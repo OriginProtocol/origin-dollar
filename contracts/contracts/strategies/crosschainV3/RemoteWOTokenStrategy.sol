@@ -202,52 +202,86 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     // --- Inbound dispatch --------------------------------------------------
 
     function _handleBridgeMessage(
+        address, // sender
+        address, // token
+        uint256 amountReceived,
+        uint256, // feePaid
+        uint32 msgType,
         uint64 nonce,
-        uint256 amount,
-        uint8 messageType,
-        bytes calldata payload
+        bytes memory body
     ) internal override {
-        if (messageType == CrossChainV3Helper.DEPOSIT) {
-            _processYieldDeposit(nonce, amount);
-        } else if (messageType == CrossChainV3Helper.WITHDRAW_REQUEST) {
-            _processWithdrawRequest(nonce, payload);
-        } else if (messageType == CrossChainV3Helper.WITHDRAW_CLAIM) {
+        if (msgType == CrossChainV3Helper.DEPOSIT) {
+            _processYieldDeposit(nonce, amountReceived);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_REQUEST) {
+            _processWithdrawRequest(nonce, body);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM) {
             _processWithdrawClaim(nonce);
-        } else if (messageType == CrossChainV3Helper.BRIDGE_OUT) {
-            _handleInboundBridgeMessage(messageType, amount, payload);
-        } else if (messageType == CrossChainV3Helper.BALANCE_CHECK_REQUEST) {
-            _processBalanceCheckRequest(nonce, payload);
-        } else if (messageType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING) {
-            _processSettlement(nonce);
+        } else if (msgType == CrossChainV3Helper.BRIDGE_OUT) {
+            _handleInboundBridgeMessage(msgType, amountReceived, body);
+        } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_REQUEST) {
+            _processBalanceCheckRequest(nonce, body);
+        } else if (msgType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING) {
+            _processSettlement(nonce, body);
         } else {
             revert("Remote: unsupported message type");
         }
     }
 
-    function _processBalanceCheckRequest(uint64 nonce, bytes calldata payload)
+    /// @dev Reports the YIELD-ONLY baseline: `_viewCheckBalance() - bridgeAdjustment`.
+    ///      This cancels bridge-channel deltas on both sides — for each BRIDGE_OUT,
+    ///      `_viewCheckBalance` drops by `net` AND `bridgeAdjustment` drops by `net`, so
+    ///      the difference stays constant. Bridge channel becomes invisible at this layer.
+    ///
+    ///      Master combines this yield-only value with its own `bridgeAdjustment` to
+    ///      reconstruct the true backing total via `checkBalance`. The math is consistent
+    ///      regardless of whether bridge messages have been processed on Remote yet —
+    ///      see the design doc for the full case analysis.
+    ///
+    ///      DOES NOT call `_acceptYieldNonce`: balance check is non-blocking, read-only,
+    ///      and the nonce is echoed back unchanged so Master can validate it's still in
+    ///      the same yield epoch.
+    function _processBalanceCheckRequest(uint64 nonce, bytes memory payload)
         internal
     {
         uint256 srcTimestamp = CrossChainV3Helper
             .decodeBalanceCheckRequestPayload(payload);
-        uint256 newBalance = _viewCheckBalance();
+        int256 yieldOnly = int256(_viewCheckBalance()) - bridgeAdjustment;
+        // Defensive: yield-only baseline should never go negative in healthy operation.
+        // Each BRIDGE_IN increases `_viewCheckBalance` by full X but `bridgeAdjustment`
+        // only by net (= X - fee), so the baseline only grows from bridge activity. Plus
+        // yield accrual. Underflow would indicate corrupted state or wOToken depeg
+        // beyond expected magnitudes.
+        require(yieldOnly >= 0, "Remote: negative yield baseline");
         bytes memory ackPayload = CrossChainV3Helper
-            .encodeBalanceCheckResponsePayload(newBalance, srcTimestamp);
+            .encodeBalanceCheckResponsePayload(
+                uint256(yieldOnly),
+                srcTimestamp
+            );
         _sendYieldMessage(
             CrossChainV3Helper.BALANCE_CHECK_RESPONSE,
             nonce,
             ackPayload
         );
-        _acceptYieldNonce(nonce);
     }
 
-    function _processSettlement(uint64 nonce) internal {
-        // Clear Remote's unsettled delta. The new authoritative balance is reported in
-        // the ack via `_viewCheckBalance` (which now reflects all bridge-channel activity
-        // through `previewRedeem`).
-        bridgeAdjustment = 0;
-        uint256 newBalance = _viewCheckBalance();
+    /// @dev Subtracts the snapshot Master sent (NOT `= 0`). Rationale:
+    ///
+    ///      At Remote-processing time, Remote.bridgeAdjustment may equal Master's snapshot
+    ///      (no in-flight ops), or differ by some delta (new bridge op has reached Remote
+    ///      between Master sending settle and Remote processing it). By subtracting only
+    ///      the exact snapshot, any newer delta is preserved on Remote — and Master does
+    ///      the symmetric subtract in `_processSettlementAck`, so both sides converge.
+    ///
+    ///      The reported balance is yield-only baseline (`_viewCheckBalance - bridgeAdj`
+    ///      post-subtract), so even if a new bridge op landed in between, the report is
+    ///      consistent with Master's reconstruction.
+    function _processSettlement(uint64 nonce, bytes memory body) internal {
+        int256 snapshot = abi.decode(body, (int256));
+        bridgeAdjustment -= snapshot;
+        int256 yieldOnly = int256(_viewCheckBalance()) - bridgeAdjustment;
+        require(yieldOnly >= 0, "Remote: negative yield baseline");
         bytes memory ackPayload = CrossChainV3Helper.encodeNewBalancePayload(
-            newBalance
+            uint256(yieldOnly)
         );
         _sendYieldMessage(
             CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK,
@@ -262,7 +296,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
      *      Ethereum OToken vault queue, reply to Master with the new view of `checkBalance`.
      *      Master doesn't need the `requestId` (Remote owns the queue lifecycle).
      */
-    function _processWithdrawRequest(uint64 nonce, bytes calldata payload)
+    function _processWithdrawRequest(uint64 nonce, bytes memory payload)
         internal
     {
         uint256 amount = CrossChainV3Helper.decodeAmountPayload(payload);

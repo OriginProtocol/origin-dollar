@@ -1,8 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const ORIGIN_V3_MESSAGE_VERSION = 1020;
-
 const MSG = {
   DEPOSIT: 1,
   DEPOSIT_ACK: 2,
@@ -18,15 +16,10 @@ const MSG = {
   BRIDGE_OUT: 12,
 };
 
-const encodePackedEnvelope = (
-  msgType,
-  nonce,
-  payloadHex,
-  sender = ethers.constants.AddressZero
-) =>
-  ethers.utils.solidityPack(
-    ["uint32", "uint32", "uint64", "address", "bytes"],
-    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, sender, payloadHex]
+const encodePackedEnvelope = (msgType, nonce, payloadHex) =>
+  ethers.utils.defaultAbiCoder.encode(
+    ["uint32", "uint64", "bytes"],
+    [msgType, nonce, payloadHex]
   );
 
 const encodeBridgeUserPayload = ({
@@ -201,7 +194,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       await bridgeAsset.approve(inboundAdapter.address, ONE_K);
 
       const envelope = encodePackedEnvelope(MSG.DEPOSIT, 7, "0x");
-      await inboundAdapter.sendTokensAndMessage(
+      await inboundAdapter.sendMessageAndTokens(
         bridgeAsset.address,
         ONE_K,
         envelope
@@ -214,10 +207,12 @@ describe("Unit: RemoteWOTokenStrategy", function () {
 
       // Master would have received the ack with the new balance.
       const sent = await outboundAdapter.lastMessageSent();
-      const decoded = sent.toLowerCase();
-      expect(decoded.slice(0, 10)).to.equal("0x000003fc");
-      expect(parseInt(decoded.slice(10, 18), 16)).to.equal(MSG.DEPOSIT_ACK);
-      expect(parseInt(decoded.slice(18, 34), 16)).to.equal(7); // nonce
+      const [msgType, ackNonce] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        sent
+      );
+      expect(msgType).to.equal(MSG.DEPOSIT_ACK);
+      expect(ackNonce).to.equal(7);
 
       expect(await remote.nonceProcessed(7)).to.equal(true);
       expect(await remote.lastYieldNonce()).to.equal(7);
@@ -227,7 +222,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       await bridgeAsset.mintTo(deployer.address, ONE_K.mul(2));
       await bridgeAsset.approve(inboundAdapter.address, ONE_K.mul(2));
 
-      await inboundAdapter.sendTokensAndMessage(
+      await inboundAdapter.sendMessageAndTokens(
         bridgeAsset.address,
         ONE_K,
         encodePackedEnvelope(MSG.DEPOSIT, 5, "0x")
@@ -235,7 +230,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
 
       // Reusing nonce 5 or going backward must be rejected.
       await expect(
-        inboundAdapter.sendTokensAndMessage(
+        inboundAdapter.sendMessageAndTokens(
           bridgeAsset.address,
           ONE_K,
           encodePackedEnvelope(MSG.DEPOSIT, 5, "0x")
@@ -243,7 +238,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       ).to.be.revertedWith("V3: nonce not monotonic");
 
       await expect(
-        inboundAdapter.sendTokensAndMessage(
+        inboundAdapter.sendMessageAndTokens(
           bridgeAsset.address,
           ONE_K,
           encodePackedEnvelope(MSG.DEPOSIT, 4, "0x")
@@ -275,9 +270,12 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       expect(await remote.bridgeAdjustment()).to.equal(AMT);
 
       const sent = await outboundAdapter.lastMessageSent();
-      const decoded = sent.toLowerCase();
-      expect(parseInt(decoded.slice(10, 18), 16)).to.equal(MSG.BRIDGE_IN);
-      expect(parseInt(decoded.slice(18, 34), 16)).to.equal(0); // nonceless
+      const [msgType, nonce] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        sent
+      );
+      expect(msgType).to.equal(MSG.BRIDGE_IN);
+      expect(nonce).to.equal(0);
     });
 
     it("rejects callGasLimit above MAX_BRIDGE_CALL_GAS", async () => {

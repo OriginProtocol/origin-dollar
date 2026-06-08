@@ -5,25 +5,28 @@ import { IBridgeReceiver } from "../../interfaces/crosschainV3/IBridgeReceiver.s
 
 /**
  * @title MockBridgeReceiver
- * @notice TEST-ONLY recorder for `receiveFromBridge` calls. Used to assert what an
+ * @notice TEST-ONLY recorder for `receiveMessage` calls. Used to assert what an
  *         inbound adapter forwarded after split-delivery store-and-process.
  */
 contract MockBridgeReceiver is IBridgeReceiver {
-    uint64 public lastNonce;
+    address public lastSender;
+    address public lastToken;
     uint256 public lastAmount;
-    uint8 public lastMessageType;
+    uint256 public lastFeePaid;
     bytes public lastPayload;
     uint256 public callCount;
 
-    function receiveFromBridge(
-        uint64 nonce,
-        uint256 amount,
-        uint8 messageType,
+    function receiveMessage(
+        address sender,
+        address token,
+        uint256 amountReceived,
+        uint256 feePaid,
         bytes calldata payload
     ) external override {
-        lastNonce = nonce;
-        lastAmount = amount;
-        lastMessageType = messageType;
+        lastSender = sender;
+        lastToken = token;
+        lastAmount = amountReceived;
+        lastFeePaid = feePaid;
         lastPayload = payload;
         callCount += 1;
     }

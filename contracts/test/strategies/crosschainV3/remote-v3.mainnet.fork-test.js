@@ -128,10 +128,21 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
 
       const sharesBefore = await woeth.balanceOf(remote.address);
 
-      // Drive the inbound DEPOSIT.
+      // Drive the inbound DEPOSIT — pack strategy envelope (msgType, nonce, body) and
+      // pass it via receiveMessage.
+      const depositPayload = ethers.utils.defaultAbiCoder.encode(
+        ["uint32", "uint64", "bytes"],
+        [MSG.DEPOSIT, 1, "0x"]
+      );
       await remote
         .connect(inboundSigner)
-        .receiveFromBridge(1, DEPOSIT_AMOUNT, MSG.DEPOSIT, "0x");
+        .receiveMessage(
+          remote.address,
+          weth.address,
+          DEPOSIT_AMOUNT,
+          0,
+          depositPayload
+        );
 
       // WETH was consumed by the vault mint.
       expect(await weth.balanceOf(remote.address)).to.equal(0);
@@ -146,7 +157,10 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
 
       // The outbound MockBridgeAdapter recorded the DEPOSIT_ACK envelope.
       const sent = await mockOut.lastMessageSent();
-      const msgType = parseInt(sent.slice(2 + 8, 2 + 16), 16);
+      const [msgType] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        sent
+      );
       expect(msgType).to.equal(MSG.DEPOSIT_ACK);
     });
   });
@@ -187,17 +201,18 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
       // wOETH share count on Remote grew (4626 deposit landed).
       expect(await woeth.balanceOf(remote.address)).to.be.gt(sharesBefore);
 
-      // The outbound adapter recorded a BRIDGE_IN envelope.
+      // The outbound adapter recorded a BRIDGE_IN envelope — unpack (msgType, nonce, body).
       const sent = await mockOut.lastMessageSent();
-      // 36-byte header: 4 version + 4 msgType + 8 nonce + 20 sender.
-      const msgType = parseInt(sent.slice(2 + 8, 2 + 16), 16);
+      const [msgType, , body] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        sent
+      );
       expect(msgType).to.equal(MSG.BRIDGE_IN);
 
-      // Payload is the BridgeUserPayload, decoded via the helper.
-      const payloadHex = "0x" + sent.slice(2 + 72);
+      // body is the BridgeUserPayload.
       const decoded = ethers.utils.defaultAbiCoder.decode(
         ["bytes32", "uint256", "address", "bytes", "uint32"],
-        payloadHex
+        body
       );
       expect(decoded[1]).to.equal(BRIDGE_AMOUNT); // amount
       expect(decoded[2].toLowerCase()).to.equal(user.address.toLowerCase());
@@ -210,7 +225,7 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
         callData: decoded[3],
         callGasLimit: decoded[4],
       });
-      expect(roundTrip).to.equal(payloadHex);
+      expect(roundTrip).to.equal(body);
     });
   });
 

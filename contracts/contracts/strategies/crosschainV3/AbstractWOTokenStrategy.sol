@@ -41,7 +41,10 @@ abstract contract AbstractWOTokenStrategy is
 
     /// @notice Maximum gas forwarded to the optional post-delivery `callData` call on
     ///         the bridge channel. Caps griefing surface; users can request lower per call.
-    uint32 public constant MAX_BRIDGE_CALL_GAS = 500_000;
+    uint32 public constant MAX_BRIDGE_CALL_GAS = 500000;
+
+    /// @notice Maximum protocol fee on the bridge channel (10% in basis points).
+    uint256 public constant MAX_BRIDGE_FEE_BPS = 1000;
 
     /// @notice Asset that bridges between Master and Remote (USDC for OUSD V3, WETH for OETHb).
     address public immutable bridgeAsset;
@@ -63,8 +66,16 @@ abstract contract AbstractWOTokenStrategy is
     ///         / BRIDGE_OUT operations. Combined with `address(this)` for global uniqueness.
     uint256 public bridgeIdCounter;
 
+    /// @notice Protocol fee on the bridge channel in basis points (1 bp = 0.01%). Default
+    ///         0; capped at `MAX_BRIDGE_FEE_BPS`. When > 0, the source side consumes the
+    ///         full `_amount` of OToken while the envelope carries `net = _amount - fee`,
+    ///         so the peer only delivers `net`. The retained `fee` worth of backing flows
+    ///         through the next `BALANCE_CHECK` and lifts the L2 vault's rebase by the
+    ///         fee.
+    uint256 public bridgeFeeBps;
+
     /// @dev Reserved for future expansion of this abstract layer.
-    uint256[44] private __gap;
+    uint256[43] private __gap;
 
     // --- Events -------------------------------------------------------------
 
@@ -73,6 +84,7 @@ abstract contract AbstractWOTokenStrategy is
         address indexed sender,
         address indexed recipient,
         uint256 amount,
+        uint256 fee,
         bytes callData,
         uint32 callGasLimit
     );
@@ -81,6 +93,7 @@ abstract contract AbstractWOTokenStrategy is
         address indexed recipient,
         uint256 amount
     );
+    event BridgeFeeBpsUpdated(uint256 oldBps, uint256 newBps);
     event BridgeCallSucceeded(
         bytes32 indexed bridgeId,
         address indexed recipient,
@@ -164,45 +177,67 @@ abstract contract AbstractWOTokenStrategy is
             _callData.length == 0 || _callGasLimit > 0,
             "WOT: callData needs gas"
         );
+        _bridgeOutboundExec(_amount, _recipient, _callData, _callGasLimit);
+    }
 
-        // Side-specific pre-flight (Master: liquidity check; Remote: no-op).
-        _preflightBridgeOutbound(_amount);
+    /// @dev Split from `bridgeOTokenToPeer` to keep the public function's stack within
+    ///      limits — the burn-full/deliver-net + envelope build chain pushes several
+    ///      locals that crowd the verifier.
+    function _bridgeOutboundExec(
+        uint256 _amount,
+        address _recipient,
+        bytes calldata _callData,
+        uint32 _callGasLimit
+    ) private {
+        // Burn-full / deliver-net: protocol fee is consumed on the source (full `_amount`)
+        // but only `net` flows across the bridge; the difference is the retained backing
+        // that lifts the next rebase.
+        uint256 fee = (_amount * bridgeFeeBps) / 10000;
+        uint256 net = _amount - fee;
+        require(net > 0, "WOT: net zero after fee");
+
+        // Pre-flight against `net` (what the peer must produce).
+        _preflightBridgeOutbound(net);
 
         address recipient = _recipient == address(0) ? msg.sender : _recipient;
 
-        // Side-specific token consumption (Master burns; Remote wraps).
+        // Master burns FULL `_amount`; Remote wraps FULL `_amount`. The fee portion stays
+        // as backing on the wOToken side and accrues to yield via the next BALANCE_CHECK.
         _consumeOTokenForBridge(_amount);
 
         uint32 msgType = _bridgeOutboundMsgType();
-        _applyBridgeAdjustment(msgType, _amount);
+        // Accounting captures the obligation that's actually leaving — `net`.
+        _applyBridgeAdjustment(msgType, net);
 
         bytes32 bridgeId = _nextBridgeId();
-        CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
-            .BridgeUserPayload({
+        bytes memory body = CrossChainV3Helper.encodeBridgeUserPayload(
+            CrossChainV3Helper.BridgeUserPayload({
                 bridgeId: bridgeId,
-                amount: _amount,
+                amount: net,
                 recipient: recipient,
                 callData: _callData,
                 callGasLimit: _callGasLimit
-            });
-
-        bytes memory message = CrossChainV3Helper.wrap(
-            msgType,
-            0,
-            address(this),
-            CrossChainV3Helper.encodeBridgeUserPayload(p)
+            })
         );
-
-        _sendRawMessage(message);
+        _sendBridgeMessage(msgType, 0, body);
 
         emit BridgeRequested(
             bridgeId,
             msg.sender,
             recipient,
-            _amount,
+            net,
+            fee,
             _callData,
             _callGasLimit
         );
+    }
+
+    // --- Governance --------------------------------------------------------
+
+    function setBridgeFeeBps(uint256 _bps) external onlyGovernor {
+        require(_bps <= MAX_BRIDGE_FEE_BPS, "WOT: fee too high");
+        emit BridgeFeeBpsUpdated(bridgeFeeBps, _bps);
+        bridgeFeeBps = _bps;
     }
 
     // --- Bridge channel: inbound -------------------------------------------
@@ -214,12 +249,12 @@ abstract contract AbstractWOTokenStrategy is
      *      post-delivery callback.
      */
     function _handleInboundBridgeMessage(
-        uint8 msgType,
+        uint32 msgType,
         uint256 amount,
-        bytes calldata payload
+        bytes memory body
     ) internal {
         CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
-            .decodeBridgeUserPayload(payload);
+            .decodeBridgeUserPayload(body);
 
         require(!consumedBridgeIds[p.bridgeId], "WOT: bridgeId replayed");
         // Bridge-channel messages are message-only by design; tokens never ride along.
@@ -231,7 +266,7 @@ abstract contract AbstractWOTokenStrategy is
 
         // CEI: mark consumed, update accounting, deliver tokens, optional call.
         consumedBridgeIds[p.bridgeId] = true;
-        _applyBridgeAdjustment(uint32(msgType), p.amount);
+        _applyBridgeAdjustment(msgType, p.amount);
 
         // Side-specific delivery (Master: mint + transfer; Remote: unwrap + transfer).
         _deliverOTokenForBridge(p.amount, p.recipient);

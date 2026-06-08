@@ -11,33 +11,26 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 import { IAny2EVMMessageReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
 
 import { AbstractAdapter } from "./AbstractAdapter.sol";
-import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
 import { CCIPMessageBuilder } from "../libraries/CCIPMessageBuilder.sol";
-import { NativeFeeHelper } from "../libraries/NativeFeeHelper.sol";
 
 /**
  * @title CCIPAdapter
  * @author Origin Protocol Inc
  *
  * @notice Atomic bidirectional adapter over Chainlink CCIP. Carries token + message
- *         (`sendTokensAndMessage`) or message-only (`sendMessage`) to the configured peer
- *         on a destination chain. The same contract receives inbound deliveries via
- *         `ccipReceive`, decodes the V3 envelope, and forwards to the destination strategy
- *         (CreateX parity: envelope sender == destination strategy on this chain).
+ *         (`sendMessageAndTokens`) or message-only (`sendMessage`) to the configured peer.
+ *         Receives inbound via `ccipReceive`, validates against the lane config (source
+ *         chain, peer adapter identity), and forwards to the destination strategy
+ *         (CREATE3 parity: envelope sender == destination strategy on this chain).
  *
- *         Pays the bridge fee in native gas, with a dual source path (pre-funded balance
- *         when `msg.value == 0`, or caller-supplied with refund of surplus).
+ *         The CCIP fee is paid in native and sourced from `msg.value`; the AbstractAdapter
+ *         base refunds any excess back to the caller after the send completes.
  */
 contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
     using SafeERC20 for IERC20;
 
     /// @notice CCIP Router on this chain.
     IRouterClient public immutable ccipRouter;
-
-    /// @notice Per-sender CCIP destination gas limit for the receive callback.
-    mapping(address => uint256) public destGasLimitFor;
-
-    event DestGasLimitConfigured(address sender, uint256 destGasLimit);
 
     constructor(IRouterClient _ccipRouter) {
         require(address(_ccipRouter) != address(0), "CCIP: zero router");
@@ -49,70 +42,69 @@ contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
         _;
     }
 
-    function setDestGasLimit(address _sender, uint256 _gasLimit)
-        external
-        onlyGovernor
-    {
-        require(authorised[_sender], "CCIP: sender not authorised");
-        destGasLimitFor[_sender] = _gasLimit;
-        emit DestGasLimitConfigured(_sender, _gasLimit);
-    }
+    // --- Outbound hooks ----------------------------------------------------
 
-    // --- IOutboundAdapter ---------------------------------------------------
-
-    function estimateFee(uint256 amount, bytes calldata message)
-        external
+    /// @dev CCIP charges a native fee per message; LINK-mode is not supported here.
+    ///      `requiresExternalPayment = true` forces the strategy to supply msg.value or
+    ///      cover from its pool.
+    function _quoteFee(
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        address token,
+        uint256 amount
+    )
+        internal
         view
         override
-        returns (uint256 nativeFee, uint256 tokenFee)
+        returns (
+            uint256 fee,
+            address feeToken,
+            bool requiresExternalPayment
+        )
     {
-        Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
-            address(0),
-            amount,
-            message,
-            peerReceiverFor[msg.sender],
-            destGasLimitFor[msg.sender]
-        );
-        nativeFee = ccipRouter.getFee(destinationFor[msg.sender], ccipMessage);
-        tokenFee = 0;
-    }
-
-    function _sendTokensAndMessage(
-        address token,
-        uint256 amount,
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
-    ) internal override {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).safeApprove(address(ccipRouter), amount);
         Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
             token,
             amount,
-            message,
-            peerReceiver,
-            destGasLimitFor[msg.sender]
+            envelope,
+            address(this), // peer adapter address (CREATE3 parity)
+            cfg.destGasLimit
         );
-        uint256 fee = ccipRouter.getFee(destination, ccipMessage);
-        NativeFeeHelper.consume(fee);
-        ccipRouter.ccipSend{ value: fee }(destination, ccipMessage);
+        fee = ccipRouter.getFee(cfg.chainSelector, ccipMessage);
+        feeToken = address(0); // native
+        requiresExternalPayment = true;
     }
 
     function _sendMessage(
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
     ) internal override {
         Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
             address(0),
             0,
-            message,
-            peerReceiver,
-            destGasLimitFor[msg.sender]
+            envelope,
+            address(this),
+            cfg.destGasLimit
         );
-        uint256 fee = ccipRouter.getFee(destination, ccipMessage);
-        NativeFeeHelper.consume(fee);
-        ccipRouter.ccipSend{ value: fee }(destination, ccipMessage);
+        ccipRouter.ccipSend{ value: fee }(cfg.chainSelector, ccipMessage);
+    }
+
+    function _sendMessageAndTokens(
+        address token,
+        uint256 amount,
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
+    ) internal override {
+        IERC20(token).safeApprove(address(ccipRouter), amount);
+        Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
+            token,
+            amount,
+            envelope,
+            address(this),
+            cfg.destGasLimit
+        );
+        ccipRouter.ccipSend{ value: fee }(cfg.chainSelector, ccipMessage);
     }
 
     // --- Inbound (IAny2EVMMessageReceiver) ---------------------------------
@@ -135,29 +127,33 @@ contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
         override
         onlyRouter
     {
-        (
-            uint32 msgType,
-            uint64 nonce,
-            address envelopeSender,
-            bytes memory payload
-        ) = _unwrapAndValidate(message.data);
+        // Decode the transport-level sender (the source-chain caller of router.ccipSend).
+        address transportSender = abi.decode(message.sender, (address));
 
-        // Single-token transfers expected for V3.
-        uint256 amount = 0;
+        (
+            address envelopeSender,
+            uint256 intendedAmount,
+            bytes memory payload
+        ) = _validateInbound(
+                message.sourceChainSelector,
+                transportSender,
+                message.data
+            );
+
+        // Single token amount expected at most; V3 doesn't multi-bundle.
         address token = address(0);
+        uint256 amount = 0;
         if (message.destTokenAmounts.length > 0) {
             token = message.destTokenAmounts[0].token;
             amount = message.destTokenAmounts[0].amount;
         }
 
-        // CREATE2 parity: destination strategy on this chain == envelope sender.
-        _deliverAtomic(
-            envelopeSender,
-            nonce,
-            amount,
-            uint8(msgType),
-            payload,
-            token
+        // CCIP delivers exactly the burned amount on the destination — no transport-side
+        // token fee, so `feePaid` is 0. Sanity-check the envelope intent matches.
+        require(
+            intendedAmount == amount,
+            "CCIP: amount mismatch with envelope"
         );
+        _deliver(envelopeSender, token, amount, 0, payload);
     }
 }

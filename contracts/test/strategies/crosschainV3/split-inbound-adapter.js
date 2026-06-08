@@ -2,25 +2,17 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { impersonateAndFund } = require("../../../utils/signers");
 
-const MSG = {
-  DEPOSIT_ACK: 2,
-  WITHDRAW_CLAIM_ACK: 6,
-};
-
 /**
- * Unit coverage for SuperbridgeAdapter exact-amount delivery semantics
- * and multi-tenant routing via the envelope-sender whitelist.
+ * Unit coverage for SuperbridgeAdapter exact-amount delivery semantics and
+ * multi-tenant routing via the envelope-sender whitelist.
  *
- * Split delivery means the CCIP message and the canonical-bridge tokens arrive in
- * separate transactions. The adapter must:
- *   1. Extract the source strategy address from the envelope header (CREATE2 parity:
- *      the same address is the destination on this chain). Reject envelopes whose
- *      sender isn't on the whitelist.
- *   2. Identify which message types carry tokens (WITHDRAW_CLAIM_ACK is the only one).
- *   3. Decode the exact expected amount from the payload.
- *   4. Hold the message in the per-target pending slot until tokens land.
- *   5. processStoredMessage(target) delivers exactly `amount` to that target.
- *   6. Two strategies served by the same adapter don't interfere with each other.
+ * Under the new envelope shape `(sender, intendedAmount, payload)`:
+ *   - Split delivery is driven by `intendedAmount`: > 0 means tokens accompany the
+ *     message via the canonical bridge; 0 means message-only.
+ *   - The adapter waits in a per-target pending slot until WETH balance covers
+ *     `intendedAmount`, then forwards via `receiveMessage`.
+ *   - Inbound trust: transport sender must equal `address(this)` (CREATE3 parity),
+ *     envelope sender must be authorised, source chain must match the lane config.
  */
 describe("Unit: SuperbridgeAdapter split delivery", function () {
   let governor, routerSigner, otherSigner;
@@ -29,13 +21,14 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
   // Ethereum CCIP selector — `BigNumber.from(string)` avoids the BigInt literal
   // syntax (`n` suffix) that eslint refuses to parse in this repo.
   const PEER_CHAIN = ethers.BigNumber.from("5009297550715157269");
+  const DEST_GAS_LIMIT = 500000;
 
-  // Build the CCIP message struct (Client.Any2EVMMessage). The transport-level
-  // sender doesn't gate routing under the new design — the envelope's `sender`
-  // field does — but CCIP still requires the field, so pass a random address.
+  // Build the CCIP message struct (Client.Any2EVMMessage). The transport `sender`
+  // field must equal the receiving adapter's own address — CREATE3 parity binds the
+  // peer adapter to the same address. Tests default to that.
   function buildAny2EvmMessage({
     messageId = ethers.utils.hexZeroPad("0x1", 32),
-    transportSender = ethers.constants.AddressZero,
+    transportSender,
     data,
     destTokenAmounts = [],
   }) {
@@ -51,18 +44,17 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     };
   }
 
-  function wrapEnvelope(messageType, nonce, envelopeSender, payload) {
+  // Wire envelope: 20-byte sender + 32-byte intendedAmount + payload.
+  function wrapEnvelope(sender, intendedAmount, payload) {
     return ethers.utils.solidityPack(
-      ["uint32", "uint32", "uint64", "address", "bytes"],
-      [1020, messageType, nonce, envelopeSender, payload]
+      ["address", "uint256", "bytes"],
+      [sender, intendedAmount, payload]
     );
   }
 
-  function encodeClaimAckPayload(newBalance, success, amount) {
-    return ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "bool", "uint256"],
-      [newBalance, success, amount]
-    );
+  // Strategy-level payload — opaque to the adapter; we pass arbitrary bytes here.
+  function packPayload(label) {
+    return ethers.utils.defaultAbiCoder.encode(["string"], [label]);
   }
 
   beforeEach(async () => {
@@ -72,8 +64,6 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     const RouterFactory = await ethers.getContractFactory("MockCCIPRouter");
     const router = await RouterFactory.connect(governor).deploy();
 
-    // The Superbridge adapter is ETH-only. The "expected token" arriving via the
-    // canonical bridge is native ETH on the L2 side, wrapped to WETH by `receive()`.
     const WETHFactory = await ethers.getContractFactory("MockWETH");
     wethMock = await WETHFactory.connect(governor).deploy();
 
@@ -95,9 +85,13 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     strategy = await StrategyFactory.connect(governor).deploy();
     strategy2 = await StrategyFactory.connect(governor).deploy();
 
-    // Under CREATE2 parity the envelope sender == destination on this chain.
-    // Authorise both strategy addresses as senders.
-    await receiver.connect(governor).authorise(strategy.address);
+    // Lane config for each authorised sender: paused=false, chain=mainnet, gas=500k.
+    const cfg = {
+      paused: false,
+      chainSelector: PEER_CHAIN,
+      destGasLimit: DEST_GAS_LIMIT,
+    };
+    await receiver.connect(governor).authorise(strategy.address, cfg);
   });
 
   // Simulate the OP Stack canonical bridge delivering native ETH to the adapter.
@@ -106,41 +100,41 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     await governor.sendTransaction({ to: receiver.address, value: amount });
   };
 
-  it("WITHDRAW_CLAIM_ACK with tokens already on adapter delivers atomically", async () => {
+  it("token-carrying message with tokens already on adapter delivers atomically", async () => {
     const amount = ethers.utils.parseUnits("100", 6);
-    const newBalance = ethers.utils.parseUnits("900", 6);
-
     await deliverBridgeEth(amount);
 
     const data = wrapEnvelope(
-      MSG.WITHDRAW_CLAIM_ACK,
-      42,
       strategy.address,
-      encodeClaimAckPayload(newBalance, true, amount)
+      amount,
+      packPayload("claim-ack")
     );
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
-    await receiver.connect(sRouter).ccipReceive(buildAny2EvmMessage({ data }));
+    await receiver
+      .connect(sRouter)
+      .ccipReceive(
+        buildAny2EvmMessage({ data, transportSender: receiver.address })
+      );
 
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(amount);
-    expect(await strategy.lastMessageType()).to.equal(MSG.WITHDRAW_CLAIM_ACK);
+    expect(await strategy.lastToken()).to.equal(wethMock.address);
     expect(await wethMock.balanceOf(strategy.address)).to.equal(amount);
     expect(await wethMock.balanceOf(receiver.address)).to.equal(0);
   });
 
-  it("WITHDRAW_CLAIM_ACK message-first: stores until tokens land, then exact delivery", async () => {
+  it("message-first: stores until tokens land, then exact delivery", async () => {
     const amount = ethers.utils.parseUnits("250", 6);
-    const data = wrapEnvelope(
-      MSG.WITHDRAW_CLAIM_ACK,
-      7,
-      strategy.address,
-      encodeClaimAckPayload(0, true, amount)
-    );
+    const data = wrapEnvelope(strategy.address, amount, packPayload("pending"));
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
-    await receiver.connect(sRouter).ccipReceive(buildAny2EvmMessage({ data }));
+    await receiver
+      .connect(sRouter)
+      .ccipReceive(
+        buildAny2EvmMessage({ data, transportSender: receiver.address })
+      );
 
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
     expect(await strategy.callCount()).to.equal(0);
@@ -151,7 +145,7 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
 
     // Tokens arrive (canonical bridge credits native ETH to the adapter; `receive()`
     // wraps to WETH). Donate one extra wei to confirm the receiver delivers exactly
-    // `amount` rather than the full balance.
+    // `intendedAmount` rather than the full balance.
     await deliverBridgeEth(amount.add(1));
 
     await receiver.processStoredMessage(strategy.address);
@@ -163,68 +157,93 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     expect(await wethMock.balanceOf(receiver.address)).to.equal(1);
   });
 
-  it("NACK (success=false) is message-only — no token leg expected", async () => {
-    const data = wrapEnvelope(
-      MSG.WITHDRAW_CLAIM_ACK,
-      11,
-      strategy.address,
-      encodeClaimAckPayload(123, false, 0)
-    );
+  it("intendedAmount=0 is message-only — delivers immediately, no token leg", async () => {
+    const data = wrapEnvelope(strategy.address, 0, packPayload("message-only"));
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
-    await receiver.connect(sRouter).ccipReceive(buildAny2EvmMessage({ data }));
+    await receiver
+      .connect(sRouter)
+      .ccipReceive(
+        buildAny2EvmMessage({ data, transportSender: receiver.address })
+      );
 
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(0);
-  });
-
-  it("DEPOSIT_ACK (other R→M msg) is message-only — never reserves a token leg", async () => {
-    const data = wrapEnvelope(
-      MSG.DEPOSIT_ACK,
-      3,
-      strategy.address,
-      ethers.utils.defaultAbiCoder.encode(["uint256"], [42])
-    );
-
-    const sRouter = await impersonateAndFund(await receiver.ccipRouter());
-    await receiver.connect(sRouter).ccipReceive(buildAny2EvmMessage({ data }));
-
-    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
-    expect(await strategy.lastAmount()).to.equal(0);
-    expect(await strategy.lastMessageType()).to.equal(MSG.DEPOSIT_ACK);
+    expect(await strategy.lastToken()).to.equal(ethers.constants.AddressZero);
   });
 
   it("rejects an envelope whose sender is not whitelisted", async () => {
-    const data = wrapEnvelope(
-      MSG.WITHDRAW_CLAIM_ACK,
-      1,
-      otherSigner.address, // not authorised
-      encodeClaimAckPayload(0, false, 0)
-    );
+    const data = wrapEnvelope(otherSigner.address, 0, packPayload("evil"));
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
     await expect(
-      receiver.connect(sRouter).ccipReceive(buildAny2EvmMessage({ data }))
+      receiver
+        .connect(sRouter)
+        .ccipReceive(
+          buildAny2EvmMessage({ data, transportSender: receiver.address })
+        )
     ).to.be.revertedWith("Adapter: not authorised");
 
-    // Direct call from a non-router caller is still rejected at the modifier.
-    const authData = wrapEnvelope(
-      MSG.WITHDRAW_CLAIM_ACK,
-      1,
-      strategy.address,
-      encodeClaimAckPayload(0, false, 0)
-    );
+    // Direct call from a non-router caller is rejected by the modifier.
+    const authData = wrapEnvelope(strategy.address, 0, packPayload("noop"));
     await expect(
-      receiver
-        .connect(routerSigner)
-        .ccipReceive(buildAny2EvmMessage({ data: authData }))
+      receiver.connect(routerSigner).ccipReceive(
+        buildAny2EvmMessage({
+          data: authData,
+          transportSender: receiver.address,
+        })
+      )
     ).to.be.revertedWith("Super: not router");
   });
 
+  it("rejects a message whose transport sender is not the peer adapter", async () => {
+    // CREATE3 parity: transport sender must equal address(this). A spoofed source-chain
+    // contract that managed to craft a CCIP message with a forged envelope sender still
+    // fails this check.
+    const data = wrapEnvelope(strategy.address, 0, packPayload("spoof"));
+
+    const sRouter = await impersonateAndFund(await receiver.ccipRouter());
+    await expect(
+      receiver.connect(sRouter).ccipReceive(
+        buildAny2EvmMessage({
+          data,
+          transportSender: otherSigner.address,
+        })
+      )
+    ).to.be.revertedWith("Adapter: not from peer adapter");
+  });
+
+  it("respects per-lane pause for inbound delivery", async () => {
+    await receiver.connect(governor).pauseLane(strategy.address);
+
+    const data = wrapEnvelope(strategy.address, 0, packPayload("paused"));
+    const sRouter = await impersonateAndFund(await receiver.ccipRouter());
+    await expect(
+      receiver
+        .connect(sRouter)
+        .ccipReceive(
+          buildAny2EvmMessage({ data, transportSender: receiver.address })
+        )
+    ).to.be.revertedWith("Adapter: lane paused");
+
+    // Unpause restores delivery.
+    await receiver.connect(governor).unpauseLane(strategy.address);
+    await receiver
+      .connect(sRouter)
+      .ccipReceive(
+        buildAny2EvmMessage({ data, transportSender: receiver.address })
+      );
+    expect(await strategy.callCount()).to.equal(1);
+  });
+
   it("multi-tenant: one adapter routes messages to distinct targets by envelope sender", async () => {
-    // Authorise the second target.
-    await receiver.connect(governor).authorise(strategy2.address);
+    const cfg = {
+      paused: false,
+      chainSelector: PEER_CHAIN,
+      destGasLimit: DEST_GAS_LIMIT,
+    };
+    await receiver.connect(governor).authorise(strategy2.address, cfg);
 
     const amount1 = ethers.utils.parseUnits("100", 6);
     const amount2 = ethers.utils.parseUnits("250", 6);
@@ -232,29 +251,21 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
 
     await receiver.connect(sRouter).ccipReceive(
       buildAny2EvmMessage({
-        data: wrapEnvelope(
-          MSG.WITHDRAW_CLAIM_ACK,
-          11,
-          strategy.address,
-          encodeClaimAckPayload(0, true, amount1)
-        ),
+        data: wrapEnvelope(strategy.address, amount1, packPayload("a")),
+        transportSender: receiver.address,
       })
     );
     await receiver.connect(sRouter).ccipReceive(
       buildAny2EvmMessage({
-        data: wrapEnvelope(
-          MSG.WITHDRAW_CLAIM_ACK,
-          22,
-          strategy2.address,
-          encodeClaimAckPayload(0, true, amount2)
-        ),
+        data: wrapEnvelope(strategy2.address, amount2, packPayload("b")),
+        transportSender: receiver.address,
       })
     );
 
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
     expect(await receiver.hasPendingMessage(strategy2.address)).to.equal(true);
 
-    // Fund the bridge-ETH leg for the SECOND tenant first and process — confirms slots
+    // Fund the bridge-ETH leg for the second tenant first and process — confirms slots
     // don't collide and tokens credit the right target.
     await deliverBridgeEth(amount2);
     await receiver.processStoredMessage(strategy2.address);

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
 
 import { AbstractWOTokenStrategy } from "./AbstractWOTokenStrategy.sol";
 import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
@@ -39,8 +40,14 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     ///         `remoteStrategyBalance` until the leg-2 ack lands.
     uint256 public pendingWithdrawalAmount;
 
+    /// @notice Snapshot of `bridgeAdjustment` captured at the moment `requestSettlement`
+    ///         fires. The ack handler subtracts exactly this value (not zero) so that any
+    ///         bridge ops processed between request and ack are preserved on both sides.
+    ///         See `_processSettlementAck` for rationale.
+    int256 public settlementSnapshot;
+
     /// @dev Reserved for future expansion.
-    uint256[42] private __gap;
+    uint256[41] private __gap;
 
     // --- Events -------------------------------------------------------------
 
@@ -138,11 +145,16 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     /// @inheritdoc InitializableAbstractStrategy
+    /// @dev Clamps the local balance by the outbound adapter's `maxTransferAmount` so a
+    ///      vault sweep larger than the bridge's per-tx limit lands as a partial deposit
+    ///      rather than reverting deep inside the bridge router. Remainder stays on Master
+    ///      until the next `depositAll` (or operator-driven sequencing).
     function depositAll() external override onlyVault nonReentrant {
         uint256 bal = IERC20(bridgeAsset).balanceOf(address(this));
-        if (bal > 0) {
-            _depositToRemote(bridgeAsset, bal);
-        }
+        if (bal == 0) return;
+        uint256 cap = IBridgeAdapter(outboundAdapter).maxTransferAmount();
+        if (cap > 0 && bal > cap) bal = cap;
+        _depositToRemote(bridgeAsset, bal);
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -160,8 +172,16 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    /// @dev Best-effort sweep: requests withdrawal of `remoteStrategyBalance` if nothing
-    ///      else is in flight; otherwise silently no-ops so the vault sweep stays safe.
+    /// @dev Best-effort sweep: requests withdrawal of `remoteStrategyBalance` (clamped by
+    ///      Remote's per-tx bridge cap) if nothing else is in flight; otherwise silently
+    ///      no-ops so the vault sweep stays safe.
+    ///
+    ///      Clamping uses `inboundAdapter.maxTransferAmount()` — Master can't query
+    ///      Remote's outbound across chains, but the symmetric inbound adapter on this
+    ///      chain holds the same protocol-level cap (outbound and inbound on a lane
+    ///      are mirror sides of the same bridge). For OETHb that's the Superbridge cap
+    ///      (canonical bridge, typically 0 = unlimited); for OUSD V3 it's the CCTPAdapter
+    ///      cap (10M USDC).
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         if (
             pendingAmount != 0 ||
@@ -170,10 +190,11 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         ) {
             return;
         }
-        if (remoteStrategyBalance == 0) {
-            return;
-        }
-        _withdrawRequest(bridgeAsset, remoteStrategyBalance);
+        uint256 amount = remoteStrategyBalance;
+        if (amount == 0) return;
+        uint256 cap = IBridgeAdapter(inboundAdapter).maxTransferAmount();
+        if (cap > 0 && amount > cap) amount = cap;
+        _withdrawRequest(bridgeAsset, amount);
     }
 
     // --- Operator entrypoints ---------------------------------------------
@@ -186,6 +207,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
      */
     function triggerClaim()
         external
+        payable
         nonReentrant
         onlyOperatorGovernorOrStrategist
     {
@@ -202,34 +224,49 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     /**
      * @notice Operator-triggered yield-channel round-trip to refresh `remoteStrategyBalance`
      *         off the back of Remote's `previewRedeem`. Run on a cron (~2h) in production.
+     *
+     * @dev    Non-blocking: does NOT advance the yield nonce. Sends with the CURRENT
+     *         `lastYieldNonce` as an "epoch marker" — the response is accepted only if
+     *         that nonce still matches when the ack lands AND no other yield op is in
+     *         flight AND the timestamp is newer than the last accepted check. See
+     *         `_processBalanceCheckResponse` for the three-guard logic.
+     *
+     *         Multiple BCs in flight at the same nonce are harmless; whichever response
+     *         is newest wins via the timestamp guard.
      */
     function requestBalanceCheck()
         external
+        payable
         nonReentrant
         onlyOperatorGovernorOrStrategist
     {
         require(outboundAdapter != address(0), "Master: outbound not set");
-        require(!isYieldOpInFlight(), "Master: yield op in flight");
-        require(pendingWithdrawalAmount == 0, "Master: withdrawal pending");
-
-        uint64 nonce = _getNextYieldNonce();
         bytes memory payload = CrossChainV3Helper
             .encodeBalanceCheckRequestPayload(block.timestamp);
+        // Echo current nonce; do NOT advance it. Read-only on Remote's side.
         _sendYieldMessage(
             CrossChainV3Helper.BALANCE_CHECK_REQUEST,
-            nonce,
+            lastYieldNonce,
             payload
         );
-        emit BalanceCheckRequested(nonce, block.timestamp);
+        emit BalanceCheckRequested(lastYieldNonce, block.timestamp);
     }
 
     /**
-     * @notice Operator-triggered settlement: reconcile bridge-channel activity with the yield
-     *         channel. Both sides clear their `bridgeAdjustment` after a successful round-trip;
-     *         the unsettled value is captured in the new `remoteStrategyBalance`.
+     * @notice Operator-triggered settlement: zero out (or reduce) `bridgeAdjustment` on
+     *         both sides. With the locked design (yield-only baseline in balance check),
+     *         settlement is housekeeping — keeps bridgeAdjustment magnitude bounded
+     *         rather than being correctness-critical.
+     *
+     * @dev    Captures `bridgeAdjustment` as a snapshot at request time. Both sides
+     *         subtract exactly that snapshot on their respective handlers (NOT `= 0`),
+     *         which preserves any bridge ops that happen between request and ack. This
+     *         avoids the desync that would occur if both sides naively zeroed while a
+     *         new BRIDGE_OUT was mid-flight. See `_processSettlementAck` for the math.
      */
     function requestSettlement()
         external
+        payable
         nonReentrant
         onlyOperatorGovernorOrStrategist
     {
@@ -238,12 +275,15 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         require(pendingWithdrawalAmount == 0, "Master: withdrawal pending");
 
         uint64 nonce = _getNextYieldNonce();
+        // Persist for the ack handler to subtract from the (possibly-evolved) bridgeAdjustment.
+        settlementSnapshot = bridgeAdjustment;
+        bytes memory payload = abi.encode(settlementSnapshot);
         _sendYieldMessage(
             CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING,
             nonce,
-            ""
+            payload
         );
-        emit SettlementRequested(nonce, bridgeAdjustment);
+        emit SettlementRequested(nonce, settlementSnapshot);
     }
 
     // --- Yield channel: deposit --------------------------------------------
@@ -300,56 +340,85 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     // --- Inbound dispatch --------------------------------------------------
 
     function _handleBridgeMessage(
+        address, // sender
+        address, // token
+        uint256 amountReceived,
+        uint256, // feePaid — unused for bridge channel / yield message-only ops
+        uint32 msgType,
         uint64 nonce,
-        uint256 amount,
-        uint8 messageType,
-        bytes calldata payload
+        bytes memory body
     ) internal override {
-        if (messageType == CrossChainV3Helper.DEPOSIT_ACK) {
-            _processYieldDepositAck(nonce, payload);
-        } else if (messageType == CrossChainV3Helper.WITHDRAW_REQUEST_ACK) {
-            _processWithdrawRequestAck(nonce, payload);
-        } else if (messageType == CrossChainV3Helper.WITHDRAW_CLAIM_ACK) {
-            _processWithdrawClaimAck(nonce, amount, payload);
-        } else if (messageType == CrossChainV3Helper.BRIDGE_IN) {
-            _handleInboundBridgeMessage(messageType, amount, payload);
-        } else if (messageType == CrossChainV3Helper.BALANCE_CHECK_RESPONSE) {
-            _processBalanceCheckResponse(nonce, payload);
-        } else if (
-            messageType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK
-        ) {
-            _processSettlementAck(nonce, payload);
+        if (msgType == CrossChainV3Helper.DEPOSIT_ACK) {
+            _processYieldDepositAck(nonce, body);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_REQUEST_ACK) {
+            _processWithdrawRequestAck(nonce, body);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM_ACK) {
+            _processWithdrawClaimAck(nonce, amountReceived, body);
+        } else if (msgType == CrossChainV3Helper.BRIDGE_IN) {
+            _handleInboundBridgeMessage(msgType, amountReceived, body);
+        } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_RESPONSE) {
+            _processBalanceCheckResponse(nonce, body);
+        } else if (msgType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK) {
+            _processSettlementAck(nonce, body);
         } else {
             revert("Master: unsupported message type");
         }
     }
 
-    function _processBalanceCheckResponse(uint64 nonce, bytes calldata payload)
+    /// @dev Three-guard acceptance:
+    ///        1. `!isYieldOpInFlight()` — if a deposit/withdraw is mid-flight, the response
+    ///           would race with its ack; ignore to avoid corrupting pendingAmount /
+    ///           remoteStrategyBalance accounting.
+    ///        2. `respNonce == lastYieldNonce` — the request was sent at this nonce; if
+    ///           lastYieldNonce has since advanced, this response is from a now-stale
+    ///           epoch. Ignore.
+    ///        3. `respTimestamp > lastBalanceCheckTimestamp` — out-of-order CCIP delivery
+    ///           could land an older snapshot after a newer one. Strict monotonic order
+    ///           preserves the latest read.
+    function _processBalanceCheckResponse(uint64 nonce, bytes memory payload)
         internal
     {
-        _markYieldNonceProcessed(nonce);
+        // No _markYieldNonceProcessed here — balance check did NOT advance the nonce, so
+        // there's nothing to mark. The 3 guards below replace nonce-advance semantics.
+        if (isYieldOpInFlight()) return;
+        if (nonce != lastYieldNonce) return;
         (uint256 newBalance, uint256 remoteTimestamp) = CrossChainV3Helper
             .decodeBalanceCheckResponsePayload(payload);
+        if (remoteTimestamp <= lastBalanceCheckTimestamp) return;
+        lastBalanceCheckTimestamp = remoteTimestamp;
         remoteStrategyBalance = newBalance;
         emit BalanceCheckResponded(nonce, newBalance, remoteTimestamp);
         emit RemoteStrategyBalanceUpdated(newBalance);
     }
 
-    function _processSettlementAck(uint64 nonce, bytes calldata payload)
+    /// @dev Subtracts `settlementSnapshot` (NOT `= 0`). Rationale:
+    ///
+    ///        Master.bridgeAdj at ack time may differ from what it was at request time if
+    ///        new bridge ops landed in between. Zeroing would erase those new ops. By
+    ///        subtracting only the exact snapshot we committed to settling, we preserve
+    ///        the post-snapshot delta on both sides — Remote does the symmetric subtract
+    ///        in `_processSettlement`, so both sides converge to the same value
+    ///        regardless of the order in which bridge ops vs. the settle message reach
+    ///        Remote.
+    ///
+    ///        Remote's reported `newBalance` is its yield-only baseline (`_viewCheckBalance
+    ///        - bridgeAdjustment` post-subtract), which combined with Master's residual
+    ///        bridgeAdjustment gives consistent checkBalance across all orderings.
+    function _processSettlementAck(uint64 nonce, bytes memory payload)
         internal
     {
         _markYieldNonceProcessed(nonce);
         uint256 newBalance = CrossChainV3Helper.decodeNewBalancePayload(
             payload
         );
-        // Master's unsettled bridge delta is now folded into the fresh balance.
-        bridgeAdjustment = 0;
+        bridgeAdjustment -= settlementSnapshot;
+        settlementSnapshot = 0;
         remoteStrategyBalance = newBalance;
         emit SettlementAcked(nonce, newBalance);
         emit RemoteStrategyBalanceUpdated(newBalance);
     }
 
-    function _processWithdrawRequestAck(uint64 nonce, bytes calldata payload)
+    function _processWithdrawRequestAck(uint64 nonce, bytes memory payload)
         internal
     {
         _markYieldNonceProcessed(nonce);
@@ -366,7 +435,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     function _processWithdrawClaimAck(
         uint64 nonce,
         uint256 amount,
-        bytes calldata payload
+        bytes memory payload
     ) internal {
         _markYieldNonceProcessed(nonce);
         (
@@ -397,7 +466,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         emit RemoteStrategyBalanceUpdated(newBalance);
     }
 
-    function _processYieldDepositAck(uint64 nonce, bytes calldata payload)
+    function _processYieldDepositAck(uint64 nonce, bytes memory payload)
         internal
     {
         _markYieldNonceProcessed(nonce);

@@ -4,22 +4,22 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IOutboundAdapter } from "../../interfaces/crosschainV3/IOutboundAdapter.sol";
+import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
 import { IBridgeReceiver } from "../../interfaces/crosschainV3/IBridgeReceiver.sol";
-import { CrossChainV3Helper } from "../../strategies/crosschainV3/CrossChainV3Helper.sol";
 
 /**
  * @title MockBridgeAdapter
  * @author Origin Protocol Inc
  *
- * @notice TEST-ONLY synchronous loopback adapter for the V3 strategy pair. Plays the role of
- *         both the outbound adapter on the source side and the receiver adapter on the
- *         destination side — it calls peer.receiveFromBridge() in the same transaction.
+ * @notice TEST-ONLY synchronous loopback adapter for the V3 strategy pair. Plays the role
+ *         of both the outbound adapter on the source side and the receiver adapter on the
+ *         destination side — it calls peer.receiveMessage() in the same transaction.
  *
- *         Used by the Master+Remote unit tests to wire two strategy instances in-process
- *         without spinning up real bridges.
+ *         The new design has the wire envelope owned by the adapter, but the strategy
+ *         passes opaque `payload` bytes that already encode `(msgType, nonce, body)` via
+ *         `CrossChainV3Helper.packPayload`. This mock simply forwards `payload` through.
  */
-contract MockBridgeAdapter is IOutboundAdapter {
+contract MockBridgeAdapter is IBridgeAdapter {
     using SafeERC20 for IERC20;
 
     /// @notice Authorised sender on the local side (the strategy we adapt for).
@@ -27,8 +27,8 @@ contract MockBridgeAdapter is IOutboundAdapter {
     /// @notice Peer receiver on the destination side (the other strategy).
     address public peer;
 
-    /// @notice When false, sendTokensAndMessage / sendMessage are no-ops on the peer side.
-    ///         Useful for simulating in-flight delays in tests; calls still consume tokens.
+    /// @notice When false, send* are no-ops on the peer side. Useful for simulating
+    ///         in-flight delays in tests; calls still consume tokens.
     bool public deliveryEnabled = true;
 
     // Inspection slots
@@ -39,7 +39,7 @@ contract MockBridgeAdapter is IOutboundAdapter {
     event PeerConfigured(address peer);
     event SenderConfigured(address sender);
     event DeliveryToggled(bool enabled);
-    event MessageDelivered(uint8 messageType, uint64 nonce, uint256 amount);
+    event MessageDelivered(address token, uint256 amount, bytes payload);
 
     function setPeer(address _peer) external {
         peer = _peer;
@@ -56,14 +56,27 @@ contract MockBridgeAdapter is IOutboundAdapter {
         emit DeliveryToggled(_enabled);
     }
 
-    /// @inheritdoc IOutboundAdapter
-    function sendTokensAndMessage(
+    /// @inheritdoc IBridgeAdapter
+    function sendMessage(bytes calldata payload) external payable override {
+        _requireAuthorised();
+        lastMessageSent = payload;
+        lastAmountSent = 0;
+        lastTokenSent = address(0);
+
+        if (!deliveryEnabled || peer == address(0)) {
+            return;
+        }
+        _dispatch(address(0), 0, payload);
+    }
+
+    /// @inheritdoc IBridgeAdapter
+    function sendMessageAndTokens(
         address token,
         uint256 amount,
-        bytes calldata message
+        bytes calldata payload
     ) external payable override {
         _requireAuthorised();
-        lastMessageSent = message;
+        lastMessageSent = payload;
         lastAmountSent = amount;
         lastTokenSent = token;
 
@@ -73,34 +86,44 @@ contract MockBridgeAdapter is IOutboundAdapter {
         if (!deliveryEnabled || peer == address(0)) {
             return;
         }
-
         // Forward tokens to peer and call its receiver hook synchronously.
         IERC20(token).safeTransfer(peer, amount);
-        _dispatch(amount, message);
+        _dispatch(token, amount, payload);
     }
 
-    /// @inheritdoc IOutboundAdapter
-    function sendMessage(bytes calldata message) external payable override {
-        _requireAuthorised();
-        lastMessageSent = message;
-        lastAmountSent = 0;
-        lastTokenSent = address(0);
-
-        if (!deliveryEnabled || peer == address(0)) {
-            return;
-        }
-
-        _dispatch(0, message);
-    }
-
-    /// @inheritdoc IOutboundAdapter
-    function estimateFee(uint256, bytes calldata)
+    /// @inheritdoc IBridgeAdapter
+    function quoteFee(
+        address,
+        uint256,
+        bytes calldata
+    )
         external
         pure
         override
-        returns (uint256, uint256)
+        returns (
+            uint256 fee,
+            address feeToken,
+            bool requiresExternalPayment
+        )
     {
-        return (0, 0);
+        // Test mock: zero fee, no external payment required. Lets unit tests exercise
+        // both _sendUserMessage (which sees fee=0, msg.value>=0 trivially) and
+        // _sendOpMessage (which sees fee=0, balance>=0 trivially) without needing any
+        // ETH plumbing in test fixtures.
+        return (0, address(0), false);
+    }
+
+    /// @notice Configurable per-tx cap for testing Master's clamp paths. Default
+    ///         `type(uint256).max` means "no clamp" so existing tests stay unaffected.
+    uint256 public maxTransferOverride = type(uint256).max;
+
+    function setMaxTransferAmountOverride(uint256 _amount) external {
+        maxTransferOverride = _amount;
+    }
+
+    /// @inheritdoc IBridgeAdapter
+    function maxTransferAmount() external view override returns (uint256) {
+        return maxTransferOverride;
     }
 
     /**
@@ -114,7 +137,7 @@ contract MockBridgeAdapter is IOutboundAdapter {
         if (lastAmountSent > 0 && lastTokenSent != address(0)) {
             IERC20(lastTokenSent).safeTransfer(peer, lastAmountSent);
         }
-        _dispatch(lastAmountSent, lastMessageSent);
+        _dispatch(lastTokenSent, lastAmountSent, lastMessageSent);
 
         delete lastMessageSent;
         lastAmountSent = 0;
@@ -128,22 +151,12 @@ contract MockBridgeAdapter is IOutboundAdapter {
         );
     }
 
-    function _dispatch(uint256 amount, bytes memory message) internal {
-        (uint32 version, uint32 msgType, uint64 nonce, , ) = CrossChainV3Helper
-            .unwrap(message);
-        require(
-            version == CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION,
-            "MockBridgeAdapter: bad version"
-        );
-
-        bytes memory payload = CrossChainV3Helper.getPayload(message);
-        emit MessageDelivered(uint8(msgType), nonce, amount);
-
-        IBridgeReceiver(peer).receiveFromBridge(
-            nonce,
-            amount,
-            uint8(msgType),
-            payload
-        );
+    function _dispatch(
+        address token,
+        uint256 amount,
+        bytes memory payload
+    ) internal {
+        emit MessageDelivered(token, amount, payload);
+        IBridgeReceiver(peer).receiveMessage(sender, token, amount, 0, payload);
     }
 }

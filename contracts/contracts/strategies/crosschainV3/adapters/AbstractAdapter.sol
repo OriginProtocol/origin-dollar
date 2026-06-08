@@ -5,123 +5,186 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { Governable } from "../../../governance/Governable.sol";
+import { IBridgeAdapter } from "../../../interfaces/crosschainV3/IBridgeAdapter.sol";
 import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceiver.sol";
-import { IOutboundAdapter } from "../../../interfaces/crosschainV3/IOutboundAdapter.sol";
-import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
 
 /**
  * @title AbstractAdapter
  * @author Origin Protocol Inc
  *
- * @notice Shared base for OUSD V3 bridge adapters. A single adapter serves both directions
- *         for one bridge protocol (outbound `IOutboundAdapter` + the protocol-specific
- *         inbound entry point), multi-tenant so one deployment can serve many strategy
- *         pairs.
+ * @notice Shared base for OUSD V3 bridge adapters. One adapter deployment serves a single
+ *         (chain, bridge protocol) — multi-tenant across strategies on that chain, with per-
+ *         sender lane configuration. Under CREATE3 cross-chain parity, the peer adapter on
+ *         the destination chain shares this contract's own address, so outbound routing and
+ *         inbound trust checks both reference `address(this)`.
  *
  *         The base provides:
- *           - a flat `authorised[address]` whitelist that gates BOTH directions
- *             (msg.sender on outbound, envelope sender on inbound — CreateX cross-chain
- *             address parity means they're the same address for a given strategy pair).
- *           - per-sender `destinationFor` and `peerReceiverFor` mappings (outbound routing).
- *           - a `_deliverAtomic` helper for forwarding inbound deliveries.
- *           - a `transferToken` sweep for stuck tokens / native (address(0) = native).
+ *           - `authorised` whitelist gating both outbound (`msg.sender`) and inbound
+ *             (`envelopeSender`); a single authorise call wires both directions.
+ *           - `laneConfig[sender]` with destination chain selector, paused flag, and
+ *             destination-side gas hint. Concrete adapters extend with their own per-lane
+ *             extras as separate mappings.
+ *           - Strategists list — accounts that can pause/unpause lanes for fast incident
+ *             response. Governor also has these powers.
+ *           - Outbound `sendMessage` / `sendMessageAndTokens` that wrap
+ *             `(msg.sender, payload)` into a transport envelope, require
+ *             `msg.value >= quote`, and refund the excess to the caller.
+ *           - Inbound helpers `_validateInbound` (transport identity already verified by
+ *             the concrete adapter) and `_deliver` (atomic delivery to the destination
+ *             strategy).
+ *           - A `transferToken` sweep for stuck tokens / native (governor only).
  *
- *         Bridge-specific behaviour (CCIP / CCTP / canonical-bridge transports, fee models,
- *         envelope decoding) lives entirely in the concrete adapters.
+ *         Concrete adapters implement three internal hooks for the bridge-specific transport
+ *         calls: `_sendMessage`, `_sendMessageAndTokens`, `_quoteFee`.
  */
-abstract contract AbstractAdapter is IOutboundAdapter, Governable {
+abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     using SafeERC20 for IERC20;
 
-    /// @notice Whitelist of strategy addresses authorised to use this adapter — both as
-    ///         outbound `msg.sender` and as the envelope sender on inbound. Under CreateX
-    ///         parity, a strategy has the same address on every chain it lives on.
+    /// @notice Per-lane routing config. One row per authorised sender.
+    struct ChainConfig {
+        bool paused;
+        uint64 chainSelector; // destination chain identifier (protocol-specific encoding)
+        uint32 destGasLimit; // gas hint forwarded to the receive callback on the peer
+    }
+
+    /// @notice Sender → authorised flag. Gates both outbound `msg.sender` and inbound
+    ///         envelopeSender. CREATE3 parity means the same address represents the same
+    ///         strategy on every chain it lives on.
     mapping(address => bool) public authorised;
 
-    /// @notice Destination chain selector per authorised sender. Concrete adapters map this
-    ///         through to the bridge's destination ID format (e.g., CCTP uint32 domain).
-    mapping(address => uint64) public destinationFor;
+    /// @notice Sender → lane config. Mutating this changes which destination chain the
+    ///         sender can send to / be received from; treat as governance-grade.
+    mapping(address => ChainConfig) public laneConfig;
 
-    /// @notice Peer receiver adapter address on the destination chain, per authorised sender.
-    mapping(address => address) public peerReceiverFor;
+    /// @notice Strategists list — actors permitted to flip the `paused` flag on a lane.
+    ///         The governor also has these powers.
+    mapping(address => bool) public strategists;
 
-    event SenderAuthorised(
+    /// @notice Per-tx maximum token amount this adapter accepts on outbound. Governor-set
+    ///         to match the bridge protocol's per-tx limit (CCIP token-lane rate, CCTP V2
+    ///         per-burn cap, etc.). Strategies on the peer chain treat the same value as
+    ///         "max this adapter can deliver inbound per tx" to size their withdrawAll-style
+    ///         requests. `0` = no enforcement at this layer (concrete adapters may still
+    ///         apply hard protocol-level constants on top).
+    uint256 public maxTransferAmount;
+
+    event Authorised(address indexed sender, ChainConfig cfg);
+    event Revoked(address indexed sender);
+    event LaneConfigUpdated(address indexed sender, ChainConfig cfg);
+    event LanePaused(address indexed sender);
+    event LaneUnpaused(address indexed sender);
+    event StrategistAdded(address indexed who);
+    event StrategistRemoved(address indexed who);
+    event MaxTransferAmountUpdated(uint256 oldAmount, uint256 newAmount);
+    event MessageSent(
         address indexed sender,
-        uint64 destination,
-        address peerReceiver
+        address token,
+        uint256 amount,
+        uint256 feeCharged
     );
-    event PeerReceiverUpdated(address indexed sender, address peerReceiver);
-    event SenderRevoked(address indexed sender);
     event MessageDelivered(
         address indexed target,
-        uint64 nonce,
-        uint8 messageType
+        address token,
+        uint256 amountReceived,
+        uint256 feePaid
     );
 
+    /// @dev Reserved for future expansion of this abstract layer (proxy upgradeable).
+    uint256[44] private __gap;
+
     constructor() {
-        // Bootstrap the deployer as initial governor; transfer to a Timelock /
-        // multisig as part of the deploy flow.
+        // For standalone deployments (tests, scratch). When behind a proxy, the proxy's
+        // own constructor + initialize ritual is the source of truth — this assignment is
+        // overwritten as soon as the proxy delegates governance through `_changeGovernor`.
         _setGovernor(msg.sender);
     }
 
-    modifier onlyAuthorisedSender() {
-        require(authorised[msg.sender], "Adapter: sender not authorised");
+    // --- Modifiers ---------------------------------------------------------
+
+    modifier onlyAuthorised() {
+        require(authorised[msg.sender], "Adapter: not authorised");
         _;
     }
 
-    /**
-     * @notice Authorise `_sender` to use this adapter and wire its outbound routing.
-     *         `_peerReceiver == address(0)` is permitted during deploy bootstrap; outbound
-     *         calls will fail at the bridge transport until {setPeerReceiver} is run.
-     */
-    function authoriseSender(
-        address _sender,
-        uint64 _destination,
-        address _peerReceiver
-    ) external onlyGovernor {
-        require(_sender != address(0), "Adapter: zero sender");
-        authorised[_sender] = true;
-        destinationFor[_sender] = _destination;
-        peerReceiverFor[_sender] = _peerReceiver;
-        emit SenderAuthorised(_sender, _destination, _peerReceiver);
+    modifier onlyStrategistOrGovernor() {
+        require(
+            strategists[msg.sender] || isGovernor(),
+            "Adapter: not strategist or governor"
+        );
+        _;
     }
 
-    /**
-     * @notice Add `_sender` to the whitelist without setting outbound routing. Convenience
-     *         for inbound-only configuration: a strategy on the peer chain is allowed to
-     *         deliver via this adapter, but this adapter never sends outbound for it.
-     *         (Under CreateX cross-chain parity, the peer's address on this chain is also
-     *         the destination strategy for inbound forwarding.)
-     */
-    function authorise(address _sender) external onlyGovernor {
-        require(_sender != address(0), "Adapter: zero sender");
-        authorised[_sender] = true;
-        emit SenderAuthorised(_sender, 0, address(0));
+    // --- Governance: strategists -------------------------------------------
+
+    function addStrategist(address who) external onlyGovernor {
+        require(who != address(0), "Adapter: zero strategist");
+        strategists[who] = true;
+        emit StrategistAdded(who);
     }
 
+    function removeStrategist(address who) external onlyGovernor {
+        strategists[who] = false;
+        emit StrategistRemoved(who);
+    }
+
+    // --- Governance: authorisation + lane config ---------------------------
+
     /**
-     * @notice Update the peer receiver for an already-authorised sender (post-deploy wiring).
+     * @notice Authorise `sender` to use this adapter and register its lane config.
+     *         Authorisation is bidirectional: the same `sender` is recognised both as
+     *         outbound `msg.sender` and as inbound `envelopeSender`.
      */
-    function setPeerReceiver(address _sender, address _peerReceiver)
+    function authorise(address sender, ChainConfig calldata cfg)
         external
         onlyGovernor
     {
-        require(authorised[_sender], "Adapter: sender not authorised");
-        require(_peerReceiver != address(0), "Adapter: zero peer");
-        peerReceiverFor[_sender] = _peerReceiver;
-        emit PeerReceiverUpdated(_sender, _peerReceiver);
+        require(sender != address(0), "Adapter: zero sender");
+        require(cfg.chainSelector != 0, "Adapter: zero chain selector");
+        authorised[sender] = true;
+        laneConfig[sender] = cfg;
+        emit Authorised(sender, cfg);
     }
 
-    function revokeSender(address _sender) external onlyGovernor {
-        authorised[_sender] = false;
-        emit SenderRevoked(_sender);
+    function revoke(address sender) external onlyGovernor {
+        authorised[sender] = false;
+        emit Revoked(sender);
     }
+
+    function setLaneConfig(address sender, ChainConfig calldata cfg)
+        external
+        onlyGovernor
+    {
+        require(authorised[sender], "Adapter: sender not authorised");
+        require(cfg.chainSelector != 0, "Adapter: zero chain selector");
+        laneConfig[sender] = cfg;
+        emit LaneConfigUpdated(sender, cfg);
+    }
+
+    /// @notice Governor sets the per-tx token amount ceiling. Set to match the bridge
+    ///         protocol's actual per-tx limit (CCIP lane rate, CCTP burn cap, etc.).
+    ///         `0` disables the check (e.g., canonical bridges with no per-tx limit).
+    function setMaxTransferAmount(uint256 _amount) external onlyGovernor {
+        emit MaxTransferAmountUpdated(maxTransferAmount, _amount);
+        maxTransferAmount = _amount;
+    }
+
+    function pauseLane(address sender) external onlyStrategistOrGovernor {
+        require(authorised[sender], "Adapter: sender not authorised");
+        laneConfig[sender].paused = true;
+        emit LanePaused(sender);
+    }
+
+    function unpauseLane(address sender) external onlyStrategistOrGovernor {
+        require(authorised[sender], "Adapter: sender not authorised");
+        laneConfig[sender].paused = false;
+        emit LaneUnpaused(sender);
+    }
+
+    // --- Governance: recovery ----------------------------------------------
 
     /**
-     * @notice Transfer token (or native) to governor. Recovery only — used to rescue
-     *         stuck tokens (mistaken sends, leftover approvals) or to drain a stale
-     *         pre-funded fee reserve.
-     *
-     *         `_asset == address(0)` is treated as the native-token sentinel.
+     * @notice Sweep a stuck asset (or native via `_asset == address(0)`) to the governor.
+     *         Recovery only — used to rescue mistaken sends or drain stale refund balances.
      */
     function transferToken(address _asset, uint256 _amount)
         external
@@ -136,105 +199,255 @@ abstract contract AbstractAdapter is IOutboundAdapter, Governable {
         }
     }
 
-    // --- IOutboundAdapter wiring -------------------------------------------
+    // --- Outbound (IBridgeAdapter) -----------------------------------------
 
-    function sendTokensAndMessage(
-        address token,
-        uint256 amount,
-        bytes calldata message
-    ) external payable virtual override onlyAuthorisedSender {
-        _sendTokensAndMessage(
-            token,
-            amount,
-            message,
-            destinationFor[msg.sender],
-            peerReceiverFor[msg.sender]
-        );
-    }
-
-    function sendMessage(bytes calldata message)
+    /// @inheritdoc IBridgeAdapter
+    ///
+    /// @dev No refund on excess. Overpayment stays on the adapter; recover via
+    ///      `transferToken(address(0), amount)` (governor-only). Rationale: refunds
+    ///      add code surface, and the strategy quotes fees itself before calling — overpay
+    ///      should be rare. Pool-donation semantics are simpler than per-call refund logic.
+    function sendMessage(bytes calldata payload)
         external
         payable
-        virtual
         override
-        onlyAuthorisedSender
+        onlyAuthorised
     {
-        _sendMessage(
-            message,
-            destinationFor[msg.sender],
-            peerReceiverFor[msg.sender]
+        ChainConfig memory cfg = laneConfig[msg.sender];
+        require(!cfg.paused, "Adapter: lane paused");
+        bytes memory envelope = _wrap(msg.sender, 0, payload);
+        (uint256 fee, , bool requiresExternalPayment) = _quoteFee(
+            envelope,
+            cfg,
+            address(0),
+            0
         );
+        // requiresExternalPayment == false means the bridge handles its own fee internally
+        // (e.g., CCTP V2 auto-deducts from the burn amount); msg.value is not consumed.
+        if (requiresExternalPayment) {
+            require(msg.value >= fee, "Adapter: insufficient fee");
+        }
+        _sendMessage(envelope, cfg, requiresExternalPayment ? fee : 0);
+        emit MessageSent(msg.sender, address(0), 0, fee);
     }
 
-    function _sendTokensAndMessage(
+    /// @inheritdoc IBridgeAdapter
+    function sendMessageAndTokens(
         address token,
         uint256 amount,
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
-    ) internal virtual;
+        bytes calldata payload
+    ) external payable override onlyAuthorised {
+        require(token != address(0), "Adapter: zero token");
+        require(amount > 0, "Adapter: zero amount");
+        // Per-tx amount cap. `0` disables the check (canonical bridges, unconfigured).
+        // Reject cleanly here rather than letting the bridge router revert deep inside
+        // its own validation.
+        require(
+            maxTransferAmount == 0 || amount <= maxTransferAmount,
+            "Adapter: amount above max"
+        );
+        ChainConfig memory cfg = laneConfig[msg.sender];
+        require(!cfg.paused, "Adapter: lane paused");
+        bytes memory envelope = _wrap(msg.sender, amount, payload);
+        (uint256 fee, , bool requiresExternalPayment) = _quoteFee(
+            envelope,
+            cfg,
+            token,
+            amount
+        );
+        if (requiresExternalPayment) {
+            require(msg.value >= fee, "Adapter: insufficient fee");
+        }
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        _sendMessageAndTokens(
+            token,
+            amount,
+            envelope,
+            cfg,
+            requiresExternalPayment ? fee : 0
+        );
+        emit MessageSent(msg.sender, token, amount, fee);
+    }
 
+    /// @inheritdoc IBridgeAdapter
+    function quoteFee(
+        address token,
+        uint256 amount,
+        bytes calldata payload
+    )
+        external
+        view
+        override
+        returns (
+            uint256 fee,
+            address feeToken,
+            bool requiresExternalPayment
+        )
+    {
+        ChainConfig memory cfg = laneConfig[msg.sender];
+        bytes memory envelope = _wrap(msg.sender, amount, payload);
+        return _quoteFee(envelope, cfg, token, amount);
+    }
+
+    // --- Outbound hooks (concrete adapters implement) ----------------------
+
+    /// @dev Send a message-only envelope through the bridge transport. `fee` is the native
+    ///      value to attach to the underlying bridge call; 0 when the protocol auto-deducts.
     function _sendMessage(
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
     ) internal virtual;
 
-    // --- Inbound helpers ----------------------------------------------------
+    /// @dev Send a message + tokens through the bridge transport. Same `fee` semantics as
+    ///      `_sendMessage`.
+    function _sendMessageAndTokens(
+        address token,
+        uint256 amount,
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
+    ) internal virtual;
+
+    /// @dev Compute the fee details for the outbound op. See `IBridgeAdapter.quoteFee` for
+    ///      the meaning of each return value. The three-value form lets the strategy
+    ///      separate "is action required?" from "what token / how much?" — important for
+    ///      bridges like CCTP V2 where the fee is real but auto-deducted (caller takes no
+    ///      action) vs CCIP where the caller must supply native.
+    function _quoteFee(
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        address token,
+        uint256 amount
+    )
+        internal
+        view
+        virtual
+        returns (
+            uint256 fee,
+            address feeToken,
+            bool requiresExternalPayment
+        );
+
+    // --- Inbound helpers (concrete adapter calls from its transport entry) --
 
     /**
-     * @dev Unwrap a V3 envelope, verify the version, and check the envelope sender is on the
-     *      whitelist. Returns the decoded fields. Reverts on any validation failure.
-     *
-     *      Concrete inbound entry points use this to avoid duplicating the same decode +
-     *      version-check + whitelist-check ritual.
+     * @dev Validate an inbound envelope against the configured lane. Concrete adapters
+     *      pass:
+     *        - `srcChain`        — source chain ID extracted from the bridge transport.
+     *        - `transportSender` — source-chain caller that originated the bridge tx. Under
+     *                              CREATE3 parity, this must equal `address(this)` (the peer
+     *                              adapter has the same address).
+     *        - `envelope`        — full wrapped bytes received from the transport.
+     *      Returns the decoded `envelopeSender` (also the destination strategy address on
+     *      this chain), `intendedAmount` (sender's intent for the token leg; 0 for
+     *      message-only), and the strategy-owned `payload`.
      */
-    function _unwrapAndValidate(bytes memory messageData)
+    function _validateInbound(
+        uint64 srcChain,
+        address transportSender,
+        bytes memory envelope
+    )
         internal
         view
         returns (
-            uint32 msgType,
-            uint64 nonce,
             address envelopeSender,
+            uint256 intendedAmount,
             bytes memory payload
         )
     {
-        uint32 version;
-        (version, msgType, nonce, envelopeSender, payload) = CrossChainV3Helper
-            .unwrap(messageData);
-        require(
-            version == CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION,
-            "Adapter: bad version"
-        );
+        (envelopeSender, intendedAmount, payload) = _unwrap(envelope);
         require(authorised[envelopeSender], "Adapter: not authorised");
+        ChainConfig memory cfg = laneConfig[envelopeSender];
+        require(!cfg.paused, "Adapter: lane paused");
+        require(srcChain == cfg.chainSelector, "Adapter: wrong source chain");
+        require(
+            transportSender == address(this),
+            "Adapter: not from peer adapter"
+        );
     }
 
     /**
-     * @dev Forward a fully-formed inbound delivery to the target strategy. Atomic concrete
-     *      adapters call this directly after their bridge transport has placed tokens on
-     *      this adapter. Split-delivery adapters call it from their finaliser once both
-     *      legs have landed. `target` is the destination strategy on this chain (equal to
-     *      the decoded envelope sender thanks to CreateX cross-chain parity).
+     * @dev Atomically transfer `amountReceived` of `token` to the target strategy and call
+     *      `receiveMessage`. The target strategy address equals `envelopeSender` under
+     *      CREATE3 parity.
      */
-    function _deliverAtomic(
-        address target,
-        uint64 nonce,
-        uint256 amount,
-        uint8 messageType,
-        bytes memory payload,
-        address token
+    function _deliver(
+        address envelopeSender,
+        address token,
+        uint256 amountReceived,
+        uint256 feePaid,
+        bytes memory payload
     ) internal {
-        if (amount > 0 && token != address(0)) {
-            IERC20(token).safeTransfer(target, amount);
+        if (amountReceived > 0 && token != address(0)) {
+            IERC20(token).safeTransfer(envelopeSender, amountReceived);
         }
-        IBridgeReceiver(target).receiveFromBridge(
-            nonce,
-            amount,
-            messageType,
+        IBridgeReceiver(envelopeSender).receiveMessage(
+            envelopeSender,
+            token,
+            amountReceived,
+            feePaid,
             payload
         );
-        emit MessageDelivered(target, nonce, messageType);
+        emit MessageDelivered(envelopeSender, token, amountReceived, feePaid);
     }
 
+    // --- Envelope wrap / unwrap --------------------------------------------
+
+    /// @dev Header byte length: 20 (sender) + 32 (intendedAmount).
+    uint256 internal constant HEADER_LENGTH = 52;
+
+    /// @dev Wire envelope: 20-byte `sender` + 32-byte `intendedAmount` + opaque `payload`.
+    ///      `intendedAmount` is the token leg the sender intends to land on the destination
+    ///      (0 for message-only). The receiving adapter compares against the actual landed
+    ///      amount to surface any transport-side fee delta to the strategy.
+    function _wrap(
+        address sender,
+        uint256 intendedAmount,
+        bytes memory payload
+    ) internal pure returns (bytes memory) {
+        return abi.encodePacked(sender, intendedAmount, payload);
+    }
+
+    /// @dev Inverse of `_wrap`. Reverts when the envelope is shorter than the header.
+    function _unwrap(bytes memory envelope)
+        internal
+        pure
+        returns (
+            address sender,
+            uint256 intendedAmount,
+            bytes memory payload
+        )
+    {
+        require(envelope.length >= HEADER_LENGTH, "Adapter: bad envelope");
+        // Load first 20 bytes as address.
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            sender := shr(96, mload(add(envelope, 32)))
+            // intendedAmount lives at offset 20; mload reads 32 bytes from there.
+            intendedAmount := mload(add(envelope, 52))
+        }
+        // Copy the remainder into a new bytes buffer.
+        uint256 payloadLength = envelope.length - HEADER_LENGTH;
+        payload = new bytes(payloadLength);
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            let src := add(envelope, 84) // 32-byte length + 20 sender + 32 amount
+            let dst := add(payload, 32)
+            for {
+                let i := 0
+            } lt(i, payloadLength) {
+                i := add(i, 32)
+            } {
+                mstore(add(dst, i), mload(add(src, i)))
+            }
+        }
+    }
+
+    // --- Native receive ----------------------------------------------------
+
+    /// @dev Accepts native ETH (e.g., refunds from underlying transports). Concrete adapters
+    ///      may override to add behaviour (e.g., SuperbridgeAdapter wrapping incoming bridge
+    ///      ETH to WETH on the L2 side).
     receive() external payable virtual {}
 }

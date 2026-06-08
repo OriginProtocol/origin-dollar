@@ -5,20 +5,18 @@ pragma solidity ^0.8.0;
  * @title NativeFeeHelper
  * @author Origin Protocol Inc
  *
- * @notice Shared "consume a native bridge fee" helper used by adapters and strategies that pay
- *         their bridge transports in native gas.
+ * @notice Legacy native-fee consumption helper used by `BridgedWOETHMigrationStrategy`.
+ *         New crosschainV3 adapters source fees from `msg.value` only and refund excess
+ *         to the caller; they do not use this library.
  *
  *         Two source paths:
- *           - `msg.value == 0` → pre-funded: the caller's `address(this).balance` covers the
- *             fee. Used by protocol-driven operations where the entry function is non-payable
- *             and an operator tops up the contract via `receive()` ahead of time.
- *           - `msg.value > 0` → user-paid: the caller supplied the fee; any excess refunds to
+ *           - `msg.value == 0` → pre-funded: the caller's `address(this).balance` covers
+ *             the fee. Used by protocol-driven operations where the entry function is
+ *             non-payable.
+ *           - `msg.value > 0` → user-paid: caller supplied the fee; excess refunds to
  *             `msg.sender`.
  *
  *         Reverts when the chosen source doesn't cover `fee`.
- *
- *         This library uses `internal` linkage so it compiles into the calling contract's
- *         bytecode — no separate library deployment needed.
  */
 library NativeFeeHelper {
     function consume(uint256 fee) internal {

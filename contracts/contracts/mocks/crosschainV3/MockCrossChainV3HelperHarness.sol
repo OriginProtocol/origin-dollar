@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import { CrossChainV3Helper } from "../../strategies/crosschainV3/CrossChainV3Helper.sol";
-import { BytesHelper } from "../../utils/BytesHelper.sol";
 
 /**
  * @title MockCrossChainV3HelperHarness
@@ -10,63 +9,24 @@ import { BytesHelper } from "../../utils/BytesHelper.sol";
  *         so the JS test suite can validate the codec.
  */
 contract MockCrossChainV3HelperHarness {
-    function version() external pure returns (uint32) {
-        return CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION;
-    }
-
-    function headerLength() external pure returns (uint256) {
-        return CrossChainV3Helper.HEADER_LENGTH;
-    }
-
-    function wrap(
+    function packPayload(
         uint32 msgType,
         uint64 nonce,
-        address sender,
-        bytes calldata payload
+        bytes calldata body
     ) external pure returns (bytes memory) {
-        return CrossChainV3Helper.wrap(msgType, nonce, sender, payload);
+        return CrossChainV3Helper.packPayload(msgType, nonce, body);
     }
 
-    function unwrap(bytes calldata message)
+    function unpackPayload(bytes calldata payload)
         external
         pure
         returns (
             uint32,
-            uint32,
             uint64,
-            address,
             bytes memory
         )
     {
-        return CrossChainV3Helper.unwrap(message);
-    }
-
-    function getSender(bytes calldata message) external pure returns (address) {
-        return CrossChainV3Helper.getSender(message);
-    }
-
-    function getVersion(bytes calldata message) external pure returns (uint32) {
-        return CrossChainV3Helper.getVersion(message);
-    }
-
-    function getMessageType(bytes calldata message)
-        external
-        pure
-        returns (uint32)
-    {
-        return CrossChainV3Helper.getMessageType(message);
-    }
-
-    function getNonce(bytes calldata message) external pure returns (uint64) {
-        return CrossChainV3Helper.getNonce(message);
-    }
-
-    function getPayload(bytes calldata message)
-        external
-        pure
-        returns (bytes memory)
-    {
-        return CrossChainV3Helper.getPayload(message);
+        return CrossChainV3Helper.unpackPayload(payload);
     }
 
     function encodeNewBalancePayload(uint256 newBalance)
@@ -193,13 +153,5 @@ contract MockCrossChainV3HelperHarness {
         CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
             .decodeBridgeUserPayload(payload);
         return (p.bridgeId, p.amount, p.recipient, p.callData, p.callGasLimit);
-    }
-
-    function extractUint64(bytes memory data, uint256 start)
-        external
-        pure
-        returns (uint64)
-    {
-        return BytesHelper.extractUint64(data, start);
     }
 }

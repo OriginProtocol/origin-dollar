@@ -2,25 +2,19 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 /**
- * Adapter fee-path coverage for `_consumeFee`.
- *
- * Two source paths the adapter must honor:
- *   - `msg.value == 0` → pre-funded capital. The adapter has ETH from a prior `receive()`
- *     deposit and pays the bridge fee out of its own balance. Used for protocol-driven
- *     yield-channel ops where the strategy entrypoint is non-payable.
- *   - `msg.value > 0` → user-paid. The caller supplied the fee; excess refunds to caller.
- *     Used for user-driven bridge-channel ops.
- *
- * Both paths revert when the relevant source can't cover the fee.
+ * Adapter fee-path coverage for the new uniform model: `msg.value` covers the bridge fee
+ * and any excess is refunded back to the caller. There is no pre-funded native pool —
+ * operators fund their own yield-channel msg.value, users fund their own user-initiated
+ * msg.value.
  */
 describe("Unit: CCIPAdapter fee path", function () {
-  let governor, sender, refundReceiver;
+  let governor, sender;
   let adapter, router;
-  const DESTINATION = 1234567890;
+  const CCIP_DEST = ethers.BigNumber.from("5009297550715157269");
   const GAS_LIMIT = 200000;
 
   beforeEach(async () => {
-    [governor, sender, refundReceiver] = await ethers.getSigners();
+    [governor, sender] = await ethers.getSigners();
 
     const RouterFactory = await ethers.getContractFactory("MockCCIPRouter");
     router = await RouterFactory.connect(governor).deploy();
@@ -28,78 +22,66 @@ describe("Unit: CCIPAdapter fee path", function () {
     const AdapterFactory = await ethers.getContractFactory("CCIPAdapter");
     adapter = await AdapterFactory.connect(governor).deploy(router.address);
 
-    // Authorise the sender EOA so it can call sendMessage directly.
-    await adapter
-      .connect(governor)
-      .authoriseSender(sender.address, DESTINATION, refundReceiver.address);
-    await adapter.connect(governor).setDestGasLimit(sender.address, GAS_LIMIT);
-  });
-
-  it("pre-funded path: msg.value=0 covers fee from adapter balance", async () => {
-    const fee = ethers.utils.parseEther("0.05");
-    await router.setFee(fee);
-
-    // Fund the adapter via a plain ETH transfer (hits `receive()`).
-    await governor.sendTransaction({
-      to: adapter.address,
-      value: fee.mul(2),
+    // Authorise sender with the lane config.
+    await adapter.connect(governor).authorise(sender.address, {
+      paused: false,
+      chainSelector: CCIP_DEST,
+      destGasLimit: GAS_LIMIT,
     });
-    expect(await ethers.provider.getBalance(adapter.address)).to.equal(
-      fee.mul(2)
-    );
-
-    const message = "0x1234";
-    await expect(adapter.connect(sender).sendMessage(message)).to.not.be
-      .reverted;
-
-    // Adapter spent `fee` from its balance.
-    expect(await ethers.provider.getBalance(adapter.address)).to.equal(fee);
-    expect(await router.sentMessagesLength()).to.equal(1);
   });
 
-  it("pre-funded path: msg.value=0 reverts when adapter is unfunded", async () => {
-    await router.setFee(ethers.utils.parseEther("0.05"));
-
-    await expect(
-      adapter.connect(sender).sendMessage("0xdeadbeef")
-    ).to.be.revertedWith("Fee: unfunded");
-  });
-
-  it("user-paid path: msg.value exactly covers fee", async () => {
+  it("msg.value exactly covers fee — no refund needed", async () => {
     const fee = ethers.utils.parseEther("0.03");
     await router.setFee(fee);
 
     await expect(adapter.connect(sender).sendMessage("0xabcd", { value: fee }))
       .to.not.be.reverted;
-    // Adapter retains no surplus (msg.value == fee).
     expect(await ethers.provider.getBalance(adapter.address)).to.equal(0);
   });
 
-  it("user-paid path: reverts when msg.value < fee", async () => {
+  it("msg.value above fee retains the excess on the adapter (no refund)", async () => {
+    // Locked design: no refunds. Overpayment stays on the adapter for governor sweep
+    // via `transferToken(address(0), amount)`. Rationale: refunds add code surface; the
+    // caller can quote exact fee via `quoteFee` to avoid donations.
+    const fee = ethers.utils.parseEther("0.03");
+    const overpay = ethers.utils.parseEther("0.1");
+    await router.setFee(fee);
+
+    const tx = await adapter
+      .connect(sender)
+      .sendMessage("0xabcd", { value: overpay });
+    await tx.wait();
+
+    // Adapter balance increased by the FULL overpay (not just fee — the router consumed
+    // `fee`, the rest stayed put).
+    expect(await ethers.provider.getBalance(adapter.address)).to.equal(
+      overpay.sub(fee)
+    );
+    expect(await router.sentMessagesLength()).to.equal(1);
+  });
+
+  it("reverts when msg.value < fee", async () => {
     const fee = ethers.utils.parseEther("0.05");
     await router.setFee(fee);
 
     await expect(
       adapter.connect(sender).sendMessage("0xabcd", { value: fee.sub(1) })
-    ).to.be.revertedWith("Fee: insufficient");
+    ).to.be.revertedWith("Adapter: insufficient fee");
   });
 
-  it("yield-channel uses pre-funded path even if adapter has both kinds of capital", async () => {
-    const fee = ethers.utils.parseEther("0.02");
+  it("reverts when called by a non-authorised sender", async () => {
+    const [, , stranger] = await ethers.getSigners();
+    await expect(
+      adapter.connect(stranger).sendMessage("0xabcd", { value: 1 })
+    ).to.be.revertedWith("Adapter: not authorised");
+  });
+
+  it("respects per-lane pause", async () => {
+    const fee = ethers.utils.parseEther("0.01");
     await router.setFee(fee);
-
-    // Pre-fund + an inbound from a prior overpayment that wasn't refunded (defensive).
-    await governor.sendTransaction({
-      to: adapter.address,
-      value: fee.mul(3),
-    });
-
-    // Two yield-style sends in a row (msg.value=0) consume from the pre-funded balance.
-    await adapter.connect(sender).sendMessage("0x11");
-    await adapter.connect(sender).sendMessage("0x22");
-
-    expect(await ethers.provider.getBalance(adapter.address)).to.equal(
-      fee.mul(1) // 3*fee − 2*fee
-    );
+    await adapter.connect(governor).pauseLane(sender.address);
+    await expect(
+      adapter.connect(sender).sendMessage("0xabcd", { value: fee })
+    ).to.be.revertedWith("Adapter: lane paused");
   });
 });

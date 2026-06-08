@@ -1,8 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const ORIGIN_V3_MESSAGE_VERSION = 1020;
-
 const MSG = {
   DEPOSIT: 1,
   DEPOSIT_ACK: 2,
@@ -21,15 +19,10 @@ const MSG = {
 // Helpers matching CrossChainV3Helper.wrap on-the-wire layout.
 // `sender` is included in the 36-byte header; MockBridgeAdapter ignores it so any
 // well-formed address works for unit tests that don't exercise the inbound whitelist.
-const encodePackedEnvelope = (
-  msgType,
-  nonce,
-  payloadHex,
-  sender = ethers.constants.AddressZero
-) => {
-  return ethers.utils.solidityPack(
-    ["uint32", "uint32", "uint64", "address", "bytes"],
-    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, sender, payloadHex]
+const encodePackedEnvelope = (msgType, nonce, payloadHex) => {
+  return ethers.utils.defaultAbiCoder.encode(
+    ["uint32", "uint64", "bytes"],
+    [msgType, nonce, payloadHex]
   );
 };
 
@@ -145,9 +138,17 @@ describe("Unit: MasterWOTokenStrategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("only inboundAdapter can call receiveFromBridge", async () => {
+    it("only inboundAdapter can call receiveMessage", async () => {
       await expect(
-        master.connect(alice).receiveFromBridge(1, 0, MSG.DEPOSIT_ACK, "0x")
+        master
+          .connect(alice)
+          .receiveMessage(
+            master.address,
+            ethers.constants.AddressZero,
+            0,
+            0,
+            "0x"
+          )
       ).to.be.revertedWith("V3: only inbound adapter");
     });
   });
@@ -290,13 +291,15 @@ describe("Unit: MasterWOTokenStrategy", function () {
       // bridgeAdjustment net zero: +amount from BRIDGE_IN, -amount from BRIDGE_OUT.
       expect(await master.bridgeAdjustment()).to.equal(0);
 
-      // Outbound adapter captured a BRIDGE_OUT message (no nonce).
+      // Outbound adapter captured a BRIDGE_OUT message — decode the strategy envelope
+      // (msgType, nonce, body) which the strategy packed via CrossChainV3Helper.packPayload.
       const stored = await outboundAdapter.lastMessageSent();
-      const decoded = stored.toLowerCase();
-      // First 4 bytes are version, next 4 are type=12, next 8 are nonce=0.
-      expect(decoded.slice(0, 10)).to.equal("0x000003fc");
-      expect(decoded.slice(10, 18)).to.equal("0000000c"); // 12 in hex
-      expect(decoded.slice(18, 34)).to.equal("0000000000000000"); // nonce 0
+      const [msgType, nonce] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        stored
+      );
+      expect(msgType).to.equal(MSG.BRIDGE_OUT);
+      expect(nonce).to.equal(0);
     });
 
     it("reverts when bridge-out exceeds available liquidity", async () => {

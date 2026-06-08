@@ -1,44 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { BytesHelper } from "../../utils/BytesHelper.sol";
-
 /**
  * @title CrossChainV3Helper
  * @author Origin Protocol Inc
  *
- * @dev Message envelope and payload codec for OUSD V3 cross-chain messages.
- *
- *      The envelope is bridge-agnostic — adapters wrap and unwrap it without any
- *      knowledge of the underlying message-type semantics.
- *
- *      Envelope layout (abi.encodePacked, no padding between fields):
- *        [0:4]   uint32  version  (always ORIGIN_V3_MESSAGE_VERSION)
- *        [4:8]   uint32  msgType  (one of the constants below)
- *        [8:16]  uint64  nonce    (yield-channel nonce; 0 for bridge-channel messages)
- *        [16:36] address sender   (source strategy address — the inbound adapter delivers
- *                                  to this same address on the destination chain, relying
- *                                  on CreateX-driven cross-chain address parity)
- *        [36:]   bytes   payload  (abi.encode of message-specific fields)
- *
- *      The 4 + 4 + 8 + 20 = 36-byte header is intentionally word-misaligned at runtime
- *      because abi.encodePacked emits each field at its natural width.
+ * @dev Strategy-level message-type constants and payload codecs for OUSD V3
+ *      cross-chain messages. The wire envelope (sender + intendedAmount + payload) is
+ *      bridge-adapter-internal; strategies only encode and decode the per-message-type
+ *      payloads below, with the message type discriminator embedded inside the payload
+ *      itself.
  */
 library CrossChainV3Helper {
-    using BytesHelper for bytes;
-
-    // --- Wire constants -----------------------------------------------------
-
-    /// @notice On-wire version tag for the V3 envelope. Bumped whenever the envelope
-    ///         layout or message-type semantics change in a non-backward-compatible way.
-    uint32 internal constant ORIGIN_V3_MESSAGE_VERSION = 1020;
-
-    /// @notice Byte length of the fixed envelope header (4 + 4 + 8 + 20).
-    uint256 internal constant HEADER_LENGTH = 36;
-
-    /// @notice Byte offset of the address field (`sender`) inside the header.
-    uint256 internal constant SENDER_OFFSET = 16;
-
     // --- Message type discriminators ---------------------------------------
 
     // Yield channel (nonce-gated, one operation in flight at a time)
@@ -88,107 +61,37 @@ library CrossChainV3Helper {
         uint32 callGasLimit;
     }
 
-    // --- Envelope wrap / unwrap --------------------------------------------
+    // --- Strategy-level envelope (msgType + nonce + body) -------------------
+    //
+    // Strategies wrap their per-op body bytes inside a small strategy-owned envelope so a
+    // single `payload` field can carry message-type discrimination and a yield-channel
+    // nonce without leaking those concerns into the bridge adapter. The adapter sees the
+    // strategy envelope as opaque bytes.
 
     /**
-     * @notice Build the 36-byte header + payload envelope.
-     * @dev Header is `abi.encodePacked(version, msgType, nonce, sender)`. The payload is
-     *      appended verbatim; callers are responsible for `abi.encode`-ing it to
-     *      match one of the per-message-type encoders below.
-     *
-     *      Strategies pass `address(this)` for `sender`. Inbound adapters trust this field
-     *      and forward to the same address on the destination chain (CreateX-driven cross-
-     *      chain address parity guarantees the destination strategy lives there).
-     * @param msgType One of the message-type constants.
-     * @param nonce   Yield-channel nonce; pass 0 for bridge-channel messages.
-     * @param sender  Source strategy address (the destination on this chain by parity).
-     * @param payload The message-specific body bytes.
-     * @return The wrapped envelope.
+     * @notice Build the strategy-level envelope: `abi.encode(msgType, nonce, body)`.
      */
-    function wrap(
+    function packPayload(
         uint32 msgType,
         uint64 nonce,
-        address sender,
-        bytes memory payload
+        bytes memory body
     ) internal pure returns (bytes memory) {
-        return
-            abi.encodePacked(
-                ORIGIN_V3_MESSAGE_VERSION,
-                msgType,
-                nonce,
-                sender,
-                payload
-            );
+        return abi.encode(msgType, nonce, body);
     }
 
     /**
-     * @notice Split an envelope back into its header fields and payload.
-     * @dev Reverts if the envelope is shorter than the 36-byte header.
-     * @param message The wrapped envelope.
-     * @return version  Wire version from bytes [0:4].
-     * @return msgType  Message-type discriminator from bytes [4:8].
-     * @return nonce    Yield-channel nonce from bytes [8:16].
-     * @return sender   Source strategy address from bytes [16:36].
-     * @return payload  Trailing bytes after the header.
+     * @notice Decode the strategy-level envelope.
      */
-    function unwrap(bytes memory message)
+    function unpackPayload(bytes memory payload)
         internal
         pure
         returns (
-            uint32 version,
             uint32 msgType,
             uint64 nonce,
-            address sender,
-            bytes memory payload
+            bytes memory body
         )
     {
-        require(message.length >= HEADER_LENGTH, "V3: message too short");
-        version = message.extractUint32(0);
-        msgType = message.extractUint32(4);
-        nonce = message.extractUint64(8);
-        sender = message.extractAddressPacked(SENDER_OFFSET);
-        payload = message.extractSlice(HEADER_LENGTH, message.length);
-    }
-
-    /// @notice Read the version field from an envelope.
-    function getVersion(bytes memory message) internal pure returns (uint32) {
-        return message.extractUint32(0);
-    }
-
-    /// @notice Read the message-type discriminator from an envelope.
-    function getMessageType(bytes memory message)
-        internal
-        pure
-        returns (uint32)
-    {
-        return message.extractUint32(4);
-    }
-
-    /// @notice Read the yield-channel nonce from an envelope (0 for bridge-channel).
-    function getNonce(bytes memory message) internal pure returns (uint64) {
-        return message.extractUint64(8);
-    }
-
-    /// @notice Read the source strategy address from an envelope.
-    function getSender(bytes memory message) internal pure returns (address) {
-        return message.extractAddressPacked(SENDER_OFFSET);
-    }
-
-    /// @notice Read the payload (everything after the 36-byte header).
-    function getPayload(bytes memory message)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return message.extractSlice(HEADER_LENGTH, message.length);
-    }
-
-    /// @notice Revert if the envelope's version does not match this codec.
-    function verifyVersion(bytes memory message) internal pure {
-        require(
-            getVersion(message) == ORIGIN_V3_MESSAGE_VERSION,
-            "V3: invalid version"
-        );
+        (msgType, nonce, body) = abi.decode(payload, (uint32, uint64, bytes));
     }
 
     // --- Per-message payload encoders / decoders ----------------------------

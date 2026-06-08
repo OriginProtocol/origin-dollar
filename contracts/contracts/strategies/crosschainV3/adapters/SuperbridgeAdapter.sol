@@ -13,12 +13,10 @@ import { IAny2EVMMessageReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip
 import { IWETH9 } from "../../../interfaces/IWETH9.sol";
 import { ISplitInboundAdapter } from "../../../interfaces/crosschainV3/ISplitInboundAdapter.sol";
 import { AbstractAdapter } from "./AbstractAdapter.sol";
-import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
 import { CCIPMessageBuilder } from "../libraries/CCIPMessageBuilder.sol";
-import { NativeFeeHelper } from "../libraries/NativeFeeHelper.sol";
 
 interface IL1StandardBridge {
-    /// @notice OP Stack canonical bridge ETH deposit. Native ETH arrives at `_to` on the L2.
+    /// @notice OP Stack canonical bridge ETH deposit. Native ETH arrives at `_to` on L2.
     function bridgeETHTo(
         address _to,
         uint32 _minGasLimit,
@@ -30,22 +28,20 @@ interface IL1StandardBridge {
  * @title SuperbridgeAdapter
  * @author Origin Protocol Inc
  *
- * @notice Split-delivery bidirectional adapter for Ethereum ↔ OP-Stack-L2, specialised to
- *         ETH only.
- *
- *           - Outbound (Ethereum → L2): take WETH from the calling strategy, unwrap to
- *             native ETH, send it via `L1StandardBridge.bridgeETHTo{value: amount}(...)`.
- *             A separate CCIP message-only send carries the V3 envelope.
+ * @notice Split-delivery bidirectional adapter for Ethereum ↔ OP-Stack-L2, ETH-only.
+ *           - Outbound (Ethereum → L2): take WETH from the calling strategy, unwrap to native
+ *             ETH, send via `L1StandardBridge.bridgeETHTo{value: amount}(...)`. A separate
+ *             CCIP message-only send carries the V3 envelope (sender + intendedAmount +
+ *             payload).
  *           - Inbound (L2 receives from Ethereum): the canonical bridge credits native ETH
  *             to this adapter's address. `receive()` wraps it back to WETH so the destination
  *             strategy (which uses `bridgeAsset = WETH`) gets the asset shape it expects.
- *             The CCIP message lands via `ccipReceive`; if the WETH balance hasn't yet
- *             reached `expectedAmount`, the message is held in a pending slot until
- *             `processStoredMessage(target)` finalises.
+ *             The CCIP message lands via `ccipReceive`; if WETH balance < intendedAmount, the
+ *             message is held in a pending slot until `processStoredMessage(target)`.
  *
- *         Same contract code on both chains; deployment role is determined by `_l1`:
+ *         Same contract code on both chains; deployment role is set by `_l1`:
  *           - `_l1 != address(0)` (Ethereum, outbound-only): `receive()` keeps incoming ETH
- *             raw so it can fund CCIP fees via `_consumeNativeFee`. Inbound entry points
+ *             raw — used as a CCIP-fee top-up reserve only when needed. Inbound entry points
  *             aren't expected to be exercised.
  *           - `_l1 == address(0)` (L2, inbound-only): `receive()` wraps incoming ETH to WETH.
  *             Outbound entry points revert at call time.
@@ -61,37 +57,25 @@ contract SuperbridgeAdapter is
     IL1StandardBridge public immutable l1StandardBridge;
     IRouterClient public immutable ccipRouter;
 
-    /// @notice Local WETH on this chain. Required on both deployment roles: the L1 side
-    ///         unwraps before calling `bridgeETHTo`, the L2 side wraps incoming bridge ETH.
+    /// @notice Local WETH on this chain. Required on both deployment roles: L1 side unwraps
+    ///         before calling `bridgeETHTo`; L2 side wraps incoming bridge ETH.
     address public immutable weth;
-
-    /// @notice Per-sender CCIP message destination gas limit.
-    mapping(address => uint256) public destGasLimitFor;
 
     /// @notice Per-sender canonical bridge minimum gas hint (typically 200k for OP Stack).
     mapping(address => uint32) public canonicalMinGasFor;
 
     struct PendingMessage {
         bool exists;
-        uint64 nonce;
-        uint256 expectedAmount;
-        uint8 messageType;
+        uint256 intendedAmount;
         bytes payload;
-        address token;
         address target;
     }
 
     /// @notice Per-target pending split-delivery slot.
     mapping(address => PendingMessage) internal pendingFor;
 
-    event DestGasLimitConfigured(address sender, uint256 destGasLimit);
     event CanonicalMinGasConfigured(address sender, uint32 canonicalMinGas);
-    event MessageStored(
-        address indexed target,
-        uint64 nonce,
-        uint8 messageType,
-        uint256 expectedAmount
-    );
+    event MessageStored(address indexed target, uint256 intendedAmount);
     event AdaptedPendingMessageFromOldAdapter(
         address indexed oldAdapter,
         address indexed target
@@ -114,14 +98,6 @@ contract SuperbridgeAdapter is
         _;
     }
 
-    function setDestGasLimit(address _sender, uint256 _gasLimit)
-        external
-        onlyGovernor
-    {
-        destGasLimitFor[_sender] = _gasLimit;
-        emit DestGasLimitConfigured(_sender, _gasLimit);
-    }
-
     function setCanonicalMinGas(address _sender, uint32 _g)
         external
         onlyGovernor
@@ -132,8 +108,7 @@ contract SuperbridgeAdapter is
 
     /**
      * @notice Auto-wrap incoming ETH on the L2-side deployment so bridge ETH becomes WETH
-     *         immediately (the destination strategy expects WETH). On the L1-side deployment
-     *         keep ETH raw — it's CCIP fee top-up budget consumed by `_consumeNativeFee`.
+     *         immediately. L1-side deployment keeps ETH raw (used as fee top-up reserve).
      */
     receive() external payable override {
         if (msg.value > 0 && address(l1StandardBridge) == address(0)) {
@@ -141,77 +116,95 @@ contract SuperbridgeAdapter is
         }
     }
 
-    // --- IOutboundAdapter ---------------------------------------------------
+    // --- Outbound hooks ----------------------------------------------------
 
-    function estimateFee(uint256, bytes calldata message)
-        external
+    /// @dev Outbound (L1-side): CCIP charges native for the message leg. Canonical bridge
+    ///      itself takes no fee. Token-carrying sends use the same CCIP message leg, so the
+    ///      fee is the same regardless of whether tokens accompany.
+    ///
+    ///      Inbound-only deployment (`_l1 == 0`) never has this called for an actual send
+    ///      (outbound reverts in `_sendMessageAndTokens`), but we still return a sensible
+    ///      value for off-chain quoting.
+    function _quoteFee(
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        address, // token
+        uint256 // amount
+    )
+        internal
         view
         override
-        returns (uint256 nativeFee, uint256 tokenFee)
+        returns (
+            uint256 fee,
+            address feeToken,
+            bool requiresExternalPayment
+        )
     {
         Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
             address(0),
             0,
-            message,
-            peerReceiverFor[msg.sender],
-            destGasLimitFor[msg.sender]
+            envelope,
+            address(this),
+            cfg.destGasLimit
         );
-        nativeFee = ccipRouter.getFee(destinationFor[msg.sender], ccipMessage);
-        tokenFee = 0;
+        fee = ccipRouter.getFee(cfg.chainSelector, ccipMessage);
+        feeToken = address(0); // native
+        requiresExternalPayment = true;
     }
 
-    function _sendTokensAndMessage(
+    function _sendMessage(
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
+    ) internal override {
+        require(
+            address(l1StandardBridge) != address(0) ||
+                address(l1StandardBridge) == address(0),
+            "Super: invalid role"
+        );
+        _sendCCIPMessage(envelope, cfg, fee);
+    }
+
+    function _sendMessageAndTokens(
         address token,
         uint256 amount,
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
     ) internal override {
         require(
             address(l1StandardBridge) != address(0),
             "Super: outbound unsupported"
         );
         require(token == weth, "Super: token must be WETH");
-        require(amount > 0, "Super: zero amount");
 
-        // Pull WETH from the sender and unwrap to native ETH for the canonical bridge.
-        IERC20(weth).safeTransferFrom(msg.sender, address(this), amount);
+        // WETH already pulled by AbstractAdapter.sendMessageAndTokens — unwrap to ETH.
         IWETH9(weth).withdraw(amount);
 
-        // Leg 1: canonical bridge — carry native ETH to the peer adapter on the L2.
+        // Leg 1: canonical bridge — carry native ETH to the peer adapter on L2.
         l1StandardBridge.bridgeETHTo{ value: amount }(
-            peerReceiver,
+            address(this),
             canonicalMinGasFor[msg.sender],
             ""
         );
 
-        // Leg 2: CCIP message-only.
-        _sendCCIPMessage(message, destination, peerReceiver);
-    }
-
-    function _sendMessage(
-        bytes calldata message,
-        uint64 destination,
-        address peerReceiver
-    ) internal override {
-        _sendCCIPMessage(message, destination, peerReceiver);
+        // Leg 2: CCIP message-only carrying the envelope.
+        _sendCCIPMessage(envelope, cfg, fee);
     }
 
     function _sendCCIPMessage(
-        bytes memory message,
-        uint64 destination,
-        address peerReceiver
+        bytes memory envelope,
+        ChainConfig memory cfg,
+        uint256 fee
     ) internal {
         Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
             address(0),
             0,
-            message,
-            peerReceiver,
-            destGasLimitFor[msg.sender]
+            envelope,
+            address(this),
+            cfg.destGasLimit
         );
-        uint256 fee = ccipRouter.getFee(destination, ccipMessage);
-        NativeFeeHelper.consume(fee);
-        ccipRouter.ccipSend{ value: fee }(destination, ccipMessage);
+        ccipRouter.ccipSend{ value: fee }(cfg.chainSelector, ccipMessage);
     }
 
     // --- Inbound (IAny2EVMMessageReceiver + split delivery) ----------------
@@ -234,40 +227,35 @@ contract SuperbridgeAdapter is
         override
         onlyRouter
     {
+        address transportSender = abi.decode(message.sender, (address));
+
         (
-            uint32 msgType,
-            uint64 nonce,
             address envelopeSender,
+            uint256 intendedAmount,
             bytes memory payload
-        ) = _unwrapAndValidate(message.data);
+        ) = _validateInbound(
+                message.sourceChainSelector,
+                transportSender,
+                message.data
+            );
 
-        // Determine the token amount the message expects to find on this adapter once the
-        // canonical bridge tokens land. For message-only types, expectedAmount = 0.
-        uint256 expectedAmount = _expectedAmountFor(uint8(msgType), payload);
-
-        // CREATE2 parity: destination strategy on this chain == envelope sender.
+        // Message-only or tokens already landed — atomic delivery.
         if (
-            expectedAmount == 0 ||
-            IERC20(weth).balanceOf(address(this)) >= expectedAmount
+            intendedAmount == 0 ||
+            IERC20(weth).balanceOf(address(this)) >= intendedAmount
         ) {
-            _deliverAtomic(
+            _deliver(
                 envelopeSender,
-                nonce,
-                expectedAmount,
-                uint8(msgType),
-                payload,
-                expectedAmount > 0 ? weth : address(0)
+                intendedAmount > 0 ? weth : address(0),
+                intendedAmount,
+                0,
+                payload
             );
-        } else {
-            _storePending(
-                envelopeSender,
-                nonce,
-                expectedAmount,
-                uint8(msgType),
-                payload,
-                weth
-            );
+            return;
         }
+
+        // Token leg not landed yet — store the message for later finalisation.
+        _storePending(envelopeSender, intendedAmount, payload);
     }
 
     /// @inheritdoc ISplitInboundAdapter
@@ -284,28 +272,18 @@ contract SuperbridgeAdapter is
     function processStoredMessage(address _target) external override {
         PendingMessage memory p = pendingFor[_target];
         require(p.exists, "Super: nothing pending");
-        if (p.expectedAmount > 0 && p.token != address(0)) {
-            require(
-                IERC20(p.token).balanceOf(address(this)) >= p.expectedAmount,
-                "Super: tokens not yet landed"
-            );
-        }
-        delete pendingFor[_target];
-        _deliverAtomic(
-            p.target,
-            p.nonce,
-            p.expectedAmount,
-            p.messageType,
-            p.payload,
-            p.token
+        require(
+            IERC20(weth).balanceOf(address(this)) >= p.intendedAmount,
+            "Super: tokens not yet landed"
         );
+        delete pendingFor[_target];
+        _deliver(p.target, weth, p.intendedAmount, 0, p.payload);
     }
 
     /**
      * @notice Adopt a pending message from a previous adapter during a governance-driven
-     *         adapter swap. The old adapter must `approve` this contract for the token
-     *         amount it holds; we pull the tokens and copy the pending slot under the
-     *         right target.
+     *         adapter swap. The old adapter must `approve` this contract for the WETH it
+     *         holds; we pull the WETH and copy the pending slot under the right target.
      */
     function adoptPendingMessage(
         address _oldAdapter,
@@ -313,63 +291,31 @@ contract SuperbridgeAdapter is
     ) external onlyGovernor {
         require(_pending.target != address(0), "Super: zero target");
         require(!pendingFor[_pending.target].exists, "Super: already pending");
-        if (_pending.token != address(0) && _pending.expectedAmount > 0) {
-            IERC20(_pending.token).safeTransferFrom(
+        if (_pending.intendedAmount > 0) {
+            IERC20(weth).safeTransferFrom(
                 _oldAdapter,
                 address(this),
-                _pending.expectedAmount
+                _pending.intendedAmount
             );
         }
         pendingFor[_pending.target] = _pending;
         pendingFor[_pending.target].exists = true;
-        emit MessageStored(
-            _pending.target,
-            _pending.nonce,
-            _pending.messageType,
-            _pending.expectedAmount
-        );
+        emit MessageStored(_pending.target, _pending.intendedAmount);
         emit AdaptedPendingMessageFromOldAdapter(_oldAdapter, _pending.target);
     }
 
     function _storePending(
         address target,
-        uint64 nonce,
-        uint256 expectedAmount,
-        uint8 messageType,
-        bytes memory payload,
-        address token
+        uint256 intendedAmount,
+        bytes memory payload
     ) internal {
         require(!pendingFor[target].exists, "Super: slot busy");
         pendingFor[target] = PendingMessage({
             exists: true,
-            nonce: nonce,
-            expectedAmount: expectedAmount,
-            messageType: messageType,
+            intendedAmount: intendedAmount,
             payload: payload,
-            token: token,
             target: target
         });
-        emit MessageStored(target, nonce, messageType, expectedAmount);
-    }
-
-    /**
-     * @dev Of all yield-channel messages that travel R→M (Remote on Ethereum → Master on
-     *      an OP-Stack L2), only `WITHDRAW_CLAIM_ACK` carries the bridgeAsset back to
-     *      Master. Other R→M messages are message-only.
-     *
-     *      The exact delivered amount is encoded inside the `WITHDRAW_CLAIM_ACK` payload
-     *      (`abi.encode(newBalance, success, amount)`); we pin `expectedAmount` to it.
-     */
-    function _expectedAmountFor(uint8 msgType, bytes memory payload)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (msgType == uint8(CrossChainV3Helper.WITHDRAW_CLAIM_ACK)) {
-            (, bool success, uint256 amount) = CrossChainV3Helper
-                .decodeWithdrawClaimAckPayload(payload);
-            return success ? amount : 0;
-        }
-        return 0;
+        emit MessageStored(target, intendedAmount);
     }
 }

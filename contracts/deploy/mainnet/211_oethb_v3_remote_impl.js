@@ -1,6 +1,3 @@
-const fs = require("fs");
-const path = require("path");
-
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { getCreate2ProxyAddress } = require("../deployActions");
@@ -8,27 +5,13 @@ const { getCreate2ProxyAddress } = require("../deployActions");
 // CCIP chain selectors (Chainlink CCIP docs).
 const CCIP_CHAIN_SELECTOR_BASE = "15971525489660198786";
 
-function readDeploymentAddress(networkName, contractName) {
-  const artifactPath = path.resolve(
-    __dirname,
-    `../../deployments/${networkName}/${contractName}.json`
-  );
-  if (!fs.existsSync(artifactPath)) return null;
-  try {
-    const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
-    return artifact && artifact.address ? artifact.address : null;
-  } catch (e) {
-    return null;
-  }
-}
-
 // OP Stack canonical bridge for Base on Ethereum (the L1StandardBridge).
 const BASE_L1_STANDARD_BRIDGE = "0x3154Cf16ccdb4C6d922629664174b904d80F2C35";
 
 // Per-receive destination gas limit for cross-chain message handling.
 const DEFAULT_DEST_GAS_LIMIT = 500000;
 
-// Canonical bridge minGasLimit hint for the ERC20 deposit (OP Stack default).
+// Canonical bridge minGasLimit hint for the ETH deposit (OP Stack default).
 const CANONICAL_MIN_GAS = 200000;
 
 module.exports = deploymentWithGovernanceProposal(
@@ -64,7 +47,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dRemoteImpl = await ethers.getContract("RemoteWOTokenStrategy");
     console.log(`RemoteWOTokenStrategy impl: ${dRemoteImpl.address}`);
 
-    // --- 2. Initialise the proxy: impl + governor=Timelock + initialize(operator) ---
+    // --- 2. Initialise the strategy proxy: impl + governor=Timelock + initialize(operator) ---
     const cRemoteProxy = await ethers.getContractAt(
       "CrossChainStrategyProxy",
       remoteProxyAddress
@@ -87,7 +70,7 @@ module.exports = deploymentWithGovernanceProposal(
     // --- 3. Deploy adapters (deployer = initial governor) ---
     // Outbound (E→B, split delivery): SuperbridgeAdapter — ETH-only. Takes WETH from
     // Remote, unwraps to native ETH, sends via the canonical bridge. `_weth` is required
-    // (mainnet WETH); mainnet-side `receive()` keeps incoming ETH raw for CCIP fee budget.
+    // (mainnet WETH); mainnet-side `receive()` keeps incoming ETH raw.
     await deployWithConfirmation("SuperbridgeAdapter", [
       BASE_L1_STANDARD_BRIDGE,
       addresses.mainnet.ccipRouterMainnet,
@@ -104,30 +87,34 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`CCIPAdapter: ${dCCIPRx.address}`);
 
     // --- 4. Adapter configuration ---
-    // Remote is the only authorised sender on the outbound adapter for the Base leg.
-    // Peer Base-side receiver address is set in a follow-up tx once known.
+    // Under CREATE3 parity, the peer adapter address on Base equals these adapters' own
+    // addresses. No peer-receiver field — adapters hard-code `address(this)`.
+    //
+    // ChainConfig fields: { paused, chainSelector, destGasLimit }
+    const remoteChainCfg = {
+      paused: false,
+      chainSelector: CCIP_CHAIN_SELECTOR_BASE,
+      destGasLimit: DEFAULT_DEST_GAS_LIMIT,
+    };
     await withConfirmation(
-      dSuperOut
-        .connect(sDeployer)
-        .authoriseSender(
-          remoteProxyAddress,
-          CCIP_CHAIN_SELECTOR_BASE,
-          addresses.zero /* peerReceiver — set later */
-        )
+      dSuperOut.connect(sDeployer).authorise(remoteProxyAddress, remoteChainCfg)
     );
     await withConfirmation(
-      dSuperOut
-        .connect(sDeployer)
-        .setDestGasLimit(remoteProxyAddress, DEFAULT_DEST_GAS_LIMIT)
+      dCCIPRx.connect(sDeployer).authorise(remoteProxyAddress, remoteChainCfg)
     );
+    // Superbridge needs the OP Stack canonical bridge min-gas hint per sender.
     await withConfirmation(
       dSuperOut
         .connect(sDeployer)
         .setCanonicalMinGas(remoteProxyAddress, CANONICAL_MIN_GAS)
     );
-
-    // Peer route is registered below in the cross-chain peer wiring block once the
-    // Base artifact is available.
+    // Strategist (multichain strategist) can pause/unpause lanes for fast incident response.
+    await withConfirmation(
+      dSuperOut.connect(sDeployer).addStrategist(addresses.multichainStrategist)
+    );
+    await withConfirmation(
+      dCCIPRx.connect(sDeployer).addStrategist(addresses.multichainStrategist)
+    );
 
     // --- 5. Transfer adapter governance to mainnet Timelock ---
     await withConfirmation(
@@ -143,34 +130,6 @@ module.exports = deploymentWithGovernanceProposal(
       "RemoteWOTokenStrategy",
       remoteProxyAddress
     );
-
-    // Cross-chain peer wiring (if Base-side deploys have already run).
-    const baseSuperRx = readDeploymentAddress("base", "SuperbridgeAdapter");
-    const baseCCIPOut = readDeploymentAddress("base", "CCIPAdapter");
-
-    const peerWiringActions = [];
-    if (baseSuperRx && baseCCIPOut) {
-      console.log(
-        `Wiring Mainnet peers: outbound→${baseSuperRx}, receiver←${baseCCIPOut}`
-      );
-      peerWiringActions.push({
-        contract: dSuperOut,
-        signature: "setPeerReceiver(address,address)",
-        args: [remoteProxyAddress, baseSuperRx],
-      });
-      // CREATE2 parity: the source strategy on Base (Master) is at the same address
-      // as the destination strategy here (Remote). Whitelist that address on the
-      // inbound CCIP adapter.
-      peerWiringActions.push({
-        contract: dCCIPRx,
-        signature: "authorise(address)",
-        args: [remoteProxyAddress],
-      });
-    } else {
-      console.log(
-        "Base adapter artifacts missing — peer wiring deferred to 212_oethb_v3_peer_wiring."
-      );
-    }
 
     return {
       name: "Deploy OETHb V3 Remote strategy + adapters on Ethereum",
@@ -205,8 +164,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "safeApproveAllTokens()",
           args: [],
         },
-        // Cross-chain peer wiring (no-op when base adapters not yet deployed).
-        ...peerWiringActions,
       ],
     };
   }
