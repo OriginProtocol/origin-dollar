@@ -80,5 +80,6 @@
   "192_migrate_ssv_clusters_to_eth": 1777859891,
   "193_permissioned_rebase_module": 1778095857,
   "195_claim_ssv_from_staking_strategies": 1778480807,
-  "197_migrate_xogn_module6_to_talos": 1780929095
+  "197_migrate_xogn_module6_to_talos": 1780930872,
+  "198_migrate_strategist_modules_to_talos": 1780930872
 }
