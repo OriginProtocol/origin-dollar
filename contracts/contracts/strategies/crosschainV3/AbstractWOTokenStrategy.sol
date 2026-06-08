@@ -49,7 +49,7 @@ abstract contract AbstractWOTokenStrategy is
     /// @notice Asset that bridges between Master and Remote (USDC for OUSD V3, WETH for OETHb).
     address public immutable bridgeAsset;
 
-    /// @notice OToken on this chain (OUSD/OETH on L2, OUSD/OETH on mainnet).
+    /// @notice OToken on this chain (the rebasing OToken — OUSD, OETH, OETHb, etc.).
     address public immutable oToken;
 
     // --- Storage (all new slots) -------------------------------------------
@@ -70,7 +70,7 @@ abstract contract AbstractWOTokenStrategy is
     ///         0; capped at `MAX_BRIDGE_FEE_BPS`. When > 0, the source side consumes the
     ///         full `_amount` of OToken while the envelope carries `net = _amount - fee`,
     ///         so the peer only delivers `net`. The retained `fee` worth of backing flows
-    ///         through the next `BALANCE_CHECK` and lifts the L2 vault's rebase by the
+    ///         through the next `BALANCE_CHECK` and lifts the vault's rebase by the
     ///         fee.
     uint256 public bridgeFeeBps;
 
@@ -335,13 +335,13 @@ abstract contract AbstractWOTokenStrategy is
 
     /**
      * @notice Pull OToken from `msg.sender` and consume it on this chain.
-     *         Master: burn via the L2 vault. Remote: wrap to wOToken via the ERC-4626.
+     *         Master: burn via the OToken vault. Remote: wrap to wOToken via the ERC-4626.
      */
     function _consumeOTokenForBridge(uint256 amount) internal virtual;
 
     /**
      * @notice Produce OToken on this chain and deliver it to `recipient`.
-     *         Master: mint via the L2 vault, then transfer. Remote: unwrap wOToken to
+     *         Master: mint via the OToken vault, then transfer. Remote: unwrap wOToken to
      *         OToken, then transfer.
      */
     function _deliverOTokenForBridge(uint256 amount, address recipient)

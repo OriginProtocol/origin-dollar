@@ -27,6 +27,12 @@ const {
   isHyperEVMFork,
   isHyperEVMForkTest,
   isHyperEVMUnitTest,
+  isSepolia,
+  isSepoliaFork,
+  isSepoliaForkTest,
+  isBaseSepolia,
+  isBaseSepoliaFork,
+  isBaseSepoliaForkTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
@@ -34,6 +40,8 @@ const {
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
+  sepoliaProviderUrl,
+  baseSepoliaProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -351,6 +359,22 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    sepolia: {
+      url: sepoliaProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 11155111,
+      tags: ["sepolia"],
+      live: true,
+      saveDeployments: true,
+    },
+    baseSepolia: {
+      url: baseSepoliaProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 84532,
+      tags: ["baseSepolia"],
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -370,6 +394,9 @@ module.exports = {
       plume: MAINNET_DEPLOYER,
       hoodi: HOODI_DEPLOYER,
       hyperevm: HYPEREVM_DEPLOYER,
+      // Testnets — deployer at signer index 0; populate per-deploy via DEPLOYER_PK env.
+      sepolia: 0,
+      baseSepolia: 0,
     },
     governorAddr: {
       default: 1,
@@ -383,6 +410,9 @@ module.exports = {
       plume: PLUME_ADMIN,
       hoodi: HOODI_RELAYER,
       hyperevm: HYPEREVM_ADMIN,
+      // Testnets — deployer also acts as governor so the rest of the deploy flow stays simple.
+      sepolia: 0,
+      baseSepolia: 0,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -459,6 +489,9 @@ module.exports = {
       plume: PLUME_STRATEGIST,
       hoodi: HOODI_RELAYER,
       hyperevm: HYPEREVM_STRATEGIST,
+      // Testnets — single-signer ops; deployer is also strategist.
+      sepolia: 0,
+      baseSepolia: 0,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
@@ -484,6 +517,8 @@ module.exports = {
       hoodi: process.env.ETHERSCAN_API_KEY,
       plume: "empty", // this works for: npx hardhat verify...
       hyperevm: process.env.ETHERSCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
+      baseSepolia: process.env.ETHERSCAN_API_KEY,
     },
     customChains: [
       {
@@ -540,6 +575,22 @@ module.exports = {
         urls: {
           apiURL: "https://api.etherscan.io/v2/api?chainId=999",
           browserURL: "https://hyperevmscan.io",
+        },
+      },
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainId=11155111",
+          browserURL: "https://sepolia.etherscan.io",
+        },
+      },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainId=84532",
+          browserURL: "https://sepolia.basescan.org",
         },
       },
     ],

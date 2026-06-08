@@ -39,10 +39,29 @@ library CCTPMessageHelper {
     uint256 private constant RECIPIENT_INDEX = 76;
     uint256 private constant MESSAGE_BODY_INDEX = 148;
 
+    /// @notice Inner burn-message body offsets for CCTP V2 burn messages. The burn body is
+    ///         what TokenMessenger constructs and ships inside the transport `messageBody`
+    ///         field when `depositForBurnWithHook` is called. We parse it manually in
+    ///         `CCTPAdapter.relay()` so the adapter has the authoritative `amount`,
+    ///         `feeExecuted`, and `hookData` rather than relying on
+    ///         `IERC20.balanceOf(adapter)` (susceptible to donations) or on the
+    ///         `IMessageHandlerV2` callback (which behaves differently across CCTP V2.0
+    ///         and V2.1 deployments).
+    ///
+    ///         Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
+    uint256 private constant BURN_BODY_VERSION_INDEX = 0;
+    uint256 private constant BURN_BODY_BURN_TOKEN_INDEX = 4;
+    uint256 private constant BURN_BODY_MINT_RECIPIENT_INDEX = 36;
+    uint256 private constant BURN_BODY_AMOUNT_INDEX = 68;
+    uint256 private constant BURN_BODY_MESSAGE_SENDER_INDEX = 100;
+    uint256 private constant BURN_BODY_FEE_EXECUTED_INDEX = 164;
+    uint256 private constant BURN_BODY_HOOK_DATA_INDEX = 228;
+
     /**
      * @notice Split a CCTP V2 wire message into its transport header fields plus the inner
-     *         `messageBody`. The body contains our application envelope, which the adapter's
-     *         `_validateInbound` decodes later from inside `handleReceiveFinalizedMessage`.
+     *         `messageBody`. The body is either:
+     *           - a burn-message body (for `depositForBurnWithHook`-sourced messages), or
+     *           - the raw application envelope (for `MessageTransmitter.sendMessage`).
      * @param message The CCTP V2 wire message bytes as received from Circle's attestation API.
      */
     function decodeMessageHeader(bytes memory message)
@@ -61,5 +80,42 @@ library CCTPMessageHelper {
         sender = message.extractAddress(SENDER_INDEX);
         recipient = message.extractAddress(RECIPIENT_INDEX);
         messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
+    }
+
+    /**
+     * @notice Decode a CCTP V2 burn-message body into its authoritative fields. Use this
+     *         when the transport header's `sender` indicates the message originated from
+     *         the source-side TokenMessenger (i.e., a `depositForBurnWithHook` rather than
+     *         a plain `sendMessage`).
+     * @param body The inner CCTP V2 burn message body.
+     * @return burnToken The token burned on source (must equal local USDC).
+     * @return amount Source-side burn amount.
+     * @return msgSender The source-side caller of `depositForBurnWithHook` (peer adapter
+     *                  under CREATE3 parity).
+     * @return feeExecuted Protocol fee deducted from `amount` on destination. `amount -
+     *                    feeExecuted` USDC arrives at the mintRecipient.
+     * @return hookData Opaque payload set by the source side via the `hookData` arg of
+     *                  `depositForBurnWithHook`. This is our application envelope.
+     */
+    function decodeBurnBody(bytes memory body)
+        internal
+        pure
+        returns (
+            address burnToken,
+            uint256 amount,
+            address msgSender,
+            uint256 feeExecuted,
+            bytes memory hookData
+        )
+    {
+        require(
+            body.length >= BURN_BODY_HOOK_DATA_INDEX,
+            "CCTP: burn body too short"
+        );
+        burnToken = body.extractAddress(BURN_BODY_BURN_TOKEN_INDEX);
+        amount = body.extractUint256(BURN_BODY_AMOUNT_INDEX);
+        msgSender = body.extractAddress(BURN_BODY_MESSAGE_SENDER_INDEX);
+        feeExecuted = body.extractUint256(BURN_BODY_FEE_EXECUTED_INDEX);
+        hookData = body.extractSlice(BURN_BODY_HOOK_DATA_INDEX, body.length);
     }
 }

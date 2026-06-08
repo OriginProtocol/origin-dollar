@@ -336,8 +336,38 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).triggerClaim();
 
     // The Master view confirms the ack amount matched the payload (else it would have
-    // reverted with "Master: claim amount mismatch").
+    // reverted with "Master: claim above ack" under the relaxed equality form).
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
+  });
+
+  it("claim ack tolerates `amount < ackAmount` (CCTP fast-finality fee scenario)", async () => {
+    // Drive leg 1 then claim on Remote.
+    await mockL2Vault.callWithdraw(
+      master.address,
+      mockL2Vault.address,
+      bridgeAsset.address,
+      WITHDRAW
+    );
+    await time.increase(DELAY + 1);
+    await remote.claimRemoteWithdrawal();
+
+    // Inspect the adapter that ships WITHDRAW_CLAIM_ACK from Remote to Master. We swap
+    // the delivered amount to be SHORT of `ackAmount` by 1 unit, simulating a fast-
+    // finality fee deduction during cross-chain transit.
+    //
+    // Use the mock-adapter override: when leg 2 fires, instead of delivering the exact
+    // ackAmount, we intercept and deliver amount-1. The relaxed `amount <= ackAmount`
+    // check must accept it.
+    const FEE = 1;
+    await adapterRM.setUnderdeliveryForNextMessage(FEE);
+
+    await master.connect(governor).triggerClaim();
+
+    expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    // Vault received `WITHDRAW - FEE` because that's what landed on Master.
+    expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(
+      WITHDRAW.sub(FEE)
+    );
   });
 });

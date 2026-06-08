@@ -208,7 +208,7 @@ describe("Unit: CCTPAdapter relay", function () {
   });
 
   describe("end-to-end through _validateInbound + _deliver", () => {
-    it("message-only delivery reaches the destination strategy with feePaid=0", async () => {
+    it("message-only delivery reaches the destination strategy with no token leg", async () => {
       const payload = ethers.utils.defaultAbiCoder.encode(
         ["string"],
         ["hello"]
@@ -222,38 +222,34 @@ describe("Unit: CCTPAdapter relay", function () {
 
       await adapter.connect(operator).relay(message, "0x");
 
-      // The mock recorder captured the receiveMessage callback.
+      // The mock recorder captured the receiveMessage callback. Pure-message path
+      // delivers with token = address(0) (no token leg), regardless of the configured
+      // USDC.
       expect(await strategy.callCount()).to.equal(1);
       expect(await strategy.lastSender()).to.equal(strategy.address);
-      expect(await strategy.lastToken()).to.equal(usdc.address);
-      expect(await strategy.lastAmount()).to.equal(0); // no USDC minted in mock
+      expect(await strategy.lastToken()).to.equal(ethers.constants.AddressZero);
+      expect(await strategy.lastAmount()).to.equal(0);
       expect(await strategy.lastFeePaid()).to.equal(0);
       expect(await strategy.lastPayload()).to.equal(payload);
     });
 
-    it("token-carrying delivery surfaces actualAmount + feePaid", async () => {
-      const intended = ethers.utils.parseUnits("100", 6);
-      const actualMint = ethers.utils.parseUnits("99.5", 6); // CCTP fast-finality fee took 0.5
-
-      // Simulate CCTP minting USDC directly to the adapter before the callback fires.
-      await usdc.mintTo(adapter.address, actualMint);
-
-      const body = wrapAppEnvelope(strategy.address, intended, "0x");
+    it("rejects a pure-message envelope that smuggles a non-zero intendedAmount", async () => {
+      // Token-bearing messages MUST go through `relay()`'s burn-message path (with a
+      // real CCTP burn body). Forcing intendedAmount > 0 down the pure-message hook is
+      // a design violation and must revert.
+      const body = wrapAppEnvelope(
+        strategy.address,
+        ethers.utils.parseUnits("100", 6),
+        "0x"
+      );
       const message = buildCCTPMessage({
         sender: adapter.address,
         recipient: adapter.address,
         body,
       });
-
-      await adapter.connect(operator).relay(message, "0x");
-
-      expect(await strategy.callCount()).to.equal(1);
-      expect(await strategy.lastAmount()).to.equal(actualMint);
-      // feePaid = intendedAmount - amountReceived = 0.5 USDC.
-      expect(await strategy.lastFeePaid()).to.equal(intended.sub(actualMint));
-      // Adapter forwarded the actual amount to the strategy.
-      expect(await usdc.balanceOf(strategy.address)).to.equal(actualMint);
-      expect(await usdc.balanceOf(adapter.address)).to.equal(0);
+      await expect(
+        adapter.connect(operator).relay(message, "0x")
+      ).to.be.revertedWith("CCTP: token leg via pure-message path");
     });
 
     it("rejects when the envelope sender isn't authorised", async () => {

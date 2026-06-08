@@ -12,9 +12,12 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  * @title MasterWOTokenStrategy
  * @author Origin Protocol Inc
  *
- * @notice L2-side leg of the wOToken cross-chain strategy pair. Registered with the L2 vault;
- *         orchestrates deposits, withdrawals, balance checks, and settlement against the
- *         Remote strategy on Ethereum. Bridge-channel mechanics (`bridgeOTokenToPeer`,
+ * @notice Vault-facing leg of the wOToken cross-chain strategy pair. Registered with the
+ *         OToken vault on its own chain; orchestrates deposits, withdrawals, balance
+ *         checks, and settlement against the Remote strategy on the peer chain. Topology
+ *         is deployment-dependent (e.g., for OETHb, Master is on Base and Remote on
+ *         Ethereum; for OUSD V3, the topology can be inverted per spoke).
+ *         Bridge-channel mechanics (`bridgeOTokenToPeer`,
  *         inbound BRIDGE_IN handling, replay protection, signed `bridgeAdjustment`
  *         bookkeeping) live in `AbstractWOTokenStrategy` and are wired here via four hooks.
  *
@@ -201,7 +204,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
     /**
      * @notice Operator-triggered leg 2: instructs Remote to claim from its OToken-vault queue
-     *         (if not already done by Ethereum-side automation) and bridge the bridgeAsset back.
+     *         (if not already done by peer-chain automation) and bridge the bridgeAsset back.
      *         Must be called only after a leg-1 ack has been processed (otherwise no
      *         pending withdrawal to claim).
      */
@@ -446,8 +449,13 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
         if (success) {
             // Tokens arrived alongside the ack. Forward what landed to the vault.
+            // `amount <= ackAmount` (not strict equality) so CCTP fast-finality fees
+            // are tolerated: the shortfall is the protocol fee, absorbed as yield drag
+            // and refreshed on the next BALANCE_CHECK. Mirrors the older
+            // `CrossChainMasterStrategy._onTokenReceived` which ignores `feeExecuted`
+            // entirely (marked `solhint-disable-next-line no-unused-vars`).
             require(amount > 0, "Master: claim ack missing tokens");
-            require(amount == ackAmount, "Master: claim amount mismatch");
+            require(amount <= ackAmount, "Master: claim above ack");
             require(
                 amount <= pendingWithdrawalAmount,
                 "Master: claim amount above pending"

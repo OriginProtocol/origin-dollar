@@ -86,9 +86,17 @@ contract MockBridgeAdapter is IBridgeAdapter {
         if (!deliveryEnabled || peer == address(0)) {
             return;
         }
+        // Optional simulated underdelivery: consume `underdeliveryForNext` of `amount`
+        // before forwarding. Lets tests assert claim-ack behaviour when CCTP fast-finality
+        // (or similar protocol-side fees) reduces delivered amount below `ackAmount`.
+        uint256 deliver = amount;
+        if (underdeliveryForNext > 0 && underdeliveryForNext <= amount) {
+            deliver = amount - underdeliveryForNext;
+            underdeliveryForNext = 0;
+        }
         // Forward tokens to peer and call its receiver hook synchronously.
-        IERC20(token).safeTransfer(peer, amount);
-        _dispatch(token, amount, payload);
+        IERC20(token).safeTransfer(peer, deliver);
+        _dispatch(token, deliver, payload);
     }
 
     /// @inheritdoc IBridgeAdapter
@@ -119,6 +127,15 @@ contract MockBridgeAdapter is IBridgeAdapter {
 
     function setMaxTransferAmountOverride(uint256 _amount) external {
         maxTransferOverride = _amount;
+    }
+
+    /// @notice One-shot simulated under-delivery for the next `sendMessageAndTokens`.
+    ///         Resets to 0 after consumption. Used to exercise the `amount < ackAmount`
+    ///         path on the receiving strategy (CCTP fast-finality fee scenario).
+    uint256 public underdeliveryForNext;
+
+    function setUnderdeliveryForNextMessage(uint256 _amount) external {
+        underdeliveryForNext = _amount;
     }
 
     /// @inheritdoc IBridgeAdapter

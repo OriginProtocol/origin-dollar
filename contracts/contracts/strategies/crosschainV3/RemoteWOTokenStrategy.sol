@@ -14,15 +14,16 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  * @title RemoteWOTokenStrategy
  * @author Origin Protocol Inc
  *
- * @notice Ethereum-side leg of the wOToken cross-chain strategy pair. Holds wOToken shares
- *         on behalf of the L2 vault. Runs the 2-step pipeline:
+ * @notice Yield-side leg of the wOToken cross-chain strategy pair. Holds wOToken shares
+ *         on behalf of the peer Master. Runs the 2-step pipeline:
  *
  *           inbound : bridgeAsset → OToken (via OToken vault `mint`) → wOToken (via 4626.deposit)
  *           outbound: wOToken (via 4626.withdraw) → OToken → bridgeAsset (via OToken vault redeem)
  *
  *         Remote is NOT registered with any vault — it's a custodian for shares held on
- *         behalf of the L2 Master. The `oTokenVault` parameter points at the Ethereum-side
- *         OToken vault (e.g. the mainnet OUSD vault or the mainnet OETH vault).
+ *         behalf of the peer Master. The `oTokenVault` parameter points at the local
+ *         OToken vault on this chain (e.g. the OUSD vault on Ethereum or the OETH vault
+ *         on Ethereum).
  *
  *         For the full Remote state-transition table (Idle → Requested → Claimed → Bridging-out
  *         → Completed) see the V3 implementation plan.
@@ -35,7 +36,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     /// @notice ERC-4626 wrapper of the OToken (wOUSD or wOETH).
     address public immutable woToken;
 
-    /// @notice Ethereum-side OToken vault. Used to convert bridgeAsset ↔ OToken via mint / redeem.
+    /// @notice Yield-side OToken vault. Used to convert bridgeAsset ↔ OToken via mint / redeem.
     address public immutable oTokenVault;
 
     // --- Storage (all new slots; nothing from any parent is relocated) -----
@@ -85,7 +86,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         address _woToken,
         address _oTokenVault
     ) AbstractWOTokenStrategy(_stratConfig, _bridgeAsset, _oToken) {
-        // Remote has no L2 vault and uses `woToken` as its "platform" for the strategy registry.
+        // Remote has no vault and uses `woToken` as its "platform" for the strategy registry.
         require(
             _stratConfig.vaultAddress == address(0),
             "Remote: vault must be zero"
@@ -423,7 +424,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             "Remote: deposit asset missing"
         );
 
-        // Mint OToken via the Ethereum-side vault. The real OUSD / OETH vault pulls
+        // Mint OToken via the yield-side vault. The real OUSD / OETH vault pulls
         // bridgeAsset via transferFrom inside `mint`; allowance pre-granted by
         // `safeApproveAllTokens`.
         IVault(oTokenVault).mint(amount);

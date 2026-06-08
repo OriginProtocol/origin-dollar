@@ -157,11 +157,8 @@ contract SuperbridgeAdapter is
         ChainConfig memory cfg,
         uint256 fee
     ) internal override {
-        require(
-            address(l1StandardBridge) != address(0) ||
-                address(l1StandardBridge) == address(0),
-            "Super: invalid role"
-        );
+        // CCIP-only path. `l1StandardBridge` is only relevant in `_sendMessageAndTokens`
+        // when a canonical ETH leg is required; pure messages don't need it.
         _sendCCIPMessage(envelope, cfg, fee);
     }
 

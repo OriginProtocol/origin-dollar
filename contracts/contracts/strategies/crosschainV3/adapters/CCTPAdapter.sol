@@ -117,20 +117,30 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
 
     /**
      * @notice Operator entry point: hand a Circle-signed CCTP message + attestation pair
-     *         off to the local MessageTransmitter. CCTP V2 then verifies the attestation,
-     *         mints USDC to this adapter (for burn messages), and calls back into
-     *         `handleReceiveFinalizedMessage` where `_validateInbound` runs the per-lane
-     *         security checks before `_deliver` forwards to the destination strategy.
+     *         to the local MessageTransmitter, then dispatch the payload to the destination
+     *         strategy.
      *
-     *         This wrapper exists because we set `destinationCaller = address(this)` on
-     *         the source-side burn, so the destination MessageTransmitter only accepts
-     *         the finalisation call from this adapter — an off-chain relayer can't call
-     *         MessageTransmitter directly.
+     *         CCTP V2 has two on-wire message shapes that both arrive here:
      *
-     *         Cheap pre-validation here (CCTP-message version + recipient match) fails
-     *         the tx early when the attestation is good but the message wasn't meant for
-     *         us. Deeper checks (source domain, envelope sender, peer-adapter parity,
-     *         lane pause) happen inside `_validateInbound` on the callback path.
+     *         1. **Burn-message + hook** (sourced from `TokenMessenger.depositForBurnWithHook`).
+     *            The transport `sender` is the source-side `TokenMessenger`. The transport
+     *            `recipient` is the destination `TokenMessenger`, NOT this adapter. The
+     *            body is a CCTP burn body containing burnToken / mintRecipient / amount /
+     *            msgSender / feeExecuted / hookData. Auto-dispatch via
+     *            `handleReceiveMessage` on the mintRecipient is V2.1-only and not
+     *            universally available across Circle's chain deployments, so we DON'T rely
+     *            on it. Instead: we call `messageTransmitter.receiveMessage` (which credits
+     *            USDC to this adapter as the configured mintRecipient), then parse the burn
+     *            body ourselves and call `_deliver` with the authoritative `amount -
+     *            feeExecuted` and the hookData (our application envelope). This mirrors
+     *            the older `AbstractCCTPIntegrator.relay()` pattern, which has been
+     *            exercised in production.
+     *
+     *         2. **Pure message** (sourced from `MessageTransmitter.sendMessage`). Transport
+     *            `sender` and `recipient` are both this adapter (CREATE3 parity). The body
+     *            is our application envelope directly. `messageTransmitter.receiveMessage`
+     *            triggers our own `handleReceiveFinalizedMessage` hook, which calls
+     *            `_handleInbound` and dispatches.
      */
     function relay(bytes calldata message, bytes calldata attestation)
         external
@@ -139,20 +149,101 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         (
             uint32 version,
             uint32 sourceDomain,
-            ,
-            address recipient,
-
+            address transportSender,
+            address transportRecipient,
+            bytes memory body
         ) = CCTPMessageHelper.decodeMessageHeader(message);
         require(
             version == CCTPMessageHelper.CCTP_V2_VERSION,
             "CCTP: bad msg version"
         );
-        require(recipient == address(this), "CCTP: not for us");
+
+        // Burn messages have the source TokenMessenger as their transport sender. Pure
+        // messages have this adapter as both transport sender and recipient (CREATE3
+        // parity).
+        if (transportSender == address(tokenMessenger)) {
+            _relayBurn(sourceDomain, body, message, attestation);
+        } else {
+            require(transportRecipient == address(this), "CCTP: not for us");
+            require(
+                messageTransmitter.receiveMessage(message, attestation),
+                "CCTP: relay failed"
+            );
+            // MessageTransmitter has now invoked our `handleReceiveFinalizedMessage` (or
+            // unfinalized variant). Nothing more to do here.
+        }
+        emit MessageRelayed(msg.sender, sourceDomain);
+    }
+
+    /// @dev Burn-message path. Parse the burn body for authoritative amount/fee/hookData,
+    ///      then `receiveMessage` to credit USDC, then validate + dispatch.
+    function _relayBurn(
+        uint32 sourceDomain,
+        bytes memory body,
+        bytes calldata message,
+        bytes calldata attestation
+    ) internal {
+        (
+            address burnToken,
+            uint256 amount,
+            address msgSender,
+            uint256 feeExecuted,
+            bytes memory hookData
+        ) = CCTPMessageHelper.decodeBurnBody(body);
+        require(burnToken == usdcToken, "CCTP: bad burn token");
+
+        uint256 balanceBefore = IERC20(usdcToken).balanceOf(address(this));
         require(
             messageTransmitter.receiveMessage(message, attestation),
             "CCTP: relay failed"
         );
-        emit MessageRelayed(msg.sender, sourceDomain);
+        uint256 landed = _landedAmount(
+            IERC20(usdcToken).balanceOf(address(this)) - balanceBefore,
+            amount - feeExecuted
+        );
+        _dispatchBurn(
+            sourceDomain,
+            msgSender,
+            hookData,
+            landed,
+            feeExecuted,
+            amount
+        );
+    }
+
+    /// @dev Choose the authoritative landed amount: prefer the smaller of the actual
+    ///      mint delta and the expected `amount - feeExecuted`. This isolates donations
+    ///      (extra balance arriving between the snapshot and the mint stays on the
+    ///      adapter) and also defends against short mints (deliver what we actually got).
+    function _landedAmount(uint256 minted, uint256 expected)
+        internal
+        pure
+        returns (uint256)
+    {
+        return minted < expected ? minted : expected;
+    }
+
+    function _dispatchBurn(
+        uint32 sourceDomain,
+        address msgSender,
+        bytes memory hookData,
+        uint256 landed,
+        uint256 feeExecuted,
+        uint256 burnAmount
+    ) internal {
+        (
+            address envelopeSender,
+            uint256 intendedAmount,
+            bytes memory payload
+        ) = _validateInbound(uint64(sourceDomain), msgSender, hookData);
+        // Sanity: source-side intent equals the full burn `amount` (the application's
+        // pre-fee intent). `intendedAmount == 0` is permitted for envelopes that don't
+        // pre-set the amount.
+        require(
+            intendedAmount == 0 || intendedAmount == burnAmount,
+            "CCTP: intent mismatch"
+        );
+        _deliver(envelopeSender, usdcToken, landed, feeExecuted, payload);
     }
 
     // --- Outbound hooks ----------------------------------------------------
@@ -285,15 +376,20 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         return true;
     }
 
+    /// @dev Pure-message-only inbound hook. The MessageTransmitter calls this on us
+    ///      directly only for message-only sends (no token leg). Burn messages flow
+    ///      through `relay()`'s manual parsing path instead — we don't take the chance
+    ///      that CCTP's auto-callback fires only on V2.1 chains.
+    ///
+    ///      `messageBody` here IS our application envelope (because `sendMessage`
+    ///      forwards it verbatim to the recipient hook). `intendedAmount` should be 0
+    ///      since this is the no-token path; reject otherwise to surface design drift
+    ///      early.
     function _handleInbound(
         uint32 sourceDomain,
         bytes32 sender,
         bytes calldata messageBody
     ) internal {
-        // CCTP-side balance after the mint is the actual landed amount. The transmitter
-        // mints USDC to this adapter atomically before invoking the handler.
-        uint256 amountReceived = IERC20(usdcToken).balanceOf(address(this));
-
         (
             address envelopeSender,
             uint256 intendedAmount,
@@ -303,12 +399,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
                 _bytes32ToAddress(sender),
                 messageBody
             );
-
-        // CCTP's token-side fee is the difference between intent and landed amount.
-        // intendedAmount is 0 for message-only sends; in that case feePaid is 0.
-        uint256 feePaid = intendedAmount > amountReceived
-            ? intendedAmount - amountReceived
-            : 0;
-        _deliver(envelopeSender, usdcToken, amountReceived, feePaid, payload);
+        require(intendedAmount == 0, "CCTP: token leg via pure-message path");
+        _deliver(envelopeSender, address(0), 0, 0, payload);
     }
 }
