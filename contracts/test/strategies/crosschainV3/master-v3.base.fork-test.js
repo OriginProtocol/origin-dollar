@@ -5,7 +5,11 @@ const { isCI } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
 const addresses = require("../../../utils/addresses");
 
-const { MSG, encodeBridgeUserPayload } = require("./_helpers");
+const {
+  MSG,
+  encodeBridgeUserPayload,
+  encodePackedEnvelope,
+} = require("./_helpers");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -64,19 +68,20 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
     const balanceBefore = await oethb.balanceOf(recipient);
     const totalSupplyBefore = await oethb.totalSupply();
 
-    // Impersonate the receiver adapter (only address allowed to call receiveFromBridge).
+    // Impersonate the receiver adapter (only address allowed to call receiveMessage).
     const sAdapter = await impersonateAndFund(inboundAdapter.address);
 
     const bridgeId = ethers.utils.id("master-fork-1");
-    const payload = encodeBridgeUserPayload({
+    const body = encodeBridgeUserPayload({
       bridgeId,
       amount,
       recipient,
     });
+    const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, body);
 
     await master
       .connect(sAdapter)
-      .receiveFromBridge(0, 0, MSG.BRIDGE_IN, payload);
+      .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope);
 
     expect(await oethb.balanceOf(recipient)).to.equal(
       balanceBefore.add(amount)
@@ -102,14 +107,21 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
     const seedAmount = ethers.utils.parseEther("500");
     const aliceAddr = fixture.governor.address;
 
-    const seedPayload = encodeBridgeUserPayload({
+    const seedBody = encodeBridgeUserPayload({
       bridgeId: ethers.utils.id("master-fork-seed"),
       amount: seedAmount,
       recipient: aliceAddr,
     });
+    const seedEnvelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, seedBody);
     await master
       .connect(sAdapter)
-      .receiveFromBridge(0, 0, MSG.BRIDGE_IN, seedPayload);
+      .receiveMessage(
+        master.address,
+        ethers.constants.AddressZero,
+        0,
+        0,
+        seedEnvelope
+      );
 
     // Now alice bridges 100 back to Ethereum. Liquidity check: bridgeAdjustment alone covers it.
     const bridgeAmount = ethers.utils.parseEther("100");
@@ -133,16 +145,19 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
   it("rejects BRIDGE_IN replay using the same bridgeId", async () => {
     const sAdapter = await impersonateAndFund(inboundAdapter.address);
     const bridgeId = ethers.utils.id("master-fork-replay");
-    const payload = encodeBridgeUserPayload({
+    const body = encodeBridgeUserPayload({
       bridgeId,
       amount: ethers.utils.parseEther("1"),
       recipient: fixture.governor.address,
     });
+    const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, body);
     await master
       .connect(sAdapter)
-      .receiveFromBridge(0, 0, MSG.BRIDGE_IN, payload);
+      .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope);
     await expect(
-      master.connect(sAdapter).receiveFromBridge(0, 0, MSG.BRIDGE_IN, payload)
+      master
+        .connect(sAdapter)
+        .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope)
     ).to.be.revertedWith("WOT: bridgeId replayed");
   });
 });
