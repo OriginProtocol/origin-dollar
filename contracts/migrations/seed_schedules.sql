@@ -3,6 +3,13 @@
 -- Commands match the original contracts/cron/cron-jobs.ts; the container's
 -- runContainer spawns them via sh -c in workdir /app.
 
+-- Drop the deprecated plume-only row (superseded by the per-network
+-- otoken_addWithdrawalQueueLiquidity_* rows below, whose action it called no
+-- longer exists). Runs every boot; idempotent — no-op once gone.
+DELETE FROM schedules
+WHERE product = 'origin-dollar'
+  AND name = 'otoken_oethp_addWithdrawalQueueLiquidity';
+
 INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, note) VALUES
 ('origin-dollar', 'manage_merkle_morpho_bribe',               'cd /app && pnpm hardhat manageMerklBribes --network mainnet',            '30 13 * * 3',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_curve_pb_mainnet',                  'cd /app && pnpm hardhat manageBribes --network mainnet',                 '30 09 * * 5',           'UTC', false, 'permissioned'),
@@ -23,7 +30,10 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'otoken_os_collectAndRelease',              'cd /app && pnpm hardhat otokenOsCollectAndRelease --network sonic',      '55 23 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_autoWithdrawal',               'cd /app && pnpm hardhat otokenOusdAutoWithdrawal --network mainnet',     '35 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_updateWoethPrice',            'cd /app && pnpm hardhat otokenOethbUpdateWoethPrice --network base',     '30 21 * * *',           'UTC', false, NULL),
-('origin-dollar', 'otoken_oethp_addWithdrawalQueueLiquidity', 'cd /app && pnpm hardhat otokenOethpAddWithdrawalQueueLiquidity --network plume', '25 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm hardhat otokenAddWithdrawalQueueLiquidity --network mainnet', '20 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm hardhat otokenAddWithdrawalQueueLiquidity --network base',    '30 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm hardhat otokenAddWithdrawalQueueLiquidity --network sonic',   '35 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_plume',   'cd /app && pnpm hardhat otokenAddWithdrawalQueueLiquidity --network plume',   '25 0 * * *',     'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_rebase',                      'cd /app && pnpm hardhat otokenOethbRebase --network base',               '25 9,21 * * *',         'UTC', false, NULL),
 ('origin-dollar', 'otoken_os_sonicRestakeRewards',            'cd /app && pnpm hardhat otokenOsSonicRestakeRewards --network sonic',    '52 22 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'cross_chain_balance_update_base',          'cd /app && pnpm hardhat crossChainBalanceUpdateBase --network base',     '40 7,15,23 * * *',      'UTC', false, 'permissioned'),

@@ -38,6 +38,7 @@ const CHAIN_NAMES: Record<number, string> = {
   999: "hyperevm",
   17000: "holesky",
   42161: "arbitrum",
+  98866: "plume",
 };
 
 function makeLog(name: string): Logger {
