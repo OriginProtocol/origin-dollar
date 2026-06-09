@@ -1082,7 +1082,52 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             emptyCluster,
             { value: ethUnits("2") }
           )
-      ).to.be.reverted;
+      ).to.be.revertedWithCustomError("NotRegisteredOrVerified()");
+    });
+
+    it("Should revert when re-registering a removed validator", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      const testValidator = testValidators[0];
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          emptyCluster,
+          { value: ethUnits("2") }
+        );
+
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          emptyCluster
+        );
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
+      ).to.equal(7, "Validator state not 7 (REMOVED)");
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .registerSsvValidator(
+            testValidator.publicKey,
+            testValidator.operatorIds,
+            testValidator.sharesData,
+            emptyCluster,
+            { value: ethUnits("2") }
+          )
+      ).to.be.revertedWithCustomError("NotRegisteredOrVerified()");
     });
 
     it("Should revert when staking because of insufficient ETH balance", async () => {
