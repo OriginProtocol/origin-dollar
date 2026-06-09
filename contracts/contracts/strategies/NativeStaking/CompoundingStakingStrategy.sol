@@ -116,7 +116,7 @@ abstract contract CompoundingValidatorStorage is Governable, Pausable {
     bytes32[] public depositList;
 
     enum ValidatorState {
-        NON_REGISTERED, // validator has not received its first deposit
+        NON_REGISTERED, // validator has not staked its first deposit
         REGISTERED, // validator has been registered by an extension contract
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
