@@ -32,12 +32,12 @@ async function manageNFTsOnModule(
   const label = moduleLabels[module.address.toLowerCase()];
 
   log.info(`Running removeAllNFTIds on module ${label}`);
-  let tx = await module.connect(signer).removeAllNFTIds({ gasLimit: 20000000 });
+  let tx = await module.connect(signer).removeAllNFTIds();
   logTxDetails(tx, "removeAllNFTIds");
   await tx.wait();
 
   log.info(`Running fetchNFTIds on module ${label}`);
-  tx = await module.connect(signer).fetchNFTIds({ gasLimit: 20000000 });
+  tx = await module.connect(signer).fetchNFTIds();
   logTxDetails(tx, "fetchNFTIds");
   await tx.wait();
 }
@@ -60,9 +60,7 @@ async function claimBribesFromModule(
     const start = i * batchSize;
     const end = Math.min(start + batchSize, nftIdsLength);
 
-    const tx = await module.connect(signer).claimBribes(start, end, true, {
-      gasLimit: 20000000,
-    });
+    const tx = await module.connect(signer).claimBribes(start, end, true);
     await logTxDetails(tx, `claimBribes (batch ${i + 1} of ${batchCount})`);
   }
 }
