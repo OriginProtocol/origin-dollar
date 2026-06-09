@@ -26,6 +26,8 @@ contract ConsolidationController is Ownable {
     address public immutable validatorRegistrator;
     /// @dev The old Native Staking Strategy connected to the second SSV cluster
     address internal immutable nativeStakingStrategy2;
+    /// @dev The old Compounding Staking SSV Strategy connected to the SSV cluster being removed
+    address internal immutable compoundingStakingSsvStrategy;
     /// @dev The new Compounding Staking Strategy
     CompoundingStakingStrategy internal immutable targetStrategy;
 
@@ -56,12 +58,14 @@ contract ConsolidationController is Ownable {
         address _owner,
         address _validatorRegistrator,
         address _nativeStakingStrategy2,
+        address _compoundingStakingSsvStrategy,
         address _targetStrategy
     ) {
         _transferOwnership(_owner);
 
         validatorRegistrator = _validatorRegistrator;
         nativeStakingStrategy2 = _nativeStakingStrategy2;
+        compoundingStakingSsvStrategy = _compoundingStakingSsvStrategy;
         targetStrategy = CompoundingStakingStrategy(payable(_targetStrategy));
     }
 
@@ -332,11 +336,13 @@ contract ConsolidationController is Ownable {
     }
 
     /**
-     * @notice Removing source validators is not allowed during the consolidation process
-     * as consolidated validators will be in EXITING state hence can not be consolidated after removal.
+     * @notice Removes a validator from an old staking strategy's SSV cluster.
+     * @dev Removing validators from the native source strategy is not allowed while
+     * that strategy is being consolidated, as consolidated validators are in EXITING
+     * state and can not be consolidated after removal.
      * Only callable by the validator registrator.
-     * @param _sourceStrategy The address of the old Native Staking Strategy
-     * @param publicKey The public key of the validator to remove which must have EXITING or REGISTERED state.
+     * @param _sourceStrategy The address of the old Native Staking Strategy or old Compounding Staking SSV Strategy
+     * @param publicKey The public key of the validator to remove
      * @param operatorIds The operator IDs for the source SSV cluster
      * @param cluster The SSV cluster information for the source validator
      */
@@ -346,8 +352,12 @@ contract ConsolidationController is Ownable {
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external onlyRegistrator {
-        // Check sourceStrategy is a valid old Native Staking Strategy
-        _checkSourceStrategy(_sourceStrategy);
+        // Check sourceStrategy is a valid old staking strategy
+        require(
+            _sourceStrategy == nativeStakingStrategy2 ||
+                _sourceStrategy == compoundingStakingSsvStrategy,
+            "Invalid source strategy"
+        );
         // Prevent removing a validator from the SSV cluster before the consolidation
         // process has been completed for the source strategy being consolidated.
         // This prevents validators that have been exited rather than consolidated but that's ok.

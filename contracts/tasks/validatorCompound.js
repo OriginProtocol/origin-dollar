@@ -890,7 +890,7 @@ async function setRegistrator({ account, type }) {
   await logTxDetails(tx, "setRegistrator");
 }
 
-async function removeValidator({ pubkey, operatorids }) {
+async function removeValidator({ pubkey, operatorids, consol = false }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
@@ -900,6 +900,9 @@ async function removeValidator({ pubkey, operatorids }) {
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
 
   // Cluster details
   const { chainId } = await ethers.provider.getNetwork();
@@ -909,10 +912,18 @@ async function removeValidator({ pubkey, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`About to remove compounding validator with pubkey ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
+  log(
+    `About to remove compounding validator with pubkey ${pubkey} via ${
+      consol ? "ConsolidationController" : "CompoundingStakingSSVStrategy"
+    }`
+  );
+  const tx = consol
+    ? await contract
+        .connect(signer)
+        .removeSsvValidator(strategy.address, pubkey, operatorIds, cluster)
+    : await contract
+        .connect(signer)
+        .removeSsvValidator(pubkey, operatorIds, cluster);
   await logTxDetails(tx, "removeSsvValidator");
 }
 

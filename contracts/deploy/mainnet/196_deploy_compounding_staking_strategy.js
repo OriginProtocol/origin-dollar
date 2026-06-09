@@ -1,10 +1,6 @@
 const addresses = require("../../utils/addresses");
-const { isFork } = require("../../test/helpers");
 const { beaconChainGenesisTimeMainnet } = require("../../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-const { getClusterInfo, splitOperatorIds } = require("../../utils/ssv");
-
-const compoundingSsvClusterOperatorIds = "2070,2071,2072,2073";
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -15,7 +11,6 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation, ethers, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
-    const { chainId } = await ethers.provider.getNetwork();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -41,24 +36,6 @@ module.exports = deploymentWithGovernanceProposal(
       "NativeStakingSSVStrategy",
       cNativeStakingStrategy2Proxy.address
     );
-    const compoundingOperatorIds = splitOperatorIds(
-      compoundingSsvClusterOperatorIds
-    );
-    const { cluster: compoundingSsvCluster } = await getClusterInfo({
-      chainId,
-      operatorids: compoundingOperatorIds.join(","),
-      ownerAddress: cCompoundingStakingSSVStrategyProxy.address,
-    });
-    const compoundingSsvClusterEthBalance = ethers.BigNumber.from(
-      compoundingSsvCluster.ethBalance || 0
-    );
-    const compoundingSsvClusterForWithdraw = {
-      validatorCount: compoundingSsvCluster.validatorCount,
-      networkFeeIndex: compoundingSsvCluster.networkFeeIndex,
-      index: compoundingSsvCluster.index,
-      active: compoundingSsvCluster.active,
-      balance: compoundingSsvClusterEthBalance,
-    };
 
     console.log("Deploy CompoundingStakingSSVStrategy implementation");
     const dCompoundingStakingSSVStrategy = await deployWithConfirmation(
@@ -154,18 +131,21 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.Guardian, // Admin 5/8 multisig
         addresses.mainnet.talosRelayer, // New Talos Relayer
         cNativeStakingStrategy2.address, // Old Native Staking Strategy 2
+        cCompoundingStakingSSVStrategy.address, // Old Compounding Staking SSV Strategy
         cStrategy.address, // New Compounding Staking Strategy
       ]
     );
-
-    const shouldWithdrawCompoundingSsvCluster =
-      !isFork || Number(compoundingSsvCluster.validatorCount) === 0;
 
     const actions = [
       {
         contract: cCompoundingStakingSSVStrategyProxy,
         signature: "upgradeTo(address)",
         args: [dCompoundingStakingSSVStrategy.address],
+      },
+      {
+        contract: cCompoundingStakingSSVStrategy,
+        signature: "setRegistrator(address)",
+        args: [dConsolidationController.address],
       },
       {
         contract: cNativeStakingStrategy2Proxy,
@@ -193,27 +173,6 @@ module.exports = deploymentWithGovernanceProposal(
         args: [dConsolidationController.address],
       },
     ];
-
-    // This can be simplified once the compounding SSV cluster has been fully exited and withdrawn,
-    // but for now we need to withdraw the cluster from the old strategy and remove the old strategy
-    // from the vault within the same proposal to ensure the safety of users' funds.
-    if (shouldWithdrawCompoundingSsvCluster) {
-      actions.splice(1, 0, {
-        contract: cCompoundingStakingSSVStrategy,
-        signature:
-          "withdrawSsvClusterEth(uint64[],uint256,(uint32,uint64,uint64,bool,uint256))",
-        args: [
-          compoundingOperatorIds,
-          compoundingSsvClusterEthBalance,
-          compoundingSsvClusterForWithdraw,
-        ],
-      });
-      actions.splice(5, 0, {
-        contract: cOETHVault,
-        signature: "removeStrategy(address)",
-        args: [cCompoundingStakingSSVStrategyProxy.address],
-      });
-    }
 
     return {
       name: "Deploy new vanilla compounding staking strategy, upgrade SSV strategies and deploy consolidation controller",
