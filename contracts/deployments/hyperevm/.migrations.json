@@ -1,4 +1,5 @@
 {
   "001_crosschain_strategy_proxies": 1773764828,
-  "002_crosschain_strategy": 1773764941
+  "002_crosschain_strategy": 1773764941,
+  "003_migrate_crosschain_strategy_to_talos": 1780954714
 }
