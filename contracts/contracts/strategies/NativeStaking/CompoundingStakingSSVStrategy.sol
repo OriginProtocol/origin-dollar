@@ -68,6 +68,10 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
 
+        if (validator[pubKeyHash].state != ValidatorState.NON_REGISTERED) {
+            revert NotRegisteredOrVerified();
+        }
+
         // Store the validator state as registered
         validator[pubKeyHash].state = ValidatorState.REGISTERED;
 
