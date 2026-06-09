@@ -1632,8 +1632,10 @@ async function crossChainFixture() {
     addresses.CCTPTokenMessengerV2
   );
 
+  // The cross-chain operator is repointed during the Talos signer migration
+  // (deploy 196), so read it from the strategy instead of hardcoding a relayer.
   fixture.relayer = await impersonateAndFund(
-    addresses.mainnet.validatorRegistrator
+    await cCrossChainMasterStrategy.operator()
   );
 
   await setERC20TokenBalance(
