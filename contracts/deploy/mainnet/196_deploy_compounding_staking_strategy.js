@@ -154,6 +154,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.Guardian, // Admin 5/8 multisig
         addresses.mainnet.talosRelayer, // New Talos Relayer
         cNativeStakingStrategy2.address, // Old Native Staking Strategy 2
+        cCompoundingStakingSSVStrategy.address, // Old Compounding Staking SSV Strategy
         cStrategy.address, // New Compounding Staking Strategy
       ]
     );
@@ -166,6 +167,11 @@ module.exports = deploymentWithGovernanceProposal(
         contract: cCompoundingStakingSSVStrategyProxy,
         signature: "upgradeTo(address)",
         args: [dCompoundingStakingSSVStrategy.address],
+      },
+      {
+        contract: cCompoundingStakingSSVStrategy,
+        signature: "setRegistrator(address)",
+        args: [dConsolidationController.address],
       },
       {
         contract: cNativeStakingStrategy2Proxy,
@@ -208,7 +214,7 @@ module.exports = deploymentWithGovernanceProposal(
           compoundingSsvClusterForWithdraw,
         ],
       });
-      actions.splice(5, 0, {
+      actions.splice(6, 0, {
         contract: cOETHVault,
         signature: "removeStrategy(address)",
         args: [cCompoundingStakingSSVStrategyProxy.address],
