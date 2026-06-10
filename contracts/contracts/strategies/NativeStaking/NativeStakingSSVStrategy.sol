@@ -133,13 +133,15 @@ contract NativeStakingSSVStrategy is
         uint256 amount,
         Cluster calldata cluster
     ) external onlyGovernor nonReentrant {
+        uint256 ethBalanceBefore = address(this).balance;
+
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, amount, cluster);
 
-        uint256 ethBalance = address(this).balance;
-        if (ethBalance > 0) {
-            IWETH9(WETH).deposit{ value: ethBalance }();
-            IERC20(WETH).safeTransfer(vaultAddress, ethBalance);
-            emit Withdrawal(WETH, address(0), ethBalance);
+        uint256 withdrawn = address(this).balance - ethBalanceBefore;
+        if (withdrawn > 0) {
+            IWETH9(WETH).deposit{ value: withdrawn }();
+            IERC20(WETH).safeTransfer(vaultAddress, withdrawn);
+            emit Withdrawal(WETH, address(0), withdrawn);
         }
     }
 
