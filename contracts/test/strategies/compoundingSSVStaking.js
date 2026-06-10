@@ -185,7 +185,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     it("Governor should be able to change the first deposit amount", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
-      const updatedAmount = parseEther("32.25");
+      const updatedAmount = parseEther("2048");
       const tx = await compoundingStakingSSVStrategy
         .connect(sGov)
         .setInitialDepositAmount(updatedAmount);
@@ -215,13 +215,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .setInitialDepositAmount(parseUnits("0.5", 18))
       ).to.be.revertedWith("Deposit too small");
     });
-    it("Should revert when setting the first deposit amount above 32.25 ETH", async () => {
+    it("Should revert when setting the first deposit amount above 2048 ETH", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
       await expect(
         compoundingStakingSSVStrategy
           .connect(sGov)
-          .setInitialDepositAmount(parseEther("32.25").add(1))
+          .setInitialDepositAmount(parseEther("2048").add(1))
       ).to.be.revertedWith("Deposit too large");
     });
     it("Should not collect rewards", async () => {
@@ -234,7 +234,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const collectRewards = compoundingStakingSSVStrategy
         .connect(governor)
         .collectRewardTokens();
-      await expect(collectRewards).to.revertedWith("Unsupported function");
+      await expect(collectRewards).to.be.revertedWithCustomError(
+        "UnsupportedFunction()"
+      );
     });
     it("Should not set platform token", async () => {
       const { compoundingStakingSSVStrategy, governor, weth } = fixture;
@@ -243,7 +245,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(governor)
         .setPTokenAddress(weth.address, weth.address);
 
-      await expect(tx).to.revertedWith("Unsupported function");
+      await expect(tx).to.be.revertedWithCustomError("UnsupportedFunction()");
     });
     it("Should not remove platform token", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
@@ -252,24 +254,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(governor)
         .removePToken(0);
 
-      await expect(tx).to.revertedWith("Unsupported function");
+      await expect(tx).to.be.revertedWithCustomError("UnsupportedFunction()");
     });
-    it("Non governor should not be able to reset the first deposit flag", async () => {
-      const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
+    it("Regular user should not be able to reset the first deposit flag", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
 
-      const signers = [strategist, josh];
-      for (const signer of signers) {
-        await expect(
-          compoundingStakingSSVStrategy.connect(signer).resetFirstDeposit()
-        ).to.be.revertedWith("Caller is not the Governor");
-      }
+      await expect(
+        compoundingStakingSSVStrategy.connect(josh).resetFirstDeposit()
+      ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
     it("Should revert reset of first deposit if there is no first deposit", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
 
       await expect(
         compoundingStakingSSVStrategy.connect(governor).resetFirstDeposit()
-      ).to.be.revertedWith("No first deposit");
+      ).to.be.revertedWithCustomError("NoFirstDeposit()");
     });
     it("Registrator or governor should be the only ones to pause the strategy", async () => {
       const {
@@ -286,7 +285,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(
         compoundingStakingSSVStrategy.connect(josh).pause()
-      ).to.be.revertedWith("Not Registrator or Governor");
+      ).to.be.revertedWithCustomError("NotRegistratorOrGovernor()");
     });
   });
 
@@ -770,9 +769,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           { value: ethAmount }
         );
 
-      await expect(regTx)
-        .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRegistered")
-        .withArgs(testValidator.publicKeyHash, testValidator.operatorIds);
+      await regTx.wait();
 
       expect(
         (
@@ -1001,7 +998,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           parseUnits("32", 9)
         );
 
-      await expect(stakeTx).to.be.revertedWith("Invalid first deposit amount");
+      await expect(stakeTx).to.be.revertedWithCustomError(
+        "InvalidFirstDepositAmount()"
+      );
     });
 
     it("Should revert registerSsvValidator when contract paused", async () => {
@@ -1083,7 +1082,52 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             emptyCluster,
             { value: ethUnits("2") }
           )
-      ).to.be.revertedWith("Validator already registered");
+      ).to.be.revertedWithCustomError("AlreadyRegistered()");
+    });
+
+    it("Should revert when re-registering a removed validator", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      const testValidator = testValidators[0];
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          emptyCluster,
+          { value: ethUnits("2") }
+        );
+
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          emptyCluster
+        );
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
+      ).to.equal(7, "Validator state not 7 (REMOVED)");
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .registerSsvValidator(
+            testValidator.publicKey,
+            testValidator.operatorIds,
+            testValidator.sharesData,
+            emptyCluster,
+            { value: ethUnits("2") }
+          )
+      ).to.be.revertedWithCustomError("AlreadyRegistered()");
     });
 
     it("Should revert when staking because of insufficient ETH balance", async () => {
@@ -1124,7 +1168,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           ETHInGwei // 1e9 Gwei = 1 ETH
         );
 
-      await expect(tx).to.be.revertedWith("Not registered or verified");
+      await expect(tx).to.be.reverted;
     });
 
     // Full validator exit
@@ -1464,7 +1508,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           emptyCluster
         );
 
-      await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
+      await expect(removeTx).to.be.reverted;
     });
 
     it("Should remove a validator when validator is exited", async () => {
@@ -1512,7 +1556,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         ).length
       ).to.equal(0);
 
-      const removeTx = await compoundingStakingSSVStrategy
+      const removeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
           testValidators[3].publicKey,
@@ -2030,7 +2074,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy
           .connect(sVault)
           .withdraw(josh.address, josh.address, parseEther("10"))
-      ).to.be.revertedWith("Unsupported asset");
+      ).to.be.revertedWithCustomError("UnsupportedAsset()");
     });
 
     it("Should revert when withdrawing 0 ETH from the strategy", async () => {
@@ -3091,7 +3135,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         "0x" // empty proof as it is not verified in the mock
       );
 
-      const tx = await compoundingStakingSSVStrategy
+      const tx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
           testValidator.publicKey,

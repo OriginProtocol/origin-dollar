@@ -9,20 +9,18 @@ import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 
 /**
- * @title Validator lifecycle management contract
+ * @title Compounding validator strategy
  * @notice This contract implements all the required functionality to
- * register, deposit, withdraw, exit and remove validators.
+ * deposit, withdraw and account for vanilla compounding validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable, Pausable {
-    using SafeERC20 for IERC20;
-
+abstract contract CompoundingValidatorStorage is Governable, Pausable {
     /// @dev Validator balances over this amount will eventually become active on the beacon chain.
     /// Due to hysteresis, if the effective balance is 31 ETH, the actual balance
     /// must rise to 32.25 ETH to trigger an effective balance update to 32 ETH.
@@ -32,6 +30,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     uint256 internal constant MAX_DEPOSITS = 32;
     /// @dev The maximum number of validators that can be verified.
     uint256 internal constant MAX_VERIFIED_VALIDATORS = 48;
+    /// @dev The maximum amount of ETH that can be used for the initial deposit to a new validator.
+    uint256 internal constant MAX_INITIAL_DEPOSIT_AMOUNT_WEI = 2048 ether;
     /// @dev The default withdrawable epoch value on the Beacon chain.
     /// A value in the far future means the validator is not exiting.
     uint64 internal constant FAR_FUTURE_EPOCH = type(uint64).max;
@@ -52,8 +52,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     address internal immutable WETH;
     /// @notice The address of the beacon chain deposit contract
     address internal immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
-    /// @notice The address of the SSV Network contract used to interface with
-    address internal immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address internal immutable VAULT_ADDRESS;
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
@@ -118,14 +116,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     bytes32[] public depositList;
 
     enum ValidatorState {
-        NON_REGISTERED, // validator is not registered on the SSV network
-        REGISTERED, // validator is registered on the SSV network
+        NON_REGISTERED, // validator has not staked its first deposit
+        REGISTERED, // validator has been registered by an extension contract
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
         ACTIVE, // The validator balance is at least 32.25 ETH. The validator may not yet be active on the beacon chain.
         EXITING, // The validator has been requested to exit
         EXITED, // The validator has been verified to have a zero balance
-        REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
+        REMOVED, // validator has been removed by an extension contract
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
     }
 
@@ -172,14 +170,67 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // For future use
     uint256[40] private __gap;
 
+    /// @param _wethAddress Address of the Erc20 WETH Token contract
+    /// @param _vaultAddress Address of the Vault
+    /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
+    /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
+    /// @param _beaconGenesisTimestamp The timestamp of the Beacon chain's genesis.
+    constructor(
+        address _wethAddress,
+        address _vaultAddress,
+        address _beaconChainDepositContract,
+        address _beaconProofs,
+        uint64 _beaconGenesisTimestamp
+    ) {
+        WETH = _wethAddress;
+        BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
+        VAULT_ADDRESS = _vaultAddress;
+        BEACON_PROOFS = _beaconProofs;
+        BEACON_GENESIS_TIMESTAMP = _beaconGenesisTimestamp;
+
+        require(
+            block.timestamp > _beaconGenesisTimestamp,
+            "Invalid genesis timestamp"
+        );
+    }
+}
+
+contract CompoundingStakingStrategy is
+    CompoundingValidatorStorage,
+    InitializableAbstractStrategy
+{
+    using SafeERC20 for IERC20;
+
+    /// @param _baseConfig Base strategy config with
+    ///   `platformAddress` not used so empty address
+    ///   `vaultAddress` the address of the OETH Vault contract
+    /// @param _wethAddress Address of the WETH Token contract
+    /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
+    /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
+    /// @param _beaconGenesisTimestamp The timestamp of the Beacon chain's genesis.
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        address _wethAddress,
+        address _beaconChainDepositContract,
+        address _beaconProofs,
+        uint64 _beaconGenesisTimestamp
+    )
+        InitializableAbstractStrategy(_baseConfig)
+        CompoundingValidatorStorage(
+            _wethAddress,
+            _baseConfig.vaultAddress,
+            _beaconChainDepositContract,
+            _beaconProofs,
+            _beaconGenesisTimestamp
+        )
+    {
+        // Make sure nobody owns the implementation contract
+        _setGovernor(address(0));
+    }
+
     event RegistratorChanged(address indexed newAddress);
     event InitialDepositAmountChanged(uint256 amountWei);
     event FirstDepositReset();
-    event SSVValidatorRegistered(
-        bytes32 indexed pubKeyHash,
-        uint64[] operatorIds
-    );
-    event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
         bytes32 indexed pendingDepositRoot,
@@ -204,6 +255,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint256 ethBalance
     );
 
+    error NotRegistratorOrGovernor(); // 0xbf454a2d
+    error NotRegistrator(); // 0x929df920
+    error NoFirstDeposit(); // 0x30e60c37
+    error InvalidFirstDepositAmount(); // 0x29829bdd
+    error UnsupportedAsset(); // 0x24a01144
+    error UnsupportedFunction(); // 0xea1c702e
+
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         _onlyRegistrator();
@@ -212,43 +270,36 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @dev internal function used to reduce contract size
     function _onlyRegistrator() internal view {
-        require(msg.sender == validatorRegistrator, "Not Registrator");
+        if (msg.sender != validatorRegistrator) {
+            revert NotRegistrator();
+        }
     }
 
     /// @dev Throws if called by any account other than the Registrator or Governor
     modifier onlyRegistratorOrGovernor() {
-        require(
-            msg.sender == validatorRegistrator || isGovernor(),
-            "Not Registrator or Governor"
-        );
+        if (msg.sender != validatorRegistrator && !isGovernor()) {
+            revert NotRegistratorOrGovernor();
+        }
         _;
     }
 
-    /// @param _wethAddress Address of the Erc20 WETH Token contract
-    /// @param _vaultAddress Address of the Vault
-    /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
-    /// @param _ssvNetwork Address of the SSV Network contract
-    /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
-    /// @param _beaconGenesisTimestamp The timestamp of the Beacon chain's genesis.
-    constructor(
-        address _wethAddress,
-        address _vaultAddress,
-        address _beaconChainDepositContract,
-        address _ssvNetwork,
-        address _beaconProofs,
-        uint64 _beaconGenesisTimestamp
-    ) {
-        WETH = _wethAddress;
-        BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
-        SSV_NETWORK = _ssvNetwork;
-        VAULT_ADDRESS = _vaultAddress;
-        BEACON_PROOFS = _beaconProofs;
-        BEACON_GENESIS_TIMESTAMP = _beaconGenesisTimestamp;
-
-        require(
-            block.timestamp > _beaconGenesisTimestamp,
-            "Invalid genesis timestamp"
+    /// @notice Set up initial internal state.
+    /// @param _rewardTokenAddresses Not used so empty array
+    /// @param _assets Not used so empty array
+    /// @param _pTokens Not used so empty array
+    /// @param _initialDepositAmountWei The amount of ETH required for the first deposit to a new validator.
+    function initialize(
+        address[] memory _rewardTokenAddresses,
+        address[] memory _assets,
+        address[] memory _pTokens,
+        uint256 _initialDepositAmountWei
+    ) external onlyGovernor initializer {
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
         );
+        _setInitialDepositAmountWei(_initialDepositAmountWei);
     }
 
     /**
@@ -272,8 +323,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
-    function resetFirstDeposit() external onlyGovernor {
-        require(firstDeposit, "No first deposit");
+    function resetFirstDeposit() external onlyGovernorOrStrategist {
+        if (!firstDeposit) {
+            revert NoFirstDeposit();
+        }
 
         firstDeposit = false;
 
@@ -293,42 +346,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
      *             Validator Management
      *
      */
-
-    /// @notice Registers a single validator in a SSV Cluster.
-    /// Only the Registrator can call this function.
-    /// @param publicKey The public key of the validator
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param sharesData The shares data for the validator
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
-    function registerSsvValidator(
-        bytes calldata publicKey,
-        uint64[] calldata operatorIds,
-        bytes calldata sharesData,
-        Cluster calldata cluster
-    ) external payable onlyRegistrator whenNotPaused {
-        // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = _hashPubKey(publicKey);
-        // Check each public key has not already been used
-        require(
-            validator[pubKeyHash].state == ValidatorState.NON_REGISTERED,
-            "Validator already registered"
-        );
-
-        // Store the validator state as registered
-        validator[pubKeyHash].state = ValidatorState.REGISTERED;
-
-        ISSVNetwork(SSV_NETWORK).registerValidator{ value: msg.value }(
-            publicKey,
-            operatorIds,
-            sharesData,
-            cluster
-        );
-
-        emit SSVValidatorRegistered(pubKeyHash, operatorIds);
-    }
-
-    // slither-disable-end reentrancy-no-eth
 
     struct ValidatorStakeData {
         bytes pubkey;
@@ -368,39 +385,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validatorStakeData.pubkey);
-        ValidatorState currentState = validator[pubKeyHash].state;
-        // Can only stake to a validator that has been registered, verified or active.
+        // Can only stake to a validator that is new, verified or active.
         // Can not stake to a validator that has been staked but not yet verified.
-        require(
-            (currentState == ValidatorState.REGISTERED ||
-                currentState == ValidatorState.VERIFIED ||
-                currentState == ValidatorState.ACTIVE),
-            "Not registered or verified"
-        );
         require(depositAmountWei >= 1 ether, "Deposit too small");
-        if (currentState == ValidatorState.REGISTERED) {
-            // Can only have one pending deposit to an unverified validator at a time.
-            // This is to limit front-running deposit attacks to a single deposit.
-            // The exiting deposit needs to be verified before another deposit can be made.
-            // If there was a front-running attack, the validator needs to be verified as invalid
-            // and the Governor calls `resetFirstDeposit` to set `firstDeposit` to false.
-            require(!firstDeposit, "Existing first deposit");
-            // Limits the amount of ETH that can be at risk from a front-running deposit attack.
-            require(
-                depositAmountWei <= initialDepositAmountWei,
-                "Invalid first deposit amount"
-            );
-            // Limits the number of validator balance proofs to verifyBalances
-            require(
-                verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS,
-                "Max validators"
-            );
-
-            // Flag a deposit to an unverified validator so no other deposits can be made
-            // to an unverified validator.
-            firstDeposit = true;
-            validator[pubKeyHash].state = ValidatorState.STAKED;
-        }
+        _admitStake(pubKeyHash, depositAmountWei);
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
          * that was introduced with the Pectra upgrade.
@@ -467,6 +455,48 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-eth,reentrancy-no-eth
 
+    function _admitStake(bytes32 pubKeyHash, uint256 depositAmountWei)
+        internal
+        virtual
+    {
+        ValidatorState currentState = validator[pubKeyHash].state;
+        require(
+            currentState == ValidatorState.NON_REGISTERED ||
+                currentState == ValidatorState.VERIFIED ||
+                currentState == ValidatorState.ACTIVE,
+            "Not registered or verified"
+        );
+
+        if (currentState == ValidatorState.NON_REGISTERED) {
+            _recordFirstDeposit(pubKeyHash, depositAmountWei);
+        }
+    }
+
+    function _recordFirstDeposit(bytes32 pubKeyHash, uint256 depositAmountWei)
+        internal
+    {
+        // Can only have one pending deposit to an unverified validator at a time.
+        // This is to limit front-running deposit attacks to a single deposit.
+        // The existing deposit needs to be verified before another deposit can be made.
+        // If there was a front-running attack, the validator needs to be verified as invalid
+        // and the Governor calls `resetFirstDeposit` to set `firstDeposit` to false.
+        require(!firstDeposit, "Existing first deposit");
+        // Limits the amount of ETH that can be at risk from a front-running deposit attack.
+        if (depositAmountWei > initialDepositAmountWei) {
+            revert InvalidFirstDepositAmount();
+        }
+        // Limits the number of validator balance proofs to verifyBalances
+        require(
+            verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS,
+            "Max validators"
+        );
+
+        // Flag a deposit to an unverified validator so no other deposits can be made
+        // to an unverified validator.
+        firstDeposit = true;
+        validator[pubKeyHash].state = ValidatorState.STAKED;
+    }
+
     /// @notice Request a full or partial withdrawal from a validator.
     /// A zero amount will trigger a full withdrawal.
     /// If the remaining balance is < 32 ETH then only the amount in excess of 32 ETH will be withdrawn.
@@ -529,68 +559,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     // slither-disable-end reentrancy-no-eth
-
-    /// @notice Remove the validator from the SSV Cluster after:
-    /// - the validator has been exited from `validatorWithdrawal` or slashed
-    /// - the validator has incorrectly registered and can not be staked to
-    /// - the initial deposit was front-run and the withdrawal address is not this strategy's address.
-    /// Make sure `validatorWithdrawal` is called with a zero amount and the validator has exited the Beacon chain.
-    /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
-    /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
-    function removeSsvValidator(
-        bytes calldata publicKey,
-        uint64[] calldata operatorIds,
-        Cluster calldata cluster
-    ) external onlyRegistrator {
-        // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = _hashPubKey(publicKey);
-        ValidatorState currentState = validator[pubKeyHash].state;
-        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
-        require(
-            currentState == ValidatorState.REGISTERED ||
-                currentState == ValidatorState.EXITED ||
-                currentState == ValidatorState.INVALID,
-            "Validator not regd or exited"
-        );
-
-        validator[pubKeyHash].state = ValidatorState.REMOVED;
-
-        ISSVNetwork(SSV_NETWORK).removeValidator(
-            publicKey,
-            operatorIds,
-            cluster
-        );
-
-        emit SSVValidatorRemoved(pubKeyHash, operatorIds);
-    }
-
-    /**
-     *
-     *             SSV Management
-     *
-     */
-
-    // slither-disable-end reentrancy-no-eth
-
-    /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function migrateClusterToETH(
-        uint64[] memory operatorIds,
-        Cluster memory cluster
-    ) external payable onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
-            operatorIds,
-            cluster
-        );
-
-        // The SSV Network emits
-        // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
-    }
 
     /**
      *
@@ -657,15 +625,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // Find and remove the deposit as the funds can not be recovered
             uint256 depositCount = depositList.length;
             for (uint256 i = 0; i < depositCount; i++) {
-                DepositData memory deposit = deposits[depositList[i]];
-                if (deposit.pubKeyHash == pubKeyHash) {
+                DepositData memory depositData = deposits[depositList[i]];
+                if (depositData.pubKeyHash == pubKeyHash) {
                     // next verifyBalances will correctly account for the loss of a front-run
                     // deposit. Doing it here accounts for the loss as soon as possible
                     lastVerifiedEthBalance -= Math.min(
                         lastVerifiedEthBalance,
-                        uint256(deposit.amountGwei) * 1 gwei
+                        uint256(depositData.amountGwei) * 1 gwei
                     );
-                    _removeDeposit(depositList[i], deposit);
+                    _removeDeposit(depositList[i], depositData);
                     break;
                 }
             }
@@ -732,9 +700,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         StrategyValidatorProofData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
-        DepositData memory deposit = deposits[pendingDepositRoot];
-        ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
-        require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+        DepositData memory depositData = deposits[pendingDepositRoot];
+        ValidatorData memory strategyValidator = validator[
+            depositData.pubKeyHash
+        ];
+        require(
+            depositData.status == DepositStatus.PENDING,
+            "Deposit not pending"
+        );
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
 
         // We should allow the verification of deposits for validators that have been marked as exiting
@@ -751,7 +724,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
-        require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
+        require(
+            depositData.slot < depositProcessedSlot,
+            "Slot not after deposit"
+        );
 
         uint64 snapTimestamp = snappedBalance.timestamp;
 
@@ -826,29 +802,29 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // We can not guarantee that the deposit has been processed in that case.
         // solhint-enable max-line-length
         require(
-            deposit.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
+            depositData.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
             "Deposit likely not processed"
         );
 
         // Remove the deposit now it has been verified as processed on the beacon chain.
-        _removeDeposit(pendingDepositRoot, deposit);
+        _removeDeposit(pendingDepositRoot, depositData);
 
         emit DepositVerified(
             pendingDepositRoot,
-            uint256(deposit.amountGwei) * 1 gwei
+            uint256(depositData.amountGwei) * 1 gwei
         );
     }
 
     function _removeDeposit(
         bytes32 pendingDepositRoot,
-        DepositData memory deposit
+        DepositData memory depositData
     ) internal {
         // After verifying the proof, update the contract storage
         deposits[pendingDepositRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
         bytes32 lastDeposit = depositList[depositList.length - 1];
-        depositList[deposit.depositIndex] = lastDeposit;
-        deposits[lastDeposit].depositIndex = deposit.depositIndex;
+        depositList[depositData.depositIndex] = lastDeposit;
+        deposits[lastDeposit].depositIndex = depositData.depositIndex;
         // Delete the last deposit from the list
         depositList.pop();
     }
@@ -1216,7 +1192,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     {
         require(_initialDepositAmountWei >= 1 ether, "Deposit too small");
         require(
-            _initialDepositAmountWei <= MIN_ACTIVATION_BALANCE_GWEI * 1e9,
+            _initialDepositAmountWei <= MAX_INITIAL_DEPOSIT_AMOUNT_WEI,
             "Deposit too large"
         );
 
@@ -1299,5 +1275,156 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice Returns the number of verified validators.
     function verifiedValidatorsLength() external view returns (uint256) {
         return verifiedValidators.length;
+    }
+
+    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
+    /// It just checks the asset is WETH and emits the Deposit event.
+    /// To deposit WETH into validators, `stakeEth` must be used.
+    /// @param _asset Address of the WETH token.
+    /// @param _amount Amount of WETH that was transferred to the strategy by the vault.
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
+        require(_amount > 0, "Must deposit something");
+
+        // Account for the new WETH
+        depositedWethAccountedFor += _amount;
+
+        emit Deposit(_asset, address(0), _amount);
+    }
+
+    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
+    /// It just emits the Deposit event.
+    /// To deposit WETH into validators, `stakeEth` must be used.
+    function depositAll() external override onlyVault nonReentrant {
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
+        uint256 newWeth = wethBalance - depositedWethAccountedFor;
+
+        if (newWeth > 0) {
+            // Account for the new WETH
+            depositedWethAccountedFor = wethBalance;
+
+            emit Deposit(WETH, address(0), newWeth);
+        }
+    }
+
+    /// @notice Withdraw ETH and WETH from this strategy contract.
+    /// @param _recipient Address to receive withdrawn assets.
+    /// @param _asset Address of the WETH token.
+    /// @param _amount Amount of WETH to withdraw.
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override nonReentrant {
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
+        require(
+            msg.sender == vaultAddress || msg.sender == validatorRegistrator,
+            "Caller not Vault or Registrator"
+        );
+
+        _withdraw(_recipient, _amount, address(this).balance);
+    }
+
+    function _withdraw(
+        address _recipient,
+        uint256 _withdrawAmount,
+        uint256 _ethBalance
+    ) internal {
+        require(_withdrawAmount > 0, "Must withdraw something");
+        require(_recipient == vaultAddress, "Recipient not Vault");
+
+        // Convert any ETH from validator partial withdrawals, exits
+        // or execution rewards to WETH and do the necessary accounting.
+        if (_ethBalance > 0) _convertEthToWeth(_ethBalance);
+
+        // Transfer WETH to the recipient and do the necessary accounting.
+        _transferWeth(_withdrawAmount, _recipient);
+
+        emit Withdrawal(WETH, address(0), _withdrawAmount);
+    }
+
+    /// @notice Transfer all WETH deposits, ETH from validator withdrawals and ETH from
+    /// execution rewards in this strategy to the vault.
+    /// This does not withdraw from the validators. That has to be done separately with the
+    /// `validatorWithdrawal` operation.
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        uint256 ethBalance = address(this).balance;
+        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
+            ethBalance;
+
+        if (withdrawAmount > 0) {
+            _withdraw(vaultAddress, withdrawAmount, ethBalance);
+        }
+    }
+
+    /// @notice Accounts for all the assets managed by this strategy which includes:
+    /// 1. The current WETH in this strategy contract
+    /// 2. The last verified ETH balance, total deposits and total validator balances
+    /// @param _asset      Address of WETH asset.
+    /// @return balance    Total value in ETH
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256 balance)
+    {
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
+
+        // Load the last verified balance from the storage
+        // and add to the latest WETH balance of this strategy.
+        balance =
+            lastVerifiedEthBalance +
+            IWETH9(WETH).balanceOf(address(this));
+    }
+
+    /// @notice Returns bool indicating whether asset is supported by the strategy.
+    /// @param _asset The address of the WETH token.
+    function supportsAsset(address _asset) public view override returns (bool) {
+        return _asset == WETH;
+    }
+
+    /// @notice Does nothing but needed as this function is abstract on InitializableAbstractStrategy
+    function safeApproveAllTokens() public override {}
+
+    /**
+     * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting
+     * like it did in the legacy NativeStakingStrategy.
+     * The new ETH will be accounted for in `checkBalance` after the next snapBalances and verifyBalances txs.
+     */
+    receive() external payable {}
+
+    /// @notice is not supported for this strategy as there is no platform token.
+    function setPTokenAddress(address, address) external pure override {
+        revert UnsupportedFunction();
+    }
+
+    /// @notice is not supported for this strategy as there is no platform token.
+    function removePToken(uint256) external pure override {
+        revert UnsupportedFunction();
+    }
+
+    /// @dev This strategy does not use a platform token like the old Aave and Compound strategies.
+    function _abstractSetPToken(address _asset, address) internal override {}
+
+    /// @dev Consensus rewards are compounded to the validator's balance instead of being
+    /// swept to this strategy contract.
+    /// Execution rewards from MEV and tx priority accumulate as ETH in this strategy contract.
+    /// Withdrawals from validators also accumulate as ETH in this strategy contract.
+    /// It's too complex to separate the rewards from withdrawals so this function is not implemented.
+    /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can now regulate
+    /// the increase in assets.
+    function _collectRewardTokens() internal pure override {
+        revert UnsupportedFunction();
     }
 }

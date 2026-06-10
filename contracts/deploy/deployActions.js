@@ -237,6 +237,30 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
   );
 
+  const cStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    strategyProxy.address
+  );
+  const initialDepositAmountWei = await cStrategy.initialDepositAmountWei();
+  if (initialDepositAmountWei.eq(0)) {
+    const defaultInitialDepositAmount = ethers.utils.parseEther("1");
+
+    console.log(
+      `Setting default initial deposit amount to ${defaultInitialDepositAmount.toString()} wei`
+    );
+    await withConfirmation(
+      cStrategy
+        .connect(sDeployer)
+        .setInitialDepositAmount(defaultInitialDepositAmount)
+    );
+  }
+
+  const updatedInitialDepositAmountWei =
+    await cStrategy.initialDepositAmountWei();
+  if (updatedInitialDepositAmountWei.eq(0)) {
+    throw new Error("initialDepositAmountWei must be set after upgrade");
+  }
+
   console.log(
     `Upgraded CompoundingStakingSSVStrategyProxy to implementation at ${dStrategyImpl.address}`
   );
