@@ -73,7 +73,7 @@ const parseRemovedCluster = (ssvNetwork, receipt) => {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "197_remove_old_compounding_ssv_strategy",
+    deployName: "200_remove_old_compounding_ssv_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,

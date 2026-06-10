@@ -105,7 +105,11 @@ const crossChainHyperEVMFixture = deployments.createFixture(async () => {
     addresses.CCTPTokenMessengerV2
   );
 
-  const relayer = await impersonateAndFund(addresses.hyperevm.OZRelayerAddress);
+  // The cross-chain operator is re-pointed during the Talos signer migration
+  // (deploy 003), so read it from the strategy instead of hardcoding a relayer.
+  const relayer = await impersonateAndFund(
+    await fixture.crossChainRemoteStrategy.operator()
+  );
 
   return {
     ...fixture,
