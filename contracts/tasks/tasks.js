@@ -2057,6 +2057,12 @@ subtask(
     "new",
     types.string
   )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2383,6 +2389,12 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await autoValidatorDeposits({ ...taskArgs, signer });
@@ -2416,6 +2428,12 @@ subtask(
   .addOptionalParam(
     "consol",
     "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
@@ -2479,6 +2497,12 @@ subtask(
   .addParam(
     "dryrun",
     "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
@@ -2587,6 +2611,12 @@ subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
   .setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2604,6 +2634,12 @@ subtask("snapStakingStrat", "Dumps the staking strategy's data")
     "Withdrawal buffer in basis points. 100 = 1%",
     100,
     types.int
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
   )
   .setAction(snapStakingStrategy);
 task("snapStakingStrat").setAction(async (_, __, runSuper) => {
