@@ -34,7 +34,28 @@ const {
 
 const log = require("../utils/logger")("task:validator:compounding");
 
+const VALIDATOR_STATE_NON_REGISTERED = 0;
 const VALIDATOR_STATE_REGISTERED = 1;
+
+const resolveCompoundingStakingContract = async (ssv = false) => {
+  if (ssv) {
+    return {
+      creatingDepositState: VALIDATOR_STATE_REGISTERED,
+      strategy: await resolveContract(
+        "CompoundingStakingSSVStrategyProxy",
+        "CompoundingStakingSSVStrategy"
+      ),
+    };
+  }
+
+  return {
+    creatingDepositState: VALIDATOR_STATE_NON_REGISTERED,
+    strategy: await resolveContract(
+      "CompoundingStakingStrategyProxy",
+      "CompoundingStakingStrategy"
+    ),
+  };
+};
 
 async function snapBalances({ consol = false }) {
   const signer = await getSigner();
@@ -151,6 +172,7 @@ async function stakeValidator({
   forkVersion,
   uuid,
   consol = false,
+  ssv = false,
 }) {
   const signer = await getSigner();
 
@@ -171,23 +193,25 @@ async function stakeValidator({
     forkVersion = _forkVersion;
   }
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const { creatingDepositState, strategy: depositStrategy } =
+    await resolveCompoundingStakingContract(ssv);
   const contract = consol
     ? await resolveContract("ConsolidationController")
-    : strategy;
+    : depositStrategy;
 
   if (!withdrawalCredentials) {
-    withdrawalCredentials = calcWithdrawalCredential("0x02", strategy.address);
+    withdrawalCredentials = calcWithdrawalCredential(
+      "0x02",
+      depositStrategy.address
+    );
   }
 
   const amountWei = parseUnits(amount.toString(), 18);
-  const initialDepositAmountWei = await strategy.initialDepositAmountWei();
-  const validator = await strategy.validator(hashPubKey(pubkey));
+  const initialDepositAmountWei =
+    await depositStrategy.initialDepositAmountWei();
+  const validator = await depositStrategy.validator(hashPubKey(pubkey));
   const isCreatingDeposit = BigNumber.from(validator.state).eq(
-    VALIDATOR_STATE_REGISTERED
+    creatingDepositState
   );
 
   if (isCreatingDeposit) {
@@ -217,7 +241,7 @@ async function stakeValidator({
   }
 
   const depositDataRoot = await calcDepositRoot(
-    strategy.address,
+    depositStrategy.address,
     "0x02",
     pubkey,
     sig,

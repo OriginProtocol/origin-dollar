@@ -2506,6 +2506,12 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
   .setAction(stakeValidator);
 task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2554,6 +2560,12 @@ subtask(
   .addOptionalParam(
     "consol",
     "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
