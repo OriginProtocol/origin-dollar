@@ -8,6 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
+    proposalId:
+      "55149588480475704640413581109675286581268845132982506029176791058168828530414",
   },
   async ({ deployWithConfirmation, ethers, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
