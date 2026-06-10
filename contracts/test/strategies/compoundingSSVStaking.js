@@ -1082,7 +1082,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             emptyCluster,
             { value: ethUnits("2") }
           )
-      ).to.be.revertedWithCustomError("NotRegisteredOrVerified()");
+      ).to.be.revertedWithCustomError("AlreadyRegistered()");
     });
 
     it("Should revert when re-registering a removed validator", async () => {
@@ -1127,7 +1127,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             emptyCluster,
             { value: ethUnits("2") }
           )
-      ).to.be.revertedWithCustomError("NotRegisteredOrVerified()");
+      ).to.be.revertedWithCustomError("AlreadyRegistered()");
     });
 
     it("Should revert when staking because of insufficient ETH balance", async () => {

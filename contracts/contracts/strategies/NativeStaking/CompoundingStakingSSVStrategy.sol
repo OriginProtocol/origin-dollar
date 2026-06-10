@@ -15,6 +15,7 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
     uint256[50] private __gap;
 
     error CannotRemoveSsvValidator(); // 0x2c45bd75
+    error AlreadyRegistered(); // 0x3a81d6fc
     error NotRegisteredOrVerified(); // 0x99088a6b
 
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
@@ -69,7 +70,7 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
         bytes32 pubKeyHash = _hashPubKey(publicKey);
 
         if (validator[pubKeyHash].state != ValidatorState.NON_REGISTERED) {
-            revert NotRegisteredOrVerified();
+            revert AlreadyRegistered();
         }
 
         // Store the validator state as registered
