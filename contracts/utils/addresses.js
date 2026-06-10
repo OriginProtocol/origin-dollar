@@ -336,6 +336,9 @@ addresses.mainnet.NativeStakingSSVStrategy3Proxy =
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
+// Talos Relayer
+addresses.mainnet.talosRelayer = "0x739212d5bAfE6AAC8Be49a60B7d003bD41DBf38b";
+
 // Lido Withdrawal Queue
 addresses.mainnet.LidoWithdrawalQueue =
   "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";

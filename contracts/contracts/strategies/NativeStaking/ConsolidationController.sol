@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { CompoundingStakingSSVStrategy, CompoundingValidatorManager } from "./CompoundingStakingSSVStrategy.sol";
+import { CompoundingStakingStrategy, CompoundingValidatorStorage } from "./CompoundingStakingStrategy.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
+import { ValidatorStakeData } from "./ValidatorRegistrator.sol";
 import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
 /// @title Consolidation Controller
-/// @notice Orchestrates the consolidation of validators from old Native Staking Strategies
+/// @notice Orchestrates the consolidation of validators from the old Native Staking Strategy
 /// to the new Compounding Staking Strategy.
 /// @author Origin Protocol Inc
 contract ConsolidationController is Ownable {
@@ -25,10 +26,10 @@ contract ConsolidationController is Ownable {
     address public immutable validatorRegistrator;
     /// @dev The old Native Staking Strategy connected to the second SSV cluster
     address internal immutable nativeStakingStrategy2;
-    /// @dev The old Native Staking Strategy connected to the third SSV cluster
-    address internal immutable nativeStakingStrategy3;
+    /// @dev The old Compounding Staking SSV Strategy connected to the SSV cluster being removed
+    address internal immutable compoundingStakingSsvStrategy;
     /// @dev The new Compounding Staking Strategy
-    CompoundingStakingSSVStrategy internal immutable targetStrategy;
+    CompoundingStakingStrategy internal immutable targetStrategy;
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
@@ -57,17 +58,15 @@ contract ConsolidationController is Ownable {
         address _owner,
         address _validatorRegistrator,
         address _nativeStakingStrategy2,
-        address _nativeStakingStrategy3,
+        address _compoundingStakingSsvStrategy,
         address _targetStrategy
     ) {
         _transferOwnership(_owner);
 
         validatorRegistrator = _validatorRegistrator;
         nativeStakingStrategy2 = _nativeStakingStrategy2;
-        nativeStakingStrategy3 = _nativeStakingStrategy3;
-        targetStrategy = CompoundingStakingSSVStrategy(
-            payable(_targetStrategy)
-        );
+        compoundingStakingSsvStrategy = _compoundingStakingSsvStrategy;
+        targetStrategy = CompoundingStakingStrategy(payable(_targetStrategy));
     }
 
     /**
@@ -91,10 +90,10 @@ contract ConsolidationController is Ownable {
 
         // Check target validator is Active on the new Compounding Staking Strategy
         bytes32 targetPubKeyHashMem = _hashPubKey(targetPubKey);
-        (CompoundingStakingSSVStrategy.ValidatorState state, ) = targetStrategy
+        (CompoundingValidatorStorage.ValidatorState state, ) = targetStrategy
             .validator(targetPubKeyHashMem);
         require(
-            state == CompoundingValidatorManager.ValidatorState.ACTIVE,
+            state == CompoundingValidatorStorage.ValidatorState.ACTIVE,
             "Target validator not active"
         );
         // Check no pending deposits in the new target validator
@@ -218,8 +217,8 @@ contract ConsolidationController is Ownable {
      *    These are 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
      */
     function confirmConsolidation(
-        CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
+        CompoundingStakingStrategy.BalanceProofs calldata balanceProofs,
+        CompoundingStakingStrategy.PendingDepositProofs
             calldata pendingDepositProofs
     ) external onlyOwner {
         // Check consolidations are in progress
@@ -275,6 +274,46 @@ contract ConsolidationController is Ownable {
     }
 
     /**
+     * @notice Register validators in the source Native Staking Strategy SSV cluster.
+     * Only callable by the validator registrator.
+     * @param _sourceStrategy The address of the old Native Staking Strategy
+     * @param publicKeys The public keys of the validators
+     * @param operatorIds The operator IDs of the SSV Cluster
+     * @param sharesData The shares data for each validator
+     * @param cluster The SSV cluster information for the source validators
+     */
+    function registerSsvValidators(
+        address _sourceStrategy,
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds,
+        bytes[] calldata sharesData,
+        Cluster calldata cluster
+    ) external payable onlyRegistrator {
+        // Check sourceStrategy is a valid old Native Staking Strategy
+        _checkSourceStrategy(_sourceStrategy);
+
+        ValidatorAccountant(_sourceStrategy).registerSsvValidators{
+            value: msg.value
+        }(publicKeys, operatorIds, sharesData, cluster);
+    }
+
+    /**
+     * @notice Stake ETH to registered source Native Staking Strategy validators.
+     * Only callable by the validator registrator.
+     * @param _sourceStrategy The address of the old Native Staking Strategy
+     * @param validators A list of validator data needed to stake.
+     */
+    function stakeEth(
+        address _sourceStrategy,
+        ValidatorStakeData[] calldata validators
+    ) external onlyRegistrator {
+        // Check sourceStrategy is a valid old Native Staking Strategy
+        _checkSourceStrategy(_sourceStrategy);
+
+        ValidatorAccountant(_sourceStrategy).stakeEth(validators);
+    }
+
+    /**
      * @notice Exit of source validators are allowed during the consolidation process
      * as consolidated validators will be in EXITING state hence can not be consolidated after exit.
      * Only callable by the validator registrator.
@@ -297,11 +336,13 @@ contract ConsolidationController is Ownable {
     }
 
     /**
-     * @notice Removing source validators is not allowed during the consolidation process
-     * as consolidated validators will be in EXITING state hence can not be consolidated after removal.
+     * @notice Removes a validator from an old staking strategy's SSV cluster.
+     * @dev Removing validators from the native source strategy is not allowed while
+     * that strategy is being consolidated, as consolidated validators are in EXITING
+     * state and can not be consolidated after removal.
      * Only callable by the validator registrator.
-     * @param _sourceStrategy The address of the old Native Staking Strategy
-     * @param publicKey The public key of the validator to remove which must have EXITING or REGISTERED state.
+     * @param _sourceStrategy The address of the old Native Staking Strategy or old Compounding Staking SSV Strategy
+     * @param publicKey The public key of the validator to remove
      * @param operatorIds The operator IDs for the source SSV cluster
      * @param cluster The SSV cluster information for the source validator
      */
@@ -311,8 +352,12 @@ contract ConsolidationController is Ownable {
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external onlyRegistrator {
-        // Check sourceStrategy is a valid old Native Staking Strategy
-        _checkSourceStrategy(_sourceStrategy);
+        // Check sourceStrategy is a valid old staking strategy
+        require(
+            _sourceStrategy == nativeStakingStrategy2 ||
+                _sourceStrategy == compoundingStakingSsvStrategy,
+            "Invalid source strategy"
+        );
         // Prevent removing a validator from the SSV cluster before the consolidation
         // process has been completed for the source strategy being consolidated.
         // This prevents validators that have been exited rather than consolidated but that's ok.
@@ -372,8 +417,8 @@ contract ConsolidationController is Ownable {
      *    These are 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
      */
     function verifyBalances(
-        CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
+        CompoundingStakingStrategy.BalanceProofs calldata balanceProofs,
+        CompoundingStakingStrategy.PendingDepositProofs
             calldata pendingDepositProofs
     ) external {
         (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
@@ -422,7 +467,7 @@ contract ConsolidationController is Ownable {
      * @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
      */
     function stakeEth(
-        CompoundingValidatorManager.ValidatorStakeData
+        CompoundingStakingStrategy.ValidatorStakeData
             calldata validatorStakeData,
         uint64 depositAmountGwei
     ) external onlyRegistrator {
@@ -434,10 +479,6 @@ contract ConsolidationController is Ownable {
         targetStrategy.stakeEth(validatorStakeData, depositAmountGwei);
     }
 
-    /// removeSsvValidator from the new Compounding Staking Strategy is not allowed until after
-    /// all the validators have been consolidated. This is done by restoring the validator registrator
-    /// back to the account used before the consolidation upgrades.
-
     /**
      *
      *      Internal Functions
@@ -445,7 +486,7 @@ contract ConsolidationController is Ownable {
      */
 
     /// @dev Check if there are any pending deposits for a validator with a given public key hash.
-    /// Need to iterate over the target strategy’s `deposits`
+    /// Need to iterate over the target strategy's `deposits`
     /// @return True if there is at least one pending deposit for the validator
     function _hasPendingDeposit(bytes32 _targetPubKeyHash)
         internal
@@ -459,11 +500,11 @@ contract ConsolidationController is Ownable {
                 ,
                 ,
                 ,
-                CompoundingValidatorManager.DepositStatus status
+                CompoundingValidatorStorage.DepositStatus status
             ) = targetStrategy.deposits(targetStrategy.depositList(i));
             if (
                 depositPubKeyHash == _targetPubKeyHash &&
-                status == CompoundingValidatorManager.DepositStatus.PENDING
+                status == CompoundingValidatorStorage.DepositStatus.PENDING
             ) {
                 return true;
             }
@@ -491,8 +532,7 @@ contract ConsolidationController is Ownable {
     /// @param _sourceStrategy The address of the old Native Staking Strategy
     function _checkSourceStrategy(address _sourceStrategy) internal view {
         require(
-            _sourceStrategy == nativeStakingStrategy2 ||
-                _sourceStrategy == nativeStakingStrategy3,
+            _sourceStrategy == nativeStakingStrategy2,
             "Invalid source strategy"
         );
     }

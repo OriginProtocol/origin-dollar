@@ -98,7 +98,7 @@ return ETH
 compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
-32 ETH from Staking Strategy is sent to Beacon Deposit.
+1 ETH from Staking Strategy is sent to Beacon Deposit.
 Withdrawal credential is the Staking Strategy.
 end note
 return

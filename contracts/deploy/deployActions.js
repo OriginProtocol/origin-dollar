@@ -237,6 +237,30 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
   );
 
+  const cStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    strategyProxy.address
+  );
+  const initialDepositAmountWei = await cStrategy.initialDepositAmountWei();
+  if (initialDepositAmountWei.eq(0)) {
+    const defaultInitialDepositAmount = ethers.utils.parseEther("1");
+
+    console.log(
+      `Setting default initial deposit amount to ${defaultInitialDepositAmount.toString()} wei`
+    );
+    await withConfirmation(
+      cStrategy
+        .connect(sDeployer)
+        .setInitialDepositAmount(defaultInitialDepositAmount)
+    );
+  }
+
+  const updatedInitialDepositAmountWei =
+    await cStrategy.initialDepositAmountWei();
+  if (updatedInitialDepositAmountWei.eq(0)) {
+    throw new Error("initialDepositAmountWei must be set after upgrade");
+  }
+
   console.log(
     `Upgraded CompoundingStakingSSVStrategyProxy to implementation at ${dStrategyImpl.address}`
   );
@@ -459,7 +483,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
 
   log("Deploy encode initialize function of the strategy contract");
   const initData = cStrategyImpl.interface.encodeFunctionData(
-    "initialize(address[],address[],address[])",
+    "initialize(address[],address[],address[],uint256)",
     [
       [], // reward token addresses
       /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
@@ -467,6 +491,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
        */
       [], // asset token addresses
       [], // platform tokens addresses
+      ethers.utils.parseEther("1"), // initial validator deposit amount
     ]
   );
 
