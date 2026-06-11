@@ -144,6 +144,10 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   isHyperEVMUnitTest
 ) {
   paths.deploy = "deploy/hyperevm";
+} else if (isSepolia || isSepoliaFork || isSepoliaForkTest) {
+  paths.deploy = "deploy/sepolia";
+} else if (isBaseSepolia || isBaseSepoliaFork || isBaseSepoliaForkTest) {
+  paths.deploy = "deploy/baseSepolia";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -169,6 +173,10 @@ const getDeployTags = () => {
     return ["plume"];
   } else if (isHyperEVMFork) {
     return ["hyperevm"];
+  } else if (isSepoliaFork) {
+    return ["sepolia"];
+  } else if (isBaseSepoliaFork) {
+    return ["baseSepolia"];
   }
 
   return undefined;
