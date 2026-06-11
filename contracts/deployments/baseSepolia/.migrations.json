@@ -2,5 +2,6 @@
   "baseSepolia_001_mock_oethb": 1781194334,
   "baseSepolia_002_master_strategy": 1781194434,
   "baseSepolia_003_adapters": 1781194960,
-  "baseSepolia_004_wire_master": 1781194984
+  "baseSepolia_004_wire_master": 1781194984,
+  "baseSepolia_005_redeploy_mock_vault": 1781206210
 }
