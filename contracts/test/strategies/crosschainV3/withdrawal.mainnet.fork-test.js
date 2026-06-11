@@ -6,7 +6,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const addresses = require("../../../utils/addresses");
 const { getCreate2ProxyAddress } = require("../../../deploy/deployActions");
 
-const { MSG } = require("./_helpers");
+const { MSG, encodePackedEnvelope } = require("./_helpers");
 
 const mainnetFixture = createFixtureLoader(defaultFixture);
 
@@ -90,24 +90,29 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
     await remote.connect(sTimelock).setOutboundAdapter(mockOut.address);
 
-    // The fork test bypasses the inbound adapter — it calls receiveFromBridge
-    // directly via the impersonated adapter signer below, so we don't need to
-    // construct a wire envelope here.
+    // The fork test bypasses the inbound adapter — it calls receiveMessage
+    // directly via the impersonated adapter signer below, wrapping the
+    // single-uint256 body in the strategy envelope.
 
     const totalBefore = await remote.checkBalance(addresses.mainnet.WETH);
     const sharesBefore = await woeth.balanceOf(remote.address);
     expect(sharesBefore).to.be.gt(0);
 
     // The receiver adapter delivers it.
-    await sAdapter.sendTransaction({
-      to: remote.address,
-      data: remote.interface.encodeFunctionData("receiveFromBridge", [
-        1,
+    const envelope = encodePackedEnvelope(
+      MSG.WITHDRAW_REQUEST,
+      1,
+      encodeAmountPayload(WITHDRAW_AMOUNT)
+    );
+    await remote
+      .connect(sAdapter)
+      .receiveMessage(
+        remote.address,
+        ethers.constants.AddressZero,
         0,
-        MSG.WITHDRAW_REQUEST,
-        encodeAmountPayload(WITHDRAW_AMOUNT),
-      ]),
-    });
+        0,
+        envelope
+      );
 
     // wOETH shares should have been unwrapped.
     expect(await woeth.balanceOf(remote.address)).to.be.lt(sharesBefore);
@@ -137,15 +142,20 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     await remote.connect(sTimelock).setOutboundAdapter(mockOut.address);
 
     // Leg 1.
-    await sAdapter.sendTransaction({
-      to: remote.address,
-      data: remote.interface.encodeFunctionData("receiveFromBridge", [
-        1,
+    const envelope = encodePackedEnvelope(
+      MSG.WITHDRAW_REQUEST,
+      1,
+      encodeAmountPayload(WITHDRAW_AMOUNT)
+    );
+    await remote
+      .connect(sAdapter)
+      .receiveMessage(
+        remote.address,
+        ethers.constants.AddressZero,
         0,
-        MSG.WITHDRAW_REQUEST,
-        encodeAmountPayload(WITHDRAW_AMOUNT),
-      ]),
-    });
+        0,
+        envelope
+      );
     const requestId = await remote.outstandingRequestId();
     expect(requestId).to.be.gt(0);
 
@@ -188,15 +198,20 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
     await remote.connect(sTimelock).setOutboundAdapter(mockOut.address);
 
-    await sAdapter.sendTransaction({
-      to: remote.address,
-      data: remote.interface.encodeFunctionData("receiveFromBridge", [
-        1,
+    const envelope = encodePackedEnvelope(
+      MSG.WITHDRAW_REQUEST,
+      1,
+      encodeAmountPayload(WITHDRAW_AMOUNT)
+    );
+    await remote
+      .connect(sAdapter)
+      .receiveMessage(
+        remote.address,
+        ethers.constants.AddressZero,
         0,
-        MSG.WITHDRAW_REQUEST,
-        encodeAmountPayload(WITHDRAW_AMOUNT),
-      ]),
-    });
+        0,
+        envelope
+      );
     await time.increase(86400);
 
     await remote.claimRemoteWithdrawal();

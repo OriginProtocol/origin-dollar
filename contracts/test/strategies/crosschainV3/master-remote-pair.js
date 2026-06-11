@@ -153,7 +153,7 @@ describe("Unit: V3 Master+Remote loopback", function () {
     //   - Master's tokens flowed: master → adapterME → remote
     //   - Remote minted OToken via ethVault, wrapped to wOToken
     //   - Remote sent DEPOSIT_ACK back via adapterRM
-    //   - adapterRM called master.receiveFromBridge with the ack
+    //   - adapterRM called master.receiveMessage with the ack
     //   - Master cleared pendingAmount and set remoteStrategyBalance = newBalance
 
     expect(await master.pendingAmount()).to.equal(0);

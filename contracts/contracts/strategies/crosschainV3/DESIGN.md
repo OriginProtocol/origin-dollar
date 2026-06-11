@@ -374,15 +374,7 @@ only: settlement cadence (6-12h target) bounds the magnitude. **Action item:**
 formal operator runbook (pending list item #7 in README) should document the
 alert threshold and recovery procedure.
 
-### 4.6 `withdrawal.mainnet.fork-test.js` still calls `receiveFromBridge`
-
-Three sites in this file (lines 104, 142, 193) still use the renamed
-`receiveFromBridge` API. **Not fixed in this PR per scope decision** — the
-mainnet fork test wasn't flagged as failing on the recent CI run, but the
-calls will break when the test runs. Fix is mechanical, same pattern as
-`master-v3.base.fork-test.js`.
-
-### 4.7 9-batch Phase 1 migration pacing
+### 4.6 9-batch Phase 1 migration pacing
 
 OETHb Phase 1 migrates 8.7k wOETH from the existing `BridgedWOETHStrategy` to
 the new Master/Remote pair via 9 × `bridgeToRemote(1000e18)`. **CCIP rate
@@ -390,14 +382,14 @@ limits this to ~1000 WETH/hour**, so the migration takes ~9 hours. No
 deposits / withdrawals on the new pair during this window — the
 `bridgeAdjustment` accumulates and is settled at the end.
 
-### 4.8 Cleanup script (`104`) is gated by `forceSkip`
+### 4.7 Cleanup script (`104`) is gated by `forceSkip`
 
 `deploy/base/104_oethb_v3_remove_old_strategy.js` has `forceSkip: true` so
 it never auto-fires. **The operator must manually flip this to `false`**
 after the 9-batch migration completes and `BridgedWOETHStrategy.checkBalance`
 is at dust.
 
-### 4.9 Adapter `maxTransferAmount` is a per-tx cap, not a per-hour rate
+### 4.8 Adapter `maxTransferAmount` is a per-tx cap, not a per-hour rate
 
 The CCIP lane has a per-hour rate limit on Chainlink's side (~1000 WETH/h
 on the OETHb pair). The adapter's `maxTransferAmount` caps each
@@ -407,14 +399,14 @@ time-window?** Adds state + complexity for no real protection — Chainlink
 enforces the rate limit on its end anyway, so a contract-side mirror
 is redundant defense.
 
-### 4.10 No refund on user-paid overpayment
+### 4.9 No refund on user-paid overpayment
 
 `bridgeOTokenToPeer` accepts any `msg.value >= fee`. Excess stays on the
 adapter as donation. **Recovery:** `transferToken(address(0), amount)`
 (governor only). UI / front-end should call `quoteFee` first to avoid
 donations; if it doesn't, the user loses the difference.
 
-### 4.11 `lastBalanceCheckTimestamp` is per-Master
+### 4.10 `lastBalanceCheckTimestamp` is per-Master
 
 The timestamp guard on balance-check responses is local state on Master. If
 Master is upgraded (impl swap) and the storage layout changes, the timestamp
@@ -438,7 +430,6 @@ pending list. Top of mind for the next PR:
    (prop 2).
 6. Operator runbook (cadences, failure modes, alert thresholds).
 7. OUSD V3 spoke deploys (per spoke chain).
-8. Fix `withdrawal.mainnet.fork-test.js` `receiveFromBridge` (4.6).
 
 ---
 

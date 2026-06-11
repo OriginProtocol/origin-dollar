@@ -81,7 +81,13 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
 
     await master
       .connect(sAdapter)
-      .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope);
+      .receiveMessage(
+        master.address,
+        ethers.constants.AddressZero,
+        0,
+        0,
+        envelope
+      );
 
     expect(await oethb.balanceOf(recipient)).to.equal(
       balanceBefore.add(amount)
@@ -153,11 +159,23 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
     const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, body);
     await master
       .connect(sAdapter)
-      .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope);
+      .receiveMessage(
+        master.address,
+        ethers.constants.AddressZero,
+        0,
+        0,
+        envelope
+      );
     await expect(
       master
         .connect(sAdapter)
-        .receiveMessage(master.address, ethers.constants.AddressZero, 0, 0, envelope)
+        .receiveMessage(
+          master.address,
+          ethers.constants.AddressZero,
+          0,
+          0,
+          envelope
+        )
     ).to.be.revertedWith("WOT: bridgeId replayed");
   });
 });
