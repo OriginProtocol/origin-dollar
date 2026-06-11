@@ -98,13 +98,17 @@ details block, and a confidence (High/Med/Low). Absence of evidence is ⚠️/�
   (nothing to check); ❌ args differ (show the diff).
 
 **5 — Governance proposal matches the deploy script**
-- `npx hardhat proposal --id <proposalId> --network <net>` prints the on-chain proposal:
-  executed state + `getActions` (targets, signatures, calldatas).
-- Compare against the deploy script's `actions` array: same number of actions, same
-  target addresses (resolve each `action.contract` → address), same `signature` strings,
-  and decode each calldata to confirm the `args` match.
-- ✅ identical; ❌ any divergence in count/target/signature/args (show the unified diff).
-  Also report that `executed == true` for a post-execution PR.
+- Read the on-chain proposal directly via ethers — do NOT use `npx hardhat proposal --id`,
+  it parses the id as a float and overflows on real (77-digit) proposalIds. Use the
+  GovernorSix (`addresses.mainnet.GovernorSix`) ABI with the id as a `BigNumber`:
+  `g.state(id)` and `g.getActions(id) -> (targets, values, signatures, calldatas)`
+  (calldatas are selector-stripped — the signature is a separate string).
+- Build the expected actions from the deploy script's `actions` array: resolve each
+  `action.contract` → target address, keep `signature`, and encode `args` with
+  `defaultAbiCoder.encode(<param types>, args)` to compare against each on-chain calldata.
+- ✅ identical (same count, targets, signatures, calldatas); ❌ any divergence (show it).
+  Report the proposal `state`: `Executed` for a fully-executed deploy; `Pending`/`Active`/
+  `Queued` is normal when reviewing before execution — flag it but it is not a failure.
 
 **6 — Smoke tests after fork execution** — SKIPPED (per project decision). Mark N/A.
 
