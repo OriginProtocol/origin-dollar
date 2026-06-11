@@ -97,5 +97,29 @@
         ],
         "stateMutability": "payable",
         "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "salt",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "initCodeHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "computeCreate2Address",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "computedAddress",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
     }
 ]

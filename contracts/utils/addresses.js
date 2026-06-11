@@ -776,7 +776,7 @@ addresses.sepolia.BaseSepoliaL1StandardBridge =
 // Base Sepolia (Base rollup testnet) — Master side for OETHb V3
 addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
 // Chainlink CCIP V1.6 router on Base Sepolia
-addresses.baseSepolia.CCIPRouter = "0xD3b06cEbF099CE7DA4AccF578aaebFDBd6e88a93";
+addresses.baseSepolia.CCIPRouter = "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93";
 // CCIP chain selector for Base Sepolia
 addresses.baseSepolia.CCIPChainSelector = "10344971235874465080";
 

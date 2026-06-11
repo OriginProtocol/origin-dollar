@@ -37,24 +37,20 @@ module.exports = async (hre) => {
   const encodedSalt = encodeSaltForCreateX(addrForSalt, false, SALT);
 
   const ProxyFactory = await ethers.getContractFactory(
-    "InitializeGovernedUpgradeabilityProxy"
+    "CrossChainStrategyProxy"
   );
   const proxyInitCode = ethers.utils.hexConcat([
     ProxyFactory.bytecode,
-    ProxyFactory.interface.encodeDeploy([]),
+    ProxyFactory.interface.encodeDeploy([deployerAddr]),
   ]);
 
+  // CreateX `_guard` for our "originprotocol" salt prefix (neither msg.sender
+  // nor address(0) for the first 20 bytes) hits the else branch:
+  //   guardedSalt = keccak256(abi.encode(salt)) == keccak256(salt)  (bytes32)
+  const guardedSalt = ethers.utils.keccak256(encodedSalt);
   const predictedProxyAddr = await cCreateX[
     "computeCreate2Address(bytes32,bytes32)"
-  ](
-    ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ["address", "bytes32"],
-        [addresses.createX, encodedSalt]
-      )
-    ),
-    ethers.utils.keccak256(proxyInitCode)
-  );
+  ](guardedSalt, ethers.utils.keccak256(proxyInitCode));
   console.log(`Predicted proxy address: ${predictedProxyAddr}`);
 
   const proxyCode = await ethers.provider.getCode(predictedProxyAddr);
