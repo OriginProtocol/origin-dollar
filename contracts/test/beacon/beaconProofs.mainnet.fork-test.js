@@ -18,6 +18,12 @@ const log = require("../../utils/logger")("test:fork:beacon:oracle");
 
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
+const activeValidatorIndex = 1938267;
+const activeValidatorWithdrawalCredential =
+  "0x02000000000000000000000084750fc0837b32afdde943051b2634d05ced8e15";
+const exitedValidatorIndex = 1998612;
+const exitedValidatorWithdrawableEpoch = 384221;
+
 describe("ForkTest: Beacon Proofs", function () {
   this.timeout(0);
 
@@ -44,28 +50,23 @@ describe("ForkTest: Beacon Proofs", function () {
   it("Should verify validator public key", async () => {
     const { beaconProofs } = fixture;
 
-    const validatorIndex = 1804300;
-
     const { proof, leaf, pubKey } = await generateValidatorPubKeyProof({
       blockView,
       blockTree,
       stateView,
-      validatorIndex,
+      validatorIndex: activeValidatorIndex,
     });
 
     const pubKeyHash = hashPubKey(pubKey);
     expect(pubKeyHash).to.eq(leaf);
-
-    const withdrawalCredential =
-      "0x020000000000000000000000f80432285c9d2055449330bbd7686a5ecf2a7247";
 
     log(`About to verify validator public key`);
     await beaconProofs.verifyValidator(
       beaconBlockRoot,
       pubKeyHash,
       proof,
-      validatorIndex,
-      withdrawalCredential
+      activeValidatorIndex,
+      activeValidatorWithdrawalCredential
     );
   });
 
@@ -92,20 +93,16 @@ describe("ForkTest: Beacon Proofs", function () {
   }
 
   it("Should verify validator withdrawable epoch that is not exiting", async () => {
-    const validatorIndex = 1804301;
-
     const withdrawableEpoch = await assertValidatorWithdrawableEpoch(
-      validatorIndex
+      activeValidatorIndex
     );
     expect(withdrawableEpoch).to.equal(MAX_UINT64);
   });
   it("Should verify validator withdrawable epoch that has exited", async () => {
-    const validatorIndex = 1804300;
-
     const withdrawableEpoch = await assertValidatorWithdrawableEpoch(
-      validatorIndex
+      exitedValidatorIndex
     );
-    expect(withdrawableEpoch).to.equal(380333);
+    expect(withdrawableEpoch).to.equal(exitedValidatorWithdrawableEpoch);
   });
 
   it("Should verify balances container", async () => {
@@ -124,13 +121,11 @@ describe("ForkTest: Beacon Proofs", function () {
   it("Should verify validator balance in balances container", async () => {
     const { beaconProofs } = fixture;
 
-    const validatorIndex = 1804300;
-
     const { proof, leaf, root } = await generateBalanceProof({
       blockView,
       blockTree,
       stateView,
-      validatorIndex,
+      validatorIndex: activeValidatorIndex,
     });
 
     log(`About to verify validator balance in balances container`);
@@ -138,7 +133,7 @@ describe("ForkTest: Beacon Proofs", function () {
       root,
       leaf,
       proof,
-      validatorIndex
+      activeValidatorIndex
     );
   });
 

@@ -37,9 +37,3 @@
 ### Storage
 
 ![Compounding Staking Strategy Storage](../../../docs/CompoundingStakingSSVStrategyStorage.svg)
-
-## Consolidation Controller
-
-### Squashed
-
-![Consolidation Controller Squashed](../../../docs/ConsolidationControllerSquashed.svg)
