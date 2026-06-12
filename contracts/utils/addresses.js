@@ -775,6 +775,11 @@ addresses.sepolia.BaseSepoliaL1StandardBridge =
 // Chainlink CCIP-BnM testnet token (burn-and-mint). Whitelisted on every CCIP
 // testnet lane. Public drip() faucet returns 1e18 per call (rate-limited).
 addresses.sepolia.CCIPBnM = "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05";
+// Circle's official testnet USDC on Sepolia. Used by CCTPAdapter for OUSD V3.
+// Users get balances from Circle's faucet at https://faucet.circle.com
+addresses.sepolia.USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+// CCTP V2 domain id for Sepolia (same as Ethereum mainnet domain).
+addresses.sepolia.CCTPDomainId = 0;
 
 // Base Sepolia (Base rollup testnet) — Master side for OETHb V3
 addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
@@ -784,5 +789,9 @@ addresses.baseSepolia.CCIPRouter = "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93";
 addresses.baseSepolia.CCIPChainSelector = "10344971235874465080";
 // Chainlink CCIP-BnM testnet token on Base Sepolia
 addresses.baseSepolia.CCIPBnM = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e";
+// Circle's official testnet USDC on Base Sepolia.
+addresses.baseSepolia.USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+// CCTP V2 domain id for Base Sepolia (same as Base mainnet domain).
+addresses.baseSepolia.CCTPDomainId = 6;
 
 module.exports = addresses;

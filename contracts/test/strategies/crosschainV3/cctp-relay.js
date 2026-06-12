@@ -14,8 +14,7 @@ describe("Unit: CCTPAdapter relay", function () {
   let governor, operator, stranger;
   let usdc, tokenMessenger, messageTransmitter, adapter, strategy;
 
-  // Source-chain CCTP V2 domain; arbitrary non-zero for tests (AbstractAdapter rejects
-  // chainSelector=0 at authorise time).
+  // Source-chain CCTP V2 domain — arbitrary value for these tests.
   const SOURCE_DOMAIN = 6;
   const DEST_GAS_LIMIT = 500000;
 

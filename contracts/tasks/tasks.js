@@ -2796,3 +2796,4 @@ task("consolFee").setAction(async (_, __, runSuper) => {
 
 // V3 testnet operator tasks (Sepolia ⇄ Base Sepolia)
 require("./testnet-v3");
+require("./testnet-v3-ousd");

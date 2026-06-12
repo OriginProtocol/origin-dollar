@@ -122,6 +122,23 @@ task(
 // --- Flow 1: Yield channel --------------------------------------------------
 
 task(
+  "tn:fund-pool",
+  "Top up the strategy's ETH op-pool (used to pay CCIP fees on outbound msgs)"
+)
+  .addParam("amount", "ETH amount in ether units (e.g. 0.02)")
+  .setAction(async ({ amount }, hre) => {
+    const { ethers } = hre;
+    const signer = await getSigner(hre);
+    const amt = ethers.utils.parseEther(amount);
+    const target = (await hre.deployments.get(strategyName(hre))).address;
+    console.log(`Sending ${fmt(amt)} ETH → ${strategyName(hre)} ${target}...`);
+    const tx = await signer.sendTransaction({ to: target, value: amt });
+    const rcpt = await tx.wait();
+    console.log(`  ${explorerUrl(hre, rcpt.transactionHash)}`);
+    console.log(`Op-pool now: ${fmt(await ethers.provider.getBalance(target))}`);
+  });
+
+task(
   "tn:fund-master",
   "Drip BnM if short, transfer BnM to Master proxy. Prereq for tn:deposit."
 )
@@ -205,6 +222,26 @@ task(
     );
     console.log(`Track CCIP: ${CCIP_EXPLORER}${rcpt.transactionHash}`);
   });
+
+task(
+  "tn:trigger-claim",
+  "Master.triggerClaim() — leg 2 of withdraw; tells Remote to claim queue and bridge BnM back"
+).setAction(async (_, hre) => {
+  requireNetwork(hre, "baseSepolia");
+  const { ethers } = hre;
+  const signer = await getSigner(hre);
+  const masterAddr = (await hre.deployments.get("MasterWOTokenStrategyProxy"))
+    .address;
+  const master = await ethers.getContractAt(
+    "MasterWOTokenStrategy",
+    masterAddr,
+    signer
+  );
+  const tx = await master.triggerClaim();
+  const rcpt = await tx.wait();
+  console.log(`triggerClaim fired. ${explorerUrl(hre, rcpt.transactionHash)}`);
+  console.log(`Track CCIP: ${CCIP_EXPLORER}${rcpt.transactionHash}`);
+});
 
 task(
   "tn:claim-withdraw",
