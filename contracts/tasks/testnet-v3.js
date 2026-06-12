@@ -2,8 +2,11 @@
  * Testnet V3 operator tasks for Sepolia (Remote / wOETH) ⇄ Base Sepolia (Master / OETHb).
  *
  * Two flows:
- *   - Yield channel: WETH → Master → DEPOSIT message → Remote (mOETH → mWOETH for yield)
+ *   - Yield channel: BnM → Master → DEPOSIT message → Remote (mOETH → mWOETH for yield)
  *   - Bridge channel: OToken → bridgeOTokenToPeer → BRIDGE_OUT / BRIDGE_IN
+ *
+ * bridgeAsset is CCIP-BnM (Chainlink's burn-and-mint testnet token) because CCIP
+ * testnet lanes don't whitelist WETH. Get BnM from the public drip() faucet.
  *
  * All tasks resolve contract addresses via deployments.get(...) and dispatch
  * by hre.network.name. Pass --network sepolia or --network baseSepolia.
@@ -11,9 +14,8 @@
 const { task } = require("hardhat/config");
 const addresses = require("../utils/addresses");
 
-const WETH_ABI = [
-  "function deposit() payable",
-  "function withdraw(uint256)",
+const BNM_ABI = [
+  "function drip(address to) external",
   "function balanceOf(address) view returns (uint256)",
   "function approve(address,uint256) returns (bool)",
   "function transfer(address,uint256) returns (bool)",
@@ -27,6 +29,9 @@ const ERC20_ABI = [
 ];
 
 const CCIP_EXPLORER = "https://ccip.chain.link/#/side-drawer/msg/";
+
+// CCIP-BnM drip() always returns 1e18 per call.
+const BNM_DRIP_UNIT = require("ethers").utils.parseEther("1");
 
 // --- Helpers ---------------------------------------------------------------
 
@@ -42,8 +47,8 @@ const requireNetwork = (hre, expected) => {
 
 const isBase = (hre) => hre.network.name === "baseSepolia";
 
-const wethAddr = (hre) =>
-  isBase(hre) ? addresses.baseSepolia.WETH : addresses.sepolia.WETH;
+const bnmAddr = (hre) =>
+  isBase(hre) ? addresses.baseSepolia.CCIPBnM : addresses.sepolia.CCIPBnM;
 
 const strategyName = (hre) =>
   isBase(hre) ? "MasterWOTokenStrategyProxy" : "RemoteWOTokenStrategyProxy";
@@ -61,41 +66,85 @@ const getSigner = async (hre) => {
   return hre.ethers.provider.getSigner(deployerAddr);
 };
 
-const wrapEthIfShort = async (signer, weth, needed) => {
-  const bal = await weth.balanceOf(await signer.getAddress());
+// Drip BnM until the caller has at least `needed`. drip() gives 1 BnM per call.
+// Faucet has per-address per-day limits — if drip reverts we surface a hint.
+const dripBnmIfShort = async (signer, bnm, needed) => {
+  const me = await signer.getAddress();
+  let bal = await bnm.balanceOf(me);
   if (bal.gte(needed)) return;
   const short = needed.sub(bal);
-  console.log(`  Wrapping ${fmt(short)} ETH → WETH...`);
-  const tx = await weth.deposit({ value: short });
-  await tx.wait();
+  const drips = short.add(BNM_DRIP_UNIT).sub(1).div(BNM_DRIP_UNIT).toNumber();
+  console.log(
+    `  Short ${fmt(short)} BnM — calling drip() ${drips}× (1 BnM per call)`
+  );
+  for (let i = 0; i < drips; i++) {
+    try {
+      const tx = await bnm.drip(me);
+      await tx.wait();
+    } catch (e) {
+      console.log(
+        `  drip() failed on call ${i + 1}/${drips}: ${e.message.split("\n")[0]}`
+      );
+      console.log(
+        "  CCIP-BnM faucet has per-address rate limits. Try again later or use another wallet."
+      );
+      throw e;
+    }
+  }
+  bal = await bnm.balanceOf(me);
+  console.log(`  BnM balance now: ${fmt(bal)}`);
 };
+
+// --- Faucet ---------------------------------------------------------------
+
+task(
+  "tn:get-bnm",
+  "Drip CCIP-BnM to caller. Faucet returns 1 BnM per call; --amount calls N times."
+)
+  .addOptionalParam("amount", "Number of drips (each = 1 BnM)", "1")
+  .setAction(async ({ amount }, hre) => {
+    const { ethers } = hre;
+    const signer = await getSigner(hre);
+    const me = await signer.getAddress();
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    const n = parseInt(amount, 10);
+    console.log(`Dripping ${n} BnM to ${me}...`);
+    for (let i = 0; i < n; i++) {
+      const tx = await bnm.drip(me);
+      const rcpt = await tx.wait();
+      console.log(
+        `  drip ${i + 1}/${n}: ${explorerUrl(hre, rcpt.transactionHash)}`
+      );
+    }
+    console.log(`BnM balance: ${fmt(await bnm.balanceOf(me))}`);
+  });
 
 // --- Flow 1: Yield channel --------------------------------------------------
 
 task(
   "tn:fund-master",
-  "Wrap ETH if short, transfer WETH to Master proxy. Prereq for tn:deposit."
+  "Drip BnM if short, transfer BnM to Master proxy. Prereq for tn:deposit."
 )
-  .addParam("amount", "WETH amount in ether units (e.g. 0.1)")
+  .addParam("amount", "BnM amount in ether units (e.g. 0.1)")
   .setAction(async ({ amount }, hre) => {
     requireNetwork(hre, "baseSepolia");
     const { ethers } = hre;
     const signer = await getSigner(hre);
     const amt = ethers.utils.parseEther(amount);
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
-    await wrapEthIfShort(signer, weth, amt);
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    await dripBnmIfShort(signer, bnm, amt);
     const master = (await hre.deployments.get("MasterWOTokenStrategyProxy"))
       .address;
-    console.log(`Transferring ${fmt(amt)} WETH → Master ${master}...`);
-    const tx = await weth.transfer(master, amt);
+    console.log(`Transferring ${fmt(amt)} BnM → Master ${master}...`);
+    const tx = await bnm.transfer(master, amt);
     const rcpt = await tx.wait();
     console.log(`  ${explorerUrl(hre, rcpt.transactionHash)}`);
-    console.log(`Master WETH balance: ${fmt(await weth.balanceOf(master))}`);
+    console.log(`Master BnM balance: ${fmt(await bnm.balanceOf(master))}`);
   });
 
 task(
   "tn:deposit",
-  "MockOETHbVault.callDeposit(master, weth, amount) → fires Master → Remote DEPOSIT"
+  "MockOETHbVault.callDeposit(master, bnm, amount) → fires Master → Remote DEPOSIT"
 )
   .addParam("amount", "Deposit amount in ether units")
   .setAction(async ({ amount }, hre) => {
@@ -106,11 +155,11 @@ task(
     const masterAddr = (await hre.deployments.get("MasterWOTokenStrategyProxy"))
       .address;
     const vaultAddr = (await hre.deployments.get("MockOETHbVault")).address;
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
-    const masterWeth = await weth.balanceOf(masterAddr);
-    if (masterWeth.lt(amt)) {
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    const masterBnm = await bnm.balanceOf(masterAddr);
+    if (masterBnm.lt(amt)) {
       throw new Error(
-        `Master only has ${fmt(masterWeth)} WETH (need ${fmt(
+        `Master only has ${fmt(masterBnm)} BnM (need ${fmt(
           amt
         )}). Run tn:fund-master first.`
       );
@@ -120,7 +169,7 @@ task(
       vaultAddr,
       signer
     );
-    const tx = await vault.callDeposit(masterAddr, wethAddr(hre), amt);
+    const tx = await vault.callDeposit(masterAddr, bnmAddr(hre), amt);
     const rcpt = await tx.wait();
     console.log(`Deposit triggered. ${explorerUrl(hre, rcpt.transactionHash)}`);
     console.log(`Track CCIP: ${CCIP_EXPLORER}${rcpt.transactionHash}`);
@@ -147,7 +196,7 @@ task(
     const tx = await vault.callWithdraw(
       masterAddr,
       vaultAddr,
-      wethAddr(hre),
+      bnmAddr(hre),
       amt
     );
     const rcpt = await tx.wait();
@@ -222,7 +271,7 @@ task(
 
 task(
   "tn:mint-oethb",
-  "Wrap ETH if short, mint OETHb 1:1 from mock vault (production-like)"
+  "Drip BnM if short, mint OETHb 1:1 from mock vault (production-like)"
 )
   .addParam("amount", "OETHb amount in ether units")
   .setAction(async ({ amount }, hre) => {
@@ -232,13 +281,13 @@ task(
     const me = await signer.getAddress();
     const amt = ethers.utils.parseEther(amount);
     const vaultAddr = (await hre.deployments.get("MockOETHbVault")).address;
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
-    await wrapEthIfShort(signer, weth, amt);
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    await dripBnmIfShort(signer, bnm, amt);
 
-    const allowance = await weth.allowance(me, vaultAddr);
+    const allowance = await bnm.allowance(me, vaultAddr);
     if (allowance.lt(amt)) {
-      console.log(`Approving vault for ${fmt(amt)} WETH...`);
-      const tx = await weth.approve(vaultAddr, amt);
+      console.log(`Approving vault for ${fmt(amt)} BnM...`);
+      const tx = await bnm.approve(vaultAddr, amt);
       await tx.wait();
     }
 
@@ -258,7 +307,7 @@ task(
     console.log(`Your OETHb balance: ${fmt(await oToken.balanceOf(me))}`);
   });
 
-task("tn:redeem-oethb", "Burn OETHb 1:1 from mock vault, get WETH back")
+task("tn:redeem-oethb", "Burn OETHb 1:1 from mock vault, get BnM back")
   .addParam("amount", "OETHb amount to redeem in ether units")
   .setAction(async ({ amount }, hre) => {
     requireNetwork(hre, "baseSepolia");
@@ -277,11 +326,11 @@ task("tn:redeem-oethb", "Burn OETHb 1:1 from mock vault, get WETH back")
     console.log(
       `Redeemed ${fmt(amt)} OETHb. ${explorerUrl(hre, rcpt.transactionHash)}`
     );
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
-    console.log(`Your WETH balance: ${fmt(await weth.balanceOf(me))}`);
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    console.log(`Your BnM balance: ${fmt(await bnm.balanceOf(me))}`);
   });
 
-task("tn:mint-oeth", "Wrap ETH if short, mint mOETH 1:1 on Sepolia")
+task("tn:mint-oeth", "Drip BnM if short, mint mOETH 1:1 on Sepolia")
   .addParam("amount", "mOETH amount in ether units")
   .setAction(async ({ amount }, hre) => {
     requireNetwork(hre, "sepolia");
@@ -290,12 +339,12 @@ task("tn:mint-oeth", "Wrap ETH if short, mint mOETH 1:1 on Sepolia")
     const me = await signer.getAddress();
     const amt = ethers.utils.parseEther(amount);
     const vaultAddr = (await hre.deployments.get("MockOETHVault")).address;
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
-    await wrapEthIfShort(signer, weth, amt);
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
+    await dripBnmIfShort(signer, bnm, amt);
 
-    const allowance = await weth.allowance(me, vaultAddr);
+    const allowance = await bnm.allowance(me, vaultAddr);
     if (allowance.lt(amt)) {
-      const tx = await weth.approve(vaultAddr, amt);
+      const tx = await bnm.approve(vaultAddr, amt);
       await tx.wait();
     }
 
@@ -422,7 +471,7 @@ task("tn:status", "Print V3 testnet state on the current network").setAction(
 
     const oTokenAddr = await strategy.oToken();
     const oToken = new ethers.Contract(oTokenAddr, ERC20_ABI, signer);
-    const weth = new ethers.Contract(wethAddr(hre), WETH_ABI, signer);
+    const bnm = new ethers.Contract(bnmAddr(hre), BNM_ABI, signer);
 
     const inbound = await strategy.inboundAdapter();
     const outbound = await strategy.outboundAdapter();
@@ -437,13 +486,13 @@ task("tn:status", "Print V3 testnet state on the current network").setAction(
     const myEth = await ethers.provider.getBalance(me);
     console.log(`-- Your account ${me} --`);
     console.log(`  ETH:       ${fmt(myEth)}`);
-    console.log(`  WETH:      ${fmt(await weth.balanceOf(me))}`);
+    console.log(`  BnM:       ${fmt(await bnm.balanceOf(me))}`);
     console.log(`  OToken:    ${fmt(await oToken.balanceOf(me))}`);
     console.log("");
 
     console.log(`-- Strategy state --`);
     console.log(
-      `  WETH on strategy: ${fmt(await weth.balanceOf(strategyAddr))}`
+      `  BnM on strategy:  ${fmt(await bnm.balanceOf(strategyAddr))}`
     );
     console.log(
       `  Op-pool (ETH):    ${fmt(

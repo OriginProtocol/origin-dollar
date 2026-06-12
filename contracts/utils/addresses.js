@@ -772,6 +772,9 @@ addresses.sepolia.CCIPChainSelector = "16015286601757825753";
 // OP Stack L1StandardBridge for the Base Sepolia rollup (lives on Sepolia)
 addresses.sepolia.BaseSepoliaL1StandardBridge =
   "0xfd0Bf71F60660E2f608ed56e1659C450eB113120";
+// Chainlink CCIP-BnM testnet token (burn-and-mint). Whitelisted on every CCIP
+// testnet lane. Public drip() faucet returns 1e18 per call (rate-limited).
+addresses.sepolia.CCIPBnM = "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05";
 
 // Base Sepolia (Base rollup testnet) — Master side for OETHb V3
 addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
@@ -779,5 +782,7 @@ addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
 addresses.baseSepolia.CCIPRouter = "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93";
 // CCIP chain selector for Base Sepolia
 addresses.baseSepolia.CCIPChainSelector = "10344971235874465080";
+// Chainlink CCIP-BnM testnet token on Base Sepolia
+addresses.baseSepolia.CCIPBnM = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e";
 
 module.exports = addresses;
