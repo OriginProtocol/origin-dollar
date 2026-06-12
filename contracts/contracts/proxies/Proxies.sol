@@ -237,6 +237,15 @@ contract CompoundingStakingSSVStrategyProxy is
 }
 
 /**
+ * @notice CompoundingStakingStrategyProxy delegates calls to a CompoundingStakingStrategy implementation
+ */
+contract CompoundingStakingStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
  * @notice OUSDMorphoV2StrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {

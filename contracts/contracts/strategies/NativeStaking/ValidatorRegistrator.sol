@@ -338,22 +338,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function migrateClusterToETH(
-        uint64[] memory operatorIds,
-        Cluster memory cluster
-    ) external payable onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
-            operatorIds,
-            cluster
-        );
-
-        // The SSV Network emits
-        // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
-    }
-
     /***************************************
             Consolidation functions
     ****************************************/
