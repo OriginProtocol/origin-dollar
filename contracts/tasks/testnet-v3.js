@@ -347,31 +347,57 @@ task(
       await tx.wait();
     }
 
-    // Quote the outbound fee
+    // Quote the outbound fee — mirror exactly what the strategy does internally
+    // (see AbstractCrossChainV3Strategy._sendUserMessage):
+    //   payload = packPayload(BRIDGE_OUT_or_IN, 0, body)
+    //   body = encode(bridgeId, amount, recipient, callData, callGasLimit)
+    //   quoteFee(address(0), 0, payload)  ← bridge channel is message-only
+    //
+    // AbstractAdapter.quoteFee reads laneConfig[msg.sender], so we MUST eth_call
+    // from the strategy address to resolve the lane config. Spoofing the `from`
+    // is fine — eth_call doesn't authenticate it.
     const outbound = await strategy.outboundAdapter();
-    const adapter = await ethers.getContractAt(
-      "IBridgeAdapter",
-      outbound,
-      signer
+    const BRIDGE_OUT_MSG = isBase(hre)
+      ? 12 /* BRIDGE_OUT */
+      : 11; /* BRIDGE_IN */
+    const to = recipient || me;
+    const dummyBridgeId = ethers.utils.hexZeroPad("0x01", 32);
+    const body = ethers.utils.defaultAbiCoder.encode(
+      ["bytes32", "uint256", "address", "bytes", "uint32"],
+      [dummyBridgeId, amt, to, "0x", 0]
     );
-    // Encoding the payload exactly matches what _sendUserTokensAndMessage does;
-    // for the quote we ask the adapter with an empty payload approximation (the
-    // fee is conservative — overpaying slightly is fine, dust stays on adapter).
-    const dummyPayload = "0x" + "00".repeat(96);
+    const payload = ethers.utils.defaultAbiCoder.encode(
+      ["uint32", "uint64", "bytes"],
+      [BRIDGE_OUT_MSG, 0, body]
+    );
+    const adapterIface = new ethers.utils.Interface([
+      "function quoteFee(address token, uint256 amount, bytes payload) view returns (uint256 fee, address feeToken, bool requiresExternalPayment)",
+    ]);
+    const callData = adapterIface.encodeFunctionData("quoteFee", [
+      ethers.constants.AddressZero,
+      0,
+      payload,
+    ]);
     let fee;
     try {
-      const q = await adapter.quoteFee(oTokenAddr, amt, dummyPayload);
-      fee = q.fee || q[0];
+      const ret = await ethers.provider.call({
+        from: strategyAddr,
+        to: outbound,
+        data: callData,
+      });
+      const decoded = adapterIface.decodeFunctionResult("quoteFee", ret);
+      fee = decoded.fee;
     } catch (e) {
       console.log(
-        "  quoteFee failed; using 0.01 ETH conservative default. Reason:",
+        "  quoteFee failed (unexpected); using 0.01 ETH default.",
         e.message.split("\n")[0]
       );
       fee = ethers.utils.parseEther("0.01");
     }
-    console.log(`Estimated fee: ${fmt(fee)} ETH`);
+    // Small buffer (1.05x) for any nonce/bridgeId-induced variance in CCIP cost.
+    fee = fee.mul(105).div(100);
+    console.log(`Estimated fee (with 5% buffer): ${fmt(fee)} ETH`);
 
-    const to = recipient || me;
     const tx = await strategy.bridgeOTokenToPeer(amt, to, "0x", 0, {
       value: fee,
     });

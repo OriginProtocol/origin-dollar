@@ -84,6 +84,32 @@ module.exports = async (hre) => {
     console.log(`Remote.inboundAdapter = CCIPAdapter`);
   }
 
+  // --- Remote token approvals ---
+  // Remote needs to approve (WETH→oTokenVault) for deposit, (oToken→oTokenVault)
+  // for withdraw queue, and (oToken→woToken) for ERC-4626 wrap. Skipping this
+  // makes every yield/bridge path that touches wOETH revert. Idempotency: skip
+  // if the WETH→oTokenVault allowance is already non-zero — OZ safeApprove
+  // reverts on non-zero → non-zero so re-calling would fail.
+  const dOToken = await deployments.get("MockOETH");
+  const dWOToken = await deployments.get("MockWOETH");
+  const dOTokenVault = await deployments.get("MockOETHVault");
+  const cWeth = await ethers.getContractAt("IERC20", addresses.sepolia.WETH);
+  const existingApproval = await cWeth.allowance(
+    remoteAddr,
+    dOTokenVault.address
+  );
+  if (existingApproval.isZero()) {
+    const tx = await cRemote.safeApproveAllTokens();
+    await tx.wait();
+    console.log(
+      `Remote.safeApproveAllTokens() — approved WETH/${dOToken.address}/${dWOToken.address} → vault/woToken`
+    );
+  } else {
+    console.log(
+      `Remote token approvals already set (skipping safeApproveAllTokens)`
+    );
+  }
+
   console.log("\n=== Sepolia Remote deployment summary ===");
   console.log(`  Remote proxy:       ${remoteAddr}`);
   console.log(`  CCIPAdapter:        ${ccipAddr}`);
