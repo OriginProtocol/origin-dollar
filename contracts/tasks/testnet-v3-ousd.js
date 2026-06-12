@@ -450,20 +450,29 @@ task(
     };
 
     let messages;
-    const MAX_TRIES = 30; // 30 * 30s = 15min
+    const MAX_TRIES = 60; // 60 * 30s = 30min
+    // Accept "complete" (finalised threshold 2000) and "pending_confirmations"
+    // (fast threshold 1000-1999) — for fast finality the attestation is signed
+    // before source finalisation and the destination is expected to relay
+    // immediately. Require both message and attestation fields populated.
+    const RELAY_STATUSES = new Set(["complete", "pending_confirmations"]);
     for (let i = 1; i <= MAX_TRIES; i++) {
       const body = await fetchAttestation();
       const msgs = body?.messages || [];
-      const ready = msgs.filter((m) => m.status === "complete");
+      const ready = msgs.filter(
+        (m) => RELAY_STATUSES.has(m.status) && m.attestation && m.message
+      );
       if (ready.length > 0) {
         messages = ready;
         console.log(
-          `  ready: ${ready.length}/${msgs.length} message(s) after ${i * 30}s`
+          `  ready: ${ready.length}/${msgs.length} message(s) after ${
+            i * 30
+          }s (statuses: ${ready.map((m) => m.status).join(",")})`
         );
         break;
       }
       console.log(
-        `  attempt ${i}/${MAX_TRIES}: ${msgs.length} pending (${msgs
+        `  attempt ${i}/${MAX_TRIES}: ${msgs.length} not relayable (${msgs
           .map((m) => m.status)
           .join(",")}) — sleeping 30s`
       );

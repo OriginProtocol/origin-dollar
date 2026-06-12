@@ -780,6 +780,12 @@ addresses.sepolia.CCIPBnM = "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05";
 addresses.sepolia.USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 // CCTP V2 domain id for Sepolia (same as Ethereum mainnet domain).
 addresses.sepolia.CCTPDomainId = 0;
+// CCTP V2 contracts on TESTNETS use different addresses than mainnet
+// (top-level `addresses.CCTPTokenMessengerV2` is mainnet-only).
+addresses.sepolia.CCTPTokenMessengerV2 =
+  "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA";
+addresses.sepolia.CCTPMessageTransmitterV2 =
+  "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275";
 
 // Base Sepolia (Base rollup testnet) — Master side for OETHb V3
 addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
@@ -793,5 +799,10 @@ addresses.baseSepolia.CCIPBnM = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e";
 addresses.baseSepolia.USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 // CCTP V2 domain id for Base Sepolia (same as Base mainnet domain).
 addresses.baseSepolia.CCTPDomainId = 6;
+// CCTP V2 testnet contracts (same address on every CCTP testnet chain).
+addresses.baseSepolia.CCTPTokenMessengerV2 =
+  "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA";
+addresses.baseSepolia.CCTPMessageTransmitterV2 =
+  "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275";
 
 module.exports = addresses;

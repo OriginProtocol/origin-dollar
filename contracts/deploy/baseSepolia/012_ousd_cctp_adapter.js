@@ -29,8 +29,8 @@ module.exports = async (hre) => {
     contract: "CCTPAdapter",
     args: [
       addresses.baseSepolia.USDC,
-      addresses.CCTPTokenMessengerV2,
-      addresses.CCTPMessageTransmitterV2,
+      addresses.baseSepolia.CCTPTokenMessengerV2,
+      addresses.baseSepolia.CCTPMessageTransmitterV2,
     ],
     log: true,
   });

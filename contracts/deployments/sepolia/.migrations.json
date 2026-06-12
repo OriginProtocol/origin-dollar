@@ -7,6 +7,6 @@
   "sepolia_006_switch_bridgeasset_to_bnm": 1781252872,
   "sepolia_010_mock_ousd": 1781272982,
   "sepolia_011_ousd_remote": 1781273018,
-  "sepolia_012_ousd_cctp_adapter": 1781273426,
-  "sepolia_013_ousd_wire": 1781273429
+  "sepolia_013_ousd_wire": 1781275231,
+  "sepolia_012_ousd_cctp_adapter": 1781276810
 }
