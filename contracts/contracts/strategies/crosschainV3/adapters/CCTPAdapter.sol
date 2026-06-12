@@ -190,7 +190,11 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
             uint256 feeExecuted,
             bytes memory hookData
         ) = CCTPMessageHelper.decodeBurnBody(body);
-        require(burnToken == usdcToken, "CCTP: bad burn token");
+        // `burnToken` is the SOURCE-chain USDC address, which is different from this chain's
+        // `usdcToken` for cross-chain transfers. CCTP's MessageTransmitter validates the
+        // burn record cryptographically via the attestation; what gets minted here is
+        // always the local USDC by protocol design. So no local equality check.
+        burnToken; // silence unused-var
 
         uint256 balanceBefore = IERC20(usdcToken).balanceOf(address(this));
         require(
@@ -274,7 +278,15 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         if (token == address(0) || amount == 0) {
             return (0, address(0), false);
         }
-        fee = tokenMessenger.getMinFeeAmount(amount);
+        // Some V2 deployments (notably CCTP testnets) ship with `depositForBurnWithHook`
+        // but without `getMinFeeAmount`. Treat the absence as fee=0 — correct for the
+        // finalised threshold (2000) which charges no protocol fee. Fast finality on those
+        // chains will revert deeper in CCTP if a real fee is required.
+        try tokenMessenger.getMinFeeAmount(amount) returns (uint256 _fee) {
+            fee = _fee;
+        } catch {
+            fee = 0;
+        }
         feeToken = usdcToken;
         requiresExternalPayment = false;
     }
@@ -314,8 +326,15 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
 
         // CCTP V2 will deduct an actual fee (<= maxFee) from the burn; recipient mints the
         // remainder. We pass maxFee as the upper bound the protocol authorises; with the
-        // default `minFinalityThreshold = 2000` (finalised) the protocol fee is 0.
-        uint256 maxFee = tokenMessenger.getMinFeeAmount(amount);
+        // default `minFinalityThreshold = 2000` (finalised) the protocol fee is 0. Some
+        // testnet deployments don't expose `getMinFeeAmount` — fall back to 0 (which works
+        // for finalised threshold; fast finality on those chains would revert in CCTP).
+        uint256 maxFee;
+        try tokenMessenger.getMinFeeAmount(amount) returns (uint256 _fee) {
+            maxFee = _fee;
+        } catch {
+            maxFee = 0;
+        }
         IERC20(token).safeApprove(address(tokenMessenger), amount);
         tokenMessenger.depositForBurnWithHook(
             amount,
