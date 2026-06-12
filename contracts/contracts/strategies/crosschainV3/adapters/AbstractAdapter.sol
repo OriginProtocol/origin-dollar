@@ -139,7 +139,9 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         onlyGovernor
     {
         require(sender != address(0), "Adapter: zero sender");
-        require(cfg.chainSelector != 0, "Adapter: zero chain selector");
+        // chainSelector may be 0 — CCTP V2 domain for Ethereum/Sepolia is literally 0.
+        // Authorisation lookup uses the `authorised` flag, not chainSelector, so 0
+        // is a valid (non-uninitialised) value here.
         authorised[sender] = true;
         laneConfig[sender] = cfg;
         emit Authorised(sender, cfg);
@@ -155,7 +157,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         onlyGovernor
     {
         require(authorised[sender], "Adapter: sender not authorised");
-        require(cfg.chainSelector != 0, "Adapter: zero chain selector");
+        // See note in `authorise()` — chainSelector may be 0 (CCTP Ethereum domain).
         laneConfig[sender] = cfg;
         emit LaneConfigUpdated(sender, cfg);
     }
