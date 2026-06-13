@@ -225,4 +225,52 @@ describe("Unit: V3 Master+Remote loopback", function () {
     expect(await master.bridgeAdjustment()).to.equal(0);
     expect(await remote.bridgeAdjustment()).to.equal(0);
   });
+
+  it("yield ack reports the yield-only baseline — no double-count with bridge activity (P0)", async () => {
+    const DEPOSIT1 = ethers.utils.parseUnits("1000", 6);
+    const BRIDGE_IN = ethers.utils.parseUnits("200", 6);
+    const DEPOSIT2 = ethers.utils.parseUnits("500", 6);
+
+    // 1. Deposit 1000 → rsb = 1000, bridgeAdjustment = 0.
+    await bridgeAsset.mintTo(master.address, DEPOSIT1);
+    await mockL2Vault.callDeposit(
+      master.address,
+      bridgeAsset.address,
+      DEPOSIT1
+    );
+    expect(await master.remoteStrategyBalance()).to.equal(DEPOSIT1);
+    expect(await master.bridgeAdjustment()).to.equal(0);
+
+    // 2. A user BRIDGE_INs 200 from Remote → Master. Leaves bridgeAdjustment = 200
+    //    on Master (and on Remote), and Remote now holds 1200 wOToken shares.
+    await bridgeAsset.mintTo(alice.address, BRIDGE_IN);
+    await bridgeAsset.connect(alice).approve(ethVault.address, BRIDGE_IN);
+    await ethVault.connect(alice).mint(BRIDGE_IN);
+    await oTokenEth.connect(alice).approve(remote.address, BRIDGE_IN);
+    await remote
+      .connect(alice)
+      .bridgeOTokenToPeer(BRIDGE_IN, alice.address, "0x", 0);
+    expect(await master.bridgeAdjustment()).to.equal(BRIDGE_IN);
+
+    // 3. Second deposit of 500. Its DEPOSIT_ACK must report the YIELD-ONLY baseline
+    //    (_viewCheckBalance - bridgeAdjustment), NOT the full balance — Master re-adds its
+    //    own bridgeAdjustment in checkBalance, so a full-balance ack would double-count the
+    //    200 bridge (the pre-fix bug: rsb=1700, checkBalance=1900).
+    await bridgeAsset.mintTo(master.address, DEPOSIT2);
+    await mockL2Vault.callDeposit(
+      master.address,
+      bridgeAsset.address,
+      DEPOSIT2
+    );
+
+    // rsb = yield-only = 1700 shares − 200 bridgeAdjustment = 1500 (just the deposits).
+    expect(await master.remoteStrategyBalance()).to.equal(
+      DEPOSIT1.add(DEPOSIT2)
+    );
+    // checkBalance = rsb(1500) + bridgeAdjustment(200) = 1700 — the bridge counted ONCE.
+    expect(await master.checkBalance(bridgeAsset.address)).to.equal(
+      DEPOSIT1.add(DEPOSIT2).add(BRIDGE_IN)
+    );
+    expect(await master.pendingAmount()).to.equal(0);
+  });
 });

@@ -245,24 +245,19 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     function _processBalanceCheckRequest(uint64 nonce, bytes memory payload)
         internal
     {
-        uint256 srcTimestamp = CrossChainV3Helper
-            .decodeBalanceCheckRequestPayload(payload);
-        int256 yieldOnly = int256(_viewCheckBalance()) - bridgeAdjustment;
-        // Defensive: yield-only baseline should never go negative in healthy operation.
-        // Each BRIDGE_IN increases `_viewCheckBalance` by full X but `bridgeAdjustment`
-        // only by net (= X - fee), so the baseline only grows from bridge activity. Plus
-        // yield accrual. Underflow would indicate corrupted state or wOToken depeg
-        // beyond expected magnitudes.
-        require(yieldOnly >= 0, "Remote: negative yield baseline");
+        uint256 srcTimestamp = CrossChainV3Helper.decodeUint256(payload);
         bytes memory ackPayload = CrossChainV3Helper
             .encodeBalanceCheckResponsePayload(
-                uint256(yieldOnly),
+                _yieldOnlyBaseline(),
                 srcTimestamp
             );
-        _sendYieldMessage(
+        _send(
+            address(0),
+            0,
             CrossChainV3Helper.BALANCE_CHECK_RESPONSE,
             nonce,
-            ackPayload
+            ackPayload,
+            false
         );
     }
 
@@ -280,15 +275,16 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     function _processSettlement(uint64 nonce, bytes memory body) internal {
         int256 snapshot = abi.decode(body, (int256));
         bridgeAdjustment -= snapshot;
-        int256 yieldOnly = int256(_viewCheckBalance()) - bridgeAdjustment;
-        require(yieldOnly >= 0, "Remote: negative yield baseline");
-        bytes memory ackPayload = CrossChainV3Helper.encodeNewBalancePayload(
-            uint256(yieldOnly)
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            _yieldOnlyBaseline()
         );
-        _sendYieldMessage(
+        _send(
+            address(0),
+            0,
             CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK,
             nonce,
-            ackPayload
+            ackPayload,
+            false
         );
         _acceptYieldNonce(nonce);
     }
@@ -301,7 +297,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     function _processWithdrawRequest(uint64 nonce, bytes memory payload)
         internal
     {
-        uint256 amount = CrossChainV3Helper.decodeAmountPayload(payload);
+        uint256 amount = CrossChainV3Helper.decodeUint256(payload);
         require(amount > 0, "Remote: zero withdraw");
         require(outstandingRequestId == 0, "Remote: queue already busy");
 
@@ -322,14 +318,15 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         outstandingRequestAmount = amount;
 
         // Reply to Master with the new total.
-        uint256 newBalance = _viewCheckBalance();
-        bytes memory ackPayload = CrossChainV3Helper.encodeNewBalancePayload(
-            newBalance
-        );
-        _sendYieldMessage(
+        uint256 newBalance = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(newBalance);
+        _send(
+            address(0),
+            0,
             CrossChainV3Helper.WITHDRAW_REQUEST_ACK,
             nonce,
-            ackPayload
+            ackPayload,
+            false
         );
         _acceptYieldNonce(nonce);
 
@@ -354,13 +351,16 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
         if (target == 0 || bridgeAssetHeld < target) {
             // Not ready (claim hasn't landed yet) or no outstanding request: NACK.
-            uint256 currentBalance = _viewCheckBalance();
+            uint256 currentBalance = _yieldOnlyBaseline();
             bytes memory nackPayload = CrossChainV3Helper
                 .encodeWithdrawClaimAckPayload(currentBalance, false, 0);
-            _sendYieldMessage(
+            _send(
+                address(0),
+                0,
                 CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
                 nonce,
-                nackPayload
+                nackPayload,
+                false
             );
             _acceptYieldNonce(nonce);
             emit WithdrawClaimNack(nonce, currentBalance);
@@ -375,16 +375,17 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         outstandingRequestId = 0;
         outstandingRequestAmount = 0;
 
-        uint256 newBalance = _viewCheckBalance() - amount; // bridgeAsset about to leave us
+        uint256 newBalance = _yieldOnlyBaselineAfter(amount); // bridgeAsset about to leave us
         bytes memory ackPayload = CrossChainV3Helper
             .encodeWithdrawClaimAckPayload(newBalance, true, amount);
         // bridgeAsset → outboundAdapter allowance is granted by `setOutboundAdapter`.
-        _sendYieldTokensAndMessage(
+        _send(
             bridgeAsset,
             amount,
             CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
             nonce,
-            ackPayload
+            ackPayload,
+            false
         );
         _acceptYieldNonce(nonce);
 
@@ -444,11 +445,16 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         }
 
         // Reply to Master with the new balance and mark the yield nonce processed.
-        uint256 newBalance = _viewCheckBalance();
-        bytes memory ackPayload = CrossChainV3Helper.encodeNewBalancePayload(
-            newBalance
+        uint256 newBalance = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(newBalance);
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.DEPOSIT_ACK,
+            nonce,
+            ackPayload,
+            false
         );
-        _sendYieldMessage(CrossChainV3Helper.DEPOSIT_ACK, nonce, ackPayload);
         _acceptYieldNonce(nonce);
 
         emit YieldDepositProcessed(nonce, amount, newBalance);
@@ -462,8 +468,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     /// @inheritdoc AbstractWOTokenStrategy
-    /// @dev Remote can always wrap user-supplied OToken; no liquidity check needed.
-    function _preflightBridgeOutbound(uint256) internal view override {}
+    /// @dev Bridging out of Remote wraps the user's own OToken, so there's no Remote-side
+    ///      liquidity ceiling — the bound is the user's balance. Report unbounded.
+    function availableBridgeLiquidity() public pure override returns (uint256) {
+        return type(uint256).max;
+    }
 
     /// @inheritdoc AbstractWOTokenStrategy
     function _consumeOTokenForBridge(uint256 amount) internal override {
@@ -505,5 +514,34 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             IERC20(oToken).balanceOf(address(this)) +
             IERC20(bridgeAsset).balanceOf(address(this)) +
             queuedAmount;
+    }
+
+    /// @dev Remote's yield-only baseline = full custody value minus the bridge-channel
+    ///      delta. `Master.remoteStrategyBalance` must hold exactly this, because
+    ///      `Master.checkBalance` re-adds its OWN `bridgeAdjustment` separately — so every
+    ///      R→M balance report routes through here (deposit / withdraw / claim acks, not
+    ///      just balance-check / settle). The `require(>=0)` is an invariant that can't
+    ///      break under normal ops (each BRIDGE_IN/OUT moves `_viewCheckBalance` and
+    ///      `bridgeAdjustment` by the same `net`, leaving this constant); if it ever did,
+    ///      a revert is a loud, safe halt — clamping to 0 would silently crater the vault's
+    ///      reported value and rebase holders down.
+    function _yieldOnlyBaseline() internal view returns (uint256) {
+        int256 v = int256(_viewCheckBalance()) - bridgeAdjustment;
+        require(v >= 0, "Remote: negative yield baseline");
+        return uint256(v);
+    }
+
+    /// @dev Yield-only baseline as it will stand AFTER `amount` of bridgeAsset leaves on a
+    ///      WITHDRAW_CLAIM_ACK (the asset is still held when this is computed).
+    function _yieldOnlyBaselineAfter(uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        int256 v = int256(_viewCheckBalance()) -
+            int256(amount) -
+            bridgeAdjustment;
+        require(v >= 0, "Remote: negative yield baseline");
+        return uint256(v);
     }
 }

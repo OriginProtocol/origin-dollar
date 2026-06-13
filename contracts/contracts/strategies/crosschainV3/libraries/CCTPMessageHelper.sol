@@ -88,7 +88,10 @@ library CCTPMessageHelper {
      *         the source-side TokenMessenger (i.e., a `depositForBurnWithHook` rather than
      *         a plain `sendMessage`).
      * @param body The inner CCTP V2 burn message body.
-     * @return burnToken The token burned on source (must equal local USDC).
+     * @return burnToken The token burned on source (the SOURCE-chain USDC; informational —
+     *                  the local mint is always `usdcToken`).
+     * @return mintRecipient Destination mint recipient from the burn body; under CREATE3
+     *                  parity this must be the relaying adapter (`relay` enforces it).
      * @return amount Source-side burn amount.
      * @return msgSender The source-side caller of `depositForBurnWithHook` (peer adapter
      *                  under CREATE3 parity).
@@ -102,6 +105,7 @@ library CCTPMessageHelper {
         pure
         returns (
             address burnToken,
+            address mintRecipient,
             uint256 amount,
             address msgSender,
             uint256 feeExecuted,
@@ -113,6 +117,7 @@ library CCTPMessageHelper {
             "CCTP: burn body too short"
         );
         burnToken = body.extractAddress(BURN_BODY_BURN_TOKEN_INDEX);
+        mintRecipient = body.extractAddress(BURN_BODY_MINT_RECIPIENT_INDEX);
         amount = body.extractUint256(BURN_BODY_AMOUNT_INDEX);
         msgSender = body.extractAddress(BURN_BODY_MESSAGE_SENDER_INDEX);
         feeExecuted = body.extractUint256(BURN_BODY_FEE_EXECUTED_INDEX);

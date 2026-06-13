@@ -115,9 +115,8 @@ contract MockBridgeAdapter is IBridgeAdapter {
         )
     {
         // Test mock: zero fee, no external payment required. Lets unit tests exercise
-        // both _sendUserMessage (which sees fee=0, msg.value>=0 trivially) and
-        // _sendOpMessage (which sees fee=0, balance>=0 trivially) without needing any
-        // ETH plumbing in test fixtures.
+        // `_send` for both the user-funded path (fee=0, msg.value>=0 trivially) and the
+        // pool-funded path (fee=0, balance>=0 trivially) without ETH plumbing in fixtures.
         return (0, address(0), false);
     }
 

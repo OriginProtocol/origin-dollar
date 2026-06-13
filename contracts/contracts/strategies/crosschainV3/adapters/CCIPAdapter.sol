@@ -23,8 +23,8 @@ import { CCIPMessageBuilder } from "../libraries/CCIPMessageBuilder.sol";
  *         chain, peer adapter identity), and forwards to the destination strategy
  *         (CREATE3 parity: envelope sender == destination strategy on this chain).
  *
- *         The CCIP fee is paid in native and sourced from `msg.value`; the AbstractAdapter
- *         base refunds any excess back to the caller after the send completes.
+ *         The CCIP fee is paid in native and sourced from `msg.value`; excess is NOT
+ *         refunded — it stays on the adapter (recover via `transferToken`).
  */
 contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
     using SafeERC20 for IERC20;

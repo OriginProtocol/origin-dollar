@@ -217,8 +217,13 @@ describe("Unit: CCTPAdapter burn relay", function () {
     expect(await usdc.balanceOf(adapter.address)).to.equal(donation);
   });
 
-  it("rejects when the burn body's `burnToken` is not the local USDC", async () => {
+  it("ignores the burn body's `burnToken` — always credits local USDC", async () => {
     const amount = ethers.utils.parseUnits("100", 6);
+    // `burnToken` is the SOURCE-chain USDC address, which differs from this chain's
+    // local USDC for a real cross-chain transfer. The adapter no longer checks it:
+    // the credited token is bound to local `usdcToken` by the balanceOf-delta + the
+    // hard-coded `_deliver(..., usdcToken, ...)`, so a forged source burnToken can't
+    // mint anything but local USDC. The relay therefore succeeds.
     const fakeToken = "0x000000000000000000000000000000000000BAD0";
     const hookData = wrapAppEnvelope(strategy.address, amount, "0x");
     const burnBody = buildBurnBody({
@@ -236,9 +241,38 @@ describe("Unit: CCTPAdapter burn relay", function () {
       body: burnBody,
     });
 
+    await adapter.connect(operator).relay(message, "0x");
+
+    // Local USDC was minted and delivered to the strategy regardless of burnToken.
+    expect(await strategy.lastToken()).to.equal(usdc.address);
+    expect(await strategy.lastAmount()).to.equal(amount);
+    expect(await usdc.balanceOf(strategy.address)).to.equal(amount);
+  });
+
+  it("rejects when the burn body's mintRecipient is not this adapter", async () => {
+    const amount = ethers.utils.parseUnits("100", 6);
+    const wrongRecipient = "0x000000000000000000000000000000000000c0DE";
+    const hookData = wrapAppEnvelope(strategy.address, amount, "0x");
+    const burnBody = buildBurnBody({
+      burnToken: usdc.address,
+      mintRecipient: wrongRecipient, // not this adapter (CREATE3 parity broken)
+      amount,
+      msgSender: adapter.address, // peer adapter under CREATE3 parity
+      feeExecuted: 0,
+      hookData,
+    });
+    const message = buildTransportMessage({
+      sourceDomain: SOURCE_DOMAIN,
+      sender: tokenMessenger.address,
+      recipient: tokenMessenger.address,
+      body: burnBody,
+    });
+
+    // The burn branch enforces mint-recipient parity (the pure-message branch checks
+    // transportRecipient; the burn branch checks the burn body's mintRecipient).
     await expect(
       adapter.connect(operator).relay(message, "0x")
-    ).to.be.revertedWith("CCTP: bad burn token");
+    ).to.be.revertedWith("CCTP: bad mint recipient");
   });
 
   it("rejects when envelope intendedAmount disagrees with the burn `amount`", async () => {

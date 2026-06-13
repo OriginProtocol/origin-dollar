@@ -34,7 +34,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (bytes memory)
     {
-        return CrossChainV3Helper.encodeNewBalancePayload(newBalance);
+        return CrossChainV3Helper.encodeUint256(newBalance);
     }
 
     function decodeNewBalancePayload(bytes calldata payload)
@@ -42,7 +42,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (uint256)
     {
-        return CrossChainV3Helper.decodeNewBalancePayload(payload);
+        return CrossChainV3Helper.decodeUint256(payload);
     }
 
     function encodeAmountPayload(uint256 amount)
@@ -50,7 +50,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (bytes memory)
     {
-        return CrossChainV3Helper.encodeAmountPayload(amount);
+        return CrossChainV3Helper.encodeUint256(amount);
     }
 
     function decodeAmountPayload(bytes calldata payload)
@@ -58,7 +58,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (uint256)
     {
-        return CrossChainV3Helper.decodeAmountPayload(payload);
+        return CrossChainV3Helper.decodeUint256(payload);
     }
 
     function encodeWithdrawClaimAckPayload(
@@ -91,7 +91,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (bytes memory)
     {
-        return CrossChainV3Helper.encodeBalanceCheckRequestPayload(timestamp);
+        return CrossChainV3Helper.encodeUint256(timestamp);
     }
 
     function decodeBalanceCheckRequestPayload(bytes calldata payload)
@@ -99,7 +99,7 @@ contract MockCrossChainV3HelperHarness {
         pure
         returns (uint256)
     {
-        return CrossChainV3Helper.decodeBalanceCheckRequestPayload(payload);
+        return CrossChainV3Helper.decodeUint256(payload);
     }
 
     function encodeBalanceCheckResponsePayload(

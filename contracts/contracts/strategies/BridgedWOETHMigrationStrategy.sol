@@ -11,6 +11,7 @@ import { BridgedWOETHStrategy } from "./BridgedWOETHStrategy.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { NativeFeeHelper } from "./crosschainV3/libraries/NativeFeeHelper.sol";
+import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.sol";
 
 /**
  * @title BridgedWOETHMigrationStrategy
@@ -155,22 +156,15 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
             "BWM: insufficient wOETH"
         );
 
-        Client.EVMTokenAmount[]
-            memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        tokenAmounts[0] = Client.EVMTokenAmount({
-            token: address(bridgedWOETH),
-            amount: _amount
-        });
-
-        Client.EVM2AnyMessage memory ccipMessage = Client.EVM2AnyMessage({
-            receiver: abi.encode(master),
-            data: "",
-            tokenAmounts: tokenAmounts,
-            feeToken: address(0),
-            extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({ gasLimit: 0 })
-            )
-        });
+        // Same shape (single token amount, native fee, V1 extraArgs) the V3 CCIPAdapter
+        // builds — `require(_amount > 0)` above guarantees the token-amount branch.
+        Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
+            address(bridgedWOETH),
+            _amount,
+            "",
+            master,
+            0
+        );
 
         uint256 fee = ccipRouter.getFee(ccipChainSelectorMainnet, ccipMessage);
         NativeFeeHelper.consume(fee);

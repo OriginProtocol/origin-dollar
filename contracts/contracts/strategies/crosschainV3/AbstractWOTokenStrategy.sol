@@ -63,7 +63,11 @@ abstract contract AbstractWOTokenStrategy is
     mapping(bytes32 => bool) public consumedBridgeIds;
 
     /// @notice Monotonic counter used to generate fresh bridgeIds for outbound BRIDGE_IN
-    ///         / BRIDGE_OUT operations. Combined with `address(this)` for global uniqueness.
+    ///         / BRIDGE_OUT operations. NOT globally unique on its own — under CREATE3 parity
+    ///         Master and Remote share `address(this)`, so the same counter yields the same id
+    ///         on both. Replay safety instead comes from `consumedBridgeIds` being per-chain:
+    ///         each side only ever consumes the PEER's ids (Master consumes Remote's BRIDGE_INs,
+    ///         Remote consumes Master's BRIDGE_OUTs), and the peer's counter is monotonic.
     uint256 public bridgeIdCounter;
 
     /// @notice Protocol fee on the bridge channel in basis points (1 bp = 0.01%). Default
@@ -196,8 +200,12 @@ abstract contract AbstractWOTokenStrategy is
         uint256 net = _amount - fee;
         require(net > 0, "WOT: net zero after fee");
 
-        // Pre-flight against `net` (what the peer must produce).
-        _preflightBridgeOutbound(net);
+        // Liquidity gate against `net` (what the peer must produce). Quote the same value
+        // off-chain via `availableBridgeLiquidity()` first to avoid a revert.
+        require(
+            net <= availableBridgeLiquidity(),
+            "Master: insufficient remote liquidity"
+        );
 
         address recipient = _recipient == address(0) ? msg.sender : _recipient;
 
@@ -219,7 +227,7 @@ abstract contract AbstractWOTokenStrategy is
                 callGasLimit: _callGasLimit
             })
         );
-        _sendBridgeMessage(msgType, 0, body);
+        _send(address(0), 0, msgType, 0, body, true);
 
         emit BridgeRequested(
             bridgeId,
@@ -247,12 +255,17 @@ abstract contract AbstractWOTokenStrategy is
      *      BRIDGE_IN / BRIDGE_OUT envelope arrives. Replay-checked, applies signed
      *      `bridgeAdjustment`, invokes the side-specific delivery hook, runs the optional
      *      post-delivery callback.
+     *
+     *      `nonReentrant` (Governable's shared fixed-slot lock — the same one
+     *      `bridgeOTokenToPeer` / `deposit` acquire) is held through `_postDeliveryCall`'s
+     *      untrusted `recipient.call`, so the callback can't re-enter any state-mutating
+     *      entrypoint. This is the only inbound path with an external callback.
      */
     function _handleInboundBridgeMessage(
         uint32 msgType,
         uint256 amount,
         bytes memory body
-    ) internal {
+    ) internal nonReentrant {
         CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
             .decodeBridgeUserPayload(body);
 
@@ -326,12 +339,14 @@ abstract contract AbstractWOTokenStrategy is
     function _bridgeOutboundMsgType() internal pure virtual returns (uint32);
 
     /**
-     * @notice Side-specific pre-flight check before consuming OToken on outbound bridge.
-     *         Master: ensures Remote has reported (or expects via bridgeAdjustment) enough
-     *         OToken to cover the delivery. Remote: no-op (wrapping always succeeds when
-     *         the user supplies the OToken).
+     * @notice Max OToken amount currently bridgeable from this chain to the peer — what the
+     *         peer can actually deliver right now. Master: bounded by Remote's deliverable
+     *         wOToken shares (`remoteStrategyBalance + bridgeAdjustment - pendingWithdrawalAmount`,
+     *         clamped to 0). Remote: unbounded (bridging out wraps the user's own OToken), so
+     *         `type(uint256).max` — a frontend reads that as "limited by your balance".
+     *         Quote against this before `bridgeOTokenToPeer` to avoid a revert.
      */
-    function _preflightBridgeOutbound(uint256 amount) internal view virtual;
+    function availableBridgeLiquidity() public view virtual returns (uint256);
 
     /**
      * @notice Pull OToken from `msg.sender` and consume it on this chain.

@@ -18,10 +18,10 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *           - Yield-channel nonce machinery (one yield op in flight at a time).
  *           - Inbound `receiveMessage` entry point with adapter-only access control,
  *             dispatching to a single hook the concrete strategy implements.
- *           - Outbound helpers (`_sendYieldMessage`, `_sendYieldTokensAndMessage`,
- *             `_sendMessage`) that pack `(msgType, nonce, body)` into the strategy-owned
- *             payload, quote the adapter fee, forward exact native via `msg.value`, and
- *             refund any excess back to the caller (user / operator).
+ *           - A single outbound `_send` helper that packs `(msgType, nonce, body)` into the
+ *             strategy-owned payload, quotes the adapter fee, and forwards exact native via
+ *             `msg.value`. Excess is NOT refunded — overpayment joins the fee pool (recover
+ *             via `transferNative`).
  *
  *         The abstract does NOT itself inherit `InitializableAbstractStrategy` — it stays
  *         small and composable. Concrete Master / Remote contracts mix in
@@ -158,8 +158,13 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
      * @inheritdoc IBridgeReceiver
      * @dev Single ingress for all inbound bridge deliveries. Validates the caller is the
      *      configured inbound adapter, decodes the strategy-owned `(msgType, nonce, body)`
-     *      from `payload`, and forwards to the concrete strategy's hook. No `nonReentrant`
-     *      here — the concrete strategy's hook is the right place to apply it.
+     *      from `payload`, and forwards to the concrete strategy's hook. The reentrancy guard
+     *      lives on the bridge-channel inbound (`_handleInboundBridgeMessage`) — the only
+     *      inbound path that makes an UNTRUSTED external call (the optional post-delivery
+     *      callback). Yield acks touch only trusted vault / wrapper contracts, so guarding
+     *      them is unnecessary; keeping the guard off `receiveMessage` also lets a synchronous
+     *      (same-tx) yield round-trip complete without a self-reentrancy false trip (relevant
+     *      only to tests — production bridge delivery is always a separate tx).
      */
     function receiveMessage(
         address sender,
@@ -196,62 +201,28 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         bytes memory body
     ) internal virtual;
 
-    // --- Outbound helpers ---------------------------------------------------
+    // --- Outbound helper ----------------------------------------------------
     //
-    // Two parallel fee paths, distinguished by who pays:
+    // One send path, parameterised by `userFunded`:
+    //   userFunded = true  → user-initiated sends (bridgeOTokenToPeer). msg.value MUST cover
+    //                        the fee; the pool is NOT consulted. Security gate: stops an
+    //                        attacker draining the operator-funded pool by spamming bridge
+    //                        in/out with msg.value = 0.
+    //   userFunded = false → operator/protocol-funded sends (yield deposits/withdraws/claims
+    //                        and the acks Remote sends back). Fee paid from
+    //                        `address(this).balance`, which already absorbs any attached
+    //                        msg.value via `receive()`.
     //
-    //   _sendUserMessage / _sendUserTokensAndMessage
-    //     User-initiated sends (bridgeOTokenToPeer). msg.value MUST cover the fee.
-    //     No fallback to the strategy's pool. Rationale: an attacker could otherwise drain
-    //     the operator-funded pool by spamming bridge_in/out with msg.value=0. User pays
-    //     for their own bridge tx.
-    //
-    //   _sendOpMessage / _sendOpTokensAndMessage
-    //     Operator/protocol-funded sends (yield channel deposits/withdraws/claims and the
-    //     acks Remote sends in response to inbound). msg.value (if any) lands in
-    //     `address(this).balance` first via `receive()`; we then check `balance >= fee`,
-    //     which covers both pre-funded pool AND any msg.value attached.
-    //
-    // Excess msg.value is NEVER refunded. Overpayment becomes part of the strategy's pool.
-    // Recovery via `transferNative` (governor only). Rationale: refunds add code surface;
-    // callers can quote exactly via `IBridgeAdapter.quoteFee` to avoid leaks.
-
-    /// @dev Operator-funded yield-channel message send (message-only).
-    function _sendYieldMessage(
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
-    ) internal {
-        _sendOpMessage(msgType, nonce, body);
-    }
-
-    /// @dev Operator-funded yield-channel send carrying tokens (DEPOSIT, WITHDRAW_CLAIM_ACK).
-    function _sendYieldTokensAndMessage(
+    // `token == address(0)` selects the message-only path; otherwise tokens ride along.
+    // Excess msg.value is NEVER refunded — overpayment joins the strategy's pool (recover via
+    // `transferNative`, governor only). Callers quote exactly via `IBridgeAdapter.quoteFee`.
+    function _send(
         address token,
         uint256 amount,
         uint32 msgType,
         uint64 nonce,
-        bytes memory body
-    ) internal {
-        _sendOpTokensAndMessage(token, amount, msgType, nonce, body);
-    }
-
-    /// @dev User-funded bridge-channel send (BRIDGE_IN / BRIDGE_OUT). msg.value required.
-    function _sendBridgeMessage(
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
-    ) internal {
-        _sendUserMessage(msgType, nonce, body);
-    }
-
-    /// @dev Strict user-payment path: msg.value MUST cover fee. Pool is NOT consulted —
-    ///      even if it has funds, a short user payment reverts. This is the security gate
-    ///      that prevents bridge_in/out from being a pool-drain vector.
-    function _sendUserMessage(
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
+        bytes memory body,
+        bool userFunded
     ) internal {
         bytes memory payload = CrossChainV3Helper.packPayload(
             msgType,
@@ -263,123 +234,36 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
             uint256 fee,
             address feeToken,
             bool requiresExternalPayment
-        ) = IBridgeAdapter(adapter).quoteFee(address(0), 0, payload);
+        ) = IBridgeAdapter(adapter).quoteFee(token, amount, payload);
         if (requiresExternalPayment) {
             // Only native fee supported today. ERC20 fee tokens (e.g., LINK-mode CCIP)
-            // would need explicit allowance handling; not implemented here. Forces any
-            // future fee-token addition to be an explicit override.
+            // would need explicit allowance handling; not implemented here.
             require(feeToken == address(0), "V3: only native fee supported");
-            require(msg.value >= fee, "V3: insufficient user fee");
-            // slither-disable-next-line arbitrary-send-eth
-            IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
-        } else {
-            // CCTP-style: protocol auto-deducts from bridged amount; no caller action.
-            IBridgeAdapter(adapter).sendMessage(payload);
-        }
-    }
-
-    /// @dev Pool-funded path: native fee paid from `address(this).balance`. msg.value (if
-    ///      any) already lands in balance via `receive()`, so this naturally covers both
-    ///      pre-funded pool AND inline operator top-ups.
-    function _sendOpMessage(
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
-    ) internal {
-        bytes memory payload = CrossChainV3Helper.packPayload(
-            msgType,
-            nonce,
-            body
-        );
-        address adapter = outboundAdapter;
-        (
-            uint256 fee,
-            address feeToken,
-            bool requiresExternalPayment
-        ) = IBridgeAdapter(adapter).quoteFee(address(0), 0, payload);
-        if (requiresExternalPayment) {
-            require(feeToken == address(0), "V3: only native fee supported");
-            require(address(this).balance >= fee, "V3: pool unfunded");
-            // slither-disable-next-line arbitrary-send-eth
-            IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
-        } else {
-            IBridgeAdapter(adapter).sendMessage(payload);
-        }
-    }
-
-    /// @dev Token-carrying variant of `_sendUserMessage`. Unused for V3 today (bridge
-    ///      channel is message-only on the wire), but kept symmetric for future use.
-    function _sendUserTokensAndMessage(
-        address token,
-        uint256 amount,
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
-    ) internal {
-        bytes memory payload = CrossChainV3Helper.packPayload(
-            msgType,
-            nonce,
-            body
-        );
-        address adapter = outboundAdapter;
-        (
-            uint256 fee,
-            address feeToken,
-            bool requiresExternalPayment
-        ) = IBridgeAdapter(adapter).quoteFee(token, amount, payload);
-        if (requiresExternalPayment) {
-            require(feeToken == address(0), "V3: only native fee supported");
-            require(msg.value >= fee, "V3: insufficient user fee");
-            // slither-disable-next-line arbitrary-send-eth
-            IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
-                token,
-                amount,
-                payload
+            require(
+                (userFunded ? msg.value : address(this).balance) >= fee,
+                userFunded ? "V3: insufficient user fee" : "V3: pool unfunded"
             );
-        } else {
-            IBridgeAdapter(adapter).sendMessageAndTokens(
-                token,
-                amount,
-                payload
-            );
-        }
-    }
-
-    /// @dev Token-carrying variant of `_sendOpMessage`. Used by DEPOSIT (Master) and
-    ///      WITHDRAW_CLAIM_ACK with tokens (Remote).
-    function _sendOpTokensAndMessage(
-        address token,
-        uint256 amount,
-        uint32 msgType,
-        uint64 nonce,
-        bytes memory body
-    ) internal {
-        bytes memory payload = CrossChainV3Helper.packPayload(
-            msgType,
-            nonce,
-            body
-        );
-        address adapter = outboundAdapter;
-        (
-            uint256 fee,
-            address feeToken,
-            bool requiresExternalPayment
-        ) = IBridgeAdapter(adapter).quoteFee(token, amount, payload);
-        if (requiresExternalPayment) {
-            require(feeToken == address(0), "V3: only native fee supported");
-            require(address(this).balance >= fee, "V3: pool unfunded");
             // slither-disable-next-line arbitrary-send-eth
-            IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
-                token,
-                amount,
-                payload
-            );
+            if (token == address(0)) {
+                IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
+            } else {
+                IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
+                    token,
+                    amount,
+                    payload
+                );
+            }
         } else {
-            IBridgeAdapter(adapter).sendMessageAndTokens(
-                token,
-                amount,
-                payload
-            );
+            // CCTP-style: protocol auto-deducts from the bridged amount; no caller action.
+            if (token == address(0)) {
+                IBridgeAdapter(adapter).sendMessage(payload);
+            } else {
+                IBridgeAdapter(adapter).sendMessageAndTokens(
+                    token,
+                    amount,
+                    payload
+                );
+            }
         }
     }
 

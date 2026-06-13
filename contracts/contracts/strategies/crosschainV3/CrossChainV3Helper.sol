@@ -109,44 +109,19 @@ library CrossChainV3Helper {
     // BRIDGE_IN / BRIDGE_OUT        : payload = abi.encode(BridgeUserPayload)
 
     /**
-     * @notice Encode the single-uint256 payload used by DEPOSIT_ACK,
-     *         WITHDRAW_REQUEST_ACK, and SETTLE_BRIDGE_ACCOUNTING_ACK.
-     * @param newBalance Remote's `checkBalance(bridgeAsset)` snapshot after the op.
+     * @notice Encode a single-`uint256` payload — shared by every message whose body is one
+     *         uint256: DEPOSIT_ACK / WITHDRAW_REQUEST_ACK / SETTLE_BRIDGE_ACCOUNTING_ACK (a
+     *         balance), WITHDRAW_REQUEST (an amount), BALANCE_CHECK_REQUEST (a timestamp).
      */
-    function encodeNewBalancePayload(uint256 newBalance)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(newBalance);
+    function encodeUint256(uint256 value) internal pure returns (bytes memory) {
+        return abi.encode(value);
     }
 
-    /// @notice Decode the single-uint256 payload above.
-    function decodeNewBalancePayload(bytes memory payload)
+    /// @notice Decode the single-`uint256` payload above.
+    function decodeUint256(bytes memory payload)
         internal
         pure
-        returns (uint256 newBalance)
-    {
-        return abi.decode(payload, (uint256));
-    }
-
-    /**
-     * @notice Encode the WITHDRAW_REQUEST payload (the leg-1 amount Master wants).
-     * @param amount  bridgeAsset units to withdraw.
-     */
-    function encodeAmountPayload(uint256 amount)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(amount);
-    }
-
-    /// @notice Decode the WITHDRAW_REQUEST payload.
-    function decodeAmountPayload(bytes memory payload)
-        internal
-        pure
-        returns (uint256 amount)
+        returns (uint256)
     {
         return abi.decode(payload, (uint256));
     }
@@ -181,24 +156,6 @@ library CrossChainV3Helper {
         return abi.decode(payload, (uint256, bool, uint256));
     }
 
-    /// @notice Encode the BALANCE_CHECK_REQUEST payload (origin timestamp).
-    function encodeBalanceCheckRequestPayload(uint256 timestamp)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(timestamp);
-    }
-
-    /// @notice Decode the BALANCE_CHECK_REQUEST payload.
-    function decodeBalanceCheckRequestPayload(bytes memory payload)
-        internal
-        pure
-        returns (uint256 timestamp)
-    {
-        return abi.decode(payload, (uint256));
-    }
-
     /// @notice Encode the BALANCE_CHECK_RESPONSE payload (balance + originating ts).
     function encodeBalanceCheckResponsePayload(
         uint256 balance,
@@ -226,6 +183,10 @@ library CrossChainV3Helper {
         pure
         returns (bytes memory)
     {
+        // Field-by-field, NOT `abi.encode(p)`: this struct has a dynamic member
+        // (`callData`), so `abi.encode(struct)` would prepend an extra offset word and
+        // diverge from this established wire layout (and from the JS test encoders /
+        // already-deployed peers). Keep the flat tuple.
         return
             abi.encode(
                 p.bridgeId,

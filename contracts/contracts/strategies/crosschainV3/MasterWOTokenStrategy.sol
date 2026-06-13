@@ -134,7 +134,26 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         onlyGovernor
         nonReentrant
     {
-        // No platform to approve. Outbound adapter is approved on-demand in `_depositToRemote`.
+        // No platform to approve. The bridgeAsset → outbound adapter allowance is the only
+        // approval Master needs, and it's (re)granted in `_setOutboundAdapter`.
+    }
+
+    /// @dev Override of `AbstractCrossChainV3Strategy._setOutboundAdapter`: max-approve the
+    ///      bridgeAsset to the new outbound adapter once (revoking the old), so
+    ///      `_depositToRemote` doesn't re-approve on every deposit. Mirrors Remote.
+    function _setOutboundAdapter(address _outboundAdapter) internal override {
+        address old = outboundAdapter;
+        if (old != address(0) && old != _outboundAdapter) {
+            IERC20(bridgeAsset).safeApprove(old, 0);
+        }
+        // slither-disable-next-line reentrancy-no-eth
+        super._setOutboundAdapter(_outboundAdapter);
+        if (_outboundAdapter != address(0) && old != _outboundAdapter) {
+            IERC20(bridgeAsset).safeApprove(
+                _outboundAdapter,
+                type(uint256).max
+            );
+        }
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -219,7 +238,14 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         require(!isYieldOpInFlight(), "Master: yield op in flight");
 
         uint64 nonce = _getNextYieldNonce();
-        _sendYieldMessage(CrossChainV3Helper.WITHDRAW_CLAIM, nonce, "");
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.WITHDRAW_CLAIM,
+            nonce,
+            "",
+            false
+        );
 
         emit WithdrawClaimTriggered(nonce, pendingWithdrawalAmount);
     }
@@ -244,15 +270,20 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         onlyOperatorGovernorOrStrategist
     {
         require(outboundAdapter != address(0), "Master: outbound not set");
-        bytes memory payload = CrossChainV3Helper
-            .encodeBalanceCheckRequestPayload(block.timestamp);
-        // Echo current nonce; do NOT advance it. Read-only on Remote's side.
-        _sendYieldMessage(
-            CrossChainV3Helper.BALANCE_CHECK_REQUEST,
-            lastYieldNonce,
-            payload
+        uint64 nonce = lastYieldNonce; // echo current nonce; do NOT advance it
+        bytes memory payload = CrossChainV3Helper.encodeUint256(
+            block.timestamp
         );
-        emit BalanceCheckRequested(lastYieldNonce, block.timestamp);
+        // Read-only on Remote's side.
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.BALANCE_CHECK_REQUEST,
+            nonce,
+            payload,
+            false
+        );
+        emit BalanceCheckRequested(nonce, block.timestamp);
     }
 
     /**
@@ -281,10 +312,13 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         // Persist for the ack handler to subtract from the (possibly-evolved) bridgeAdjustment.
         settlementSnapshot = bridgeAdjustment;
         bytes memory payload = abi.encode(settlementSnapshot);
-        _sendYieldMessage(
+        _send(
+            address(0),
+            0,
             CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING,
             nonce,
-            payload
+            payload,
+            false
         );
         emit SettlementRequested(nonce, settlementSnapshot);
     }
@@ -303,13 +337,14 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         uint64 nonce = _getNextYieldNonce();
         pendingAmount = _amount;
 
-        IERC20(bridgeAsset).safeApprove(outboundAdapter, _amount);
-        _sendYieldTokensAndMessage(
+        // bridgeAsset → outboundAdapter allowance is granted once in `_setOutboundAdapter`.
+        _send(
             bridgeAsset,
             _amount,
             CrossChainV3Helper.DEPOSIT,
             nonce,
-            ""
+            "",
+            false
         );
 
         emit DepositRequested(nonce, _amount);
@@ -334,8 +369,15 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         uint64 nonce = _getNextYieldNonce();
         pendingWithdrawalAmount = _amount;
 
-        bytes memory payload = CrossChainV3Helper.encodeAmountPayload(_amount);
-        _sendYieldMessage(CrossChainV3Helper.WITHDRAW_REQUEST, nonce, payload);
+        bytes memory payload = CrossChainV3Helper.encodeUint256(_amount);
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.WITHDRAW_REQUEST,
+            nonce,
+            payload,
+            false
+        );
 
         emit WithdrawRequested(nonce, _amount);
     }
@@ -411,9 +453,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         internal
     {
         _markYieldNonceProcessed(nonce);
-        uint256 newBalance = CrossChainV3Helper.decodeNewBalancePayload(
-            payload
-        );
+        uint256 newBalance = CrossChainV3Helper.decodeUint256(payload);
         bridgeAdjustment -= settlementSnapshot;
         settlementSnapshot = 0;
         remoteStrategyBalance = newBalance;
@@ -425,9 +465,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         internal
     {
         _markYieldNonceProcessed(nonce);
-        uint256 newBalance = CrossChainV3Helper.decodeNewBalancePayload(
-            payload
-        );
+        uint256 newBalance = CrossChainV3Helper.decodeUint256(payload);
         remoteStrategyBalance = newBalance;
         // pendingWithdrawalAmount stays set — gates concurrent triggerClaim() calls
         // until the leg-2 ack lands.
@@ -478,9 +516,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         internal
     {
         _markYieldNonceProcessed(nonce);
-        uint256 newBalance = CrossChainV3Helper.decodeNewBalancePayload(
-            payload
-        );
+        uint256 newBalance = CrossChainV3Helper.decodeUint256(payload);
         remoteStrategyBalance = newBalance;
         pendingAmount = 0;
         emit DepositAcked(nonce, newBalance);
@@ -495,14 +531,16 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     /// @inheritdoc AbstractWOTokenStrategy
-    function _preflightBridgeOutbound(uint256 amount) internal view override {
-        // Liquidity check: Remote's reported balance plus any unsettled bridge-channel
-        // delta must cover the bridge-out.
-        int256 available = int256(remoteStrategyBalance) + bridgeAdjustment;
-        require(
-            available >= int256(amount),
-            "Master: insufficient remote liquidity"
-        );
+    /// @dev Conservative: subtracts the in-flight withdrawal's claim on Remote's shares
+    ///      (`pendingWithdrawalAmount`), which `remoteStrategyBalance` still counts until the
+    ///      claim-ack lands. Does NOT add the in-flight `pendingAmount` deposit — it isn't yet
+    ///      shares on Remote, and a BRIDGE_OUT could race ahead of (or outlive) it, so counting
+    ///      it would re-open a stranding window.
+    function availableBridgeLiquidity() public view override returns (uint256) {
+        int256 a = int256(remoteStrategyBalance) +
+            bridgeAdjustment -
+            int256(pendingWithdrawalAmount);
+        return a > 0 ? uint256(a) : 0;
     }
 
     /// @inheritdoc AbstractWOTokenStrategy

@@ -289,6 +289,24 @@ describe("Unit: MasterWOTokenStrategy", function () {
       ).to.be.revertedWith("Master: insufficient remote liquidity");
     });
 
+    it("availableBridgeLiquidity subtracts an in-flight withdrawal (P1-b)", async () => {
+      const seed = ethers.utils.parseUnits("10000", 6);
+      expect(await master.availableBridgeLiquidity()).to.equal(seed);
+
+      // Initiate a withdrawal → pendingWithdrawalAmount = W. Those shares are committed to
+      // the queue on Remote and are NOT deliverable for a bridge-out, so the preflight must
+      // exclude them (otherwise a bridge could burn locally what Remote can't deliver).
+      const W = ethers.utils.parseUnits("3000", 6);
+      await mockVault.callWithdraw(
+        master.address,
+        mockVault.address,
+        bridgeAsset.address,
+        W
+      );
+      expect(await master.pendingWithdrawalAmount()).to.equal(W);
+      expect(await master.availableBridgeLiquidity()).to.equal(seed.sub(W));
+    });
+
     it("rejects bridge-out when caller has no OToken", async () => {
       // bob never received any OToken, so `bridgeOTokenToPeer` reverts on the
       // burn (transferFrom-style) regardless of liquidity. Separate concern from

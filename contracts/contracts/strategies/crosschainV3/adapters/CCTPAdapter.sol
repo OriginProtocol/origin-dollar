@@ -23,8 +23,9 @@ import { CCTPMessageHelper } from "../libraries/CCTPMessageHelper.sol";
  *             USDC to this adapter. Validate source domain + sender against the lane config,
  *             then forward the actual minted amount to the destination strategy.
  *
- *         CCTP has no native bridge fee — `_quoteFee` returns 0 and the AbstractAdapter's
- *         `msg.value` plumbing simply refunds whatever the caller forwarded.
+ *         CCTP has no native bridge fee — `_quoteFee` returns 0 so no `msg.value` is
+ *         required. Anything a caller forwards anyway is NOT refunded; it stays on the
+ *         adapter (recover via `transferToken`).
  */
 contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     using SafeERC20 for IERC20;
@@ -185,16 +186,21 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     ) internal {
         (
             address burnToken,
+            address mintRecipient,
             uint256 amount,
             address msgSender,
             uint256 feeExecuted,
             bytes memory hookData
         ) = CCTPMessageHelper.decodeBurnBody(body);
-        // `burnToken` is the SOURCE-chain USDC address, which is different from this chain's
+        // `burnToken` is the SOURCE-chain USDC address, which differs from this chain's
         // `usdcToken` for cross-chain transfers. CCTP's MessageTransmitter validates the
         // burn record cryptographically via the attestation; what gets minted here is
-        // always the local USDC by protocol design. So no local equality check.
+        // always the local USDC by protocol design. So no local burnToken equality check.
         burnToken; // silence unused-var
+        // The burn branch skips the pure-message branch's `transportRecipient` parity check,
+        // so enforce mint-recipient parity here: a forged burn that mints elsewhere reverts
+        // cleanly instead of silently delivering 0.
+        require(mintRecipient == address(this), "CCTP: bad mint recipient");
 
         uint256 balanceBefore = IERC20(usdcToken).balanceOf(address(this));
         require(
@@ -278,15 +284,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         if (token == address(0) || amount == 0) {
             return (0, address(0), false);
         }
-        // Some V2 deployments (notably CCTP testnets) ship with `depositForBurnWithHook`
-        // but without `getMinFeeAmount`. Treat the absence as fee=0 — correct for the
-        // finalised threshold (2000) which charges no protocol fee. Fast finality on those
-        // chains will revert deeper in CCTP if a real fee is required.
-        try tokenMessenger.getMinFeeAmount(amount) returns (uint256 _fee) {
-            fee = _fee;
-        } catch {
-            fee = 0;
-        }
+        fee = _minFeeOrZero(amount);
         feeToken = usdcToken;
         requiresExternalPayment = false;
     }
@@ -324,17 +322,10 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         require(amount >= minTransferAmount, "CCTP: amount below min");
         require(amount <= MAX_TRANSFER_AMOUNT, "CCTP: amount above CCTP cap");
 
-        // CCTP V2 will deduct an actual fee (<= maxFee) from the burn; recipient mints the
-        // remainder. We pass maxFee as the upper bound the protocol authorises; with the
-        // default `minFinalityThreshold = 2000` (finalised) the protocol fee is 0. Some
-        // testnet deployments don't expose `getMinFeeAmount` — fall back to 0 (which works
-        // for finalised threshold; fast finality on those chains would revert in CCTP).
-        uint256 maxFee;
-        try tokenMessenger.getMinFeeAmount(amount) returns (uint256 _fee) {
-            maxFee = _fee;
-        } catch {
-            maxFee = 0;
-        }
+        // CCTP V2 deducts an actual fee (<= maxFee) from the burn; recipient mints the
+        // remainder. maxFee is the upper bound the protocol authorises (0 at the finalised
+        // threshold 2000). See `_minFeeOrZero` for the testnet fallback.
+        uint256 maxFee = _minFeeOrZero(amount);
         IERC20(token).safeApprove(address(tokenMessenger), amount);
         tokenMessenger.depositForBurnWithHook(
             amount,
@@ -346,6 +337,18 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
             minFinalityThreshold,
             envelope
         );
+    }
+
+    /// @dev `getMinFeeAmount` isn't exposed by every CCTP V2 deployment (notably some
+    ///      testnets ship `depositForBurnWithHook` without it). Treat its absence as fee=0 —
+    ///      correct for the finalised threshold (2000, zero protocol fee); fast finality on
+    ///      such a chain would revert deeper in CCTP if a real fee were required.
+    function _minFeeOrZero(uint256 amount) private view returns (uint256) {
+        try tokenMessenger.getMinFeeAmount(amount) returns (uint256 fee) {
+            return fee;
+        } catch {
+            return 0;
+        }
     }
 
     function _addressToBytes32(address _addr) internal pure returns (bytes32) {

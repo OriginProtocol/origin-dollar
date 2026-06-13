@@ -6,8 +6,8 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  *
  * @notice Legacy native-fee consumption helper used by `BridgedWOETHMigrationStrategy`.
- *         New crosschainV3 adapters source fees from `msg.value` only and refund excess
- *         to the caller; they do not use this library.
+ *         New crosschainV3 adapters source fees from `msg.value` / the pool and do NOT
+ *         refund excess (it stays on the adapter); they do not use this library.
  *
  *         Two source paths:
  *           - `msg.value == 0` → pre-funded: the caller's `address(this).balance` covers

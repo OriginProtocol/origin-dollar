@@ -27,8 +27,9 @@ import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceive
  *           - Strategists list — accounts that can pause/unpause lanes for fast incident
  *             response. Governor also has these powers.
  *           - Outbound `sendMessage` / `sendMessageAndTokens` that wrap
- *             `(msg.sender, payload)` into a transport envelope, require
- *             `msg.value >= quote`, and refund the excess to the caller.
+ *             `(msg.sender, payload)` into a transport envelope and require
+ *             `msg.value >= quote`. Excess is NOT refunded — it stays on the adapter
+ *             (recover via `transferToken`); see `sendMessage`.
  *           - Inbound helpers `_validateInbound` (transport identity already verified by
  *             the concrete adapter) and `_deliver` (atomic delivery to the destination
  *             strategy).
