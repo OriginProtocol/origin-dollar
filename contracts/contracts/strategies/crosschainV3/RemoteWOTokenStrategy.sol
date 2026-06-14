@@ -1,0 +1,546 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { IVault } from "../../interfaces/IVault.sol";
+import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
+
+import { AbstractWOTokenStrategy } from "./AbstractWOTokenStrategy.sol";
+import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
+
+/**
+ * @title RemoteWOTokenStrategy
+ * @author Origin Protocol Inc
+ *
+ * @notice Yield-side leg of the wOToken cross-chain strategy pair. Holds wOToken shares
+ *         on behalf of the peer Master. Runs the 2-step pipeline:
+ *
+ *           inbound : bridgeAsset → OToken (via OToken vault `mint`) → wOToken (via 4626.deposit)
+ *           outbound: wOToken (via 4626.withdraw) → OToken → bridgeAsset (via OToken vault redeem)
+ *
+ *         Remote is NOT registered with any vault — it's a custodian for shares held on
+ *         behalf of the peer Master. The `oTokenVault` parameter points at the local
+ *         OToken vault on this chain (e.g. the OUSD vault on Ethereum or the OETH vault
+ *         on Ethereum).
+ *
+ *         For the full Remote state-transition table (Idle → Requested → Claimed → Bridging-out
+ *         → Completed) see the V3 implementation plan.
+ */
+contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
+    using SafeERC20 for IERC20;
+
+    // --- Immutables --------------------------------------------------------
+
+    /// @notice ERC-4626 wrapper of the OToken (wOUSD or wOETH).
+    address public immutable woToken;
+
+    /// @notice Yield-side OToken vault. Used to convert bridgeAsset ↔ OToken via mint / redeem.
+    address public immutable oTokenVault;
+
+    // --- Storage (all new slots; nothing from any parent is relocated) -----
+
+    /// @notice OToken-vault queue handle, stored **offset by one** (vault `requestId + 1`).
+    ///         The vault's `requestId` starts at 0 for the first-ever withdrawal on a fresh
+    ///         vault, which would be indistinguishable from "no request" if stored verbatim;
+    ///         the +1 offset keeps `0` meaning "no outstanding (unclaimed) queue request" while
+    ///         a real id of 0 is safely represented as 1. Cleared to 0 once the claim lands.
+    uint256 public outstandingRequestId;
+
+    /// @notice Originally-requested bridgeAsset amount for the outstanding withdrawal.
+    ///         Set in `_processWithdrawRequest`, refined to the actually-claimed amount
+    ///         once `_opportunisticClaim` succeeds, cleared on successful leg-2 delivery.
+    ///         Caps the value leg-2 may ship to Master, defeating residual/donation over-send.
+    uint256 public outstandingRequestAmount;
+
+    /// @dev Reserved for future expansion.
+    uint256[43] private __gap;
+
+    // --- Events -------------------------------------------------------------
+
+    event DepositProcessed(uint64 nonce, uint256 amount, uint256 yieldBaseline);
+    event WithdrawRequestProcessed(
+        uint64 nonce,
+        uint256 amount,
+        uint256 requestId
+    );
+    event WithdrawClaimDelivered(
+        uint64 nonce,
+        uint256 amount,
+        uint256 yieldBaseline
+    );
+    event WithdrawClaimNack(uint64 nonce, uint256 yieldBaseline);
+    event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
+
+    // --- Construction / initialisation -------------------------------------
+
+    constructor(
+        BaseStrategyConfig memory _stratConfig,
+        address _bridgeAsset,
+        address _oToken,
+        address _woToken,
+        address _oTokenVault
+    ) AbstractWOTokenStrategy(_stratConfig, _bridgeAsset, _oToken) {
+        // Remote has no vault and uses `woToken` as its "platform" for the strategy registry.
+        require(
+            _stratConfig.vaultAddress == address(0),
+            "Remote: vault must be zero"
+        );
+        require(_woToken != address(0), "Remote: woToken required");
+        require(_oTokenVault != address(0), "Remote: oTokenVault required");
+        require(
+            _stratConfig.platformAddress == _woToken,
+            "Remote: platform must be woToken"
+        );
+        woToken = _woToken;
+        oTokenVault = _oTokenVault;
+    }
+
+    function initialize(address _operator) external onlyGovernor initializer {
+        operator = _operator;
+        // wOToken is the registry platform token for Remote.
+        _initWithPToken(woToken);
+    }
+
+    // --- Required strategy overrides ---------------------------------------
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        require(_asset == bridgeAsset, "Remote: unsupported asset");
+        // _viewCheckBalance is OToken-denominated (18dp); checkBalance reports in bridgeAsset
+        // units like every strategy. (The R→M yield reports use the 18dp baseline directly.)
+        return _toAsset(_viewCheckBalance());
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
+        // Static (token, spender) pairs the strategy ever transfers through:
+        //   bridgeAsset → oTokenVault   (vault.mint pulls WETH on deposit)
+        //   oToken      → oTokenVault   (vault.requestWithdrawal pulls OToken on withdraw)
+        //   oToken      → woToken       (ERC-4626 deposit / withdraw of OToken shares)
+        // One-shot: approves to type(uint256).max so the per-op approval dance isn't needed.
+        // The dynamic (bridgeAsset → outboundAdapter) pair is managed by `setOutboundAdapter`.
+        IERC20(bridgeAsset).safeApprove(oTokenVault, type(uint256).max);
+        IERC20(oToken).safeApprove(oTokenVault, type(uint256).max);
+        IERC20(oToken).safeApprove(woToken, type(uint256).max);
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function deposit(address, uint256)
+        external
+        view
+        override
+        onlyVaultOrGovernor
+    {
+        revert("Remote: use bridge");
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function depositAll() external view override onlyVaultOrGovernor {
+        revert("Remote: use bridge");
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function withdraw(
+        address,
+        address,
+        uint256
+    ) external view override onlyVaultOrGovernor {
+        revert("Remote: use bridge");
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function withdrawAll() external view override onlyVaultOrGovernor {
+        revert("Remote: use bridge");
+    }
+
+    // --- Inbound dispatch --------------------------------------------------
+
+    function _handleBridgeMessage(
+        uint256 amountReceived,
+        uint32 msgType,
+        uint64 nonce,
+        bytes memory body
+    ) internal override {
+        if (msgType == CrossChainV3Helper.DEPOSIT) {
+            _processDeposit(nonce, amountReceived);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_REQUEST) {
+            _processWithdrawRequest(nonce, body);
+        } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM) {
+            _processWithdrawClaim(nonce);
+        } else if (msgType == CrossChainV3Helper.BRIDGE_OUT) {
+            _handleInboundBridgeMessage(msgType, amountReceived, body);
+        } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_REQUEST) {
+            _processBalanceCheckRequest(nonce, body);
+        } else if (msgType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING) {
+            _processSettlement(nonce, body);
+        } else {
+            revert("Remote: unsupported message type");
+        }
+    }
+
+    /// @dev Reports the YIELD-ONLY baseline: `_viewCheckBalance() - bridgeAdjustment`.
+    ///      This cancels bridge-channel deltas on both sides — for each BRIDGE_OUT,
+    ///      `_viewCheckBalance` drops by `net` AND `bridgeAdjustment` drops by `net`, so
+    ///      the difference stays constant. Bridge channel becomes invisible at this layer.
+    ///
+    ///      Master combines this yield-only value with its own `bridgeAdjustment` to
+    ///      reconstruct the true backing total via `checkBalance`. The math is consistent
+    ///      regardless of whether bridge messages have been processed on Remote yet —
+    ///      see the design doc for the full case analysis.
+    ///
+    ///      DOES NOT call `_acceptYieldNonce`: balance check is non-blocking, read-only,
+    ///      and the nonce is echoed back unchanged so Master can validate it's still in
+    ///      the same yield epoch.
+    function _processBalanceCheckRequest(uint64 nonce, bytes memory payload)
+        internal
+    {
+        uint256 srcTimestamp = CrossChainV3Helper.decodeUint256(payload);
+        bytes memory ackPayload = CrossChainV3Helper
+            .encodeBalanceCheckResponsePayload(
+                _yieldOnlyBaseline(),
+                srcTimestamp
+            );
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.BALANCE_CHECK_RESPONSE,
+            nonce,
+            ackPayload,
+            false
+        );
+    }
+
+    /// @dev Subtracts the snapshot Master sent (NOT `= 0`). Rationale:
+    ///
+    ///      At Remote-processing time, Remote.bridgeAdjustment may equal Master's snapshot
+    ///      (no in-flight ops), or differ by some delta (new bridge op has reached Remote
+    ///      between Master sending settle and Remote processing it). By subtracting only
+    ///      the exact snapshot, any newer delta is preserved on Remote — and Master does
+    ///      the symmetric subtract in `_processSettlementAck`, so both sides converge.
+    ///
+    ///      The reported balance is yield-only baseline (`_viewCheckBalance - bridgeAdj`
+    ///      post-subtract), so even if a new bridge op landed in between, the report is
+    ///      consistent with Master's reconstruction.
+    function _processSettlement(uint64 nonce, bytes memory body) internal {
+        int256 snapshot = abi.decode(body, (int256));
+        bridgeAdjustment -= snapshot;
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            _yieldOnlyBaseline()
+        );
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK,
+            nonce,
+            ackPayload,
+            false
+        );
+        _acceptYieldNonce(nonce);
+    }
+
+    /**
+     * @dev Leg 1 of Option 1. Unwrap wOToken → OToken, request a withdrawal from the
+     *      Ethereum OToken vault queue, reply to Master with the new view of `checkBalance`.
+     *      Master doesn't need the `requestId` (Remote owns the queue lifecycle).
+     */
+    function _processWithdrawRequest(uint64 nonce, bytes memory payload)
+        internal
+    {
+        uint256 amount = CrossChainV3Helper.decodeUint256(payload);
+        require(amount > 0, "Remote: zero withdraw");
+        require(outstandingRequestId == 0, "Remote: queue already busy");
+
+        // `amount` is in bridgeAsset units (what the L2 vault asked back). The wOToken unwrap
+        // and the OToken-vault queue operate in OToken (18dp) units.
+        uint256 oTokenAmount = _toOToken(amount);
+
+        // Unwrap wOToken → OToken to satisfy the queue request.
+        uint256 sharesNeeded = IERC4626(woToken).previewWithdraw(oTokenAmount);
+        require(
+            IERC20(woToken).balanceOf(address(this)) >= sharesNeeded,
+            "Remote: insufficient shares"
+        );
+        IERC4626(woToken).withdraw(oTokenAmount, address(this), address(this));
+
+        // Queue the withdrawal on the OToken vault. Allowance pre-granted by
+        // `safeApproveAllTokens`.
+        (uint256 requestId, ) = IVault(oTokenVault).requestWithdrawal(
+            oTokenAmount
+        );
+        // Store offset by one so a vault requestId of 0 (first withdrawal on a fresh vault)
+        // is distinguishable from the "no request" sentinel. See `outstandingRequestId` doc.
+        // slither-disable-next-line reentrancy-no-eth
+        outstandingRequestId = requestId + 1;
+        // outstandingRequestAmount tracks the bridgeAsset value leg 2 will ship back.
+        outstandingRequestAmount = amount;
+
+        // Reply to Master with the new total.
+        uint256 yieldBaseline = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            yieldBaseline
+        );
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.WITHDRAW_REQUEST_ACK,
+            nonce,
+            ackPayload,
+            false
+        );
+        _acceptYieldNonce(nonce);
+
+        emit WithdrawRequestProcessed(nonce, amount, requestId);
+    }
+
+    /**
+     * @dev Leg 2 of Option 1. If the OToken-vault queue hasn't been claimed yet, try the
+     *      claim opportunistically. If the bridgeAsset is in hand, bridge it back to Master.
+     *      Otherwise reply with a NACK so Master can retry later.
+     */
+    function _processWithdrawClaim(uint64 nonce) internal {
+        // Best-effort claim (idempotent — early-returns if already claimed).
+        _opportunisticClaim();
+
+        // Ship only when the queue actually paid out THIS cycle. `_opportunisticClaim` zeroes
+        // `outstandingRequestId` only on a successful claim, so it's the authoritative
+        // "claim landed" signal — gating on it (not just held balance) stops a bridgeAsset
+        // donation during the queue-delay window from being shipped as the proceeds and
+        // permanently orphaning the still-pending queue request. `outstandingRequestAmount`
+        // (refined to the claimed amount in `_opportunisticClaim`) caps the ship to the real
+        // amount, so any donation stays behind and is realised as yield on the next report.
+        uint256 amount = outstandingRequestAmount;
+        uint256 bridgeAssetHeld = IERC20(bridgeAsset).balanceOf(address(this));
+
+        // Defense-in-depth: if the claimed amount is outside the outbound adapter's
+        // [min, max], the leg-2 ship would revert inside the adapter and brick the yield
+        // channel (the nonce never gets accepted). NACK instead so the channel stays live and
+        // the claimed bridgeAsset remains counted on Remote (recoverable). Master's leg-1
+        // pre-check (mirror-lane bounds) should prevent reaching this; it only fires on a
+        // bounds desync between Master's inbound and Remote's outbound configuration.
+        uint256 minT = IBridgeAdapter(outboundAdapter).minTransferAmount();
+        uint256 maxT = IBridgeAdapter(outboundAdapter).maxTransferAmount();
+        bool shipOutOfBounds = amount < minT || (maxT != 0 && amount > maxT);
+
+        if (
+            outstandingRequestId != 0 ||
+            amount == 0 ||
+            bridgeAssetHeld < amount ||
+            shipOutOfBounds
+        ) {
+            // Claim not landed / no request / un-shippable amount: NACK so Master can retry.
+            uint256 currentBalance = _yieldOnlyBaseline();
+            bytes memory nackPayload = CrossChainV3Helper
+                .encodeWithdrawClaimAckPayload(currentBalance, false, 0);
+            _send(
+                address(0),
+                0,
+                CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
+                nonce,
+                nackPayload,
+                false
+            );
+            _acceptYieldNonce(nonce);
+            emit WithdrawClaimNack(nonce, currentBalance);
+            return;
+        }
+
+        // Clear queue-side state (re-set if a fresh leg 1 starts) and bridge back.
+        // outstandingRequestId is already 0 here (the guard NACKs otherwise); cleared defensively.
+        // slither-disable-next-line reentrancy-no-eth
+        outstandingRequestId = 0;
+        outstandingRequestAmount = 0;
+
+        // `amount` (bridgeAsset units) is about to leave us; subtract its OToken-equivalent
+        // value from the yield baseline.
+        uint256 yieldBaseline = _yieldOnlyBaselineAfter(_toOToken(amount));
+        bytes memory ackPayload = CrossChainV3Helper
+            .encodeWithdrawClaimAckPayload(yieldBaseline, true, amount);
+        // bridgeAsset → outboundAdapter allowance is granted by `setOutboundAdapter`.
+        _send(
+            bridgeAsset,
+            amount,
+            CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
+            nonce,
+            ackPayload,
+            false
+        );
+        _acceptYieldNonce(nonce);
+
+        emit WithdrawClaimDelivered(nonce, amount, yieldBaseline);
+    }
+
+    /**
+     * @notice Permissionless, idempotent: claim the outstanding queue withdrawal if its delay
+     *         has elapsed. Safe to call multiple times — early-returns when nothing's pending.
+     */
+    function claimRemoteWithdrawal() external nonReentrant {
+        _opportunisticClaim();
+    }
+
+    function _opportunisticClaim() internal {
+        uint256 stored = outstandingRequestId;
+        if (stored == 0) {
+            return;
+        }
+        // `outstandingRequestId` is stored offset-by-one; the real vault id is `stored - 1`.
+        uint256 vaultRequestId = stored - 1;
+        // Hoist `claimed` outside the try so its scope is unambiguous to static
+        // analysers (avoids the slither uninitialized-local false-positive that
+        // fired when `claimed` was named only in the try-returns clause).
+        uint256 claimed;
+        // Use try/catch so a not-yet-claimable queue delay doesn't bubble up as a revert.
+        try IVault(oTokenVault).claimWithdrawal(vaultRequestId) returns (
+            uint256 _claimed
+        ) {
+            claimed = _claimed;
+            // slither-disable-next-line reentrancy-no-eth
+            outstandingRequestId = 0;
+            // Refine `outstandingRequestAmount` to what the vault actually paid out so
+            // leg-2 ships the precise claimed amount (accounts for any rounding gain/loss
+            // between request time and claim time).
+            outstandingRequestAmount = claimed;
+            emit RemoteWithdrawalClaimed(vaultRequestId, claimed);
+        } catch {
+            // Still queued; leave state unchanged.
+        }
+    }
+
+    function _processDeposit(uint64 nonce, uint256 amount) internal {
+        // bridgeAsset already arrived with the tokens-with-message delivery. Mint OToken
+        // from the Ethereum vault, then wrap to wOToken.
+        require(
+            IERC20(bridgeAsset).balanceOf(address(this)) >= amount,
+            "Remote: deposit asset missing"
+        );
+
+        // Mint OToken via the yield-side vault. The real OUSD / OETH vault pulls
+        // bridgeAsset via transferFrom inside `mint`; allowance pre-granted by
+        // `safeApproveAllTokens`.
+        IVault(oTokenVault).mint(amount);
+
+        // Whatever OToken we now hold gets wrapped to wOToken (allowance pre-granted).
+        uint256 oTokenBalance = IERC20(oToken).balanceOf(address(this));
+        if (oTokenBalance > 0) {
+            IERC4626(woToken).deposit(oTokenBalance, address(this));
+        }
+
+        // Reply to Master with the new balance and mark the yield nonce processed.
+        uint256 yieldBaseline = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            yieldBaseline
+        );
+        _send(
+            address(0),
+            0,
+            CrossChainV3Helper.DEPOSIT_ACK,
+            nonce,
+            ackPayload,
+            false
+        );
+        _acceptYieldNonce(nonce);
+
+        emit DepositProcessed(nonce, amount, yieldBaseline);
+    }
+
+    // --- AbstractWOTokenStrategy hooks -------------------------------------
+
+    /// @inheritdoc AbstractWOTokenStrategy
+    function _bridgeOutboundMsgType() internal pure override returns (uint32) {
+        return CrossChainV3Helper.BRIDGE_IN;
+    }
+
+    /// @inheritdoc AbstractWOTokenStrategy
+    /// @dev Bridging out of Remote wraps the user's own OToken, so there's no Remote-side
+    ///      liquidity ceiling — the bound is the user's balance. Report unbounded.
+    function availableBridgeLiquidity() public pure override returns (uint256) {
+        return type(uint256).max;
+    }
+
+    /// @inheritdoc AbstractWOTokenStrategy
+    function _consumeOTokenForBridge(uint256 amount) internal override {
+        // Pull OToken from the user and wrap into wOToken shares held by this strategy.
+        IERC20(oToken).safeTransferFrom(msg.sender, address(this), amount);
+        IERC4626(woToken).deposit(amount, address(this));
+    }
+
+    /// @inheritdoc AbstractWOTokenStrategy
+    function _deliverOTokenForBridge(uint256 amount, address recipient)
+        internal
+        override
+    {
+        // Defensive: ensure we actually hold enough OToken value to satisfy this bridge-out.
+        uint256 sharesNeeded = IERC4626(woToken).previewWithdraw(amount);
+        require(
+            IERC20(woToken).balanceOf(address(this)) >= sharesNeeded,
+            "Remote: insufficient remote wOToken"
+        );
+
+        IERC4626(woToken).withdraw(amount, address(this), address(this));
+        IERC20(oToken).safeTransfer(recipient, amount);
+    }
+
+    // --- Helpers -----------------------------------------------------------
+
+    function _viewCheckBalance() internal view returns (uint256) {
+        // Denominated in OToken (18dp). Value lives in exactly one slot at any time per the
+        // state-transition table:
+        //   - shares       (4626-wrapped wOToken) — OToken units
+        //   - oToken       (unwrapped but not yet queued / redeemed) — OToken units
+        //   - bridgeAsset  (claimed / redeemed but not yet bridged back) — bridgeAsset units,
+        //                   scaled up to OToken units here
+        //   - the OToken-vault queue — tracked by outstandingRequestAmount (bridgeAsset units,
+        //                   scaled up), counted only while the request is still outstanding
+        uint256 sharesBalance = IERC20(woToken).balanceOf(address(this));
+        uint256 valueOfShares = sharesBalance == 0
+            ? 0
+            : IERC4626(woToken).previewRedeem(sharesBalance);
+        uint256 queued = outstandingRequestId != 0
+            ? _toOToken(outstandingRequestAmount)
+            : 0;
+        return
+            valueOfShares +
+            IERC20(oToken).balanceOf(address(this)) +
+            _toOToken(IERC20(bridgeAsset).balanceOf(address(this))) +
+            queued;
+    }
+
+    /// @dev Remote's yield-only baseline = full custody value minus the bridge-channel
+    ///      delta. `Master.remoteStrategyBalance` must hold exactly this, because
+    ///      `Master.checkBalance` re-adds its OWN `bridgeAdjustment` separately — so every
+    ///      R→M balance report routes through here (deposit / withdraw / claim acks, not
+    ///      just balance-check / settle). The `require(>=0)` is an invariant that can't
+    ///      break under normal ops (each BRIDGE_IN/OUT moves `_viewCheckBalance` and
+    ///      `bridgeAdjustment` by the same `net`, leaving this constant); if it ever did,
+    ///      a revert is a loud, safe halt — clamping to 0 would silently crater the vault's
+    ///      reported value and rebase holders down.
+    function _yieldOnlyBaseline() internal view returns (uint256) {
+        return _yieldOnlyBaselineAfter(0);
+    }
+
+    /// @dev Yield-only baseline as it will stand AFTER `oTokenAmount` of OToken value leaves
+    ///      on a WITHDRAW_CLAIM_ACK (the bridgeAsset is still held when this is computed).
+    ///      `oTokenAmount` is in OToken (18dp) units, matching `_viewCheckBalance`;
+    ///      `_yieldOnlyBaseline()` is the `oTokenAmount == 0` case.
+    function _yieldOnlyBaselineAfter(uint256 oTokenAmount)
+        internal
+        view
+        returns (uint256)
+    {
+        int256 v = int256(_viewCheckBalance()) -
+            int256(oTokenAmount) -
+            bridgeAdjustment;
+        require(v >= 0, "Remote: negative yield baseline");
+        return uint256(v);
+    }
+}
