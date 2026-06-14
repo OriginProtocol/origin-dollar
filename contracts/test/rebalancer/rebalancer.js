@@ -8,6 +8,9 @@ const {
   computeImpactAwareAllocation,
   buildExecutableActions,
   formatAllocationTable,
+  computePortfolioApy,
+  _applyPortfolioSpreadGate,
+  _markShortfallWithdrawals,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
   ACTION_NONE,
@@ -903,9 +906,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
     expect(deposits).to.have.length(1);
     expect(deposits[0].name).to.equal("Base Morpho");
-    const surplusDeposit = result.find(
-      (a) => a.reason && a.reason.includes("surplus fallback")
-    );
+    const surplusDeposit = result.find((a) => a.isVaultSurplus);
     expect(surplusDeposit).to.be.undefined;
   });
 
@@ -1079,9 +1080,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
     expect(deposits).to.have.length(1);
     expect(deposits[0].name).to.equal("Base Morpho");
-    const surplusDeposit = result.find(
-      (a) => a.reason && a.reason.includes("surplus fallback")
-    );
+    const surplusDeposit = result.find((a) => a.isVaultSurplus);
     expect(surplusDeposit).to.be.undefined;
   });
 
@@ -1099,9 +1098,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const ethRow = result.find((a) => a.isDefault);
     expect(ethRow.action).to.equal(ACTION_DEPOSIT);
     expect(ethRow.delta).to.equal(usdc(10000));
-    const surplusFallback = result.find(
-      (a) => a.reason && a.reason.includes("surplus fallback")
-    );
+    const surplusFallback = result.find((a) => a.isVaultSurplus);
     expect(surplusFallback).to.be.undefined;
   });
 
@@ -1529,6 +1526,27 @@ describe("Rebalancer: buildExecutableActions", () => {
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
   });
+
+  // ── Shortfall marking on normal-path withdrawals ────────
+
+  it("marks normal-path default withdrawal as isShortfall when it covers the vault deficit", async () => {
+    // Default overallocated → withdrawal is approved via the normal path.
+    // Shortfall > 0, vaultBalance = 0 → deficit = shortfall.
+    // Gate preservation depends on isShortfall; the normal-path withdrawal
+    // must be flagged even though _coverShortfall was not invoked.
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, usdc(100000), usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.isShortfall).to.be.true;
+  });
 });
 
 // ─────────────────────────────────────────────────────────
@@ -1938,5 +1956,417 @@ describe("Rebalancer: computeImpactAwareAllocation", () => {
     const ethRow = result.find((r) => r.name === "Ethereum Morpho");
     // Should get at least 5% of $1M = $50K
     expect(ethRow.targetBalance.gte(usdc(50000))).to.be.true;
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// computePortfolioApy + _applyPortfolioSpreadGate
+// ─────────────────────────────────────────────────────────
+
+// Minimal action row for gate/portfolio tests — only the fields the helpers read.
+function makeAction({
+  name,
+  balance,
+  targetBalance,
+  apy,
+  expectedApy,
+  action = ACTION_NONE,
+  reason = null,
+  isShortfall = false,
+  isVaultSurplus = false,
+}) {
+  const balBn = usdc(balance);
+  const tgtBn = usdc(targetBalance != null ? targetBalance : balance);
+  return {
+    name,
+    address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
+    balance: balBn,
+    targetBalance: tgtBn,
+    delta: tgtBn.sub(balBn),
+    apy,
+    expectedApy,
+    action,
+    reason,
+    isShortfall,
+    isVaultSurplus,
+  };
+}
+
+describe("Rebalancer: computePortfolioApy", () => {
+  it("weights strategy APYs by balance", () => {
+    const actions = [
+      makeAction({ name: "A", balance: 600000, apy: 0.05 }),
+      makeAction({ name: "B", balance: 400000, apy: 0.03 }),
+    ];
+    const totalCapital = actions.reduce((s, a) => s.add(a.balance), ZERO);
+    const apy = computePortfolioApy(actions, totalCapital, {
+      useTarget: false,
+    });
+    // 600k*0.05 + 400k*0.03 = 30k + 12k = 42k; / 1M = 0.042
+    expect(apy).to.be.closeTo(0.042, 1e-9);
+  });
+
+  it("includes idle vault in the denominator at 0% yield", () => {
+    const actions = [makeAction({ name: "A", balance: 500000, apy: 0.1 })];
+    // 500k idle vault + 500k strategy @ 10% → 0.05
+    const totalCapital = usdc(500000).add(actions[0].balance);
+    const apy = computePortfolioApy(actions, totalCapital, {
+      useTarget: false,
+    });
+    expect(apy).to.be.closeTo(0.05, 1e-9);
+  });
+
+  it("useTarget=true uses expectedApy and targetBalance", () => {
+    const actions = [
+      makeAction({
+        name: "A",
+        balance: 500000,
+        targetBalance: 700000,
+        apy: 0.05,
+        expectedApy: 0.04,
+        action: ACTION_DEPOSIT,
+      }),
+      makeAction({
+        name: "B",
+        balance: 500000,
+        targetBalance: 300000,
+        apy: 0.03,
+        expectedApy: 0.035,
+        action: ACTION_WITHDRAW,
+      }),
+    ];
+    const totalCapital = usdc(1000000);
+    const apy = computePortfolioApy(actions, totalCapital, { useTarget: true });
+    // 700k*0.04 + 300k*0.035 = 28k + 10.5k = 38.5k; / 1M = 0.0385
+    expect(apy).to.be.closeTo(0.0385, 1e-9);
+  });
+
+  it("falls back to apy when expectedApy is missing", () => {
+    const actions = [
+      makeAction({
+        name: "A",
+        balance: 500000,
+        targetBalance: 500000,
+        apy: 0.05,
+      }),
+    ];
+    const totalCapital = usdc(500000);
+    const apy = computePortfolioApy(actions, totalCapital, { useTarget: true });
+    expect(apy).to.be.closeTo(0.05, 1e-9);
+  });
+
+  it("returns 0 for zero totalCapital", () => {
+    expect(computePortfolioApy([], ZERO, { useTarget: false })).to.equal(0);
+  });
+});
+
+describe("Rebalancer: _applyPortfolioSpreadGate", () => {
+  const constraints = { minApySpread: 0.005 }; // 50 bps
+
+  it("drops yield-motivated actions when spread below threshold", () => {
+    const actions = [
+      makeAction({
+        name: "Src",
+        balance: 500000,
+        targetBalance: 400000,
+        apy: 0.04,
+        expectedApy: 0.042,
+        action: ACTION_WITHDRAW,
+        reason: "move to higher APY",
+      }),
+      makeAction({
+        name: "Dst",
+        balance: 500000,
+        targetBalance: 600000,
+        apy: 0.045,
+        expectedApy: 0.044,
+        action: ACTION_DEPOSIT,
+        reason: null,
+      }),
+    ];
+    const totalCapital = usdc(1000000);
+    const warnings = [];
+    const res = _applyPortfolioSpreadGate(
+      actions,
+      totalCapital,
+      constraints,
+      warnings
+    );
+
+    // Lift is < 50 bps, so both actions are cancelled.
+    expect(res.gated).to.be.true;
+    expect(actions[0].action).to.equal(ACTION_NONE);
+    expect(actions[1].action).to.equal(ACTION_NONE);
+    expect(actions[0].delta.eq(ZERO)).to.be.true;
+    expect(actions[0].targetBalance.eq(actions[0].balance)).to.be.true;
+    expect(warnings.length).to.equal(1);
+    expect(warnings[0]).to.match(/yield-motivated actions dropped/);
+    // After-APY is recomputed post-drop and should equal before.
+    expect(res.after).to.be.closeTo(res.before, 1e-9);
+  });
+
+  it("preserves shortfall withdrawals when the gate fires", () => {
+    const actions = [
+      makeAction({
+        name: "Src",
+        balance: 500000,
+        targetBalance: 400000,
+        apy: 0.04,
+        expectedApy: 0.042,
+        action: ACTION_WITHDRAW,
+        reason: "rebalance",
+      }),
+      makeAction({
+        name: "Dst",
+        balance: 500000,
+        targetBalance: 500000,
+        apy: 0.045,
+        expectedApy: 0.045,
+        action: ACTION_WITHDRAW,
+        reason: "shortfall fallback",
+        isShortfall: true,
+      }),
+    ];
+    const totalCapital = usdc(1000000);
+    const warnings = [];
+    _applyPortfolioSpreadGate(actions, totalCapital, constraints, warnings);
+
+    expect(actions[0].action).to.equal(ACTION_NONE);
+    expect(actions[1].action).to.equal(ACTION_WITHDRAW);
+    expect(actions[1].reason).to.equal("shortfall fallback");
+  });
+
+  it("preserves vault-surplus deposits when the gate fires", () => {
+    const actions = [
+      makeAction({
+        name: "Src",
+        balance: 500000,
+        targetBalance: 400000,
+        apy: 0.04,
+        expectedApy: 0.041,
+        action: ACTION_WITHDRAW,
+        reason: "rebalance",
+      }),
+      makeAction({
+        name: "Default",
+        balance: 500000,
+        targetBalance: 600000,
+        apy: 0.045,
+        expectedApy: 0.044,
+        action: ACTION_DEPOSIT,
+        reason: "vault surplus fallback",
+        isVaultSurplus: true,
+      }),
+    ];
+    const totalCapital = usdc(1000000);
+    const warnings = [];
+    _applyPortfolioSpreadGate(actions, totalCapital, constraints, warnings);
+
+    expect(actions[0].action).to.equal(ACTION_NONE);
+    expect(actions[1].action).to.equal(ACTION_DEPOSIT);
+    expect(actions[1].reason).to.equal("vault surplus fallback");
+  });
+
+  it("preserves the surplus-netted-against-withdrawal branch", () => {
+    const actions = [
+      makeAction({
+        name: "Default",
+        balance: 500000,
+        targetBalance: 550000,
+        apy: 0.045,
+        expectedApy: 0.044,
+        action: ACTION_DEPOSIT,
+        reason: "vault surplus (net of cancelled withdrawal)",
+        isVaultSurplus: true,
+      }),
+    ];
+    const totalCapital = usdc(500000);
+    const warnings = [];
+    _applyPortfolioSpreadGate(actions, totalCapital, constraints, warnings);
+    expect(actions[0].action).to.equal(ACTION_DEPOSIT);
+  });
+
+  it("no-op when spread meets threshold", () => {
+    const actions = [
+      makeAction({
+        name: "Src",
+        balance: 500000,
+        targetBalance: 300000,
+        apy: 0.02,
+        expectedApy: 0.02,
+        action: ACTION_WITHDRAW,
+      }),
+      makeAction({
+        name: "Dst",
+        balance: 500000,
+        targetBalance: 700000,
+        apy: 0.08,
+        expectedApy: 0.08,
+        action: ACTION_DEPOSIT,
+      }),
+    ];
+    const totalCapital = usdc(1000000);
+    const warnings = [];
+    const res = _applyPortfolioSpreadGate(
+      actions,
+      totalCapital,
+      constraints,
+      warnings
+    );
+    // Before = 0.5*0.02 + 0.5*0.08 = 0.05
+    // After  = 0.3*0.02 + 0.7*0.08 = 0.062 → +120 bps, above threshold
+    expect(res.gated).to.be.false;
+    expect(actions[0].action).to.equal(ACTION_WITHDRAW);
+    expect(actions[1].action).to.equal(ACTION_DEPOSIT);
+    expect(warnings.length).to.equal(0);
+  });
+
+  it("does not fire when minApySpread is not set", () => {
+    const actions = [
+      makeAction({
+        name: "Src",
+        balance: 500000,
+        targetBalance: 400000,
+        apy: 0.04,
+        expectedApy: 0.04,
+        action: ACTION_WITHDRAW,
+        reason: "rebalance",
+      }),
+    ];
+    const totalCapital = usdc(500000);
+    const warnings = [];
+    const res = _applyPortfolioSpreadGate(actions, totalCapital, {}, warnings);
+    expect(res.gated).to.be.false;
+    expect(actions[0].action).to.equal(ACTION_WITHDRAW);
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// _markShortfallWithdrawals
+// ─────────────────────────────────────────────────────────
+
+function makeWithdrawAction(name, balance, withdrawAmount, apy, flags = {}) {
+  const balBn = usdc(balance);
+  const amtBn = usdc(withdrawAmount);
+  return {
+    name,
+    address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
+    balance: balBn,
+    targetBalance: balBn.sub(amtBn),
+    delta: amtBn.mul(-1),
+    apy,
+    action: ACTION_WITHDRAW,
+    isDefault: !!flags.isDefault,
+    isCrossChain: !!flags.isCrossChain,
+    isShortfall: false,
+    isVaultSurplus: false,
+  };
+}
+
+describe("Rebalancer: _markShortfallWithdrawals", () => {
+  const constraints = { minVaultBalance: 0 };
+
+  it("flags the default-strategy withdrawal when it fully covers the deficit", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 100000, 0.05, { isDefault: true }),
+      makeWithdrawAction("CrossChain", 500000, 100000, 0.03, {
+        isCrossChain: true,
+      }),
+    ];
+    // vaultBalance=0, shortfall=50K → deficit=50K, default withdrawal=100K covers it
+    _markShortfallWithdrawals(actions, ZERO, usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.true;
+    expect(actions[1].isShortfall).to.be.false;
+  });
+
+  it("walks cross-chain by lowest APY after default", () => {
+    const actions = [
+      makeWithdrawAction("Default", 100000, 20000, 0.05, { isDefault: true }),
+      makeWithdrawAction("HighApyCC", 300000, 120000, 0.08, {
+        isCrossChain: true,
+      }),
+      makeWithdrawAction("LowApyCC", 300000, 120000, 0.03, {
+        isCrossChain: true,
+      }),
+    ];
+    // deficit=130K: default covers 20K, lowest-APY cross-chain covers the rest
+    _markShortfallWithdrawals(actions, ZERO, usdc(130000), constraints);
+    expect(actions[0].isShortfall).to.be.true;
+    expect(actions[2].isShortfall).to.be.true;
+    expect(actions[1].isShortfall).to.be.false;
+  });
+
+  it("does nothing when vault balance already covers the target", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 100000, 0.05, { isDefault: true }),
+    ];
+    // vaultBalance=200K >= shortfall=50K → deficit=0
+    _markShortfallWithdrawals(actions, usdc(200000), usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.false;
+  });
+
+  it("is a no-op when no approved withdrawals exist", () => {
+    const actions = [
+      {
+        ...makeWithdrawAction("Default", 500000, 100000, 0.05, {
+          isDefault: true,
+        }),
+        action: ACTION_NONE,
+      },
+    ];
+    _markShortfallWithdrawals(actions, ZERO, usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.false;
+  });
+
+  it("respects minVaultBalance when computing the deficit", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 30000, 0.05, { isDefault: true }),
+    ];
+    // vaultBalance=100K, shortfall=50K, minVaultBalance=60K → target=110K, deficit=10K
+    _markShortfallWithdrawals(actions, usdc(100000), usdc(50000), {
+      minVaultBalance: usdc(60000),
+    });
+    expect(actions[0].isShortfall).to.be.true;
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// End-to-end gate regression (mirrors the production failure)
+// ─────────────────────────────────────────────────────────
+
+describe("Rebalancer: shortfall funding survives the spread gate", () => {
+  it("preserves normal-path withdrawals that cover the vault deficit", async () => {
+    // Ethereum Morpho overallocated at 14% APY; Base/HyperEVM underfunded at
+    // lower APY. Rebalance withdraws from ETH → APY lift turns negative. With
+    // shortfall > 0, the withdrawal must survive the spread gate.
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 400000, 0.14, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 600000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const actions = await buildExecutableActions(allocs, usdc(100000), usdc(0));
+
+    const totalCapital = actions.reduce((sum, a) => sum.add(a.balance), ZERO);
+    const warnings = [];
+    const res = _applyPortfolioSpreadGate(
+      actions,
+      totalCapital,
+      { minApySpread: 0.001 },
+      warnings
+    );
+
+    const ethRow = actions.find((a) => a.isDefault);
+    const baseRow = actions.find((a) => a.isCrossChain);
+
+    // Gate fires because APY lift is negative.
+    expect(res.gated).to.be.true;
+    // ETH withdrawal covers the shortfall → flagged and preserved.
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.isShortfall).to.be.true;
+    // Base deposit is yield-motivated → dropped.
+    expect(baseRow.action).to.equal(ACTION_NONE);
   });
 });
