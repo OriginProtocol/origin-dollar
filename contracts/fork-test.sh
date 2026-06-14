@@ -57,6 +57,12 @@ main()
     elif [[ $FORK_NETWORK_NAME == "hyperevm" ]]; then
       PROVIDER_URL=$HYPEREVM_PROVIDER_URL;
       BLOCK_NUMBER=$HYPEREVM_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "sepolia" ]]; then
+      PROVIDER_URL=$SEPOLIA_PROVIDER_URL;
+      BLOCK_NUMBER=$SEPOLIA_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "baseSepolia" ]]; then
+      PROVIDER_URL=$BASE_SEPOLIA_PROVIDER_URL;
+      BLOCK_NUMBER=$BASE_SEPOLIA_BLOCK_NUMBER;
     fi
 
     if $is_local; then

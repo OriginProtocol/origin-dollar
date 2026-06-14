@@ -16,6 +16,10 @@ const isHoodi = process.env.NETWORK_NAME === "hoodi";
 const isHoodiFork = process.env.FORK_NETWORK_NAME === "hoodi";
 const isHyperEVM = process.env.NETWORK_NAME === "hyperevm";
 const isHyperEVMFork = process.env.FORK_NETWORK_NAME === "hyperevm";
+const isSepolia = process.env.NETWORK_NAME === "sepolia";
+const isSepoliaFork = process.env.FORK_NETWORK_NAME === "sepolia";
+const isBaseSepolia = process.env.NETWORK_NAME === "baseSepolia";
+const isBaseSepoliaFork = process.env.FORK_NETWORK_NAME === "baseSepolia";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
@@ -29,6 +33,8 @@ const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
 const isHoodiForkTest = isForkTest && isHoodiFork;
 const isHyperEVMForkTest = isForkTest && isHyperEVMFork;
 const isHyperEVMUnitTest = process.env.UNIT_TESTS_NETWORK === "hyperevm";
+const isSepoliaForkTest = isForkTest && isSepoliaFork;
+const isBaseSepoliaForkTest = isForkTest && isBaseSepoliaFork;
 
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
@@ -40,6 +46,8 @@ const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
 const hoodiProviderUrl = `${process.env.HOODI_PROVIDER_URL}`;
 const hyperEVMProviderUrl = `${process.env.HYPEREVM_PROVIDER_URL}`;
+const sepoliaProviderUrl = `${process.env.SEPOLIA_PROVIDER_URL}`;
+const baseSepoliaProviderUrl = `${process.env.BASE_SEPOLIA_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
@@ -79,6 +87,14 @@ const adjustTheForkBlockNumber = () => {
     } else if (isHyperEVMForkTest) {
       forkBlockNumber = process.env.HYPEREVM_BLOCK_NUMBER
         ? Number(process.env.HYPEREVM_BLOCK_NUMBER)
+        : undefined;
+    } else if (isSepoliaForkTest) {
+      forkBlockNumber = process.env.SEPOLIA_BLOCK_NUMBER
+        ? Number(process.env.SEPOLIA_BLOCK_NUMBER)
+        : undefined;
+    } else if (isBaseSepoliaForkTest) {
+      forkBlockNumber = process.env.BASE_SEPOLIA_BLOCK_NUMBER
+        ? Number(process.env.BASE_SEPOLIA_BLOCK_NUMBER)
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
@@ -152,6 +168,10 @@ const getHardhatNetworkProperties = () => {
     chainId = 560048;
   } else if (isHyperEVMFork && isFork) {
     chainId = 999;
+  } else if (isSepoliaFork && isFork) {
+    chainId = 11155111;
+  } else if (isBaseSepoliaFork && isFork) {
+    chainId = 84532;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -173,6 +193,10 @@ const getHardhatNetworkProperties = () => {
       provider = hoodiProviderUrl;
     } else if (isHyperEVMForkTest) {
       provider = hyperEVMProviderUrl;
+    } else if (isSepoliaForkTest) {
+      provider = sepoliaProviderUrl;
+    } else if (isBaseSepoliaForkTest) {
+      provider = baseSepoliaProviderUrl;
     }
   }
 
@@ -189,6 +213,8 @@ const networkMap = {
   98866: "plume",
   560048: "hoodi",
   999: "hyperevm",
+  11155111: "sepolia",
+  84532: "baseSepolia",
 };
 
 /**
@@ -238,6 +264,12 @@ module.exports = {
   isHyperEVMFork,
   isHyperEVMForkTest,
   isHyperEVMUnitTest,
+  isSepolia,
+  isSepoliaFork,
+  isSepoliaForkTest,
+  isBaseSepolia,
+  isBaseSepoliaFork,
+  isBaseSepoliaForkTest,
   providerUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
@@ -246,6 +278,8 @@ module.exports = {
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
+  sepoliaProviderUrl,
+  baseSepoliaProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 };
