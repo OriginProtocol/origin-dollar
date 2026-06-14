@@ -1,0 +1,137 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// --- Test base
+import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+
+// --- Project imports
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+
+contract Unit_Concrete_CurveAMOStrategy_Withdraw_Test is Unit_CurveAMOStrategy_Shared_Test {
+    function test_withdraw_removesLiquidityAndTransfers() public {
+        uint256 depositAmount = 10 ether;
+        uint256 withdrawAmount = 5 ether;
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(depositAmount);
+
+        address recipient = address(oethVault);
+        uint256 recipientBalBefore = weth.balanceOf(recipient);
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(recipient, address(weth), withdrawAmount);
+
+        assertEq(weth.balanceOf(recipient) - recipientBalBefore, withdrawAmount);
+    }
+
+    function test_withdraw_burnsOTokens() public {
+        uint256 depositAmount = 10 ether;
+        uint256 withdrawAmount = 5 ether;
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(depositAmount);
+
+        uint256 supplyBefore = oeth.totalSupply();
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), withdrawAmount);
+
+        // OTokens should have been burned
+        assertLt(oeth.totalSupply(), supplyBefore);
+    }
+
+    function test_withdraw_emitsWithdrawalEvents() public {
+        uint256 depositAmount = 10 ether;
+        uint256 withdrawAmount = 5 ether;
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(depositAmount);
+
+        vm.expectEmit(true, true, true, true);
+        emit ICurveAMOStrategy.Withdrawal(address(weth), address(curvePool), withdrawAmount);
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), withdrawAmount);
+    }
+
+    function test_withdraw_RevertWhen_amountIsZero() public {
+        vm.prank(address(oethVault));
+        vm.expectRevert("Must withdraw something");
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 0);
+    }
+
+    function test_withdraw_RevertWhen_wrongAsset() public {
+        vm.prank(address(oethVault));
+        vm.expectRevert("Can only withdraw hard asset");
+        curveAMOStrategy.withdraw(address(oethVault), address(oeth), 1 ether);
+    }
+
+    function test_withdraw_RevertWhen_calledByNonVault() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Vault");
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 1 ether);
+    }
+
+    function test_withdraw_RevertWhen_insufficientLPTokens() public {
+        // Deposit a small amount, then try to withdraw more than available
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(1 ether);
+
+        // Try to withdraw much more than deposited — will need more LP than available
+        vm.prank(address(oethVault));
+        vm.expectRevert("Insufficient LP tokens");
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 100 ether);
+    }
+
+    function test_withdraw_RevertWhen_protocolInsolvent() public {
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(10 ether);
+
+        // Inflate supply to cause insolvency after withdraw
+        vm.prank(address(oethVault));
+        oeth.mint(alice, 10_000 ether);
+
+        vm.prank(address(oethVault));
+        vm.expectRevert("Protocol insolvent");
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 5 ether);
+    }
+
+    function test_withdraw_emitsOTokenWithdrawalEvent() public {
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(10 ether);
+
+        // Should emit Withdrawal for OToken burn
+        vm.expectEmit(true, true, false, false);
+        emit ICurveAMOStrategy.Withdrawal(address(oeth), address(curvePool), 0);
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 5 ether);
+    }
+
+    function test_withdraw_assertsSolvency() public {
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(10 ether);
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 5 ether);
+
+        // Verify solvency maintained
+        uint256 totalValue = oethVault.totalValue();
+        uint256 totalSupply = oeth.totalSupply();
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
+    }
+
+    function test_withdraw_calcTokenToBurn_computesCorrectly() public {
+        _seedVaultForSolvency(100 ether);
+        _depositAsVault(10 ether);
+
+        uint256 gaugeBefore = curveGauge.balanceOf(address(curveAMOStrategy));
+
+        vm.prank(address(oethVault));
+        curveAMOStrategy.withdraw(address(oethVault), address(weth), 3 ether);
+
+        uint256 gaugeAfter = curveGauge.balanceOf(address(curveAMOStrategy));
+        uint256 lpBurned = gaugeBefore - gaugeAfter;
+
+        // LP burned should be > 0 and reasonable
+        assertGt(lpBurned, 0);
+        assertLt(lpBurned, gaugeBefore);
+    }
+}

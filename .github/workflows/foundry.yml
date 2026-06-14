@@ -1,0 +1,225 @@
+name: Foundry
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - master
+      - staging
+      - stable
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: foundry-${{ github.ref }}
+
+jobs:
+  # ── Formatting & Lint ───────────────────────────────────────
+  fmt:
+    name: Formatting & Lint
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Check Solidity formatting (forge)
+        working-directory: contracts
+        run: forge fmt --check scripts/ tests/
+      - name: Check JS formatting (prettier)
+        working-directory: contracts
+        run: npx prettier -c "*.js" "deploy/**/*.js" "scripts/**/*.js" "tasks/**/*.js" "test/**/*.js" "utils/**/*.js"
+      - name: Check Solidity formatting (prettier)
+        working-directory: contracts
+        run: npx prettier -c --plugin=prettier-plugin-solidity "contracts/**/*.sol"
+      - name: Lint
+        working-directory: contracts
+        run: pnpm run lint
+      - name: Check unused imports
+        working-directory: contracts
+        run: make lint-imports
+
+  # ── Build ───────────────────────────────────────────────────
+  build:
+    name: Build
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Check contract sizes
+        working-directory: contracts
+        run: forge build --sizes --skip "test/**" --skip "tests/**" --skip "script/**" --skip "scripts/**"
+
+  # ── Unit Tests ──────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run unit tests
+        working-directory: contracts
+        run: make test-unit
+
+  # ── Fork Tests ──────────────────────────────────────────────
+  fork-tests-mainnet:
+    name: Fork Tests (Mainnet)
+    runs-on: ubuntu-latest
+    env:
+      MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Mainnet fork tests
+        working-directory: contracts
+        run: make test-fork-mainnet
+
+  fork-tests-base:
+    name: Fork Tests (Base)
+    runs-on: ubuntu-latest
+    env:
+      BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Base fork tests
+        working-directory: contracts
+        run: make test-fork-base
+
+  fork-tests-sonic:
+    name: Fork Tests (Sonic)
+    runs-on: ubuntu-latest
+    env:
+      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Sonic fork tests
+        working-directory: contracts
+        run: make test-fork-sonic
+
+  fork-tests-hyperevm:
+    name: Fork Tests (HyperEVM)
+    runs-on: ubuntu-latest
+    env:
+      HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run HyperEVM fork tests
+        working-directory: contracts
+        run: make test-fork-hyperevm
+
+  # ── Smoke Tests ─────────────────────────────────────────────
+  smoke-tests-mainnet:
+    name: Smoke Tests (Mainnet)
+    runs-on: ubuntu-latest
+    env:
+      MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Mainnet smoke tests
+        working-directory: contracts
+        run: make test-smoke-mainnet
+
+  smoke-tests-base:
+    name: Smoke Tests (Base)
+    runs-on: ubuntu-latest
+    env:
+      BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Base smoke tests
+        working-directory: contracts
+        run: make test-smoke-base
+
+  smoke-tests-sonic:
+    name: Smoke Tests (Sonic)
+    runs-on: ubuntu-latest
+    env:
+      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run Sonic smoke tests
+        working-directory: contracts
+        run: make test-smoke-sonic
+
+  smoke-tests-hyperevm:
+    name: Smoke Tests (HyperEVM)
+    runs-on: ubuntu-latest
+    env:
+      HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run HyperEVM smoke tests
+        working-directory: contracts
+        run: make test-smoke-hyperevm
+
+  # ── Static Analysis ────────────────────────────────────────
+  slither:
+    name: Slither
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Slither
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.7/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc
+          pip3 install slither-analyzer
+      - name: Run Slither
+        working-directory: contracts
+        run: slither . --config-file slither.config.json
+
+  snyk:
+    name: Snyk
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high  --all-projects
