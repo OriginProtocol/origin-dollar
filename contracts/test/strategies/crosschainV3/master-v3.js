@@ -122,12 +122,12 @@ describe("Unit: MasterWOTokenStrategy", function () {
   describe("deposit flow (DEPOSIT)", () => {
     const ONE_K = ethers.utils.parseUnits("1000", 6);
 
-    it("vault.deposit assigns a yield nonce, sets pendingAmount, sends DEPOSIT", async () => {
+    it("vault.deposit assigns a yield nonce, sets pendingDepositAmount, sends DEPOSIT", async () => {
       await bridgeAsset.mintTo(master.address, ONE_K);
 
       await mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K);
 
-      expect(await master.pendingAmount()).to.equal(ONE_K);
+      expect(await master.pendingDepositAmount()).to.equal(ONE_K);
       expect(await master.lastYieldNonce()).to.equal(1);
       expect(await master.isYieldOpInFlight()).to.equal(true);
 
@@ -161,7 +161,7 @@ describe("Unit: MasterWOTokenStrategy", function () {
 
       await expect(
         mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K)
-      ).to.be.revertedWith("Master: yield op in flight");
+      ).to.be.revertedWith("Master: deposit or withdrawal pending");
     });
 
     it("non-vault callers cannot deposit", async () => {
@@ -171,7 +171,7 @@ describe("Unit: MasterWOTokenStrategy", function () {
       ).to.be.revertedWith("Caller is not the Vault");
     });
 
-    it("DEPOSIT_ACK clears pendingAmount and updates remoteStrategyBalance", async () => {
+    it("DEPOSIT_ACK clears pendingDepositAmount and updates remoteStrategyBalance", async () => {
       await bridgeAsset.mintTo(master.address, ONE_K);
       await mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K);
 
@@ -185,7 +185,7 @@ describe("Unit: MasterWOTokenStrategy", function () {
       );
       await inboundAdapter.sendMessage(ackEnvelope);
 
-      expect(await master.pendingAmount()).to.equal(0);
+      expect(await master.pendingDepositAmount()).to.equal(0);
       expect(await master.remoteStrategyBalance()).to.equal(newBalance);
       expect(await master.isYieldOpInFlight()).to.equal(false);
 

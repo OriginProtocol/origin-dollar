@@ -128,6 +128,14 @@ contract MockBridgeAdapter is IBridgeAdapter {
         maxTransferOverride = _amount;
     }
 
+    /// @notice Configurable per-tx floor for testing the bounds pre-check / NACK paths.
+    ///         Default 0 = no floor so existing tests stay unaffected.
+    uint256 public minTransferOverride;
+
+    function setMinTransferAmountOverride(uint256 _amount) external {
+        minTransferOverride = _amount;
+    }
+
     /// @notice One-shot simulated under-delivery for the next `sendMessageAndTokens`.
     ///         Resets to 0 after consumption. Used to exercise the `amount < ackAmount`
     ///         path on the receiving strategy (CCTP fast-finality fee scenario).
@@ -140,6 +148,11 @@ contract MockBridgeAdapter is IBridgeAdapter {
     /// @inheritdoc IBridgeAdapter
     function maxTransferAmount() external view override returns (uint256) {
         return maxTransferOverride;
+    }
+
+    /// @inheritdoc IBridgeAdapter
+    function minTransferAmount() external view override returns (uint256) {
+        return minTransferOverride;
     }
 
     /**

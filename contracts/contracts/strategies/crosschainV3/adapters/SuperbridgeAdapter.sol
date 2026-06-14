@@ -72,6 +72,15 @@ contract SuperbridgeAdapter is
     }
 
     /// @notice Per-target pending split-delivery slot.
+    /// @dev SINGLE-TENANT ASSUMPTION: delivery gates on this adapter's GLOBAL WETH balance,
+    ///      not a per-slot reservation. That is sound only with ONE authorised WETH strategy
+    ///      per Superbridge adapter (the live OETHb config) — with one strategy the only
+    ///      token-carrying inbound (WITHDRAW_CLAIM_ACK) is one-op-in-flight, so balances never
+    ///      contend. Do NOT authorise a second WETH-bridging strategy on the same adapter
+    ///      without adding per-target WETH reservation accounting (see DESIGN.md), or one
+    ///      target's landed WETH could be delivered against another's pending message. The
+    ///      generic "one adapter serves all authorised strategies" note on `IBridgeAdapter`
+    ///      does NOT extend to Superbridge's shared WETH pool.
     mapping(address => PendingMessage) internal pendingFor;
 
     event CanonicalMinGasConfigured(address sender, uint32 canonicalMinGas);

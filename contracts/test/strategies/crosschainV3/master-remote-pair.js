@@ -159,9 +159,9 @@ describe("Unit: V3 Master+Remote loopback", function () {
     //   - Remote minted OToken via ethVault, wrapped to wOToken
     //   - Remote sent DEPOSIT_ACK back via adapterRM
     //   - adapterRM called master.receiveMessage with the ack
-    //   - Master cleared pendingAmount and set remoteStrategyBalance = newBalance
+    //   - Master cleared pendingDepositAmount and set remoteStrategyBalance = newBalance
 
-    expect(await master.pendingAmount()).to.equal(0);
+    expect(await master.pendingDepositAmount()).to.equal(0);
     // remoteStrategyBalance is the OToken-denominated (18dp) yield baseline.
     expect(await master.remoteStrategyBalance()).to.equal(AMOUNT.mul(SCALE));
     expect(await master.isYieldOpInFlight()).to.equal(false);
@@ -283,6 +283,6 @@ describe("Unit: V3 Master+Remote loopback", function () {
     expect(await master.checkBalance(bridgeAsset.address)).to.equal(
       DEPOSIT1.add(DEPOSIT2).add(BRIDGE_IN_USDC)
     );
-    expect(await master.pendingAmount()).to.equal(0);
+    expect(await master.pendingDepositAmount()).to.equal(0);
   });
 });

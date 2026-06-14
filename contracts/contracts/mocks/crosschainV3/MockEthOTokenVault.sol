@@ -66,6 +66,12 @@ contract MockEthOTokenVault {
         withdrawalClaimDelay = _delay;
     }
 
+    /// @notice TEST-ONLY: seed the next requestId. Set to 0 to mimic a fresh vault whose
+    ///         first-ever withdrawal returns requestId 0 (exercises the Remote offset-by-one).
+    function setNextRequestId(uint256 _id) external {
+        nextRequestId = _id;
+    }
+
     // --- Instant mint / redeem ---------------------------------------------
 
     /// @param _amount Amount of bridgeAsset deposited (asset decimals). Mints scaled OToken.

@@ -177,7 +177,7 @@ describe("Unit: V3 Withdrawal", function () {
     // Remote's checkBalance stays at SEED — queue + remaining shares. outstandingRequestAmount
     // tracks the bridgeAsset value (6dp) committed to the queue.
     expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW);
-    expect(await remote.outstandingRequestId()).to.equal(1);
+    expect(await remote.outstandingRequestId()).to.be.gt(0);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
     expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
 
@@ -201,6 +201,36 @@ describe("Unit: V3 Withdrawal", function () {
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(
       SEED.sub(WITHDRAW)
     );
+  });
+
+  it("handles a fresh-vault requestId of 0 without bricking (P1 offset-by-one)", async () => {
+    // Fresh OToken vault: the first-ever withdrawal returns requestId 0. Pre-fix, Remote
+    // stored 0 verbatim — indistinguishable from "no request" — which dropped the queued
+    // value from checkBalance and NACK-looped leg-2 forever. With the offset, id 0 is stored
+    // as 1, so the full lifecycle completes.
+    await ethVault.setNextRequestId(0);
+
+    // Leg 1.
+    await mockL2Vault.callWithdraw(
+      master.address,
+      mockL2Vault.address,
+      bridgeAsset.address,
+      WITHDRAW
+    );
+
+    // Real vault requestId 0 → stored offset-by-one as 1 (recognised as a live queue request).
+    expect(await remote.outstandingRequestId()).to.equal(1);
+    // Queued value still counted (not lost) — checkBalance preserved.
+    expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
+    expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
+
+    // Leg 2 completes — would NACK-loop / brick the channel without the offset fix.
+    await time.increase(DELAY + 1);
+    await master.connect(governor).triggerClaim();
+
+    expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
   });
 
   it("opportunistic claim path: leg 2 claims and ships without prior automation", async () => {
@@ -233,14 +263,14 @@ describe("Unit: V3 Withdrawal", function () {
     // No advance — queue delay not yet met.
     // Permissionless claim attempt is a no-op.
     await remote.claimRemoteWithdrawal();
-    expect(await remote.outstandingRequestId()).to.equal(1);
+    expect(await remote.outstandingRequestId()).to.be.gt(0);
 
     // Leg 2 attempts and gets a NACK.
     await master.connect(governor).triggerClaim();
 
     // Pending state must still be set so retry is possible.
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
-    expect(await remote.outstandingRequestId()).to.equal(1);
+    expect(await remote.outstandingRequestId()).to.be.gt(0);
     // No tokens reached the vault.
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0);
 
@@ -259,7 +289,7 @@ describe("Unit: V3 Withdrawal", function () {
       bridgeAsset.address,
       WITHDRAW
     );
-    expect(await remote.outstandingRequestId()).to.equal(1);
+    expect(await remote.outstandingRequestId()).to.be.gt(0);
 
     // An attacker donates >= the target bridgeAsset to Remote DURING the delay window.
     await bridgeAsset.mintTo(remote.address, WITHDRAW);
@@ -271,7 +301,7 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).triggerClaim();
 
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW); // still pending
-    expect(await remote.outstandingRequestId()).to.equal(1); // queue intact, not orphaned
+    expect(await remote.outstandingRequestId()).to.be.gt(0); // queue intact, not orphaned
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0); // nothing shipped
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW); // donation stays
 
@@ -319,7 +349,7 @@ describe("Unit: V3 Withdrawal", function () {
         bridgeAsset.address,
         WITHDRAW
       )
-    ).to.be.revertedWith("Master: yield op in flight");
+    ).to.be.revertedWith("Master: deposit or withdrawal pending");
   });
 
   it("rejects triggerClaim when no withdrawal is pending", async () => {
@@ -417,5 +447,84 @@ describe("Unit: V3 Withdrawal", function () {
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(
       WITHDRAW.sub(FEE)
     );
+  });
+
+  describe("bridge bounds (leg-1 pre-check + leg-2 NACK)", () => {
+    // Master's inbound adapter (adapterRM) mirrors Remote's outbound — the bounds source for
+    // both the Master leg-1 pre-check and the Remote leg-2 NACK.
+    it("leg-1 rejects a sub-min withdrawal", async () => {
+      await adapterRM.setMinTransferAmountOverride(
+        ethers.utils.parseUnits("5000", 6)
+      );
+      await expect(
+        mockL2Vault.callWithdraw(
+          master.address,
+          mockL2Vault.address,
+          bridgeAsset.address,
+          WITHDRAW // 4000 < 5000 floor
+        )
+      ).to.be.revertedWith("Master: amount below bridge min");
+    });
+
+    it("leg-1 rejects an above-cap withdrawal", async () => {
+      await adapterRM.setMaxTransferAmountOverride(
+        ethers.utils.parseUnits("1000", 6)
+      );
+      await expect(
+        mockL2Vault.callWithdraw(
+          master.address,
+          mockL2Vault.address,
+          bridgeAsset.address,
+          WITHDRAW // 4000 > 1000 cap
+        )
+      ).to.be.revertedWith("Master: amount above bridge max");
+    });
+
+    it("withdrawAll no-ops below the bridge floor", async () => {
+      // Floor above the whole seeded balance → nothing is sweepable; best-effort no-op.
+      await adapterRM.setMinTransferAmountOverride(
+        ethers.utils.parseUnits("20000", 6)
+      );
+      await mockL2Vault.callWithdrawAll(master.address);
+      expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    });
+
+    it("withdrawAll no-ops when the inbound adapter is unset", async () => {
+      await master
+        .connect(governor)
+        .setInboundAdapter(ethers.constants.AddressZero);
+      await mockL2Vault.callWithdrawAll(master.address);
+      expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    });
+
+    it("leg-2 NACKs (no revert/brick) on a bounds desync, then completes once resolved", async () => {
+      // Leg 1 passes the pre-check (default bounds); a desync then shrinks the outbound floor
+      // above the claimed amount before leg 2.
+      await mockL2Vault.callWithdraw(
+        master.address,
+        mockL2Vault.address,
+        bridgeAsset.address,
+        WITHDRAW
+      );
+      await time.increase(DELAY + 1);
+      await adapterRM.setMinTransferAmountOverride(
+        ethers.utils.parseUnits("5000", 6) // > WITHDRAW (4000)
+      );
+
+      // Leg 2 NACKs instead of reverting: pending stays set, nothing shipped, channel free.
+      await master.connect(governor).triggerClaim();
+      expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
+      expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0);
+      expect(await remote.outstandingRequestId()).to.equal(0); // claimed, held on Remote
+      expect(await master.isYieldOpInFlight()).to.equal(false);
+
+      // Resolve the desync and retry — the withdrawal completes.
+      await adapterRM.setMinTransferAmountOverride(0);
+      await master.connect(governor).triggerClaim();
+      expect(await master.pendingWithdrawalAmount()).to.equal(0);
+      expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(
+        WITHDRAW
+      );
+    });
   });
 });

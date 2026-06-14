@@ -455,7 +455,7 @@ describe("Unit: Adapter transfer caps", function () {
         bridgeAsset.address,
         ONE_K.mul(5)
       );
-      // Send DEPOSIT_ACK back so pendingAmount clears and remoteStrategyBalance = 5000
+      // Send DEPOSIT_ACK back so pendingDepositAmount clears and remoteStrategyBalance = 5000
       // OToken (18dp — Remote reports its baseline in OToken units).
       const ackBody = ethers.utils.defaultAbiCoder.encode(
         ["uint256"],

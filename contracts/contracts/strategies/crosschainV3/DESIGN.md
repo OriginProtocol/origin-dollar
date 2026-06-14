@@ -92,7 +92,7 @@ Two strategy contracts, one bridge-agnostic adapter API:
 **Two channels:**
 - **Yield channel.** DEPOSIT / WITHDRAW_REQUEST / WITHDRAW_CLAIM /
   BALANCE_CHECK / SETTLE and their ACKs. Each message has a yield nonce.
-  Master gates concurrent yield ops via `pendingAmount == 0 &&
+  Master gates concurrent yield ops via `pendingDepositAmount == 0 &&
   pendingWithdrawalAmount == 0`. The balance check is the only non-blocking
   yield op (nonce-echo, no advance).
 - **Bridge channel.** BRIDGE_IN / BRIDGE_OUT. Nonceless. User-driven via
@@ -122,7 +122,7 @@ See [`FLOWS.md`](./FLOWS.md) for sequence diagrams of each flow.
 different ordering semantics.
 
 **Why.** Yield ops change protocol-level accounting (`remoteStrategyBalance`,
-`pendingAmount`, `pendingWithdrawalAmount`) so they must be serialised — out-of-order
+`pendingDepositAmount`, `pendingWithdrawalAmount`) so they must be serialised — out-of-order
 delivery would corrupt state. User-driven bridge ops are independent (each
 has its own `bridgeId`) and can run concurrently; gating them on a single
 nonce would create a DOS vector (one user could front-run others by
@@ -131,7 +131,7 @@ two cadences independently.
 
 **How.**
 - Yield channel: `_acceptYieldNonce` + `_markYieldNonceProcessed` enforce
-  monotonic advance. Sender gate `pendingAmount == 0 &&
+  monotonic advance. Sender gate `pendingDepositAmount == 0 &&
   pendingWithdrawalAmount == 0` blocks concurrent yield sends.
 - Bridge channel: no nonce, no global gate. Replay protection is
   per-message via `consumedBridgeIds[bridgeId]` on the destination side.
@@ -259,7 +259,7 @@ report a yield-only baseline. Both sides must have synchronised
 ### 3.7 `pendingWithdrawalAmount` not in `checkBalance`
 
 **Decision.** `Master.checkBalance` includes `bridgeAsset.balanceOf(this)` +
-`pendingAmount` + `remoteStrategyBalance` + `bridgeAdjustment`, but NOT
+`pendingDepositAmount` + `remoteStrategyBalance` + `bridgeAdjustment`, but NOT
 `pendingWithdrawalAmount`.
 
 **Why.** During an in-flight withdrawal, the value is still on Remote (in the
@@ -344,7 +344,7 @@ via an implementation upgrade if a slashing / negative rebase ever trips it.
 - **OToken (18dp):** `remoteStrategyBalance`, `bridgeAdjustment`, the whole OToken
   bridge channel, and Remote's `_viewCheckBalance` / `_yieldOnlyBaseline`. Remote
   reports its yield baseline to Master in **18dp**.
-- **bridgeAsset decimals (6dp USDC / 18dp WETH):** `pendingAmount`,
+- **bridgeAsset decimals (6dp USDC / 18dp WETH):** `pendingDepositAmount`,
   `pendingWithdrawalAmount`, `outstandingRequestAmount`, the locally-held balance,
   every physical bridge transfer, and the `checkBalance` return value.
 
@@ -504,7 +504,7 @@ For an auditor or on-call engineer reviewing the code quickly:
 
 - **Master.checkBalance never reverts and never returns negative.** Clamping
   to 0 on hypothetical negative totals is intentional.
-- **Yield ops are serialised on Master.** `pendingAmount == 0 &&
+- **Yield ops are serialised on Master.** `pendingDepositAmount == 0 &&
   pendingWithdrawalAmount == 0` must hold before a new yield op fires.
 - **Balance check is non-blocking** but acceptance requires all three guards
   (`isYieldOpInFlight()`, nonce match, timestamp monotonic).
@@ -525,6 +525,32 @@ For an auditor or on-call engineer reviewing the code quickly:
 - **Master forwards full local bridgeAsset to vault on claim-ack success.**
   Donated bridgeAsset on Master ends up in the vault as "free deposit" —
   intentional (locked policy).
+- **Yield-ack handlers only call protocol-controlled contracts.**
+  `receiveMessage` is deliberately NOT `nonReentrant` (so a synchronous
+  same-tx round-trip works in tests); it is safe only because every
+  yield-ack handler touches trusted contracts (OToken vault, wOToken 4626,
+  bridgeAsset, governor-set adapter). The reentrancy guard lives solely on
+  `_handleInboundBridgeMessage` (the one path with an untrusted
+  `recipient.call`). Never add an external call to a non-protocol address in
+  a yield-ack handler.
+- **Bridge bounds can't brick the yield channel.** A withdrawal outside the
+  adapter's `[minTransferAmount, maxTransferAmount]` is rejected at Master
+  leg 1 (pre-check against the inbound/mirror adapter) and, as defense in
+  depth, NACK'd — not reverted — at Remote leg 2. A sub-floor / above-cap
+  amount can never deadlock the one-op-in-flight channel.
+- **Queue requestId is stored offset-by-one.** `outstandingRequestId =
+  vault.requestId + 1`, so a real requestId of 0 (first withdrawal on a fresh
+  vault) is distinguishable from "no request"; `outstandingRequestId != 0`
+  means "pending, unclaimed".
+- **OToken (18dp) internal, bridgeAsset units at the vault edge** (see §3.11):
+  `remoteStrategyBalance` / `bridgeAdjustment` / the bridge channel are 18dp;
+  conversions happen only at the documented seams (identity for 18/18 OETHb).
+- **CCTP token legs use the finalised threshold (fee 0).** Fast-finality
+  (1000–1999) deducts a non-zero burn fee with no `maxFee` headroom, so the
+  deploy config sets `minFinalityThreshold = 2000` for token-carrying legs.
+- **Strategist-gated paths are inert on Remote.** Remote has no vault
+  (`vaultAddress == 0`), so the strategist branch of the shared modifiers
+  cannot resolve; Remote runs via governor / operator / permissionless paths.
 
 These invariants are the load-bearing assumptions across the codebase. If
 any one breaks, downstream math goes wrong. Tests cover each one explicitly.

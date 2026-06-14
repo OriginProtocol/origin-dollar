@@ -78,15 +78,15 @@ The protocol uses two nested envelopes:
 | ID | Type | Channel | Direction | Body | Notes |
 |---|---|---|---|---|---|
 | 1 | DEPOSIT | Yield | M→R | empty | tokens carried via adapter |
-| 2 | DEPOSIT_ACK | Yield | R→M | `(uint256 newBalance)` | |
+| 2 | DEPOSIT_ACK | Yield | R→M | `(uint256 yieldBaseline)` | |
 | 3 | WITHDRAW_REQUEST | Yield | M→R | `(uint256 amount)` | leg 1 |
-| 4 | WITHDRAW_REQUEST_ACK | Yield | R→M | `(uint256 newBalance)` | requestId stays on Remote |
+| 4 | WITHDRAW_REQUEST_ACK | Yield | R→M | `(uint256 yieldBaseline)` | requestId stays on Remote |
 | 5 | WITHDRAW_CLAIM | Yield | M→R | empty | leg 2 trigger |
-| 6 | WITHDRAW_CLAIM_ACK | Yield | R→M | `(uint256 newBalance, bool success, uint256 amount)` | tokens carried on success |
+| 6 | WITHDRAW_CLAIM_ACK | Yield | R→M | `(uint256 yieldBaseline, bool success, uint256 amount)` | tokens carried on success |
 | 7 | BALANCE_CHECK_REQUEST | Yield | M→R | `(uint256 timestamp)` | |
 | 8 | BALANCE_CHECK_RESPONSE | Yield | R→M | `(uint256 balance, uint256 timestamp)` | |
 | 9 | SETTLE_BRIDGE_ACCOUNTING | Yield | M→R | empty | clears bridgeAdjustment both sides |
-| 10 | SETTLE_BRIDGE_ACCOUNTING_ACK | Yield | R→M | `(uint256 newBalance)` | |
+| 10 | SETTLE_BRIDGE_ACCOUNTING_ACK | Yield | R→M | `(uint256 yieldBaseline)` | |
 | 11 | BRIDGE_IN | Bridge | R→M | `BridgeUserPayload` | nonceless, mint on destination |
 | 12 | BRIDGE_OUT | Bridge | M→R | `BridgeUserPayload` | nonceless, release on destination |
 

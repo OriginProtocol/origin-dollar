@@ -183,7 +183,7 @@ sequenceDiagram
     Vault->>Master: deposit(bridgeAsset, X)
     Note over Master,Vault: Master.deposit is non-payable.<br/>msg.value = 0 by construction.
     Master->>Master: _getNextYieldNonce → N+1
-    Master->>Master: pendingAmount = X
+    Master->>Master: pendingDepositAmount = X
     Master->>Master: approve adapter for X
     Master->>Adapter: sendMessageAndTokens(WETH, X, payload[DEPOSIT, N+1, ""])
     Note over Master,Adapter: _send (userFunded=false): pool funds CCIP fee from<br/>address(this).balance. quoteFee returns (fee, native, true).
@@ -197,38 +197,38 @@ sequenceDiagram
     OEV-->>Remote: OETH minted
     Remote->>wOETH: deposit(OETHbalance, Remote)
     wOETH-->>Remote: shares minted
-    Remote->>Remote: newBalance = _viewCheckBalance()
-    Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(newBalance)])
+    Remote->>Remote: yieldBaseline = _viewCheckBalance()
+    Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
     Note over Remote,SuperEth: Remote's outbound = SuperbridgeAdapter on Eth.<br/>Message-only path goes via CCIP under the hood<br/>(no canonical leg). Pool funds the fee.
     Remote->>Remote: _acceptYieldNonce(N+1)<br/>lastYieldNonce=N+1, nonceProcessed=true
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processYieldDepositAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = newBalance<br/>pendingAmount = 0
+    Master->>Master: _processDepositAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
 ```
 
 ### State changes
 
 **Phase 1 — `Master.deposit(WETH, X)` (Base):**
 - `lastYieldNonce: N → N+1`
-- `pendingAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
+- `pendingDepositAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
   disappear during the bridge round trip)
 - WETH allowance to `outboundAdapter`: `0 → X`
 - `Master.WETH balance: X → 0` (pulled by adapter)
 
-**Phase 2 — `Remote._processYieldDeposit(N+1, X)` (Ethereum):**
+**Phase 2 — `Remote._processDeposit(N+1, X)` (Ethereum):**
 - WETH consumed by OETH vault mint; OETH wrapped to wOETH.
 - `Remote.wOETH balance: increased by ≈X-worth of shares`
 - `Remote.lastYieldNonce: → N+1`; `nonceProcessed[N+1] = true`
 
-**Phase 3 — `Master._processYieldDepositAck(N+1, newBalance)` (Base):**
-- `remoteStrategyBalance: B → newBalance`
-- `pendingAmount: X → 0`
+**Phase 3 — `Master._processDepositAck(N+1, yieldBaseline)` (Base):**
+- `remoteStrategyBalance: B → yieldBaseline`
+- `pendingDepositAmount: X → 0`
 - `nonceProcessed[N+1] = true`
 
 `Master.checkBalance(WETH)` is consistent throughout: pre-deposit = B,
-mid-flight = X (pendingAmount) + B (stale remoteStrategyBalance), post-ack =
-newBalance ≈ B + X.
+mid-flight = X (pendingDepositAmount) + B (stale remoteStrategyBalance), post-ack =
+yieldBaseline ≈ B + X.
 
 ### OUSD V3 differences
 
@@ -300,13 +300,13 @@ sequenceDiagram
     Note over Remote: outstandingRequestId = requestId<br/>outstandingRequestAmount = amount
 
     Note over Master,Remote: ─── Phase B: Remote sends WITHDRAW_REQUEST_ACK ───
-    Remote->>Remote: newBalance = _viewCheckBalance()
-    Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(newBalance)])
+    Remote->>Remote: yieldBaseline = _viewCheckBalance()
+    Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline)])
     Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only → uses CCIP under the hood.
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = newBalance
+    Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline
     Note over Master: pendingWithdrawalAmount stays set — gates leg-2
 
     Note over Master,Remote: ─── Phase C: queue delay (minutes for OUSD, ~10d for OETH) ───
@@ -329,7 +329,7 @@ sequenceDiagram
         SuperEth-->>SuperBase: ccipReceive delivers the envelope
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
         SuperBase->>Master: receiveMessage(Master, WETH, claimed, payload)
-        Master->>Master: _processWithdrawClaimAck success:<br/>_markYieldNonceProcessed(N+2)<br/>pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = newBalance
+        Master->>Master: _processWithdrawClaimAck success:<br/>_markYieldNonceProcessed(N+2)<br/>pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = yieldBaseline
         Master->>Vault: transfer(WETH, claimed)
         Note over Master: emit Withdrawal(WETH, WETH, claimed)
     else queue not yet matured (NACK)
@@ -337,7 +337,7 @@ sequenceDiagram
         SuperEth->>Bridge: ccipSend
         Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-        Master->>Master: _processWithdrawClaimAck nack:<br/>_markYieldNonceProcessed(N+2)<br/>remoteStrategyBalance = newBalance<br/>pendingWithdrawalAmount stays set
+        Master->>Master: _processWithdrawClaimAck nack:<br/>_markYieldNonceProcessed(N+2)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
         Note over Master: operator retries triggerClaim later
     end
 ```
@@ -462,7 +462,7 @@ sequenceDiagram
     ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
     Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
     alt all guards pass
-        Master->>Master: lastBalanceCheckTimestamp = respTimestamp<br/>remoteStrategyBalance = newBalance
+        Master->>Master: lastBalanceCheckTimestamp = respTimestamp<br/>remoteStrategyBalance = yieldBaseline
         Note over Master: emit BalanceCheckResponded
     else any guard fails
         Note over Master: silently discard
@@ -475,7 +475,7 @@ The response can arrive in three "bad" situations; each guard catches one:
 
 1. **`isYieldOpInFlight()`** — a deposit/withdraw was kicked off between the
    request and the response. Accepting now would race with the upcoming
-   deposit/withdraw ack and corrupt `remoteStrategyBalance` or `pendingAmount`.
+   deposit/withdraw ack and corrupt `remoteStrategyBalance` or `pendingDepositAmount`.
    Skip.
 
 2. **`respNonce != lastYieldNonce`** — a yield op happened and the nonce
@@ -696,7 +696,7 @@ arrived on Remote before or after the SETTLE message:
 
 The exact reported value depends on Remote's processing order, BUT the
 combination of (Master's residual bridgeAdjustment after subtract) + (the
-reported newBalance) is consistent and equals true backing. The yield-only
+reported yieldBaseline) is consistent and equals true backing. The yield-only
 baseline construction is what makes both orderings converge.
 
 ### When to run settlement
@@ -864,7 +864,7 @@ accept inbound (pure-message) deliveries; the difference is the finality gate:
 | **Bridge channel** | User-facing messages (BRIDGE_IN, BRIDGE_OUT). Nonceless. |
 | **bridgeAdjustment** | Signed net delta from bridge-channel activity since last settlement. Tracked on both sides; always equal in magnitude. |
 | **remoteStrategyBalance** | Master's cached snapshot of Remote's `_viewCheckBalance` minus Remote's `bridgeAdjustment` (i.e., yield-only baseline). Updated by balance check and settlement acks. |
-| **pendingAmount** | Master's in-flight deposit value. Counts in `checkBalance` so vault doesn't see backing dip during bridge round-trip. |
+| **pendingDepositAmount** | Master's in-flight deposit value. Counts in `checkBalance` so vault doesn't see backing dip during bridge round-trip. |
 | **pendingWithdrawalAmount** | Master's in-flight withdrawal amount. Gates concurrent ops; NOT in `checkBalance` (value is already in `remoteStrategyBalance` until claim ack). |
 | **settlementSnapshot** | `bridgeAdjustment` value captured at request time, persisted on Master so the ack handler can subtract exactly that delta. Preserves in-flight bridge ops. |
 | **lastBalanceCheckTimestamp** | Most recently accepted balance check timestamp. Enforces strict monotonic ordering across out-of-order CCIP delivery. |

@@ -18,11 +18,11 @@ library CrossChainV3Helper {
 
     /// @notice Master → Remote: deposit `amount` of bridgeAsset (carried by the adapter).
     uint32 internal constant DEPOSIT = 1;
-    /// @notice Remote → Master: deposit acknowledgement with Remote's new checkBalance.
+    /// @notice Remote → Master: deposit acknowledgement with Remote's yield-only baseline (OToken 18dp).
     uint32 internal constant DEPOSIT_ACK = 2;
     /// @notice Master → Remote: leg-1 withdrawal request for `amount` of bridgeAsset.
     uint32 internal constant WITHDRAW_REQUEST = 3;
-    /// @notice Remote → Master: leg-1 acknowledgement with Remote's new checkBalance.
+    /// @notice Remote → Master: leg-1 acknowledgement with Remote's yield-only baseline (OToken 18dp).
     uint32 internal constant WITHDRAW_REQUEST_ACK = 4;
     /// @notice Master → Remote: leg-2 trigger to ship the previously-queued amount.
     uint32 internal constant WITHDRAW_CLAIM = 5;
@@ -34,7 +34,7 @@ library CrossChainV3Helper {
     uint32 internal constant BALANCE_CHECK_RESPONSE = 8;
     /// @notice Master → Remote: clear the bridge-adjustment accounting on both sides.
     uint32 internal constant SETTLE_BRIDGE_ACCOUNTING = 9;
-    /// @notice Remote → Master: settlement acknowledgement with Remote's new checkBalance.
+    /// @notice Remote → Master: settlement acknowledgement with Remote's yield-only baseline (OToken 18dp).
     uint32 internal constant SETTLE_BRIDGE_ACCOUNTING_ACK = 10;
 
     // Bridge channel (nonceless, multiple operations in flight)
@@ -97,15 +97,15 @@ library CrossChainV3Helper {
     // --- Per-message payload encoders / decoders ----------------------------
     //
     // DEPOSIT                       : payload empty; amount is carried by the adapter
-    // DEPOSIT_ACK                   : payload = abi.encode(newBalance)
+    // DEPOSIT_ACK                   : payload = abi.encode(yieldBaseline)
     // WITHDRAW_REQUEST              : payload = abi.encode(amount)
-    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(newBalance)
+    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(yieldBaseline)
     // WITHDRAW_CLAIM                : payload empty
-    // WITHDRAW_CLAIM_ACK            : payload = abi.encode(newBalance, success, amount)
+    // WITHDRAW_CLAIM_ACK            : payload = abi.encode(yieldBaseline, success, amount)
     // BALANCE_CHECK_REQUEST         : payload = abi.encode(timestamp)
     // BALANCE_CHECK_RESPONSE        : payload = abi.encode(balance, timestamp)
-    // SETTLE_BRIDGE_ACCOUNTING      : payload empty
-    // SETTLE_BRIDGE_ACCOUNTING_ACK  : payload = abi.encode(newBalance)
+    // SETTLE_BRIDGE_ACCOUNTING      : payload = abi.encode(int256 snapshot)
+    // SETTLE_BRIDGE_ACCOUNTING_ACK  : payload = abi.encode(yieldBaseline)
     // BRIDGE_IN / BRIDGE_OUT        : payload = abi.encode(BridgeUserPayload)
 
     /**
@@ -131,16 +131,16 @@ library CrossChainV3Helper {
      *         carries tokens — `amount` pins the exact bridgeAsset bundled with the
      *         message (0 on NACK or message-only) so split-delivery receivers can set
      *         `expectedAmount` without inspecting the bridge transport.
-     * @param newBalance Remote's `checkBalance` after the claim leg.
+     * @param yieldBaseline Remote's yield-only baseline (OToken 18dp) after the claim leg.
      * @param success    `true` if the claim shipped tokens, `false` if leg-2 NACK'd.
      * @param amount     bridgeAsset units bundled with this ack; 0 when `success` is false.
      */
     function encodeWithdrawClaimAckPayload(
-        uint256 newBalance,
+        uint256 yieldBaseline,
         bool success,
         uint256 amount
     ) internal pure returns (bytes memory) {
-        return abi.encode(newBalance, success, amount);
+        return abi.encode(yieldBaseline, success, amount);
     }
 
     /// @notice Decode the WITHDRAW_CLAIM_ACK 3-tuple payload.
@@ -148,7 +148,7 @@ library CrossChainV3Helper {
         internal
         pure
         returns (
-            uint256 newBalance,
+            uint256 yieldBaseline,
             bool success,
             uint256 amount
         )

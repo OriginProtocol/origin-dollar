@@ -214,7 +214,7 @@ abstract contract AbstractWOTokenStrategy is
     // The OToken domain (wOToken shares, OToken, `bridgeAdjustment`,
     // `remoteStrategyBalance`, the OToken bridge channel) is denominated in
     // `oTokenDecimals` (18). The vault / physical domain (deposit / withdraw amounts,
-    // `pendingAmount`, `pendingWithdrawalAmount`, physical bridge transfers, and
+    // `pendingDepositAmount`, `pendingWithdrawalAmount`, physical bridge transfers, and
     // `checkBalance`'s return value) is denominated in `bridgeAssetDecimals`. These two
     // helpers convert between the domains; both are the identity when the decimals match
     // (e.g. WETH / OETH 18/18), so the matched-decimal deployment is unaffected.
@@ -414,12 +414,11 @@ abstract contract AbstractWOTokenStrategy is
     function _bridgeOutboundMsgType() internal pure virtual returns (uint32);
 
     /**
-     * @notice Max OToken amount currently bridgeable from this chain to the peer — what the
-     *         peer can actually deliver right now. Master: bounded by Remote's deliverable
-     *         wOToken shares (`remoteStrategyBalance + bridgeAdjustment - pendingWithdrawalAmount`,
-     *         clamped to 0). Remote: unbounded (bridging out wraps the user's own OToken), so
-     *         `type(uint256).max` — a frontend reads that as "limited by your balance".
-     *         Quote against this before `bridgeOTokenToPeer` to avoid a revert.
+     * @notice Max OToken (18dp) amount currently bridgeable from this chain to the peer — what
+     *         the peer can actually deliver right now. Quote against this before
+     *         `bridgeOTokenToPeer` to avoid a revert. The per-side formula lives in each
+     *         concrete override (Master: bounded by Remote's deliverable shares; Remote:
+     *         unbounded — `type(uint256).max` — since bridging out wraps the user's own OToken).
      */
     function availableBridgeLiquidity() public view virtual returns (uint256);
 

@@ -63,6 +63,8 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     ///         Used by `_processBalanceCheckResponse` to enforce strict monotonic ordering
     ///         when multiple balance checks are in flight at the same yield-nonce window
     ///         and responses can arrive out of order (CCIP delivery isn't FIFO).
+    /// @dev    Written/read only on the Master leg (which initiates balance checks); inert on
+    ///         the Remote leg, which echoes the nonce back without recording a timestamp.
     // slither-disable-next-line constable-states
     uint256 public lastBalanceCheckTimestamp;
 
@@ -180,7 +182,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     /**
      * @dev Concrete strategies (Master / Remote) override this to dispatch by `msgType` and
      *      implement the per-message logic. `body` is the message-specific payload (e.g.,
-     *      `abi.encode(newBalance)` for DEPOSIT_ACK).
+     *      `abi.encode(yieldBaseline)` for DEPOSIT_ACK).
      */
     function _handleBridgeMessage(
         uint256 amountReceived,
@@ -231,7 +233,8 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
                 (userFunded ? msg.value : address(this).balance) >= fee,
                 userFunded ? "V3: insufficient user fee" : "V3: pool unfunded"
             );
-            // slither-disable-next-line arbitrary-send-eth
+            // `adapter` is the governor-set outbound adapter, not arbitrary user input.
+            // slither-disable-start arbitrary-send-eth
             if (token == address(0)) {
                 IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
             } else {
@@ -241,6 +244,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
                     payload
                 );
             }
+            // slither-disable-end arbitrary-send-eth
         } else {
             // CCTP-style: protocol auto-deducts from the bridged amount; no caller action.
             if (token == address(0)) {

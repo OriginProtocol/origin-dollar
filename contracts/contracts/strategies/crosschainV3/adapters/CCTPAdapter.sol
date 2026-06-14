@@ -55,8 +55,9 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     uint32 public minFinalityThreshold;
 
     /// @notice Lower bound on USDC transfers; governor-settable. Avoids dust burns that
-    ///         waste gas + CCTP attestation latency on negligible amounts.
-    uint256 public minTransferAmount;
+    ///         waste gas + CCTP attestation latency on negligible amounts. Exposed via the
+    ///         `minTransferAmount()` getter (overrides AbstractAdapter's default 0).
+    uint256 internal _minTransferAmount;
 
     /// @notice Account allowed to invoke `relay(message, attestation)` — the off-chain
     ///         attestation poller / relayer. Single address; governor-settable. CCTP is
@@ -105,8 +106,24 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     }
 
     function setMinTransferAmount(uint256 _amount) external onlyGovernor {
-        emit MinTransferAmountUpdated(minTransferAmount, _amount);
-        minTransferAmount = _amount;
+        emit MinTransferAmountUpdated(_minTransferAmount, _amount);
+        _minTransferAmount = _amount;
+    }
+
+    /// @notice Dust floor for USDC transfers (overrides AbstractAdapter's default 0).
+    function minTransferAmount() public view override returns (uint256) {
+        return _minTransferAmount;
+    }
+
+    /// @notice Effective per-tx cap: the governance value clamped to the hard CCTP protocol
+    ///         cap, and the hard cap itself when unset. Strategies sizing against this never
+    ///         exceed what `_sendMessageAndTokens` will accept (avoids a leg-2 hard revert).
+    function maxTransferAmount() public view override returns (uint256) {
+        uint256 configured = _maxTransferAmount;
+        if (configured == 0 || configured > MAX_TRANSFER_AMOUNT) {
+            return MAX_TRANSFER_AMOUNT;
+        }
+        return configured;
     }
 
     function setOperator(address _operator) external onlyGovernor {
@@ -319,7 +336,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         // already enforces `maxTransferAmount` if set; we ALSO enforce the protocol-level
         // constant so an under-configured maxTransferAmount can't accidentally allow a
         // larger burn than CCTP itself accepts.
-        require(amount >= minTransferAmount, "CCTP: amount below min");
+        require(amount >= _minTransferAmount, "CCTP: amount below min");
         require(amount <= MAX_TRANSFER_AMOUNT, "CCTP: amount above CCTP cap");
 
         // CCTP V2 deducts an actual fee (<= maxFee) from the burn; recipient mints the
@@ -362,6 +379,10 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     // --- Inbound (IMessageHandlerV2) ---------------------------------------
 
     /// @inheritdoc IMessageHandlerV2
+    /// @dev Finalised inbound is accepted unconditionally (no `minFinalityThreshold` guard,
+    ///      unlike `handleReceiveUnfinalizedMessage`): a fully-finalised message is the
+    ///      strongest case, and `minFinalityThreshold` is a SEND-side parameter that has no
+    ///      bearing on an already-finalised inbound. Auth is via `onlyCCTP` + `_validateInbound`.
     function handleReceiveFinalizedMessage(
         uint32 sourceDomain,
         bytes32 sender,

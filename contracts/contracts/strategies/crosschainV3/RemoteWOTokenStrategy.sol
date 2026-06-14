@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
 
-// solhint-disable-next-line no-unused-import
-import { AbstractCrossChainV3Strategy } from "./AbstractCrossChainV3Strategy.sol";
 import { AbstractWOTokenStrategy } from "./AbstractWOTokenStrategy.sol";
 import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
 
@@ -41,7 +40,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Storage (all new slots; nothing from any parent is relocated) -----
 
-    /// @notice OToken-vault queue handle. 0 = no outstanding queue request.
+    /// @notice OToken-vault queue handle, stored **offset by one** (vault `requestId + 1`).
+    ///         The vault's `requestId` starts at 0 for the first-ever withdrawal on a fresh
+    ///         vault, which would be indistinguishable from "no request" if stored verbatim;
+    ///         the +1 offset keeps `0` meaning "no outstanding (unclaimed) queue request" while
+    ///         a real id of 0 is safely represented as 1. Cleared to 0 once the claim lands.
     uint256 public outstandingRequestId;
 
     /// @notice Originally-requested bridgeAsset amount for the outstanding withdrawal.
@@ -55,11 +58,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Events -------------------------------------------------------------
 
-    event YieldDepositProcessed(
-        uint64 nonce,
-        uint256 amount,
-        uint256 newBalance
-    );
+    event DepositProcessed(uint64 nonce, uint256 amount, uint256 yieldBaseline);
     event WithdrawRequestProcessed(
         uint64 nonce,
         uint256 amount,
@@ -68,9 +67,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     event WithdrawClaimDelivered(
         uint64 nonce,
         uint256 amount,
-        uint256 newBalance
+        uint256 yieldBaseline
     );
-    event WithdrawClaimNack(uint64 nonce, uint256 newBalance);
+    event WithdrawClaimNack(uint64 nonce, uint256 yieldBaseline);
     event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
 
     // --- Construction / initialisation -------------------------------------
@@ -174,7 +173,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         bytes memory body
     ) internal override {
         if (msgType == CrossChainV3Helper.DEPOSIT) {
-            _processYieldDeposit(nonce, amountReceived);
+            _processDeposit(nonce, amountReceived);
         } else if (msgType == CrossChainV3Helper.WITHDRAW_REQUEST) {
             _processWithdrawRequest(nonce, body);
         } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM) {
@@ -279,14 +278,18 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         (uint256 requestId, ) = IVault(oTokenVault).requestWithdrawal(
             oTokenAmount
         );
+        // Store offset by one so a vault requestId of 0 (first withdrawal on a fresh vault)
+        // is distinguishable from the "no request" sentinel. See `outstandingRequestId` doc.
         // slither-disable-next-line reentrancy-no-eth
-        outstandingRequestId = requestId;
+        outstandingRequestId = requestId + 1;
         // outstandingRequestAmount tracks the bridgeAsset value leg 2 will ship back.
         outstandingRequestAmount = amount;
 
         // Reply to Master with the new total.
-        uint256 newBalance = _yieldOnlyBaseline();
-        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(newBalance);
+        uint256 yieldBaseline = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            yieldBaseline
+        );
         _send(
             address(0),
             0,
@@ -316,13 +319,26 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         // permanently orphaning the still-pending queue request. `outstandingRequestAmount`
         // (refined to the claimed amount in `_opportunisticClaim`) caps the ship to the real
         // amount, so any donation stays behind and is realised as yield on the next report.
-        uint256 target = outstandingRequestAmount;
+        uint256 amount = outstandingRequestAmount;
         uint256 bridgeAssetHeld = IERC20(bridgeAsset).balanceOf(address(this));
 
+        // Defense-in-depth: if the claimed amount is outside the outbound adapter's
+        // [min, max], the leg-2 ship would revert inside the adapter and brick the yield
+        // channel (the nonce never gets accepted). NACK instead so the channel stays live and
+        // the claimed bridgeAsset remains counted on Remote (recoverable). Master's leg-1
+        // pre-check (mirror-lane bounds) should prevent reaching this; it only fires on a
+        // bounds desync between Master's inbound and Remote's outbound configuration.
+        uint256 minT = IBridgeAdapter(outboundAdapter).minTransferAmount();
+        uint256 maxT = IBridgeAdapter(outboundAdapter).maxTransferAmount();
+        bool shipOutOfBounds = amount < minT || (maxT != 0 && amount > maxT);
+
         if (
-            outstandingRequestId != 0 || target == 0 || bridgeAssetHeld < target
+            outstandingRequestId != 0 ||
+            amount == 0 ||
+            bridgeAssetHeld < amount ||
+            shipOutOfBounds
         ) {
-            // Claim hasn't landed yet (queue still pending) or no outstanding request: NACK.
+            // Claim not landed / no request / un-shippable amount: NACK so Master can retry.
             uint256 currentBalance = _yieldOnlyBaseline();
             bytes memory nackPayload = CrossChainV3Helper
                 .encodeWithdrawClaimAckPayload(currentBalance, false, 0);
@@ -339,8 +355,6 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             return;
         }
 
-        uint256 amount = target;
-
         // Clear queue-side state (re-set if a fresh leg 1 starts) and bridge back.
         // outstandingRequestId is already 0 here (the guard NACKs otherwise); cleared defensively.
         // slither-disable-next-line reentrancy-no-eth
@@ -349,9 +363,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
         // `amount` (bridgeAsset units) is about to leave us; subtract its OToken-equivalent
         // value from the yield baseline.
-        uint256 newBalance = _yieldOnlyBaselineAfter(_toOToken(amount));
+        uint256 yieldBaseline = _yieldOnlyBaselineAfter(_toOToken(amount));
         bytes memory ackPayload = CrossChainV3Helper
-            .encodeWithdrawClaimAckPayload(newBalance, true, amount);
+            .encodeWithdrawClaimAckPayload(yieldBaseline, true, amount);
         // bridgeAsset → outboundAdapter allowance is granted by `setOutboundAdapter`.
         _send(
             bridgeAsset,
@@ -363,7 +377,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         );
         _acceptYieldNonce(nonce);
 
-        emit WithdrawClaimDelivered(nonce, amount, newBalance);
+        emit WithdrawClaimDelivered(nonce, amount, yieldBaseline);
     }
 
     /**
@@ -375,16 +389,20 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     function _opportunisticClaim() internal {
-        uint256 id = outstandingRequestId;
-        if (id == 0) {
+        uint256 stored = outstandingRequestId;
+        if (stored == 0) {
             return;
         }
+        // `outstandingRequestId` is stored offset-by-one; the real vault id is `stored - 1`.
+        uint256 vaultRequestId = stored - 1;
         // Hoist `claimed` outside the try so its scope is unambiguous to static
         // analysers (avoids the slither uninitialized-local false-positive that
         // fired when `claimed` was named only in the try-returns clause).
         uint256 claimed;
         // Use try/catch so a not-yet-claimable queue delay doesn't bubble up as a revert.
-        try IVault(oTokenVault).claimWithdrawal(id) returns (uint256 _claimed) {
+        try IVault(oTokenVault).claimWithdrawal(vaultRequestId) returns (
+            uint256 _claimed
+        ) {
             claimed = _claimed;
             // slither-disable-next-line reentrancy-no-eth
             outstandingRequestId = 0;
@@ -392,13 +410,13 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             // leg-2 ships the precise claimed amount (accounts for any rounding gain/loss
             // between request time and claim time).
             outstandingRequestAmount = claimed;
-            emit RemoteWithdrawalClaimed(id, claimed);
+            emit RemoteWithdrawalClaimed(vaultRequestId, claimed);
         } catch {
             // Still queued; leave state unchanged.
         }
     }
 
-    function _processYieldDeposit(uint64 nonce, uint256 amount) internal {
+    function _processDeposit(uint64 nonce, uint256 amount) internal {
         // bridgeAsset already arrived with the tokens-with-message delivery. Mint OToken
         // from the Ethereum vault, then wrap to wOToken.
         require(
@@ -418,8 +436,10 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         }
 
         // Reply to Master with the new balance and mark the yield nonce processed.
-        uint256 newBalance = _yieldOnlyBaseline();
-        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(newBalance);
+        uint256 yieldBaseline = _yieldOnlyBaseline();
+        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
+            yieldBaseline
+        );
         _send(
             address(0),
             0,
@@ -430,7 +450,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         );
         _acceptYieldNonce(nonce);
 
-        emit YieldDepositProcessed(nonce, amount, newBalance);
+        emit DepositProcessed(nonce, amount, yieldBaseline);
     }
 
     // --- AbstractWOTokenStrategy hooks -------------------------------------

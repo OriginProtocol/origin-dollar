@@ -55,9 +55,10 @@ interface IBridgeAdapter {
      *
      *         The three-value return separates two orthogonal concerns:
      *           1. Pre-send caller action (do I need to pay anything separately?)
-     *           2. Post-send accounting (the actual deduction is surfaced via
-     *              `IBridgeReceiver.receiveMessage(... uint256 feePaid)` on the receiving
-     *              side, independent of this quote).
+     *           2. Post-send accounting (the actual deduction is surfaced on the adapter's
+     *              `MessageDelivered(target, token, amountReceived, feePaid)` event on the
+     *              receiving side — it is NOT passed to `receiveMessage`, which no strategy
+     *              reads it from; the strategy accounts on `amountReceived`).
      */
     function quoteFee(
         address token,
@@ -90,4 +91,12 @@ interface IBridgeAdapter {
      *         cap regardless of the configured value).
      */
     function maxTransferAmount() external view returns (uint256);
+
+    /**
+     * @notice Per-tx minimum token amount (dust floor) this adapter enforces on outbound, and
+     *         the implied floor on inbound (mirror-lane convention, like `maxTransferAmount`).
+     *         `0` means "no floor". Strategies quote `[minTransferAmount(), maxTransferAmount()]`
+     *         to avoid initiating a transfer the adapter would reject.
+     */
+    function minTransferAmount() external view returns (uint256);
 }

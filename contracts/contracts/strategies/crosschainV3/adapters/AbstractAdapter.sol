@@ -67,7 +67,10 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     ///         "max this adapter can deliver inbound per tx" to size their withdrawAll-style
     ///         requests. `0` = no enforcement at this layer (concrete adapters may still
     ///         apply hard protocol-level constants on top).
-    uint256 public maxTransferAmount;
+    /// @dev Backing storage for the `maxTransferAmount()` getter, which concrete adapters may
+    ///      override to surface a hard protocol cap (e.g. CCTPAdapter's 10M) regardless of the
+    ///      configured value. Internal so the override is the single source of truth externally.
+    uint256 internal _maxTransferAmount;
 
     event Authorised(address indexed sender, ChainConfig cfg);
     event Revoked(address indexed sender);
@@ -167,8 +170,21 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     ///         protocol's actual per-tx limit (CCIP lane rate, CCTP burn cap, etc.).
     ///         `0` disables the check (e.g., canonical bridges with no per-tx limit).
     function setMaxTransferAmount(uint256 _amount) external onlyGovernor {
-        emit MaxTransferAmountUpdated(maxTransferAmount, _amount);
-        maxTransferAmount = _amount;
+        emit MaxTransferAmountUpdated(_maxTransferAmount, _amount);
+        _maxTransferAmount = _amount;
+    }
+
+    /// @notice Per-tx maximum token amount (see `_maxTransferAmount`). `0` = unlimited at this
+    ///         layer. Concrete adapters override to surface a hard protocol cap.
+    function maxTransferAmount() public view virtual returns (uint256) {
+        return _maxTransferAmount;
+    }
+
+    /// @notice Per-tx minimum token amount (dust floor). `0` = no floor. Concrete adapters
+    ///         that enforce a floor (e.g. CCTPAdapter) override this; default is no floor so
+    ///         strategies can quote `[minTransferAmount(), maxTransferAmount()]` generically.
+    function minTransferAmount() public view virtual returns (uint256) {
+        return 0;
     }
 
     function pauseLane(address sender) external onlyStrategistOrGovernor {
@@ -246,7 +262,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         // Reject cleanly here rather than letting the bridge router revert deep inside
         // its own validation.
         require(
-            maxTransferAmount == 0 || amount <= maxTransferAmount,
+            _maxTransferAmount == 0 || amount <= _maxTransferAmount,
             "Adapter: amount above max"
         );
         ChainConfig memory cfg = laneConfig[msg.sender];

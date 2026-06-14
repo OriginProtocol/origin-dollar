@@ -12,7 +12,7 @@ pragma solidity ^0.8.0;
  *      interface — they deliver in a single transaction and have no pending-slot lifecycle.
  *
  *      Split-delivery adapters are multi-tenant: each pending slot is keyed by the destination
- *      strategy's address on this chain (which equals the source sender by CREATE2 parity),
+ *      strategy's address on this chain (which equals the source sender by CREATE3 parity),
  *      so callers pass that address when querying or finalising.
  */
 interface ISplitInboundAdapter {
