@@ -70,11 +70,18 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const strategyBalanceAfter = await crossChainMasterStrategy.checkBalance(
         usdc.address
       );
+      // Pending bridged deposits remain counted in the master strategy's total
+      // value until the remote confirmation updates the cached remote balance.
       expect(strategyBalanceAfter).to.eq(strategyBalanceBefore);
 
+      const lastTransferNonce = await crossChainMasterStrategy.lastTransferNonce();
       expect(await crossChainMasterStrategy.pendingAmount()).to.eq(
         usdcUnits("1000")
       );
+      expect(await crossChainMasterStrategy.isTransferPending()).to.eq(true);
+      expect(
+        await crossChainMasterStrategy.isNonceProcessed(lastTransferNonce)
+      ).to.eq(false);
 
       // Check for message sent event
       const receipt = await tx.wait();
@@ -262,6 +269,11 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
         payload
       );
 
+      expect(await crossChainMasterStrategy.pendingAmount()).to.eq(
+        usdcUnits("1000")
+      );
+      expect(await crossChainMasterStrategy.isTransferPending()).to.eq(true);
+
       // Relay the message with fake attestation
       await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
@@ -272,6 +284,10 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
 
       expect(await crossChainMasterStrategy.pendingAmount()).to.eq(
         usdcUnits("0")
+      );
+      expect(await crossChainMasterStrategy.isTransferPending()).to.eq(false);
+      expect(await crossChainMasterStrategy.checkBalance(usdc.address)).to.eq(
+        usdcUnits("10000")
       );
     });
 
@@ -391,7 +407,12 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Relay the message with fake attestation
       await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
-      // Should've ignore the message
+      // The out-of-order non-confirmation balance update must not clear the
+      // pending transfer or cached remote balance. pendingAmount tracks pending
+      // deposits only, so a pending withdrawal keeps it at zero.
+      expect(await crossChainMasterStrategy.pendingAmount()).to.eq(0);
+      expect(await crossChainMasterStrategy.isTransferPending()).to.eq(true);
+
       const remoteStrategyBalance =
         await crossChainMasterStrategy.remoteStrategyBalance();
       expect(remoteStrategyBalance).to.eq(remoteStrategyBalanceBefore);
@@ -493,6 +514,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const remoteStrategyBalanceAfter =
         await crossChainMasterStrategy.remoteStrategyBalance();
       expect(remoteStrategyBalanceAfter).to.eq(remoteStrategyBalanceBefore);
+      expect(await crossChainMasterStrategy.isTransferPending()).to.eq(false);
     });
 
     it("Should revert if the burn token is not peer USDC", async function () {
