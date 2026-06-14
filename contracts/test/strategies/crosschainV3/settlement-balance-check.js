@@ -19,6 +19,9 @@ describe("Unit: V3 settlement + balance check", function () {
   let master, remote;
 
   const SEED = ethers.utils.parseUnits("5000", 6);
+  // bridgeAsset (USDC) is 6dp; remoteStrategyBalance / bridgeAdjustment are OToken (18dp).
+  // SCALE is the 6→18 factor: a SEED-USDC deposit shows up as SEED.mul(SCALE) on Remote.
+  const SCALE = ethers.BigNumber.from(10).pow(12);
 
   beforeEach(async () => {
     [deployer, governor, alice] = await ethers.getSigners();
@@ -142,30 +145,33 @@ describe("Unit: V3 settlement + balance check", function () {
   });
 
   it("requestBalanceCheck picks up yield accrued on the wOToken", async () => {
-    // Simulate yield: airdrop OToken to the wOToken vault to inflate previewRedeem.
+    // Simulate yield: airdrop OToken to the wOToken vault to inflate previewRedeem. Mint
+    // YIELD USDC → YIELD*SCALE OToken (18dp), then donate all of it to the vault so the
+    // increase is meaningful at the bridgeAsset (6dp) scale.
     const YIELD = ethers.utils.parseUnits("100", 6);
     await bridgeAsset.mintTo(deployer.address, YIELD);
     await bridgeAsset.approve(ethVault.address, YIELD);
     await ethVault.mint(YIELD);
-    await oTokenEth.transfer(woTokenEth.address, YIELD);
+    await oTokenEth.transfer(woTokenEth.address, YIELD.mul(SCALE));
     // Now previewRedeem(SEED shares) > SEED.
 
-    // Before: Master's cached balance still equals SEED.
-    expect(await master.remoteStrategyBalance()).to.equal(SEED);
+    // Before: Master's cached balance still equals the seeded baseline (18dp).
+    expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
 
     await master.connect(governor).requestBalanceCheck();
 
-    // After: balance reflects the yield.
-    expect(await master.remoteStrategyBalance()).to.be.gt(SEED);
+    // After: balance reflects the yield (18dp on Remote, 6dp on checkBalance).
+    expect(await master.remoteStrategyBalance()).to.be.gt(SEED.mul(SCALE));
     expect(await master.checkBalance(bridgeAsset.address)).to.be.gt(SEED);
   });
 
   it("requestSettlement zeros both sides' bridgeAdjustment and refreshes balance", async () => {
-    // Drive a bridge-in round trip to create unsettled deltas on both sides.
-    const AMT = ethers.utils.parseUnits("250", 6);
-    await bridgeAsset.mintTo(alice.address, AMT);
-    await bridgeAsset.connect(alice).approve(ethVault.address, AMT);
-    await ethVault.connect(alice).mint(AMT);
+    // Drive a bridge-in round trip to create unsettled deltas on both sides. AMT is the
+    // bridged OToken amount (18dp); alice mints the bridgeAsset (6dp) needed to obtain it.
+    const AMT = ethers.utils.parseUnits("250", 18);
+    await bridgeAsset.mintTo(alice.address, AMT.div(SCALE));
+    await bridgeAsset.connect(alice).approve(ethVault.address, AMT.div(SCALE));
+    await ethVault.connect(alice).mint(AMT.div(SCALE));
     await oTokenEth.connect(alice).approve(remote.address, AMT);
     await remote.connect(alice).bridgeOTokenToPeer(AMT, alice.address, "0x", 0);
 
@@ -177,8 +183,10 @@ describe("Unit: V3 settlement + balance check", function () {
 
     expect(await master.bridgeAdjustment()).to.equal(0);
     expect(await remote.bridgeAdjustment()).to.equal(0);
-    // remoteStrategyBalance now reflects the bridged-in shares.
-    expect(await master.remoteStrategyBalance()).to.equal(SEED.add(AMT));
+    // remoteStrategyBalance now reflects the seeded deposit (18dp) plus the bridged-in shares.
+    expect(await master.remoteStrategyBalance()).to.equal(
+      SEED.mul(SCALE).add(AMT)
+    );
   });
 
   it("balance check does NOT advance the yield nonce", async () => {
@@ -207,11 +215,13 @@ describe("Unit: V3 settlement + balance check", function () {
   });
 
   it("yield-only baseline: balance check reports correctly with bridgeAdjustment != 0", async () => {
-    // Bridge-in 250 to create non-zero bridgeAdjustment on both sides.
-    const AMT = ethers.utils.parseUnits("250", 6);
-    await bridgeAsset.mintTo(alice.address, AMT);
-    await bridgeAsset.connect(alice).approve(ethVault.address, AMT);
-    await ethVault.connect(alice).mint(AMT);
+    // Bridge-in 250 OToken (18dp) to create non-zero bridgeAdjustment on both sides — a
+    // meaningful amount (not sub-bridgeAsset dust) so a double-count would actually move
+    // checkBalance and the equality assertion is discriminating.
+    const AMT = ethers.utils.parseUnits("250", 18);
+    await bridgeAsset.mintTo(alice.address, AMT.div(SCALE));
+    await bridgeAsset.connect(alice).approve(ethVault.address, AMT.div(SCALE));
+    await ethVault.connect(alice).mint(AMT.div(SCALE));
     await oTokenEth.connect(alice).approve(remote.address, AMT);
     await remote.connect(alice).bridgeOTokenToPeer(AMT, alice.address, "0x", 0);
 

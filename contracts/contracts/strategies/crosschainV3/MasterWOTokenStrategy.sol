@@ -89,18 +89,8 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
     function initialize(address _operator) external onlyGovernor initializer {
         operator = _operator;
-
-        address[] memory rewardTokens = new address[](0);
-        address[] memory assets = new address[](1);
-        address[] memory pTokens = new address[](1);
-        assets[0] = bridgeAsset;
-        pTokens[0] = bridgeAsset; // No pToken; mirror the bridgeAsset for the registry.
-
-        InitializableAbstractStrategy._initialize(
-            rewardTokens,
-            assets,
-            pTokens
-        );
+        // No real platform; mirror the bridgeAsset as the registry pToken.
+        _initWithPToken(bridgeAsset);
     }
 
     // --- Required strategy overrides ---------------------------------------
@@ -113,18 +103,19 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         returns (uint256)
     {
         require(_asset == bridgeAsset, "Master: unsupported asset");
-        // Local + in-flight deposit + last reported remote balance.
-        // pendingWithdrawalAmount is NOT included — value is already in remoteStrategyBalance
-        // until the leg-2 ack lands (see state-transition table in the design plan).
-        // bridgeAdjustment captures unsettled bridge-channel activity (signed).
-        int256 total = int256(
+        // Two domains (see AbstractWOTokenStrategy decimal-scaling note):
+        //   - local bridgeAsset balance + in-flight deposit are in bridgeAsset units.
+        //   - remoteStrategyBalance + bridgeAdjustment are OToken (18dp) units; the signed
+        //     bridgeAdjustment captures unsettled bridge-channel activity.
+        // Clamp the OToken block to zero, scale it down to bridgeAsset units, then add the
+        // bridgeAsset-denominated locals. pendingWithdrawalAmount is NOT included — its value
+        // is still in remoteStrategyBalance until the leg-2 ack lands.
+        int256 remote = int256(remoteStrategyBalance) + bridgeAdjustment;
+        uint256 remoteInAsset = remote > 0 ? _toAsset(uint256(remote)) : 0;
+        return
             IERC20(bridgeAsset).balanceOf(address(this)) +
-                pendingAmount +
-                remoteStrategyBalance
-        ) + bridgeAdjustment;
-        // Clamp to zero — bridgeAdjustment is bounded by burnForStrategy authorisation
-        // (can't be more negative than remoteStrategyBalance + previously settled bridge-in).
-        return total > 0 ? uint256(total) : 0;
+            pendingAmount +
+            remoteInAsset;
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -136,24 +127,6 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     {
         // No platform to approve. The bridgeAsset → outbound adapter allowance is the only
         // approval Master needs, and it's (re)granted in `_setOutboundAdapter`.
-    }
-
-    /// @dev Override of `AbstractCrossChainV3Strategy._setOutboundAdapter`: max-approve the
-    ///      bridgeAsset to the new outbound adapter once (revoking the old), so
-    ///      `_depositToRemote` doesn't re-approve on every deposit. Mirrors Remote.
-    function _setOutboundAdapter(address _outboundAdapter) internal override {
-        address old = outboundAdapter;
-        if (old != address(0) && old != _outboundAdapter) {
-            IERC20(bridgeAsset).safeApprove(old, 0);
-        }
-        // slither-disable-next-line reentrancy-no-eth
-        super._setOutboundAdapter(_outboundAdapter);
-        if (_outboundAdapter != address(0) && old != _outboundAdapter) {
-            IERC20(bridgeAsset).safeApprove(
-                _outboundAdapter,
-                type(uint256).max
-            );
-        }
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -180,10 +153,16 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    /// @dev Withdrawals are async: this kicks off leg 1 (WITHDRAW_REQUEST). The actual
-    ///      tokens land later when `triggerClaim()` is invoked and the leg-2 ack returns.
-    ///      The `_recipient` parameter is informational — Master forwards received bridgeAsset
-    ///      to the vault on leg-2 ack regardless of this value.
+    /// @dev Withdrawals are async: this kicks off leg 1 (WITHDRAW_REQUEST). The actual tokens
+    ///      land later when `triggerClaim()` is invoked and the leg-2 ack returns. `_recipient`
+    ///      must equal the vault (enforced by the require below); Master always forwards the
+    ///      received bridgeAsset to `vaultAddress` on the leg-2 ack.
+    ///
+    ///      Only the `remoteStrategyBalance` slice is drawable here: `_amount` must be
+    ///      `<= remoteStrategyBalance` even though `checkBalance` can report more (local
+    ///      bridgeAsset + positive bridgeAdjustment). To realise the remainder, the strategist
+    ///      can `requestSettlement()` (folding bridgeAdjustment into remoteStrategyBalance)
+    ///      and/or use the locally-held bridgeAsset, then withdraw.
     function withdraw(
         address _recipient,
         address _asset,
@@ -212,7 +191,8 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         ) {
             return;
         }
-        uint256 amount = remoteStrategyBalance;
+        // remoteStrategyBalance is OToken (18dp); withdraw amounts are bridgeAsset units.
+        uint256 amount = _toAsset(remoteStrategyBalance);
         if (amount == 0) return;
         uint256 cap = IBridgeAdapter(inboundAdapter).maxTransferAmount();
         if (cap > 0 && amount > cap) amount = cap;
@@ -361,8 +341,11 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             pendingAmount == 0 && pendingWithdrawalAmount == 0,
             "Master: yield op in flight"
         );
+        // _amount is bridgeAsset units; remoteStrategyBalance is OToken (18dp). Compare in
+        // bridgeAsset units (scaling rsb down rounds conservatively, so the gate can never
+        // over-permit a withdrawal).
         require(
-            _amount <= remoteStrategyBalance,
+            _amount <= _toAsset(remoteStrategyBalance),
             "Master: amount exceeds remote balance"
         );
 
@@ -385,10 +368,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     // --- Inbound dispatch --------------------------------------------------
 
     function _handleBridgeMessage(
-        address, // sender
-        address, // token
         uint256 amountReceived,
-        uint256, // feePaid — unused for bridge channel / yield message-only ops
         uint32 msgType,
         uint64 nonce,
         bytes memory body
@@ -537,9 +517,12 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     ///      shares on Remote, and a BRIDGE_OUT could race ahead of (or outlive) it, so counting
     ///      it would re-open a stranding window.
     function availableBridgeLiquidity() public view override returns (uint256) {
+        // Reported in OToken (18dp) — it gates an OToken bridge (`net`). remoteStrategyBalance
+        // and bridgeAdjustment are already 18dp; pendingWithdrawalAmount is bridgeAsset units,
+        // so scale it up before subtracting.
         int256 a = int256(remoteStrategyBalance) +
             bridgeAdjustment -
-            int256(pendingWithdrawalAmount);
+            int256(_toOToken(pendingWithdrawalAmount));
         return a > 0 ? uint256(a) : 0;
     }
 

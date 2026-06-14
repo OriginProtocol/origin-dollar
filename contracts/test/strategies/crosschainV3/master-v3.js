@@ -9,6 +9,11 @@ const {
   encodeNewBalancePayload,
 } = require("./_helpers");
 
+// bridgeAsset (MockUSDC) is 6dp; remoteStrategyBalance is OToken-denominated (18dp). SCALE
+// is the 6→18 factor used where a balance reported from Remote (18dp) meets a bridgeAsset
+// (6dp) amount.
+const SCALE = ethers.BigNumber.from(10).pow(12);
+
 describe("Unit: MasterWOTokenStrategy", function () {
   let deployer, governor, alice, bob;
   let bridgeAsset, oToken, mockVault, master;
@@ -109,13 +114,7 @@ describe("Unit: MasterWOTokenStrategy", function () {
       await expect(
         master
           .connect(alice)
-          .receiveMessage(
-            master.address,
-            ethers.constants.AddressZero,
-            0,
-            0,
-            "0x"
-          )
+          .receiveMessage(master.address, ethers.constants.AddressZero, 0, "0x")
       ).to.be.revertedWith("V3: only inbound adapter");
     });
   });
@@ -218,10 +217,11 @@ describe("Unit: MasterWOTokenStrategy", function () {
       await bridgeAsset.mintTo(master.address, seed);
       await mockVault.callDeposit(master.address, bridgeAsset.address, seed);
 
+      // Remote reports its yield baseline in OToken (18dp), so seed the ack in 18dp.
       const ack = encodePackedEnvelope(
         MSG.DEPOSIT_ACK,
         1,
-        encodeNewBalancePayload(seed)
+        encodeNewBalancePayload(seed.mul(SCALE))
       );
       await inboundAdapter.sendMessage(ack);
     });
@@ -274,28 +274,31 @@ describe("Unit: MasterWOTokenStrategy", function () {
       // inflate bridgeAdjustment by the minted amount and defeat the test). The mock
       // vault is permissionless on `oToken.mint(addr, amount)` once it's set as the
       // OToken's `vaultAddress`.
-      const tooBig = ethers.utils.parseUnits("999999999", 6);
+      // tooBig is an OToken (18dp) amount that exceeds the seeded liquidity (10000 OToken).
+      const tooBig = ethers.utils.parseUnits("999999999", 18);
       const sVault = await impersonateAndFund(mockVault.address);
       await oToken.connect(sVault).mint(alice.address, tooBig);
       await oToken.connect(alice).approve(master.address, tooBig);
 
-      // Available = remoteStrategyBalance + bridgeAdjustment. Seed-only flow above
-      // left remoteStrategyBalance ≈ `seed` (a small number) and bridgeAdjustment = 0.
+      // Available = remoteStrategyBalance + bridgeAdjustment (OToken, 18dp). The seed flow
+      // above left remoteStrategyBalance = 10000 OToken and bridgeAdjustment = 0.
       // Bridging `tooBig` exceeds available → preflight reverts.
       await expect(
         master
           .connect(alice)
           .bridgeOTokenToPeer(tooBig, ethers.constants.AddressZero, "0x", 0)
-      ).to.be.revertedWith("Master: insufficient remote liquidity");
+      ).to.be.revertedWith("WOT: insufficient bridge liquidity");
     });
 
     it("availableBridgeLiquidity subtracts an in-flight withdrawal (P1-b)", async () => {
       const seed = ethers.utils.parseUnits("10000", 6);
-      expect(await master.availableBridgeLiquidity()).to.equal(seed);
+      // availableBridgeLiquidity is OToken-denominated (18dp) — it gates an OToken bridge.
+      expect(await master.availableBridgeLiquidity()).to.equal(seed.mul(SCALE));
 
-      // Initiate a withdrawal → pendingWithdrawalAmount = W. Those shares are committed to
-      // the queue on Remote and are NOT deliverable for a bridge-out, so the preflight must
-      // exclude them (otherwise a bridge could burn locally what Remote can't deliver).
+      // Initiate a withdrawal → pendingWithdrawalAmount = W (bridgeAsset, 6dp). Those shares
+      // are committed to the queue on Remote and are NOT deliverable for a bridge-out, so the
+      // preflight must exclude them (scaled up to OToken units) — otherwise a bridge could
+      // burn locally what Remote can't deliver.
       const W = ethers.utils.parseUnits("3000", 6);
       await mockVault.callWithdraw(
         master.address,
@@ -304,7 +307,9 @@ describe("Unit: MasterWOTokenStrategy", function () {
         W
       );
       expect(await master.pendingWithdrawalAmount()).to.equal(W);
-      expect(await master.availableBridgeLiquidity()).to.equal(seed.sub(W));
+      expect(await master.availableBridgeLiquidity()).to.equal(
+        seed.sub(W).mul(SCALE)
+      );
     });
 
     it("rejects bridge-out when caller has no OToken", async () => {

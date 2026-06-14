@@ -173,6 +173,6 @@ contract MockBridgeAdapter is IBridgeAdapter {
         bytes memory payload
     ) internal {
         emit MessageDelivered(token, amount, payload);
-        IBridgeReceiver(peer).receiveMessage(sender, token, amount, 0, payload);
+        IBridgeReceiver(peer).receiveMessage(sender, token, amount, payload);
     }
 }

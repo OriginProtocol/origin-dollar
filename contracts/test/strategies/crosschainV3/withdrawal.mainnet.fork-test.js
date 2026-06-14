@@ -110,13 +110,12 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
         remote.address,
         ethers.constants.AddressZero,
         0,
-        0,
         envelope
       );
 
     // wOETH shares should have been unwrapped.
     expect(await woeth.balanceOf(remote.address)).to.be.lt(sharesBefore);
-    expect(await remote.queuedAmount()).to.equal(WITHDRAW_AMOUNT);
+    expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW_AMOUNT);
     expect(await remote.outstandingRequestId()).to.be.gt(0);
 
     // Invariant: checkBalance is preserved (within rounding) — value shifted from shares → queue.
@@ -153,7 +152,6 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
         remote.address,
         ethers.constants.AddressZero,
         0,
-        0,
         envelope
       );
     const requestId = await remote.outstandingRequestId();
@@ -180,9 +178,8 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     const wethBefore = await weth.balanceOf(remote.address);
     await remote.claimRemoteWithdrawal();
 
-    // After claim: outstandingRequestId cleared, queuedAmount cleared, WETH on Remote increased.
+    // After claim: outstandingRequestId cleared, WETH on Remote increased.
     expect(await remote.outstandingRequestId()).to.equal(0);
-    expect(await remote.queuedAmount()).to.equal(0);
     expect(await weth.balanceOf(remote.address)).to.be.gt(wethBefore);
   });
 
@@ -208,7 +205,6 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
       .receiveMessage(
         remote.address,
         ethers.constants.AddressZero,
-        0,
         0,
         envelope
       );

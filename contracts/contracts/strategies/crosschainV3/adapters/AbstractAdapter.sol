@@ -385,11 +385,12 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         if (amountReceived > 0 && token != address(0)) {
             IERC20(token).safeTransfer(envelopeSender, amountReceived);
         }
+        // feePaid is NOT forwarded to the strategy (no strategy reads it); off-chain
+        // consumers read it from the MessageDelivered event below.
         IBridgeReceiver(envelopeSender).receiveMessage(
             envelopeSender,
             token,
             amountReceived,
-            feePaid,
             payload
         );
         emit MessageDelivered(envelopeSender, token, amountReceived, feePaid);

@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IBasicToken } from "../../interfaces/IBasicToken.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 import { AbstractCrossChainV3Strategy } from "./AbstractCrossChainV3Strategy.sol";
 import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
@@ -27,7 +29,7 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *         that differs between the two sides:
  *
  *           - `_bridgeOutboundMsgType()` — Master: BRIDGE_OUT, Remote: BRIDGE_IN.
- *           - `_preflightBridgeOutbound(amount)` — Master: liquidity check, Remote: no-op.
+ *           - `availableBridgeLiquidity()` — Master: deliverable wOToken ceiling, Remote: unbounded.
  *           - `_consumeOTokenForBridge(amount)` — Master: burn via vault, Remote: wrap to wOToken.
  *           - `_deliverOTokenForBridge(amount, recipient)` — Master: mint+transfer, Remote: unwrap+transfer.
  */
@@ -36,6 +38,7 @@ abstract contract AbstractWOTokenStrategy is
     InitializableAbstractStrategy
 {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     // --- Constants & immutables --------------------------------------------
 
@@ -46,11 +49,20 @@ abstract contract AbstractWOTokenStrategy is
     /// @notice Maximum protocol fee on the bridge channel (10% in basis points).
     uint256 public constant MAX_BRIDGE_FEE_BPS = 1000;
 
+    /// @dev Basis-points denominator (100% = 10000) for the bridge-fee calc.
+    uint256 internal constant BPS_DENOMINATOR = 10000;
+
     /// @notice Asset that bridges between Master and Remote (USDC for OUSD V3, WETH for OETHb).
     address public immutable bridgeAsset;
 
     /// @notice OToken on this chain (the rebasing OToken — OUSD, OETH, OETHb, etc.).
     address public immutable oToken;
+
+    /// @notice Decimals of `bridgeAsset` (6 for USDC, 18 for WETH). Cached at construction.
+    uint8 public immutable bridgeAssetDecimals;
+
+    /// @notice Decimals of `oToken` (18 for OUSD / OETH). Cached at construction.
+    uint8 public immutable oTokenDecimals;
 
     // --- Storage (all new slots) -------------------------------------------
 
@@ -121,6 +133,24 @@ abstract contract AbstractWOTokenStrategy is
         require(_oToken != address(0), "WOT: oToken required");
         bridgeAsset = _bridgeAsset;
         oToken = _oToken;
+        bridgeAssetDecimals = IBasicToken(_bridgeAsset).decimals();
+        oTokenDecimals = IBasicToken(_oToken).decimals();
+    }
+
+    /// @dev Shared `initialize` body: no reward tokens, `[bridgeAsset]` as the supported
+    ///      asset, and `[pToken]` as the platform token for the strategy registry. Master
+    ///      passes `bridgeAsset` (it has no real platform); Remote passes `woToken`.
+    function _initWithPToken(address pToken) internal {
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](1);
+        address[] memory pTokens = new address[](1);
+        assets[0] = bridgeAsset;
+        pTokens[0] = pToken;
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
     }
 
     // --- Modifiers ----------------------------------------------------------
@@ -153,6 +183,51 @@ abstract contract AbstractWOTokenStrategy is
         onlyHarvesterOrStrategist
         nonReentrant
     {}
+
+    /**
+     * @inheritdoc AbstractCrossChainV3Strategy
+     * @dev Rotates the bridgeAsset allowance from the old outbound adapter to the new one
+     *      (old → 0, new → max) so the per-op send path never needs a per-call approve.
+     *      Shared by Master and Remote — both only ever push bridgeAsset through the adapter.
+     */
+    function _setOutboundAdapter(address _outboundAdapter)
+        internal
+        virtual
+        override
+    {
+        address old = outboundAdapter;
+        if (old != address(0) && old != _outboundAdapter) {
+            IERC20(bridgeAsset).safeApprove(old, 0);
+        }
+        // slither-disable-next-line reentrancy-no-eth
+        super._setOutboundAdapter(_outboundAdapter);
+        if (_outboundAdapter != address(0) && old != _outboundAdapter) {
+            IERC20(bridgeAsset).safeApprove(
+                _outboundAdapter,
+                type(uint256).max
+            );
+        }
+    }
+
+    // --- Decimal scaling ----------------------------------------------------
+    //
+    // The OToken domain (wOToken shares, OToken, `bridgeAdjustment`,
+    // `remoteStrategyBalance`, the OToken bridge channel) is denominated in
+    // `oTokenDecimals` (18). The vault / physical domain (deposit / withdraw amounts,
+    // `pendingAmount`, `pendingWithdrawalAmount`, physical bridge transfers, and
+    // `checkBalance`'s return value) is denominated in `bridgeAssetDecimals`. These two
+    // helpers convert between the domains; both are the identity when the decimals match
+    // (e.g. WETH / OETH 18/18), so the matched-decimal deployment is unaffected.
+
+    /// @dev bridgeAsset units → OToken units.
+    function _toOToken(uint256 assetAmount) internal view returns (uint256) {
+        return assetAmount.scaleBy(oTokenDecimals, bridgeAssetDecimals);
+    }
+
+    /// @dev OToken units → bridgeAsset units.
+    function _toAsset(uint256 oTokenAmount) internal view returns (uint256) {
+        return oTokenAmount.scaleBy(bridgeAssetDecimals, oTokenDecimals);
+    }
 
     // --- Bridge channel: outbound -------------------------------------------
 
@@ -196,7 +271,7 @@ abstract contract AbstractWOTokenStrategy is
         // Burn-full / deliver-net: protocol fee is consumed on the source (full `_amount`)
         // but only `net` flows across the bridge; the difference is the retained backing
         // that lifts the next rebase.
-        uint256 fee = (_amount * bridgeFeeBps) / 10000;
+        uint256 fee = (_amount * bridgeFeeBps) / BPS_DENOMINATOR;
         uint256 net = _amount - fee;
         require(net > 0, "WOT: net zero after fee");
 
@@ -204,7 +279,7 @@ abstract contract AbstractWOTokenStrategy is
         // off-chain via `availableBridgeLiquidity()` first to avoid a revert.
         require(
             net <= availableBridgeLiquidity(),
-            "Master: insufficient remote liquidity"
+            "WOT: insufficient bridge liquidity"
         );
 
         address recipient = _recipient == address(0) ? msg.sender : _recipient;

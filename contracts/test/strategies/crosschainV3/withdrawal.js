@@ -33,6 +33,9 @@ describe("Unit: V3 Withdrawal", function () {
   const SEED = ethers.utils.parseUnits("10000", 6);
   const WITHDRAW = ethers.utils.parseUnits("4000", 6);
   const DELAY = 86400; // 1 day queue delay
+  // bridgeAsset (USDC) is 6dp; remoteStrategyBalance / wOToken shares are OToken (18dp).
+  // Withdraw amounts, outstandingRequestAmount, and checkBalance are bridgeAsset units.
+  const SCALE = ethers.BigNumber.from(10).pow(12);
 
   beforeEach(async () => {
     [deployer, governor, alice] = await ethers.getSigners();
@@ -155,8 +158,10 @@ describe("Unit: V3 Withdrawal", function () {
     await bridgeAsset.mintTo(master.address, SEED);
     await mockL2Vault.callDeposit(master.address, bridgeAsset.address, SEED);
 
-    expect(await master.remoteStrategyBalance()).to.equal(SEED);
-    expect(await woTokenEth.balanceOf(remote.address)).to.equal(SEED);
+    expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
+    expect(await woTokenEth.balanceOf(remote.address)).to.equal(
+      SEED.mul(SCALE)
+    );
   });
 
   it("happy path: leg1 → automation claim → leg2 returns tokens to vault", async () => {
@@ -169,17 +174,17 @@ describe("Unit: V3 Withdrawal", function () {
     );
 
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
-    // Remote's checkBalance stays at SEED — queue + remaining shares.
-    expect(await remote.queuedAmount()).to.equal(WITHDRAW);
+    // Remote's checkBalance stays at SEED — queue + remaining shares. outstandingRequestAmount
+    // tracks the bridgeAsset value (6dp) committed to the queue.
+    expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW);
     expect(await remote.outstandingRequestId()).to.equal(1);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
-    expect(await master.remoteStrategyBalance()).to.equal(SEED);
+    expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
 
     // Advance past the queue delay and claim from Ethereum (permissionless).
     await time.increase(DELAY + 1);
     await remote.connect(alice).claimRemoteWithdrawal();
     expect(await remote.outstandingRequestId()).to.equal(0);
-    expect(await remote.queuedAmount()).to.equal(0);
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
 
@@ -189,8 +194,10 @@ describe("Unit: V3 Withdrawal", function () {
     // Master forwarded WITHDRAW tokens to the vault.
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
-    // Remote's balance dropped by WITHDRAW.
-    expect(await master.remoteStrategyBalance()).to.equal(SEED.sub(WITHDRAW));
+    // Remote's balance dropped by WITHDRAW (18dp on Remote, 6dp on checkBalance).
+    expect(await master.remoteStrategyBalance()).to.equal(
+      SEED.sub(WITHDRAW).mul(SCALE)
+    );
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(
       SEED.sub(WITHDRAW)
     );
@@ -242,6 +249,41 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).triggerClaim();
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
+  });
+
+  it("donation during the queue window is NOT shipped and does NOT orphan the request (P0-B)", async () => {
+    // Leg 1: queue a withdrawal. The OToken-vault claim delay (DELAY) has NOT elapsed.
+    await mockL2Vault.callWithdraw(
+      master.address,
+      mockL2Vault.address,
+      bridgeAsset.address,
+      WITHDRAW
+    );
+    expect(await remote.outstandingRequestId()).to.equal(1);
+
+    // An attacker donates >= the target bridgeAsset to Remote DURING the delay window.
+    await bridgeAsset.mintTo(remote.address, WITHDRAW);
+    expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
+
+    // Leg 2 fires before the queue is claimable. The opportunistic claim reverts (delay), so
+    // outstandingRequestId stays set. Even though held >= target (the donation), the id-gate
+    // forces a NACK: the donation must NOT ship and the real queue must NOT be orphaned.
+    await master.connect(governor).triggerClaim();
+
+    expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW); // still pending
+    expect(await remote.outstandingRequestId()).to.equal(1); // queue intact, not orphaned
+    expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0); // nothing shipped
+    expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW); // donation stays
+
+    // After the delay, the real claim lands. Leg 2 ships EXACTLY the claimed amount and the
+    // donation is left behind on Remote (realised as yield on the next balance report).
+    await time.increase(DELAY + 1);
+    await master.connect(governor).triggerClaim();
+    expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
+    // The donation (WITHDRAW) remains on Remote — never attributed to the withdrawal.
+    expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
   });
 
   it("claimRemoteWithdrawal is idempotent (safe to call twice)", async () => {
@@ -317,7 +359,7 @@ describe("Unit: V3 Withdrawal", function () {
     // Master's view of Remote reflects shares-remaining + donation that stayed on Remote.
     // The donation is real value the strategy now holds — it should appear in Master's view.
     expect(await master.remoteStrategyBalance()).to.equal(
-      SEED.sub(WITHDRAW).add(DONATION)
+      SEED.sub(WITHDRAW).add(DONATION).mul(SCALE)
     );
     // outstandingRequestAmount cleared after leg-2 success.
     expect(await remote.outstandingRequestAmount()).to.equal(0);

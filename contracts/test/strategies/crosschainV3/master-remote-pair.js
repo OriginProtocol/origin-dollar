@@ -1,6 +1,11 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+// bridgeAsset (MockUSDC) is 6dp; oToken / wOToken are 18dp. The strategy keeps the OToken
+// domain (remoteStrategyBalance, wOToken shares, bridgeAdjustment) in 18dp and scales to
+// bridgeAsset units only at the vault edge (checkBalance). SCALE is the 6→18 factor.
+const SCALE = ethers.BigNumber.from(10).pow(12);
+
 /**
  * Paired Master+Remote loopback integration test.
  *
@@ -157,14 +162,17 @@ describe("Unit: V3 Master+Remote loopback", function () {
     //   - Master cleared pendingAmount and set remoteStrategyBalance = newBalance
 
     expect(await master.pendingAmount()).to.equal(0);
-    expect(await master.remoteStrategyBalance()).to.equal(AMOUNT);
+    // remoteStrategyBalance is the OToken-denominated (18dp) yield baseline.
+    expect(await master.remoteStrategyBalance()).to.equal(AMOUNT.mul(SCALE));
     expect(await master.isYieldOpInFlight()).to.equal(false);
 
-    // checkBalance on Master == AMOUNT (Remote balance is reflected here).
+    // checkBalance is bridgeAsset-denominated (6dp) — scaled back down at the vault edge.
     expect(await master.checkBalance(bridgeAsset.address)).to.equal(AMOUNT);
 
-    // Remote actually holds the wOToken shares.
-    expect(await woTokenEth.balanceOf(remote.address)).to.equal(AMOUNT);
+    // Remote holds the wOToken shares for the minted OToken (18dp, 1:1 with OToken here).
+    expect(await woTokenEth.balanceOf(remote.address)).to.equal(
+      AMOUNT.mul(SCALE)
+    );
 
     // Nonces synced on both sides.
     expect(await master.lastYieldNonce()).to.equal(1);
@@ -227,35 +235,39 @@ describe("Unit: V3 Master+Remote loopback", function () {
   });
 
   it("yield ack reports the yield-only baseline — no double-count with bridge activity (P0)", async () => {
+    // Deposits are bridgeAsset (USDC 6dp); the bridge channel moves OToken (18dp). The
+    // bridged amount is 200 OToken (= 200 USDC of value); BRIDGE_IN_USDC is what Alice
+    // spends to obtain it.
     const DEPOSIT1 = ethers.utils.parseUnits("1000", 6);
-    const BRIDGE_IN = ethers.utils.parseUnits("200", 6);
     const DEPOSIT2 = ethers.utils.parseUnits("500", 6);
+    const BRIDGE_IN_USDC = ethers.utils.parseUnits("200", 6);
+    const BRIDGE_IN = ethers.utils.parseUnits("200", 18);
 
-    // 1. Deposit 1000 → rsb = 1000, bridgeAdjustment = 0.
+    // 1. Deposit 1000 USDC → rsb = 1000 (18dp), bridgeAdjustment = 0.
     await bridgeAsset.mintTo(master.address, DEPOSIT1);
     await mockL2Vault.callDeposit(
       master.address,
       bridgeAsset.address,
       DEPOSIT1
     );
-    expect(await master.remoteStrategyBalance()).to.equal(DEPOSIT1);
+    expect(await master.remoteStrategyBalance()).to.equal(DEPOSIT1.mul(SCALE));
     expect(await master.bridgeAdjustment()).to.equal(0);
 
-    // 2. A user BRIDGE_INs 200 from Remote → Master. Leaves bridgeAdjustment = 200
-    //    on Master (and on Remote), and Remote now holds 1200 wOToken shares.
-    await bridgeAsset.mintTo(alice.address, BRIDGE_IN);
-    await bridgeAsset.connect(alice).approve(ethVault.address, BRIDGE_IN);
-    await ethVault.connect(alice).mint(BRIDGE_IN);
+    // 2. A user BRIDGE_INs 200 OToken from Remote → Master. bridgeAdjustment = 200 OToken
+    //    (18dp) on both sides; Remote wraps the user's OToken on top of its yield shares.
+    await bridgeAsset.mintTo(alice.address, BRIDGE_IN_USDC);
+    await bridgeAsset.connect(alice).approve(ethVault.address, BRIDGE_IN_USDC);
+    await ethVault.connect(alice).mint(BRIDGE_IN_USDC);
     await oTokenEth.connect(alice).approve(remote.address, BRIDGE_IN);
     await remote
       .connect(alice)
       .bridgeOTokenToPeer(BRIDGE_IN, alice.address, "0x", 0);
     expect(await master.bridgeAdjustment()).to.equal(BRIDGE_IN);
 
-    // 3. Second deposit of 500. Its DEPOSIT_ACK must report the YIELD-ONLY baseline
+    // 3. Second deposit of 500 USDC. Its DEPOSIT_ACK must report the YIELD-ONLY baseline
     //    (_viewCheckBalance - bridgeAdjustment), NOT the full balance — Master re-adds its
     //    own bridgeAdjustment in checkBalance, so a full-balance ack would double-count the
-    //    200 bridge (the pre-fix bug: rsb=1700, checkBalance=1900).
+    //    200 OToken bridge.
     await bridgeAsset.mintTo(master.address, DEPOSIT2);
     await mockL2Vault.callDeposit(
       master.address,
@@ -263,13 +275,13 @@ describe("Unit: V3 Master+Remote loopback", function () {
       DEPOSIT2
     );
 
-    // rsb = yield-only = 1700 shares − 200 bridgeAdjustment = 1500 (just the deposits).
+    // rsb = yield-only baseline = just the two deposits (18dp), bridge excluded.
     expect(await master.remoteStrategyBalance()).to.equal(
-      DEPOSIT1.add(DEPOSIT2)
+      DEPOSIT1.add(DEPOSIT2).mul(SCALE)
     );
-    // checkBalance = rsb(1500) + bridgeAdjustment(200) = 1700 — the bridge counted ONCE.
+    // checkBalance (6dp) = deposits(1500) + bridge(200) = 1700 — the bridge counted ONCE.
     expect(await master.checkBalance(bridgeAsset.address)).to.equal(
-      DEPOSIT1.add(DEPOSIT2).add(BRIDGE_IN)
+      DEPOSIT1.add(DEPOSIT2).add(BRIDGE_IN_USDC)
     );
     expect(await master.pendingAmount()).to.equal(0);
   });

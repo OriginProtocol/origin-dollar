@@ -2,6 +2,10 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { impersonateAndFund } = require("../../../utils/signers");
 
+// remoteStrategyBalance is OToken-denominated (18dp); withdraw amounts and adapter transfer
+// caps are bridgeAsset units (6dp for USDC). SCALE is the 6→18 factor used when seeding rsb.
+const SCALE = ethers.BigNumber.from(10).pow(12);
+
 /**
  * Coverage for the adapter-level transfer caps + CCTPAdapter-specific behaviour
  * (MAX_TRANSFER_AMOUNT constant, minTransferAmount setter, minFinalityThreshold
@@ -451,19 +455,22 @@ describe("Unit: Adapter transfer caps", function () {
         bridgeAsset.address,
         ONE_K.mul(5)
       );
-      // Send DEPOSIT_ACK back so pendingAmount clears and remoteStrategyBalance = 5000.
+      // Send DEPOSIT_ACK back so pendingAmount clears and remoteStrategyBalance = 5000
+      // OToken (18dp — Remote reports its baseline in OToken units).
       const ackBody = ethers.utils.defaultAbiCoder.encode(
         ["uint256"],
-        [ONE_K.mul(5)]
+        [ONE_K.mul(5).mul(SCALE)]
       );
       const ackEnvelope = ethers.utils.defaultAbiCoder.encode(
         ["uint32", "uint64", "bytes"],
         [2, 1, ackBody] // DEPOSIT_ACK msgType=2, nonce=1
       );
       await inbound.sendMessage(ackEnvelope);
-      expect(await master.remoteStrategyBalance()).to.equal(ONE_K.mul(5));
+      expect(await master.remoteStrategyBalance()).to.equal(
+        ONE_K.mul(5).mul(SCALE)
+      );
 
-      // Cap the inbound at 2000. withdrawAll clamps.
+      // Cap the inbound at 2000 (bridgeAsset units). withdrawAll clamps the scaled-down amount.
       await inbound.setMaxTransferAmountOverride(ONE_K.mul(2));
       await mockL2Vault.callWithdrawAll(master.address);
 
@@ -489,7 +496,7 @@ describe("Unit: Adapter transfer caps", function () {
       );
       const ackBody = ethers.utils.defaultAbiCoder.encode(
         ["uint256"],
-        [ONE_K.mul(5)]
+        [ONE_K.mul(5).mul(SCALE)]
       );
       const ackEnvelope = ethers.utils.defaultAbiCoder.encode(
         ["uint32", "uint64", "bytes"],
@@ -497,7 +504,7 @@ describe("Unit: Adapter transfer caps", function () {
       );
       await inbound.sendMessage(ackEnvelope);
 
-      // Inbound cap = 0 (default override). withdrawAll ships the full 5000.
+      // Inbound cap = 0 (default override). withdrawAll ships the full 5000 (bridgeAsset units).
       await inbound.setMaxTransferAmountOverride(0);
       await mockL2Vault.callWithdrawAll(master.address);
 

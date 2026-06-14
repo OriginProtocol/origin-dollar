@@ -85,7 +85,6 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
         master.address,
         ethers.constants.AddressZero,
         0,
-        0,
         envelope
       );
 
@@ -125,7 +124,6 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
         master.address,
         ethers.constants.AddressZero,
         0,
-        0,
         seedEnvelope
       );
 
@@ -163,7 +161,6 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
         master.address,
         ethers.constants.AddressZero,
         0,
-        0,
         envelope
       );
     await expect(
@@ -172,7 +169,6 @@ describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", fu
         .receiveMessage(
           master.address,
           ethers.constants.AddressZero,
-          0,
           0,
           envelope
         )

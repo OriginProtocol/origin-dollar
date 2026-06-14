@@ -170,15 +170,18 @@ describe("Unit: CCTPAdapter burn relay", function () {
       body: burnBody,
     });
 
-    await adapter.connect(operator).relay(message, "0x");
+    const landed = amount.sub(feeExecuted);
+    // feePaid is no longer forwarded to the strategy; the adapter emits it on
+    // MessageDelivered for off-chain consumers. Assert the event carries feeExecuted.
+    await expect(adapter.connect(operator).relay(message, "0x"))
+      .to.emit(adapter, "MessageDelivered")
+      .withArgs(strategy.address, usdc.address, landed, feeExecuted);
 
     // Strategy received exactly `amount - feeExecuted` USDC.
-    const landed = amount.sub(feeExecuted);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastSender()).to.equal(strategy.address);
     expect(await strategy.lastToken()).to.equal(usdc.address);
     expect(await strategy.lastAmount()).to.equal(landed);
-    expect(await strategy.lastFeePaid()).to.equal(feeExecuted);
     expect(await strategy.lastPayload()).to.equal(payload);
     expect(await usdc.balanceOf(strategy.address)).to.equal(landed);
     expect(await usdc.balanceOf(adapter.address)).to.equal(0);

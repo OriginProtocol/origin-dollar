@@ -18,7 +18,7 @@ contracts/interfaces/crosschainV3/
 contracts/strategies/crosschainV3/
   CrossChainV3Helper.sol           — strategy envelope `abi.encode(msgType, nonce, body)` + per-msgType codec
   AbstractCrossChainV3Strategy.sol — adapter wiring, yield-nonce machinery, inbound dispatch,
-                                     yield-channel send helpers (_sendYieldMessage / _sendYieldTokensAndMessage)
+                                     single outbound send helper (_send, parameterised by userFunded)
   AbstractWOTokenStrategy.sol      — wOToken pair base: bridge-channel state + generic bridge mechanics,
                                      `bridgeOTokenToPeer`, replay protection, signed bridgeAdjustment,
                                      onlyOperatorGovernorOrStrategist modifier, side-specific hooks
@@ -96,13 +96,15 @@ The protocol uses two nested envelopes:
 
 Authoritative summary of the Option-1 withdrawal flow with idempotent claim. Each row is a single intermediate state; the value lives in exactly one slot per row, and `checkBalance` equals the total in every row:
 
-| State | shares value | oToken bal | bridgeAsset bal | queuedAmount | outstandingRequestId | checkBalance |
+| State | shares value | oToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
 |---|---|---|---|---|---|---|
 | Idle | X | 0 | 0 | 0 | 0 | X |
 | Requested (post-leg-1) | X − A | 0 | 0 | A | nonzero | X |
 | Claimed (post-`claimRemoteWithdrawal`) | X − A | 0 | A | 0 | 0 | X |
 | Bridging-out (post-leg-2 send) | X − A | 0 | 0 | 0 | 0 | X − A |
 | Completed | X − A | 0 | 0 | 0 | 0 | X − A |
+
+\* `queued` is derived, not a stored slot: `outstandingRequestId != 0 ? outstandingRequestAmount : 0`.
 
 ## Authorisation surface
 

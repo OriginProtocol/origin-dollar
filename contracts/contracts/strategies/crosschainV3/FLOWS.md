@@ -73,9 +73,9 @@ Native fees come from one of two places depending on who initiated:
 - **Operator-initiated** (yield channel + every Remote-side ack) → the
   strategy's local ETH pool (`address(this).balance`). Operator pre-funds.
 
-Token-side fees are surfaced in `receiveMessage(amountReceived, feePaid)`. The
-receiving strategy accounts on `amountReceived`; the delta becomes implicit
-yield drag.
+Token-side fees are surfaced on the adapter's `MessageDelivered` event (not
+forwarded to `receiveMessage`). The receiving strategy accounts on
+`amountReceived`; the delta becomes implicit yield drag.
 
 ETH on the strategy is **never** counted in `checkBalance` — `checkBalance`
 only reads bridge-asset-denominated slots. Sweep via
@@ -186,12 +186,12 @@ sequenceDiagram
     Master->>Master: pendingAmount = X
     Master->>Master: approve adapter for X
     Master->>Adapter: sendMessageAndTokens(WETH, X, payload[DEPOSIT, N+1, ""])
-    Note over Master,Adapter: _sendOpTokensAndMessage: pool funds CCIP fee from<br/>address(this).balance. quoteFee returns (fee, native, true).
+    Note over Master,Adapter: _send (userFunded=false): pool funds CCIP fee from<br/>address(this).balance. quoteFee returns (fee, native, true).
     Adapter->>Adapter: pull WETH, build CCIP message
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg)
     Bridge-->>AdapterEth: ccipReceive (DON pushes)
     AdapterEth->>AdapterEth: _validateInbound:<br/>transportSender == address(this) (peer parity)<br/>sourceChain == BASE_SELECTOR<br/>authorised[Remote] == true<br/>!cfg.paused
-    AdapterEth->>Remote: receiveMessage(Remote, WETH, X, 0, payload)
+    AdapterEth->>Remote: receiveMessage(Remote, WETH, X, payload)
     Remote->>Remote: unpackPayload → (DEPOSIT, N+1, "")
     Remote->>OEV: mint(X) [pulls WETH]
     OEV-->>Remote: OETH minted
@@ -203,7 +203,7 @@ sequenceDiagram
     Remote->>Remote: _acceptYieldNonce(N+1)<br/>lastYieldNonce=N+1, nonceProcessed=true
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
-    SuperBase->>Master: receiveMessage(Master, 0, 0, 0, payload)
+    SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
     Master->>Master: _processYieldDepositAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = newBalance<br/>pendingAmount = 0
 ```
 
@@ -288,16 +288,16 @@ sequenceDiagram
     Note over Master,Remote: ─── Phase A: vault.withdraw triggers leg 1 synchronously ───
     Vault->>Master: withdraw(vault, WETH, amount)
     Master->>Master: require(recipient == vault)<br/>_withdrawRequest(WETH, amount)
-    Master->>Master: _getNextYieldNonce → N+1<br/>pendingWithdrawalAmount = amount<br/>require(amount <= remoteStrategyBalance + bridgeAdjustment)
+    Master->>Master: _getNextYieldNonce → N+1<br/>pendingWithdrawalAmount = amount<br/>require(amount <= remoteStrategyBalance)
     Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
-    Note over Master,Adapter: Master.withdraw is non-payable. _sendOpMessage uses<br/>pool (address(this).balance) for CCIP fee.
+    Note over Master,Adapter: Master.withdraw is non-payable. _send (userFunded=false) uses<br/>pool (address(this).balance) for CCIP fee.
     Adapter->>Bridge: ccipSend
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
     Remote->>wOETH: withdraw(amount, Remote, Remote) [unwrap shares to OETH]
     Remote->>OEV: requestWithdrawal(amount)
     OEV-->>Remote: requestId
-    Note over Remote: outstandingRequestId = requestId<br/>queuedAmount = amount<br/>outstandingRequestAmount = amount
+    Note over Remote: outstandingRequestId = requestId<br/>outstandingRequestAmount = amount
 
     Note over Master,Remote: ─── Phase B: Remote sends WITHDRAW_REQUEST_ACK ───
     Remote->>Remote: newBalance = _viewCheckBalance()
@@ -305,7 +305,7 @@ sequenceDiagram
     Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only → uses CCIP under the hood.
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
-    SuperBase->>Master: receiveMessage(Master, 0, 0, 0, payload)
+    SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
     Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = newBalance
     Note over Master: pendingWithdrawalAmount stays set — gates leg-2
 
@@ -321,14 +321,14 @@ sequenceDiagram
     Remote->>Remote: _opportunisticClaim()
     Remote->>OEV: claimWithdrawal(requestId)
     OEV-->>Remote: bridgeAsset (claimed)
-    Note over Remote: outstandingRequestId = 0<br/>queuedAmount = 0<br/>outstandingRequestAmount = claimed
+    Note over Remote: outstandingRequestId = 0<br/>outstandingRequestAmount = claimed
     alt claim succeeded and tokens are in hand
         Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
         SuperEth-->>SuperBase: canonical bridge delivers ETH (receive() wraps to WETH on Base side)
         SuperEth-->>SuperBase: ccipReceive delivers the envelope
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
-        SuperBase->>Master: receiveMessage(Master, WETH, claimed, 0, payload)
+        SuperBase->>Master: receiveMessage(Master, WETH, claimed, payload)
         Master->>Master: _processWithdrawClaimAck success:<br/>_markYieldNonceProcessed(N+2)<br/>pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = newBalance
         Master->>Vault: transfer(WETH, claimed)
         Note over Master: emit Withdrawal(WETH, WETH, claimed)
@@ -336,7 +336,7 @@ sequenceDiagram
         Remote->>SuperEth: sendMessage(payload[WITHDRAW_CLAIM_ACK, N+2, ack(false)])
         SuperEth->>Bridge: ccipSend
         Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
-        SuperBase->>Master: receiveMessage(Master, 0, 0, 0, payload)
+        SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
         Master->>Master: _processWithdrawClaimAck nack:<br/>_markYieldNonceProcessed(N+2)<br/>remoteStrategyBalance = newBalance<br/>pendingWithdrawalAmount stays set
         Note over Master: operator retries triggerClaim later
     end
@@ -348,7 +348,7 @@ sequenceDiagram
 synchronous. `onlyVault`, `nonReentrant`, non-payable. Calls
 `_withdrawRequest` which assigns the next yield nonce, sets
 `pendingWithdrawalAmount`, and ships WITHDRAW_REQUEST. The CCIP fee for the
-message comes from Master's local ETH pool (`_sendOpMessage` uses
+message comes from Master's local ETH pool (`_send (userFunded=false)` uses
 `address(this).balance`); operator must keep it topped up.
 
 `pendingWithdrawalAmount` gates concurrent ops but is NOT part of
@@ -389,13 +389,17 @@ From `README.md`, reproduced here for completeness. Each row is a single
 intermediate state; value lives in exactly one slot per row, and `checkBalance`
 equals the total in every row.
 
-| State | wOETH share value | OToken bal | bridgeAsset bal | queuedAmount | outstandingRequestId | checkBalance |
+| State | wOETH share value | OToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
 |---|---|---|---|---|---|---|
 | Idle | X | 0 | 0 | 0 | 0 | X |
 | Requested (post-leg-1) | X − A | 0 | 0 | A | nonzero | X |
 | Claimed (post-`claimRemoteWithdrawal`) | X − A | 0 | A | 0 | 0 | X |
 | Bridging-out (post-leg-2 send) | X − A | 0 | 0 | 0 | 0 | X − A |
 | Completed | X − A | 0 | 0 | 0 | 0 | X − A |
+
+\* `queued` is no longer a stored slot — it's derived as
+`outstandingRequestId != 0 ? outstandingRequestAmount : 0` (so it's `A` only while the queue
+request is outstanding, and `0` once claimed).
 
 ### Permissionless touchpoints
 
@@ -413,10 +417,11 @@ equals the total in every row.
   full cycle: request ack, claim ack on the Master side; request, claim on the
   Remote side).
 - Token-side fee on the claim-ack leg (if fast-finality used) → strategy sees
-  `amountReceived < ackAmount` and `feePaid > 0`. Master's success-branch
-  `require(amount == ackAmount)` would need to allow for this delta —
-  currently it's strict; an OUSD V3 deploy with fast-finality CCTP would need
-  a tolerance window or always use finalised (fee=0) for the claim leg.
+  `amountReceived < ackAmount`. Master's success-branch already uses
+  `require(amount <= ackAmount)` (a tolerance window), so the shortfall is
+  absorbed as yield drag and refreshed on the next BALANCE_CHECK; a finalised
+  (fee=0) claim leg sees `amount == ackAmount`. (The fee itself is emitted on the
+  adapter's `MessageDelivered` event, not forwarded to the strategy.)
 
 ---
 
@@ -454,7 +459,7 @@ sequenceDiagram
     Note over Remote: DOES NOT call _acceptYieldNonce.<br/>Read-only on Remote's side.
     ReturnA->>Bridge: ccipSend
     Bridge-->>ReturnB: ccipReceive (intendedAmount=0)
-    ReturnB->>Master: receiveMessage(Master, 0, 0, 0, payload)
+    ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
     Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
     alt all guards pass
         Master->>Master: lastBalanceCheckTimestamp = respTimestamp<br/>remoteStrategyBalance = newBalance
@@ -542,15 +547,15 @@ sequenceDiagram
     Alice->>Master: approve(Master, X) [OETHb]
     Alice->>Master: bridgeOTokenToPeer{value: fee}(X, alice_eth, "0x", 0)
     Master->>Master: fee = X * bridgeFeeBps / 10_000<br/>net = X - fee<br/>require(net > 0)
-    Master->>Master: _preflightBridgeOutbound(net):<br/>require(remoteStrategyBalance + bridgeAdjustment >= net)
+    Master->>Master: liquidity gate:<br/>require(net <= availableBridgeLiquidity())<br/>(rsb + bridgeAdjustment - pendingWithdrawalAmount)
     Master->>L2V: burnForStrategy(X) [pulled X OETHb from Alice]
     Note over Master: bridgeAdjustment -= net (NOT -= X)<br/>bridgeIdCounter += 1<br/>bridgeId = keccak256(strategy, counter)
-    Master->>Master: _sendUserMessage:<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
+    Master->>Master: _send(userFunded=true):<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
     Master->>Adapter: sendMessage{value: fee}(payload[BRIDGE_OUT, 0, BridgeUserPayload{<br/>  bridgeId, amount=net, recipient=alice_eth, callData, callGasLimit<br/>}])
     Adapter->>Bridge: ccipSend
     Note over Master: emit BridgeRequested(bridgeId, alice, alice_eth, net, fee, ...)
     Bridge-->>AdapterEth: ccipReceive
-    AdapterEth->>Remote: receiveMessage(Remote, 0, 0, 0, payload)
+    AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Remote->>Remote: unpack → BRIDGE_OUT, decode BridgeUserPayload<br/>require(!consumedBridgeIds[bridgeId])<br/>consumedBridgeIds[bridgeId] = true<br/>bridgeAdjustment -= net
     Remote->>wOETH: withdraw(net, Remote, Remote) [shares→OETH]
     wOETH-->>Remote: OETH (net)
@@ -615,8 +620,8 @@ until settlement runs.
 
 ### User pays via `msg.value`
 
-`_sendUserMessage` requires `msg.value >= fee`; pool is NOT consulted. This is
-the security gate that prevents a bridge_in/out path from being a pool-drain
+`_send(..., userFunded=true)` requires `msg.value >= fee`; pool is NOT consulted.
+This is the security gate that prevents a bridge_in/out path from being a pool-drain
 vector. Excess `msg.value` becomes pool donation (no refund); user can quote
 exactly via `adapter.quoteFee` to avoid this.
 
@@ -716,17 +721,16 @@ baseline construction is what makes both orderings converge.
 | Category | Where paid | When non-zero | How surfaced |
 |---|---|---|---|
 | **Native** | Caller's wallet (`msg.value`) → adapter | CCIP always; Superbridge always (CCIP message leg); CCTP **never** | `quoteFee` returns `requiresExternalPayment = true`, `feeToken = address(0)`; strategy enforces `msg.value >= fee` |
-| **Token-side** | Bridged token (auto-deducted by protocol) | CCTP V2 fast-finality only | `receiveMessage(... amountReceived, feePaid, ...)` on the destination side. Strategy operates on `amountReceived`; delta becomes yield drag. |
+| **Token-side** | Bridged token (auto-deducted by protocol) | CCTP V2 fast-finality only | Strategy operates on `amountReceived` (delta becomes yield drag); the fee is emitted on the adapter's `MessageDelivered` event, not forwarded to `receiveMessage`. |
 
-### Two send paths in the strategy
+### One send path, two funding modes
 
 ```solidity
-// User-initiated bridge_in/out. msg.value MUST cover fee. Pool NOT consulted.
-function _sendUserMessage(msgType, nonce, body) internal { ... }
-
-// Operator yield ops + ack-triggered sends. Pool (address(this).balance) covers fee.
-// msg.value (if any) lands via receive() first, augmenting the pool.
-function _sendOpMessage(msgType, nonce, body) internal { ... }
+// Single helper. `token == address(0)` selects message-only; userFunded selects who pays.
+//   userFunded=true  — user-initiated bridge_in/out; msg.value MUST cover fee, pool NOT consulted.
+//   userFunded=false — operator yield ops + ack-triggered sends; pool (address(this).balance)
+//                      covers fee. msg.value (if any) lands via receive() first, augmenting the pool.
+function _send(token, amount, msgType, nonce, body, userFunded) internal { ... }
 ```
 
 The split prevents pool-drain attacks: an unauthenticated user-facing path

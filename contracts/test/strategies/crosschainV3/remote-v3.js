@@ -7,6 +7,10 @@ const {
   encodeBridgeUserPayload,
 } = require("./_helpers");
 
+// bridgeAsset (MockUSDC) is 6dp; oToken / wOToken are 18dp. The strategy holds value in the
+// OToken (18dp) domain and reports checkBalance in bridgeAsset (6dp) units. SCALE is 6→18.
+const SCALE = ethers.BigNumber.from(10).pow(12);
+
 describe("Unit: RemoteWOTokenStrategy", function () {
   let deployer, governor, alice;
   let bridgeAsset, oToken, woToken, ethVault, remote;
@@ -126,18 +130,20 @@ describe("Unit: RemoteWOTokenStrategy", function () {
   });
 
   describe("checkBalance sums all state-table slots", () => {
-    const FIVE = ethers.utils.parseUnits("5", 6);
+    const FIVE = ethers.utils.parseUnits("5", 6); // 5 bridgeAsset (USDC, 6dp)
+    const FIVE_OT = ethers.utils.parseUnits("5", 18); // 5 OToken (18dp) == 5 USDC of value
 
     it("returns 0 when idle", async () => {
       expect(await remote.checkBalance(bridgeAsset.address)).to.equal(0);
     });
 
     it("includes wOToken shares (via previewRedeem)", async () => {
+      // mint(FIVE) USDC produces FIVE_OT OToken (scaled); wrap all of it.
       await bridgeAsset.mintTo(deployer.address, FIVE);
       await bridgeAsset.approve(ethVault.address, FIVE);
       await ethVault.mint(FIVE);
-      await oToken.approve(woToken.address, FIVE);
-      await woToken.deposit(FIVE, remote.address);
+      await oToken.approve(woToken.address, FIVE_OT);
+      await woToken.deposit(FIVE_OT, remote.address);
       expect(await remote.checkBalance(bridgeAsset.address)).to.equal(FIVE);
     });
 
@@ -145,7 +151,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       await bridgeAsset.mintTo(deployer.address, FIVE);
       await bridgeAsset.approve(ethVault.address, FIVE);
       await ethVault.mint(FIVE);
-      await oToken.transfer(remote.address, FIVE);
+      await oToken.transfer(remote.address, FIVE_OT);
       expect(await remote.checkBalance(bridgeAsset.address)).to.equal(FIVE);
     });
 
@@ -173,8 +179,10 @@ describe("Unit: RemoteWOTokenStrategy", function () {
         envelope
       );
 
-      // wOToken shares minted match the deposit (1:1 in mock).
-      expect(await woToken.balanceOf(remote.address)).to.equal(ONE_K);
+      // ONE_K USDC mints ONE_K*SCALE OToken (18dp), all wrapped to wOToken (1:1 in mock).
+      expect(await woToken.balanceOf(remote.address)).to.equal(
+        ONE_K.mul(SCALE)
+      );
       expect(await oToken.balanceOf(remote.address)).to.equal(0);
       expect(await bridgeAsset.balanceOf(remote.address)).to.equal(0);
 

@@ -167,23 +167,14 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
      *      only to tests — production bridge delivery is always a separate tx).
      */
     function receiveMessage(
-        address sender,
-        address token,
+        address, // sender — redundant with onlyInboundAdapter + CREATE3 peer parity
+        address, // token — inbound paths that need the delivered token read balanceOf directly
         uint256 amountReceived,
-        uint256 feePaid,
         bytes calldata payload
     ) external override onlyInboundAdapter {
         (uint32 msgType, uint64 nonce, bytes memory body) = CrossChainV3Helper
             .unpackPayload(payload);
-        _handleBridgeMessage(
-            sender,
-            token,
-            amountReceived,
-            feePaid,
-            msgType,
-            nonce,
-            body
-        );
+        _handleBridgeMessage(amountReceived, msgType, nonce, body);
     }
 
     /**
@@ -192,10 +183,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
      *      `abi.encode(newBalance)` for DEPOSIT_ACK).
      */
     function _handleBridgeMessage(
-        address sender,
-        address token,
         uint256 amountReceived,
-        uint256 feePaid,
         uint32 msgType,
         uint64 nonce,
         bytes memory body

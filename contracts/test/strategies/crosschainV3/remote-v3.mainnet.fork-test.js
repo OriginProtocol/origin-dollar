@@ -78,7 +78,7 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
   it("claimRemoteWithdrawal is idempotent when nothing is outstanding", async () => {
     await expect(remote.claimRemoteWithdrawal()).to.not.be.reverted;
     expect(await remote.outstandingRequestId()).to.equal(0);
-    expect(await remote.queuedAmount()).to.equal(0);
+    expect(await remote.outstandingRequestAmount()).to.equal(0);
   });
 
   it("checkBalance is zero on a freshly deployed Remote", async () => {
@@ -123,7 +123,6 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
           remote.address,
           weth.address,
           DEPOSIT_AMOUNT,
-          0,
           depositPayload
         );
 

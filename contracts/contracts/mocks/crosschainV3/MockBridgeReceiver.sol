@@ -12,7 +12,6 @@ contract MockBridgeReceiver is IBridgeReceiver {
     address public lastSender;
     address public lastToken;
     uint256 public lastAmount;
-    uint256 public lastFeePaid;
     bytes public lastPayload;
     uint256 public callCount;
 
@@ -20,13 +19,11 @@ contract MockBridgeReceiver is IBridgeReceiver {
         address sender,
         address token,
         uint256 amountReceived,
-        uint256 feePaid,
         bytes calldata payload
     ) external override {
         lastSender = sender;
         lastToken = token;
         lastAmount = amountReceived;
-        lastFeePaid = feePaid;
         lastPayload = payload;
         callCount += 1;
     }

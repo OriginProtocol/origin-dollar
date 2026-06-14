@@ -214,16 +214,18 @@ describe("Unit: CCTPAdapter relay", function () {
         body,
       });
 
-      await adapter.connect(operator).relay(message, "0x");
+      // Pure-message path delivers with token = address(0) and feePaid = 0 (feePaid lives
+      // on the event, not forwarded to the strategy).
+      await expect(adapter.connect(operator).relay(message, "0x"))
+        .to.emit(adapter, "MessageDelivered")
+        .withArgs(strategy.address, ethers.constants.AddressZero, 0, 0);
 
       // The mock recorder captured the receiveMessage callback. Pure-message path
-      // delivers with token = address(0) (no token leg), regardless of the configured
-      // USDC.
+      // delivers with token = address(0) (no token leg), regardless of the configured USDC.
       expect(await strategy.callCount()).to.equal(1);
       expect(await strategy.lastSender()).to.equal(strategy.address);
       expect(await strategy.lastToken()).to.equal(ethers.constants.AddressZero);
       expect(await strategy.lastAmount()).to.equal(0);
-      expect(await strategy.lastFeePaid()).to.equal(0);
       expect(await strategy.lastPayload()).to.equal(payload);
     });
 

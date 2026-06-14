@@ -276,14 +276,14 @@ adapter. Not a code change — operational only.
 
 ### 3.8 Fee channel split — user-paid vs operator-pool, no refunds
 
-**Decision.** Two distinct fee-funding paths:
-- **User-paid** (`_sendUserMessage` / `_sendUserTokensAndMessage`): the
-  caller supplies `msg.value` ≥ `fee`. Used by `bridgeOTokenToPeer`. Any
-  excess `msg.value` stays in the adapter's balance — no refund.
-- **Op-pool** (`_sendOpMessage` / `_sendOpTokensAndMessage`): the fee comes
-  from `address(this).balance`. Used by the yield channel (deposit /
-  withdraw / balance check / settle). The operator pre-funds the pool;
-  any inbound refunds also accumulate there.
+**Decision.** A single `_send(token, amount, msgType, nonce, body, userFunded)`
+helper with two funding modes selected by `userFunded`:
+- **User-paid** (`userFunded = true`): the caller supplies `msg.value` ≥ `fee`.
+  Used by `bridgeOTokenToPeer`. Any excess `msg.value` stays in the adapter's
+  balance — no refund.
+- **Op-pool** (`userFunded = false`): the fee comes from `address(this).balance`.
+  Used by the yield channel (deposit / withdraw / balance check / settle). The
+  operator pre-funds the pool; any inbound refunds also accumulate there.
 
 **Why split.** User-driven bridge ops should pay their own way (no operator
 subsidy of arbitrary user bridges). Yield ops are operator-driven and
@@ -326,9 +326,58 @@ int256 total = int256(...) + bridgeAdjustment;
 return total > 0 ? uint256(total) : 0;
 ```
 
-The same principle applies to `_viewCheckBalance` on Remote and the
-`yieldOnly = _viewCheckBalance - bridgeAdjustment` calculation:
-balance-view functions must be totally defined.
+Remote's external `checkBalance` is likewise total: it scales the
+OToken-denominated `_viewCheckBalance` down to bridgeAsset units (see 3.11) and
+never reverts. The internal `_yieldOnlyBaseline` (`_viewCheckBalance -
+bridgeAdjustment`, used only for the R→M yield reports — never for
+`checkBalance`) DELIBERATELY reverts if it would go negative: a loud halt is
+safer than shipping a wrong value on the balance-bearing path, and a negative
+baseline shouldn't arise under normal ops (each BRIDGE_IN/OUT moves
+`_viewCheckBalance` and `bridgeAdjustment` by the same amount). Governor recovers
+via an implementation upgrade if a slashing / negative rebase ever trips it.
+
+---
+
+### 3.11 Decimal domains — OToken (18dp) internal, bridgeAsset at the vault edge
+
+**Decision.** The strategy keeps two unit domains and scales only at the seams:
+- **OToken (18dp):** `remoteStrategyBalance`, `bridgeAdjustment`, the whole OToken
+  bridge channel, and Remote's `_viewCheckBalance` / `_yieldOnlyBaseline`. Remote
+  reports its yield baseline to Master in **18dp**.
+- **bridgeAsset decimals (6dp USDC / 18dp WETH):** `pendingAmount`,
+  `pendingWithdrawalAmount`, `outstandingRequestAmount`, the locally-held balance,
+  every physical bridge transfer, and the `checkBalance` return value.
+
+`AbstractWOTokenStrategy._toOToken` / `_toAsset` (thin `StableMath.scaleBy`
+wrappers over the cached `bridgeAssetDecimals` / `oTokenDecimals` immutables) do
+the conversion. Adapters never scale — they move the physical token at native
+decimals. For the matched-decimal OETHb deployment (WETH/OETH 18/18) every scale
+is the identity, so the deployed config is unaffected.
+
+**Why.** `bridgeAdjustment` is intrinsically an OToken (18dp) quantity; storing it
+(or `remoteStrategyBalance`) at 6dp would truncate ~12 digits per bridge op and
+drift. Keeping the OToken block at 18dp and scaling down once at the `checkBalance`
+read preserves full precision; the vault interface still receives bridgeAsset
+decimals like every other strategy. Mirrors `CurveAMOStrategy`.
+
+---
+
+### 3.12 Governor is fully trusted across this subsystem
+
+**Decision / note.** The governor is a fully-trusted role here, on par with the
+proxy-upgrade power it already holds:
+- `AbstractAdapter.transferToken` can sweep ANY asset off an adapter, including
+  bridge tokens that rest there transiently or across blocks (e.g. Superbridge
+  split-delivery WETH stranded until `processStoredMessage`). It is intentionally
+  NOT guarded by `!supportsAsset` (unlike the strategy base) precisely so it can
+  recover in-flight / stranded bridge assets.
+- `AbstractCrossChainV3Strategy.transferNative` sweeps the native fee pool.
+- Governor sets adapters, operator, lane configs, and upgrades the proxies.
+
+These are expected centralized-trust surfaces, strictly weaker than the upgrade
+power, and the only bounded levers (`bridgeFeeBps <= 1000` with `net > 0`; the
+per-tx `maxTransferAmount` cap) constrain the operator/economic paths, not the
+governor.
 
 ---
 
