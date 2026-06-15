@@ -296,9 +296,14 @@ async function stakeValidator({
       consol ? "ConsolidationController" : "strategy"
     }`
   );
-  const tx = await contract
-    .connect(signer)
-    .stakeEth({ pubkey, signature: sig, depositDataRoot }, amountGwei);
+  const validatorStakeData = { pubkey, signature: sig, depositDataRoot };
+  const connectedContract = contract.connect(signer);
+  const tx = consol
+    ? await connectedContract["stakeEth((bytes,bytes,bytes32),uint64)"](
+        validatorStakeData,
+        amountGwei
+      )
+    : await connectedContract.stakeEth(validatorStakeData, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
 
   const event = receipt.events.find((event) => event.event === "ETHStaked");
