@@ -192,14 +192,6 @@
       "type": "t_array(t_int256)98_storage",
       "contract": "InitializableAbstractStrategy",
       "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
-    },
-    {
-      "label": "__gap",
-      "offset": 0,
-      "slot": "207",
-      "type": "t_array(t_uint256)50_storage",
-      "contract": "CompoundingStakingSSVStrategy",
-      "src": "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:15"
     }
   ],
   "types": {
