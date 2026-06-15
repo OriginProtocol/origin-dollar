@@ -260,11 +260,11 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         require(amount > 0, "Adapter: zero amount");
         // Per-tx amount cap. `0` disables the check (canonical bridges, unconfigured).
         // Reject cleanly here rather than letting the bridge router revert deep inside
-        // its own validation.
-        require(
-            _maxTransferAmount == 0 || amount <= _maxTransferAmount,
-            "Adapter: amount above max"
-        );
+        // its own validation. Read the virtual getter (not the raw `_maxTransferAmount`
+        // field) so a concrete adapter's hard-cap override (e.g. CCTP's 10M) is honoured
+        // here even when `_maxTransferAmount` is left at 0.
+        uint256 cap = maxTransferAmount();
+        require(cap == 0 || amount <= cap, "Adapter: amount above max");
         ChainConfig memory cfg = laneConfig[msg.sender];
         require(!cfg.paused, "Adapter: lane paused");
         bytes memory envelope = _wrap(msg.sender, amount, payload);
@@ -403,6 +403,9 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         }
         // feePaid is NOT forwarded to the strategy (no strategy reads it); off-chain
         // consumers read it from the MessageDelivered event below.
+        // The call target and the `sender` argument are the same `envelopeSender`: the
+        // target == sender under CREATE3 parity (see @dev), and the strategy expects its
+        // own peer address as `sender`.
         IBridgeReceiver(envelopeSender).receiveMessage(
             envelopeSender,
             token,

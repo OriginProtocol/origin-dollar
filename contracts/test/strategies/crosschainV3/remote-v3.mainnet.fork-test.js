@@ -133,9 +133,11 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
       // No bare OETH left on Remote.
       expect(await oeth.balanceOf(remote.address)).to.equal(0);
 
-      // checkBalance reflects the wrapped value (within 1 wei rounding).
+      // checkBalance reflects the wrapped value. Allow a few wei for the OETH-vault mint +
+      // ERC4626 deposit/previewRedeem double-rounding, which shifts slightly with the live
+      // wOETH share price on a fork (so the margin can't be a fixed 1 wei).
       const total = await remote.checkBalance(weth.address);
-      expect(total).to.be.closeTo(DEPOSIT_AMOUNT, 1);
+      expect(total).to.be.closeTo(DEPOSIT_AMOUNT, 10);
 
       // The outbound MockBridgeAdapter recorded the DEPOSIT_ACK envelope.
       const sent = await mockOut.lastMessageSent();

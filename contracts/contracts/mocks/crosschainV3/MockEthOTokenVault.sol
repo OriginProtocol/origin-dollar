@@ -85,6 +85,8 @@ contract MockEthOTokenVault {
     }
 
     /// @param _oTokenAmount OToken to burn (18dp). Returns the asset-scaled bridgeAsset.
+    /// @dev TEST-ONLY: not exercised by the current suite; retained as a production-surface
+    ///      mirror of the OToken vault's instant-redeem path Remote may use.
     function redeem(uint256 _oTokenAmount, uint256 _minAsset) external {
         uint256 assetAmount = _oTokenAmount.scaleBy(
             assetDecimals,

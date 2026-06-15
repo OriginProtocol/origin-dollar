@@ -351,6 +351,10 @@ abstract contract AbstractWOTokenStrategy is
             p.callGasLimit <= MAX_BRIDGE_CALL_GAS,
             "WOT: callGasLimit too high"
         );
+        // Defense-in-depth: the trusted CREATE3 peer always sets a non-zero recipient
+        // (outbound defaults it to msg.sender), but reject a zero recipient explicitly so a
+        // malformed payload can't consume the bridgeId and then revert in delivery.
+        require(p.recipient != address(0), "WOT: zero recipient");
 
         // CEI: mark consumed, update accounting, deliver tokens, optional call.
         consumedBridgeIds[p.bridgeId] = true;

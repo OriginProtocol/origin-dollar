@@ -179,6 +179,12 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         // Burn messages have the source TokenMessenger as their transport sender. Pure
         // messages have this adapter as both transport sender and recipient (CREATE3
         // parity).
+        // INVARIANT: this branch compares the SOURCE-chain TokenMessenger (transportSender)
+        // against THIS chain's `tokenMessenger` immutable. It is only correct because CCTP V2
+        // deploys TokenMessenger at the same address on every chain. If a future supported
+        // chain breaks that parity, a legitimate burn would mis-route into the pure-message
+        // branch and revert at the `transportRecipient == address(this)` check — re-validate
+        // before integrating such a chain.
         if (transportSender == address(tokenMessenger)) {
             _relayBurn(sourceDomain, body, message, attestation);
         } else {
@@ -332,10 +338,11 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
     ) internal override {
         require(token == usdcToken, "CCTP: token must be usdc");
         require(minFinalityThreshold > 0, "CCTP: threshold not set");
-        // Bounds: dust floor (governor-set) + Circle's hard per-burn cap. AbstractAdapter
-        // already enforces `maxTransferAmount` if set; we ALSO enforce the protocol-level
-        // constant so an under-configured maxTransferAmount can't accidentally allow a
-        // larger burn than CCTP itself accepts.
+        // Bounds: dust floor (governor-set) + Circle's hard per-burn cap. The base
+        // `sendMessageAndTokens` now enforces the cap via `maxTransferAmount()`, whose CCTP
+        // override already surfaces MAX_TRANSFER_AMOUNT — so an over-cap burn is rejected at
+        // the base layer first and the cap require below is belt-and-suspenders. The min
+        // floor is NOT checked at the base layer, so it stays load-bearing here.
         require(amount >= _minTransferAmount, "CCTP: amount below min");
         require(amount <= MAX_TRANSFER_AMOUNT, "CCTP: amount above CCTP cap");
 

@@ -37,7 +37,6 @@ contract MockCCTPRelayTransmitter is ICCTPMessageTransmitter {
     uint256 private constant MESSAGE_BODY_INDEX = 148;
 
     // Burn-body offsets (must match CCTPMessageHelper).
-    uint256 private constant BURN_BODY_BURN_TOKEN_INDEX = 4;
     uint256 private constant BURN_BODY_MINT_RECIPIENT_INDEX = 36;
     uint256 private constant BURN_BODY_AMOUNT_INDEX = 68;
     uint256 private constant BURN_BODY_FEE_EXECUTED_INDEX = 164;

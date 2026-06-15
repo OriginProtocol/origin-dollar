@@ -29,7 +29,6 @@ contract MockOTokenVault {
     address public strategistAddr;
 
     event StrategyWhitelisted(address strategy);
-    event StrategyDelisted(address strategy);
 
     function setOToken(MockMintableBurnableOToken _oToken) external {
         oToken = _oToken;
@@ -42,11 +41,6 @@ contract MockOTokenVault {
     function whitelistStrategy(address _strategy) external {
         isMintWhitelistedStrategy[_strategy] = true;
         emit StrategyWhitelisted(_strategy);
-    }
-
-    function delistStrategy(address _strategy) external {
-        isMintWhitelistedStrategy[_strategy] = false;
-        emit StrategyDelisted(_strategy);
     }
 
     function mintForStrategy(uint256 _amount) external {

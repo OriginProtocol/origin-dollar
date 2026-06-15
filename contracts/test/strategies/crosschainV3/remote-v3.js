@@ -395,4 +395,47 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       expect(await oToken.balanceOf(target.address)).to.equal(AMT);
     });
   });
+
+  describe("transferToken custody protection (round-4 #17)", () => {
+    it("rejects sweeping woToken / oToken / bridgeAsset", async () => {
+      await expect(
+        remote.connect(governor).transferToken(woToken.address, 1)
+      ).to.be.revertedWith("Cannot transfer custody asset");
+      await expect(
+        remote.connect(governor).transferToken(oToken.address, 1)
+      ).to.be.revertedWith("Cannot transfer custody asset");
+      await expect(
+        remote.connect(governor).transferToken(bridgeAsset.address, 1)
+      ).to.be.revertedWith("Cannot transfer custody asset");
+    });
+
+    it("still rescues an unrelated token to governor, governor-only", async () => {
+      const ERC20Factory = await ethers.getContractFactory("MockUSDC");
+      const stray = await ERC20Factory.deploy();
+      const amt = ethers.utils.parseUnits("10", 6);
+      await stray.mintTo(remote.address, amt);
+
+      await expect(
+        remote.connect(alice).transferToken(stray.address, amt)
+      ).to.be.revertedWith("Caller is not the Governor");
+
+      await remote.connect(governor).transferToken(stray.address, amt);
+      expect(await stray.balanceOf(governor.address)).to.equal(amt);
+      expect(await stray.balanceOf(remote.address)).to.equal(0);
+    });
+  });
+
+  describe("inbound bridge zero-recipient guard (round-4 #2)", () => {
+    it("reverts a BRIDGE_OUT whose payload recipient is address(0)", async () => {
+      const payload = encodeBridgeUserPayload({
+        bridgeId: ethers.utils.id("zero-recipient"),
+        amount: ethers.utils.parseEther("1"),
+        recipient: ethers.constants.AddressZero,
+      });
+      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
+      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
+        "WOT: zero recipient"
+      );
+    });
+  });
 });

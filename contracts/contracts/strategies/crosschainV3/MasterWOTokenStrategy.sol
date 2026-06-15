@@ -322,6 +322,15 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             pendingDepositAmount == 0 && pendingWithdrawalAmount == 0,
             "Master: deposit or withdrawal pending"
         );
+        // Best-effort min floor (mirror of the withdraw-side guard in `_withdrawRequest` /
+        // `withdrawAll`): a sub-min amount would revert deep inside the adapter on `_send`.
+        // No-op instead of reverting — the asset is already on the strategy (the vault
+        // transfers it before calling `deposit`) and stays counted in `checkBalance`, so it
+        // auto-deposits once enough accumulates. A revert here would DoS the mint ->
+        // `_allocate` -> `deposit` path. Covers both `deposit` and `depositAll`.
+        if (_amount < IBridgeAdapter(outboundAdapter).minTransferAmount()) {
+            return;
+        }
 
         uint64 nonce = _getNextYieldNonce();
         pendingDepositAmount = _amount;

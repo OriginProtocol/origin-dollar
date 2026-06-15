@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import { Governable } from "../../governance/Governable.sol";
 import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
 import { IBridgeReceiver } from "../../interfaces/crosschainV3/IBridgeReceiver.sol";
@@ -28,8 +25,6 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *         `InitializableAbstractStrategy` separately.
  */
 abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
-    using SafeERC20 for IERC20;
-
     // --- Events -------------------------------------------------------------
 
     event OutboundAdapterUpdated(address oldAdapter, address newAdapter);
@@ -225,6 +220,10 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
             address feeToken,
             bool requiresExternalPayment
         ) = IBridgeAdapter(adapter).quoteFee(token, amount, payload);
+        // Native to forward: the quoted `fee` when the bridge needs external payment, else 0
+        // (CCTP-style auto-deduct path). `{ value: 0 }` is a no-op, so a single dispatch
+        // serves both fee modes.
+        uint256 payValue = 0;
         if (requiresExternalPayment) {
             // Only native fee supported today. ERC20 fee tokens (e.g., LINK-mode CCIP)
             // would need explicit allowance handling; not implemented here.
@@ -233,30 +232,20 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
                 (userFunded ? msg.value : address(this).balance) >= fee,
                 userFunded ? "V3: insufficient user fee" : "V3: pool unfunded"
             );
-            // `adapter` is the governor-set outbound adapter, not arbitrary user input.
-            // slither-disable-start arbitrary-send-eth
-            if (token == address(0)) {
-                IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
-            } else {
-                IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
-                    token,
-                    amount,
-                    payload
-                );
-            }
-            // slither-disable-end arbitrary-send-eth
-        } else {
-            // CCTP-style: protocol auto-deducts from the bridged amount; no caller action.
-            if (token == address(0)) {
-                IBridgeAdapter(adapter).sendMessage(payload);
-            } else {
-                IBridgeAdapter(adapter).sendMessageAndTokens(
-                    token,
-                    amount,
-                    payload
-                );
-            }
+            payValue = fee;
         }
+        // `adapter` is the governor-set outbound adapter, not arbitrary user input.
+        // slither-disable-start arbitrary-send-eth
+        if (token == address(0)) {
+            IBridgeAdapter(adapter).sendMessage{ value: payValue }(payload);
+        } else {
+            IBridgeAdapter(adapter).sendMessageAndTokens{ value: payValue }(
+                token,
+                amount,
+                payload
+            );
+        }
+        // slither-disable-end arbitrary-send-eth
     }
 
     /// @notice Sweep native ETH out of the strategy to governor. Used to drain the fee

@@ -141,6 +141,11 @@ contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
             );
 
         // Single token amount expected at most; V3 doesn't multi-bundle.
+        // NOTE: the delivered token is forwarded as-is on CCIP-router trust; it is NOT pinned
+        // to an expected bridge asset here (unlike CCTPAdapter's `usdcToken` and
+        // SuperbridgeAdapter's `weth`). The destination strategy ignores the token argument
+        // and accounts against its own configured `bridgeAsset` balance, so a correctly
+        // configured lane is the load-bearing assumption for token identity.
         address token = address(0);
         uint256 amount = 0;
         if (message.destTokenAmounts.length > 0) {

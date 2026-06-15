@@ -164,6 +164,25 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         revert("Remote: use bridge");
     }
 
+    /// @inheritdoc InitializableAbstractStrategy
+    /// @dev Hardened recovery sweep. Remote custodies the L2 vault's backing as `woToken`
+    ///      shares (and transiently `oToken`), so block sweeping those alongside the supported
+    ///      `bridgeAsset`. Otherwise a `transferToken(woToken, …)` would silently lower
+    ///      `_viewCheckBalance` -> `remoteStrategyBalance` and rebase L2 holders down. Mirrors
+    ///      `BridgedWOETHStrategy.transferToken`. Genuinely-stuck unrelated tokens stay
+    ///      recoverable; true custody recovery goes through the governor upgrade path.
+    function transferToken(address _asset, uint256 _amount)
+        public
+        override
+        onlyGovernor
+    {
+        require(
+            _asset != bridgeAsset && _asset != woToken && _asset != oToken,
+            "Cannot transfer custody asset"
+        );
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
     // --- Inbound dispatch --------------------------------------------------
 
     function _handleBridgeMessage(
@@ -406,9 +425,12 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             claimed = _claimed;
             // slither-disable-next-line reentrancy-no-eth
             outstandingRequestId = 0;
-            // Refine `outstandingRequestAmount` to what the vault actually paid out so
-            // leg-2 ships the precise claimed amount (accounts for any rounding gain/loss
-            // between request time and claim time).
+            // Refine `outstandingRequestAmount` to the vault's actually-returned asset
+            // amount so leg-2 ships exactly what the vault paid out. This is a defensive
+            // read-back of the authoritative vault value, NOT a rounding correction: the
+            // request->claim round-trip is exact (claimed == requested) because the vault
+            // stores the queued 18dp amount and returns scaleBy(amount, assetDecimals, 18),
+            // which is the identity when bridgeAsset and the vault's asset share decimals.
             outstandingRequestAmount = claimed;
             emit RemoteWithdrawalClaimed(vaultRequestId, claimed);
         } catch {

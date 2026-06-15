@@ -255,13 +255,15 @@ describe("Unit: Adapter transfer caps", function () {
         adapter.connect(sender).sendMessageAndTokens(usdc.address, 999, "0x")
       ).to.be.revertedWith("CCTP: amount below min");
 
-      // Above CCTP cap (10M + 1 wei)
+      // Above the effective cap (10M + 1 wei). After round-4 #18 the base-layer check
+      // (via maxTransferAmount(), whose CCTP override surfaces the 10M constant) catches
+      // this first, so the revert now comes from AbstractAdapter, not CCTP's own require.
       const tooBig = TEN_MILLION.add(1);
       await usdc.mintTo(strategy.address, tooBig);
       await usdc.connect(sender).approve(adapter.address, tooBig);
       await expect(
         adapter.connect(sender).sendMessageAndTokens(usdc.address, tooBig, "0x")
-      ).to.be.revertedWith("CCTP: amount above CCTP cap");
+      ).to.be.revertedWith("Adapter: amount above max");
 
       // We don't assert the in-bounds happy path here — the TokenMessenger mock used by
       // these tests (MockCCTPRelayTransmitter) is wired for inbound-relay testing and
@@ -516,6 +518,50 @@ describe("Unit: Adapter transfer caps", function () {
       const [amount] = ethers.utils.defaultAbiCoder.decode(["uint256"], body);
       expect(amount).to.equal(ONE_K.mul(5));
       expect(await master.pendingWithdrawalAmount()).to.equal(ONE_K.mul(5));
+    });
+
+    // round-4 #1: deposit side mirrors the withdraw-side min floor as a best-effort no-op.
+    it("depositAll no-ops when the swept balance is below the outbound min floor (#1)", async () => {
+      await bridgeAsset.mintTo(master.address, ONE_K.div(2)); // 500
+      await outbound.setMinTransferAmountOverride(ONE_K); // floor 1000
+
+      await mockL2Vault.callDepositAll(master.address);
+
+      // Nothing bridged; funds stay local and are still counted in checkBalance.
+      expect(await outbound.lastAmountSent()).to.equal(0);
+      expect(await master.pendingDepositAmount()).to.equal(0);
+      expect(await bridgeAsset.balanceOf(master.address)).to.equal(
+        ONE_K.div(2)
+      );
+      expect(await master.checkBalance(bridgeAsset.address)).to.equal(
+        ONE_K.div(2)
+      );
+    });
+
+    it("deposit no-ops on a sub-min amount, leaving funds local (#1)", async () => {
+      await bridgeAsset.mintTo(master.address, ONE_K.div(2)); // 500
+      await outbound.setMinTransferAmountOverride(ONE_K); // floor 1000
+
+      await mockL2Vault.callDeposit(
+        master.address,
+        bridgeAsset.address,
+        ONE_K.div(2)
+      );
+
+      expect(await master.pendingDepositAmount()).to.equal(0);
+      expect(await bridgeAsset.balanceOf(master.address)).to.equal(
+        ONE_K.div(2)
+      );
+    });
+
+    it("deposit at the min floor still bridges (#1)", async () => {
+      await bridgeAsset.mintTo(master.address, ONE_K); // 1000 == floor
+      await outbound.setMinTransferAmountOverride(ONE_K);
+
+      await mockL2Vault.callDeposit(master.address, bridgeAsset.address, ONE_K);
+
+      expect(await outbound.lastAmountSent()).to.equal(ONE_K);
+      expect(await master.pendingDepositAmount()).to.equal(ONE_K);
     });
   });
 });
