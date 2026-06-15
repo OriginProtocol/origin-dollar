@@ -205,8 +205,9 @@ async function stakeValidator({
   uuid,
   consol = false,
   ssv = false,
+  signer: taskSigner,
 }) {
-  const signer = await getSigner();
+  const signer = taskSigner || (await getSigner());
 
   if (uuid) {
     const {
@@ -941,8 +942,13 @@ async function setRegistrator({ account, type, ssv = false }) {
   await logTxDetails(tx, "setRegistrator");
 }
 
-async function removeValidator({ pubkey, operatorids, consol = false }) {
-  const signer = await getSigner();
+async function removeValidator({
+  pubkey,
+  operatorids,
+  consol = false,
+  signer: taskSigner,
+}) {
+  const signer = taskSigner || (await getSigner());
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = splitOperatorIds(operatorids);

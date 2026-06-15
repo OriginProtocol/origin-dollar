@@ -39,11 +39,26 @@ function normalizeDefault(v) {
   return { hasDefault: true, defaultValue: null };
 }
 
+const TALOS_PARAM_ALLOWLISTS = {
+  removeValidator: new Set(["consol", "operatorids", "pubkey"]),
+  stakeValidator: new Set([
+    "amount",
+    "consol",
+    "depositMessageRoot",
+    "pubkey",
+    "sig",
+  ]),
+};
+
 const catalog = {};
 for (const [taskName, def] of Object.entries(hre.tasks)) {
   const params = [];
+  const allowlist = TALOS_PARAM_ALLOWLISTS[taskName];
   const pd = def.paramDefinitions || {};
   for (const p of Object.values(pd)) {
+    if (allowlist && !allowlist.has(p.name)) {
+      continue;
+    }
     const { hasDefault, defaultValue } = normalizeDefault(p.defaultValue);
     params.push({
       paramName: p.name,

@@ -1,5 +1,5 @@
 import type { ethers } from "ethers";
-import { subtask, task } from "hardhat/config";
+import { task } from "hardhat/config";
 import type { ConfigurableTaskDefinition } from "hardhat/types";
 
 import { getSigner as defaultGetSigner } from "../../utils/signers";
@@ -96,13 +96,25 @@ export function createActionHandler(
 export function action(config: ActionConfig) {
   const handler = createActionHandler(config);
 
-  const definition = subtask(config.name, config.description);
+  const definition = task(config.name, config.description);
+  const skipDuplicateParams = (
+    method: "addParam" | "addOptionalParam" | "addFlag"
+  ) => {
+    const original = definition[method].bind(definition);
+    (definition as any)[method] = (name: string, ...args: unknown[]) => {
+      if (definition.paramDefinitions?.[name] !== undefined) {
+        return definition;
+      }
+      return original(name, ...args);
+    };
+  };
+
+  skipDuplicateParams("addParam");
+  skipDuplicateParams("addOptionalParam");
+  skipDuplicateParams("addFlag");
+
   if (config.params) {
     config.params(definition);
   }
   definition.setAction(handler);
-
-  task(config.name).setAction(async (_, __, runSuper) => {
-    return runSuper();
-  });
 }
