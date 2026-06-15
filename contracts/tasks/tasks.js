@@ -2793,3 +2793,7 @@ subtask(
 task("consolFee").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+// V3 testnet operator tasks (Sepolia ⇄ Base Sepolia)
+require("./testnet-v3");
+require("./testnet-v3-ousd");

@@ -27,6 +27,8 @@ addresses.holesky = {};
 addresses.hoodi = {};
 addresses.plume = {};
 addresses.hyperevm = {};
+addresses.sepolia = {};
+addresses.baseSepolia = {};
 addresses.unitTests = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
@@ -753,5 +755,54 @@ addresses.hyperevm.CrossChainRemoteStrategy =
   "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
 addresses.hyperevm.OZRelayerAddress =
   "0xC79Ad862c66E140D1D1E3fE65D33f98d7b4a0517";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Testnets: Sepolia (Ethereum L1 testnet) and Base Sepolia (Base rollup testnet).
+// Used as the staging pair for the OETHb cross-chain V3 topology: Master lives
+// on Base Sepolia, Remote on Sepolia. CCIP + Superbridge (OP Stack canonical
+// L1StandardBridge for Base rollup) only — CCTP testnet wiring is a follow-up.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Sepolia (Ethereum L1 testnet) — Remote side for OETHb V3
+addresses.sepolia.WETH = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
+// Chainlink CCIP V1.6 router on Sepolia
+addresses.sepolia.CCIPRouter = "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59";
+// CCIP chain selector for Sepolia (source/dest identifier in CCIP messages)
+addresses.sepolia.CCIPChainSelector = "16015286601757825753";
+// OP Stack L1StandardBridge for the Base Sepolia rollup (lives on Sepolia)
+addresses.sepolia.BaseSepoliaL1StandardBridge =
+  "0xfd0Bf71F60660E2f608ed56e1659C450eB113120";
+// Chainlink CCIP-BnM testnet token (burn-and-mint). Whitelisted on every CCIP
+// testnet lane. Public drip() faucet returns 1e18 per call (rate-limited).
+addresses.sepolia.CCIPBnM = "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05";
+// Circle's official testnet USDC on Sepolia. Used by CCTPAdapter for OUSD V3.
+// Users get balances from Circle's faucet at https://faucet.circle.com
+addresses.sepolia.USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+// CCTP V2 domain id for Sepolia (same as Ethereum mainnet domain).
+addresses.sepolia.CCTPDomainId = 0;
+// CCTP V2 contracts on TESTNETS use different addresses than mainnet
+// (top-level `addresses.CCTPTokenMessengerV2` is mainnet-only).
+addresses.sepolia.CCTPTokenMessengerV2 =
+  "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA";
+addresses.sepolia.CCTPMessageTransmitterV2 =
+  "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275";
+
+// Base Sepolia (Base rollup testnet) — Master side for OETHb V3
+addresses.baseSepolia.WETH = "0x4200000000000000000000000000000000000006";
+// Chainlink CCIP V1.6 router on Base Sepolia
+addresses.baseSepolia.CCIPRouter = "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93";
+// CCIP chain selector for Base Sepolia
+addresses.baseSepolia.CCIPChainSelector = "10344971235874465080";
+// Chainlink CCIP-BnM testnet token on Base Sepolia
+addresses.baseSepolia.CCIPBnM = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e";
+// Circle's official testnet USDC on Base Sepolia.
+addresses.baseSepolia.USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+// CCTP V2 domain id for Base Sepolia (same as Base mainnet domain).
+addresses.baseSepolia.CCTPDomainId = 6;
+// CCTP V2 testnet contracts (same address on every CCTP testnet chain).
+addresses.baseSepolia.CCTPTokenMessengerV2 =
+  "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA";
+addresses.baseSepolia.CCTPMessageTransmitterV2 =
+  "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275";
 
 module.exports = addresses;
