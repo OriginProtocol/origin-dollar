@@ -306,10 +306,16 @@ async function stakeValidator({
     : await connectedContract.stakeEth(validatorStakeData, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
 
-  const event = receipt.events.find((event) => event.event === "ETHStaked");
-  if (!event) {
+  const eventTopic = depositStrategy.interface.getEventTopic("ETHStaked");
+  const rawLog = receipt.logs.find(
+    (l) =>
+      l.address.toLowerCase() === depositStrategy.address.toLowerCase() &&
+      l.topics[0] === eventTopic
+  );
+  if (!rawLog) {
     throw new Error("ETHStaked event not found in transaction receipt");
   }
+  const event = depositStrategy.interface.parseLog(rawLog);
   console.log(`Pending deposit root: ${event.args.pendingDepositRoot}`);
 }
 
