@@ -9,7 +9,7 @@
     "prepare": "husky"
   },
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "devDependencies": {
     "danger": "^11.2.8",

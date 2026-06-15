@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
+import { CompoundingStakingStrategy } from "./CompoundingStakingStrategy.sol";
 
 /**
  * @title Viewing contract for the Compounding Staking Strategy.
@@ -9,16 +9,16 @@ import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
  */
 contract CompoundingStakingStrategyView {
     /// @notice The address of the Compounding Staking Strategy contract
-    CompoundingValidatorManager public immutable stakingStrategy;
+    CompoundingStakingStrategy public immutable stakingStrategy;
 
     constructor(address _stakingStrategy) {
-        stakingStrategy = CompoundingValidatorManager(_stakingStrategy);
+        stakingStrategy = CompoundingStakingStrategy(payable(_stakingStrategy));
     }
 
     struct ValidatorView {
         bytes32 pubKeyHash;
         uint64 index;
-        CompoundingValidatorManager.ValidatorState state;
+        uint8 state;
     }
 
     struct DepositView {
@@ -40,10 +40,7 @@ contract CompoundingStakingStrategyView {
         validators = new ValidatorView[](validatorCount);
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
-            (
-                CompoundingValidatorManager.ValidatorState state,
-                uint64 index
-            ) = stakingStrategy.validator(pubKeyHash);
+            (uint8 state, uint64 index) = _validator(pubKeyHash);
             validators[i] = ValidatorView({
                 pubKeyHash: pubKeyHash,
                 index: index,
@@ -78,5 +75,20 @@ contract CompoundingStakingStrategyView {
                 slot: slot
             });
         }
+    }
+
+    function _validator(bytes32 pubKeyHash)
+        internal
+        view
+        returns (uint8 state, uint64 index)
+    {
+        (bool success, bytes memory data) = address(stakingStrategy).staticcall(
+            abi.encodeWithSelector(
+                stakingStrategy.validator.selector,
+                pubKeyHash
+            )
+        );
+        require(success, "validator call failed");
+        return abi.decode(data, (uint8, uint64));
     }
 }

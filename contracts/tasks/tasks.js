@@ -106,6 +106,9 @@ const {
   snapValidators,
 } = require("./validator");
 const {
+  autoValidatorDeposits,
+  autoValidatorWithdrawals,
+  snapBalances,
   snapStakingStrategy,
   registerValidatorCreateRequest,
   registerValidator,
@@ -1867,6 +1870,12 @@ subtask(
     "new",
     types.string
   )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2106,6 +2115,30 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "autoValidatorDeposits",
+  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
+)
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorDeposits({ ...taskArgs, signer });
+  });
+task("autoValidatorDeposits").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "withdrawValidator",
   "Requests a partial or full withdrawal from a compounding validator"
 )
@@ -2130,6 +2163,12 @@ subtask(
   .addOptionalParam(
     "consol",
     "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
@@ -2166,11 +2205,47 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorWithdrawals",
+  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
+)
+  .addOptionalParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
+    types.int
+  )
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorWithdrawals({ ...taskArgs, signer });
+  });
+task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2187,6 +2262,12 @@ subtask(
   .addOptionalParam(
     "dryrun",
     "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
@@ -2242,6 +2323,12 @@ subtask(
     types.boolean
   )
   .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
     false,
@@ -2249,6 +2336,24 @@ subtask(
   )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
+  )
+  .setAction(snapBalances);
+task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2264,6 +2369,12 @@ subtask("snapStakingStrat", "Dumps the staking strategy's data")
     "Withdrawal buffer in basis points. 100 = 1%",
     100,
     types.int
+  )
+  .addOptionalParam(
+    "ssv",
+    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
+    false,
+    types.boolean
   )
   .setAction(snapStakingStrategy);
 task("snapStakingStrat").setAction(async (_, __, runSuper) => {
