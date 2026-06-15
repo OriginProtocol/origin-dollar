@@ -2313,7 +2313,7 @@ subtask(
   .addOptionalParam(
     "forkVersion",
     "Fork version of the beacon chain. Required for validating the BLS signature",
-    "10000910",
+    "00000000",
     types.string
   )
   .addOptionalParam(
