@@ -46,6 +46,8 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'cross_chain_mainnet_hyper',                'cd /app && pnpm hardhat crossChainRelayHyperEVM --network mainnet',      '7 3,8,13,18,23 * * *',  'UTC', false, 'permissioned'),
 ('origin-dollar', 'claim_ssv_rewards',                        'cd /app && pnpm hardhat claimSSVRewards --network mainnet',              '45 0 1 * *',            'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_oeth_rebase',                  'cd /app && pnpm hardhat otokenOusdOethRebase --network mainnet',         '45 11,23 * * *',        'UTC', false, NULL),
+('origin-dollar', 'otoken_oeth_rebase',                       'cd /app && pnpm hardhat otokenOethRebase --network mainnet',             '45 11,23 * * *',        'UTC', false, NULL),
+('origin-dollar', 'otoken_ousd_rebase',                       'cd /app && pnpm hardhat otokenOusdRebase --network mainnet',             '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'ogn_claimAndForwardRewards',               'cd /app && pnpm hardhat ognClaimAndForwardRewards --network mainnet',    '50 0 * * 2',            'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_harvest',                     'cd /app && pnpm hardhat otokenOethbHarvest --network base',              '55 11 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'module_rebase_mainnet',                    'cd /app && pnpm hardhat permissionedRebase --network mainnet',           '15 10,22 * * *',        'UTC', false, NULL),
