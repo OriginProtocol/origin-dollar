@@ -63,14 +63,6 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
     event Redeemed(uint256 oTokenAmount, uint256 sharesBurned);
     event MintCapUpdated(uint256 oldCap, uint256 newCap);
 
-    error MintCapExceeded(
-        uint256 requested,
-        uint256 currentNetMinted,
-        uint256 cap
-    );
-    error NothingToWithdraw();
-    error UnsupportedFunction();
-
     /**
      * @param _baseConfig platformAddress = the Morpho V2 credit vault,
      *        vaultAddress = the OToken Vault (eg VaultProxy or OETHVaultProxy).
@@ -127,9 +119,7 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
     {
         require(amount > 0, "Must mint something");
         uint256 newNetMinted = netMinted + amount;
-        if (newNetMinted > mintCap) {
-            revert MintCapExceeded(amount, netMinted, mintCap);
-        }
+        require(newNetMinted <= mintCap, "Mint cap exceeded");
 
         // Update accounting before the external calls (checks-effects-interactions).
         // Both calls are to trusted contracts and revert the whole tx on failure.
@@ -155,9 +145,7 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
         returns (uint256 withdrawn)
     {
         withdrawn = Math.min(amount, maxWithdrawable());
-        if (withdrawn == 0) {
-            revert NothingToWithdraw();
-        }
+        require(withdrawn > 0, "Nothing to withdraw");
         _redeemAndBurn(withdrawn);
     }
 
@@ -281,12 +269,12 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
     /// @dev The Vault never sends backing assets to a credit AMO. Reverts so any misrouted
     ///      backing asset fails loudly rather than being silently stranded.
     function deposit(address, uint256) external pure override {
-        revert UnsupportedFunction();
+        revert("unsupported function");
     }
 
     /// @dev See deposit().
     function depositAll() external pure override {
-        revert UnsupportedFunction();
+        revert("unsupported function");
     }
 
     /// @dev See deposit().
@@ -295,17 +283,17 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
         address,
         uint256
     ) external pure override {
-        revert UnsupportedFunction();
+        revert("unsupported function");
     }
 
     /// @notice Not supported. The credit vault is fixed at deploy time.
     function setPTokenAddress(address, address) external override onlyGovernor {
-        revert UnsupportedFunction();
+        revert("unsupported function");
     }
 
     /// @notice Not supported. The credit vault is fixed at deploy time.
     function removePToken(uint256) external override onlyGovernor {
-        revert UnsupportedFunction();
+        revert("unsupported function");
     }
 
     /// @dev This strategy uses no per-asset platform token.

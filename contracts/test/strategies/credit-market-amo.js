@@ -90,9 +90,7 @@ describe("Unit test: Credit Market AMO Strategy", function () {
           await strategy.connect(governor).mintAndSupply(oUnits("100"));
           await expect(
             strategy.connect(governor).mintAndSupply(oUnits("1"))
-          ).to.be.revertedWithCustomError(
-            "MintCapExceeded(uint256,uint256,uint256)"
-          );
+          ).to.be.revertedWith("Mint cap exceeded");
         });
 
         it("reverts on zero amount", async () => {
@@ -171,7 +169,7 @@ describe("Unit test: Credit Market AMO Strategy", function () {
         it("reverts when nothing is liquid", async () => {
           await expect(
             strategy.connect(governor).redeemAndBurn(oUnits("100"))
-          ).to.be.revertedWithCustomError("NothingToWithdraw()");
+          ).to.be.revertedWith("Nothing to withdraw");
         });
       });
 
@@ -231,15 +229,15 @@ describe("Unit test: Credit Market AMO Strategy", function () {
             strategy
               .connect(fixture.josh)
               .deposit(hardAsset.address, oUnits("1"))
-          ).to.be.revertedWithCustomError("UnsupportedFunction()");
+          ).to.be.revertedWith("unsupported function");
           await expect(
             strategy.connect(fixture.josh).depositAll()
-          ).to.be.revertedWithCustomError("UnsupportedFunction()");
+          ).to.be.revertedWith("unsupported function");
           await expect(
             strategy
               .connect(fixture.josh)
               .withdraw(oTokenVault.address, hardAsset.address, oUnits("1"))
-          ).to.be.revertedWithCustomError("UnsupportedFunction()");
+          ).to.be.revertedWith("unsupported function");
         });
 
         it("reverts pToken management", async () => {
@@ -247,10 +245,10 @@ describe("Unit test: Credit Market AMO Strategy", function () {
             strategy
               .connect(governor)
               .setPTokenAddress(oToken.address, creditVault.address)
-          ).to.be.revertedWithCustomError("UnsupportedFunction()");
+          ).to.be.revertedWith("unsupported function");
           await expect(
             strategy.connect(governor).removePToken(0)
-          ).to.be.revertedWithCustomError("UnsupportedFunction()");
+          ).to.be.revertedWith("unsupported function");
         });
 
         it("checkBalance reverts for an unsupported asset", async () => {
