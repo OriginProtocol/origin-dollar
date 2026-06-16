@@ -68,12 +68,5 @@ action({
       consolidationController,
       log
     );
-    await doAccountingForProxy(
-      "NativeStakingSSVStrategy3Proxy",
-      networkName,
-      signer,
-      consolidationController,
-      log
-    );
   },
 });
