@@ -210,14 +210,20 @@ describe("Unit test: Credit Market AMO Strategy", function () {
       });
 
       describe("admin and disabled functions", () => {
-        it("setMintCap is governor-only and emits", async () => {
+        it("setMintCap is callable by governor or strategist and emits", async () => {
           const tx = await strategy.connect(governor).setMintCap(oUnits("5"));
           await expect(tx)
             .to.emit(strategy, "MintCapUpdated")
             .withArgs(oUnits("1000000"), oUnits("5"));
+
+          // Strategist can also move the cap operationally.
+          await strategy.connect(strategist).setMintCap(oUnits("7"));
+          expect(await strategy.mintCap()).to.equal(oUnits("7"));
+
+          // Others cannot.
           await expect(
             strategy.connect(fixture.josh).setMintCap(oUnits("5"))
-          ).to.be.revertedWith("Caller is not the Governor");
+          ).to.be.revertedWith("Caller is not the Strategist or Governor");
         });
 
         it("reverts disabled entry and exit", async () => {
