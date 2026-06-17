@@ -19,9 +19,9 @@ object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
 
-object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
-    assets: WETH, OETH
-}
+' object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
+'     assets: WETH, OETH
+' }
 
 
 object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
@@ -91,9 +91,8 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
 '     assets: ETH
 ' }
 
-object "CompoundingStakingSSVStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
+object "CompoundingStakingStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
-    Rewards: SSV
 }
 object "CompoundingStakingStrategyView" as compView <<Origin>> #$originColor {
 
@@ -175,7 +174,7 @@ zap ..> oeth
 zap ..> oethv
 ' zap .....> weth
 
-arm ..> oethv
+' arm ..> oethv
 
 ' drip .....> weth
 oethv <.> drip
