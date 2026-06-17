@@ -31,7 +31,9 @@ const isHyperEVMForkTest = isForkTest && isHyperEVMFork;
 const isHyperEVMUnitTest = process.env.UNIT_TESTS_NETWORK === "hyperevm";
 
 const providerUrl = `${
-  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+  process.env.LOCAL_PROVIDER_URL ||
+  process.env.MAINNET_PROVIDER_URL ||
+  process.env.PROVIDER_URL
 }`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;

@@ -2,6 +2,7 @@
 const ethers = require("ethers");
 const { logTxDetails } = require("../utils/txLogger");
 const { api: cctpApi } = require("../utils/cctp");
+const log = require("../utils/logger")("task:crossChain");
 
 const cctpOperationsConfig = async ({
   destinationChainSigner,
@@ -35,7 +36,7 @@ const cctpOperationsConfig = async ({
 };
 
 const fetchAttestations = async ({ transactionHash, cctpChainId }) => {
-  console.log(
+  log(
     `Fetching attestation for transaction hash: ${transactionHash} on cctp chain id: ${cctpChainId}`
   );
   const response = await fetch(
@@ -124,7 +125,7 @@ const fetchTxHashesFromCctpTransactions = async ({
   const messageTransmittedTopic =
     cctpIntegrationContractSource.interface.getEventTopic("MessageTransmitted");
 
-  console.log(
+  log(
     `Fetching event logs from block ${resolvedFromBlock} to block ${resolvedToBlock}`
   );
   const [eventLogsTokenBridged, eventLogsMessageTransmitted] =
@@ -150,7 +151,7 @@ const fetchTxHashesFromCctpTransactions = async ({
   ].map((log) => log.transactionHash);
   const allTxHashes = Array.from(new Set([...possiblyDuplicatedTxHashes]));
 
-  console.log(`Found ${allTxHashes.length} transactions that emitted messages`);
+  log(`Found ${allTxHashes.length} transactions that emitted messages`);
   return { allTxHashes };
 };
 
@@ -174,7 +175,7 @@ const processCctpBridgeTransactions = async ({
     cctpIntegrationContractAddress,
     cctpIntegrationContractAddressDestination,
   });
-  console.log(
+  log(
     `Fetching cctp messages posted on ${config.networkName} network.${
       block ? ` Only for block: ${block}` : " Looking at most recent blocks"
     }`
@@ -193,7 +194,7 @@ const processCctpBridgeTransactions = async ({
     const txStoredValue = await store.get(txStoreKey);
     const txStoredValue_Legacy = await store.get(txStoreKey_Legacy);
     if (txStoredValue === "processed" || txStoredValue_Legacy === "processed") {
-      console.log(
+      log(
         `Transaction with hash ${txHash} has already been processed via tx-level key ${txStoreKey}. Skipping...`
       );
       continue;
@@ -204,7 +205,7 @@ const processCctpBridgeTransactions = async ({
       cctpChainId: cctpSourceDomainId,
     });
 
-    console.log(
+    log(
       `Found ${cctpMessages.length} CCTP messages for transaction hash: ${txHash}`
     );
 
@@ -220,7 +221,7 @@ const processCctpBridgeTransactions = async ({
       const storedValue = await store.get(storeKey);
 
       if (cctpMessage.status !== "complete") {
-        console.log(
+        log(
           `Message ${messageId} from tx ${txHash} is not attested yet (status: ${cctpMessage.status}). Skipping...`
         );
         hasEligibleMessage = true;
@@ -234,7 +235,7 @@ const processCctpBridgeTransactions = async ({
         destinationDomainId: cctpDestinationDomainId,
       });
       if (!messageTargetsDestination) {
-        console.log(
+        log(
           `Skipping message ${messageId} from tx ${txHash} because it does not target destination caller ${destinationAddress} on domain ${cctpDestinationDomainId}`
         );
         continue;
@@ -242,26 +243,26 @@ const processCctpBridgeTransactions = async ({
       hasEligibleMessage = true;
 
       if (storedValue === "processed") {
-        console.log(
+        log(
           `Message with key ${storeKey} has already been processed. Skipping...`
         );
         continue;
       }
 
       if (!cctpMessage.message || !cctpMessage.attestation) {
-        console.log(
+        log(
           `Message ${messageId} from tx ${txHash} is missing message payload or attestation. Skipping...`
         );
         hasUnprocessedEligibleMessages = true;
         continue;
       }
 
-      console.log(
+      log(
         `Attempting to relay message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
       );
 
       if (dryrun) {
-        console.log(
+        log(
           `Dryrun: Would have relayed message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
         );
         continue;
@@ -272,17 +273,17 @@ const processCctpBridgeTransactions = async ({
         cctpMessage.attestation,
         { gasLimit: 2000000 }
       );
-      console.log(
+      log(
         `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
       );
       const receipt = await logTxDetails(relayTx, "CCTP relay");
 
       // Final verification
       if (receipt.status === 1) {
-        console.log("SUCCESS: Transaction executed successfully!");
+        log("SUCCESS: Transaction executed successfully!");
         await store.put(storeKey, "processed");
       } else {
-        console.log("FAILURE: Transaction reverted!");
+        log("FAILURE: Transaction reverted!");
         throw new Error(`Transaction reverted - status: ${receipt.status}`);
       }
     }
@@ -291,11 +292,9 @@ const processCctpBridgeTransactions = async ({
       !hasEligibleMessage || !hasUnprocessedEligibleMessages;
     if (shouldMarkTxProcessed) {
       await store.put(txStoreKey, "processed");
-      console.log(
-        `Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`
-      );
+      log(`Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`);
     } else {
-      console.log(
+      log(
         `Did not mark tx-level key ${txStoreKey} because eligible messages exist but none were fully processed for tx ${txHash}`
       );
     }

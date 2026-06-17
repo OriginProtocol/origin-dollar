@@ -24,7 +24,7 @@ pnpm prettier
 ```
 
 ## Linter
-
+ 
 [solhit](https://protofire.github.io/solhint/) is used to lint Solidity code. The configuration for solhint is in [.solhint.json](./.solhint.json). [.solhintignore](./.solhintignore) is used to ignore Solidity files from being linted.
 
 [eslint](https://eslint.org/) is used to lint JavaScript code. The configuration for eslint is in [.eslintrc.js](./.eslintrc.js).
@@ -246,8 +246,9 @@ If enabled, the gas usage will be output in a table after the tests have execute
 When using Hardhat tasks, there are a few options for specifying the wallet to send transactions from.
 
 1. Primary key
-2. Impersonate
-3. Defender Relayer
+2. AWS KMS signer
+3. Impersonate
+4. Defender Relayer
 
 ### Primary Key
 
@@ -262,6 +263,24 @@ unset DEPLOYER_PK
 unset GOVERNOR_PK
 ```
 
+### AWS KMS Signer
+
+Hardhat tasks can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` are set.
+
+The default `relayer-id` is `origin-relayer-production-evm`. Some tasks can be mapped
+to different defaults in code, and a user-provided task parameter always wins:
+
+```
+npx hardhat <task> --network <network> --relayer-id <kms-key-id-or-alias>
+```
+
+The relayer resolution precedence is:
+
+1. `--relayer-id`
+2. task-name based override map
+3. global default (`origin-relayer-production-evm`)
+
 ### Impersonate
 
 If using a fork test or node, you can impersonate any externally owned account or contract. Export `IMPERSONATE` with the address of the account you want to impersonate. The account will be funded with some Ether. For example
@@ -275,6 +294,25 @@ When finished, you can stop impersonating by unsetting the `IMPERSONATE` environ
 ```
 unset IMPERSONATE
 ```
+
+### Automated Actions (Talos)
+
+The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@talos/client`](https://github.com/oplabs/talos):
+
+- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
+- **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
+- **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
+
+Every action remains directly executable as a hardhat task on your dev machine — nothing about the local workflow changed:
+
+```
+pnpm hardhat harvest --network mainnet
+pnpm hardhat healthcheck --network mainnet
+```
+
+**No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.
+
+Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` / `GOVERNOR_PK` fallbacks, `IMPERSONATE`, Defender) stays exactly as described in the sections above. The library only handles the nonce wrap; it does not construct signers here.
 
 ### Defender Relayer
 
