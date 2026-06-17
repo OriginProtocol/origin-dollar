@@ -22,6 +22,7 @@ contract MockERC4626Vault is IERC4626, ERC20 {
 
     function deposit(uint256 assets, address receiver)
         public
+        virtual
         override
         returns (uint256 shares)
     {
@@ -46,7 +47,7 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         uint256 assets,
         address receiver,
         address owner
-    ) public override returns (uint256 shares) {
+    ) public virtual override returns (uint256 shares) {
         shares = previewWithdraw(assets);
         if (msg.sender != owner) {
             // No approval check for mock
@@ -160,6 +161,18 @@ contract MockERC4626Vault is IERC4626, ERC20 {
 
     function _burn(address account, uint256 amount) internal override {
         super._burn(account, amount);
+    }
+
+    // --- Morpho V2 compatibility stubs ---
+
+    /// @dev Returns self as the liquidity adapter (satisfies IVaultV2)
+    function liquidityAdapter() external view virtual returns (address) {
+        return address(this);
+    }
+
+    /// @dev Returns self as the Morpho V1 vault (satisfies IMorphoV2Adapter)
+    function morphoVaultV1() external view virtual returns (address) {
+        return address(this);
     }
 
     // Inherited from ERC20

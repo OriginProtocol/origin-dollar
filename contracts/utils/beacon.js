@@ -10,6 +10,12 @@ const {
 
 const log = require("./logger")("utils:beacon");
 
+const fetchImpl =
+  typeof globalThis.fetch === "function"
+    ? globalThis.fetch.bind(globalThis)
+    : (...args) =>
+        import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 const SLOTS_PER_EPOCH = 32;
 
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
@@ -90,11 +96,15 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
-  // Hoodie and Mainnet currently use the same types but this could change in the future
+  // Mainnet fixed-slot proof generation currently decodes against Electra-era beacon data.
   const BeaconBlock =
-    networkName === "mainnet" ? ssz.fulu.BeaconBlock : ssz.fulu.BeaconBlock;
+    networkName === "mainnet"
+      ? ssz.electra.BeaconBlock
+      : ssz.electra.BeaconBlock;
   const BeaconState =
-    networkName === "mainnet" ? ssz.fulu.BeaconState : ssz.fulu.BeaconState;
+    networkName === "mainnet"
+      ? ssz.electra.BeaconState
+      : ssz.electra.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
@@ -108,31 +118,87 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
 
   const blockView = BeaconBlock.toView(blockRes.value().message);
 
+  const stateFilename = `./cache/state_${blockView.slot}.ssz`;
+  const fetchStateSsz = async () => {
+    log(`Fetching state for slot ${blockView.slot} from the beacon node`);
+
+    // [Claude] Bypass the Lodestar API client and fetch beacon state SSZ directly.
+    //
+    // Why: The Lodestar client (v1.38.0) sends an Accept header that allows
+    // both SSZ and JSON (`application/octet-stream;q=1,application/json;q=0.9`).
+    // When the beacon node returns a JSON content-type but the body contains
+    // binary SSZ data, the client calls Response.json() which invokes
+    // TextDecoder.decode() on the binary payload, throwing
+    // ERR_ENCODING_INVALID_DATA. By requesting SSZ-only via a direct fetch
+    // and reading the response as an ArrayBuffer, we avoid any text decoding.
+    let base = process.env.BEACON_PROVIDER_URL;
+    if (!base.endsWith("/")) base += "/";
+    // Concatenate rather than using `new URL(path, base)` to preserve any
+    // path segments in the provider URL (e.g. QuickNode API key in path).
+    const stateUrl = `${base}eth/v2/debug/beacon/states/${blockView.slot}`;
+    const parsedUrl = new URL(stateUrl);
+    const headers = { Accept: "application/octet-stream" };
+    // Preserve Basic auth credentials embedded in the provider URL
+    if (parsedUrl.username || parsedUrl.password) {
+      const creds = `${decodeURIComponent(
+        parsedUrl.username
+      )}:${decodeURIComponent(parsedUrl.password)}`;
+      headers.Authorization = `Basic ${Buffer.from(creds).toString("base64")}`;
+      parsedUrl.username = "";
+      parsedUrl.password = "";
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+    let response;
+    try {
+      response = await fetchImpl(parsedUrl.toString(), {
+        method: "GET",
+        headers,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    // Read as ArrayBuffer to get raw binary SSZ bytes without text decoding.
+    const stateSszBytes = new Uint8Array(await response.arrayBuffer());
+
+    log(`Writing state to file ${stateFilename}`);
+    fs.writeFileSync(stateFilename, stateSszBytes);
+    return stateSszBytes;
+  };
+
   // Read the state from a local file or fetch it from the beacon node.
   let stateSsz;
-  const stateFilename = `./cache/state_${blockView.slot}.ssz`;
   if (fs.existsSync(stateFilename)) {
     log(`Loading state from file ${stateFilename}`);
     stateSsz = fs.readFileSync(stateFilename);
   } else {
-    log(`Fetching state for slot ${blockView.slot} from the beacon node`);
-    const stateRes = await client.debug.getStateV2(
-      { stateId: blockView.slot },
-      "ssz"
-    );
-    if (!stateRes.ok) {
-      console.error(stateRes);
-      throw new Error(
-        `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${stateRes.status} ${stateRes.statusText}`
-      );
-    }
-
-    log(`Writing state to file ${stateFilename}`);
-    fs.writeFileSync(stateFilename, stateRes.ssz());
-    stateSsz = stateRes.ssz();
+    stateSsz = await fetchStateSsz();
   }
 
-  const stateView = BeaconState.deserializeToView(stateSsz);
+  let stateView;
+  try {
+    stateView = BeaconState.deserializeToView(stateSsz);
+  } catch (err) {
+    if (!fs.existsSync(stateFilename)) {
+      throw err;
+    }
+
+    log(
+      `Failed to deserialize cached state ${stateFilename}, refetching fresh state`
+    );
+    stateSsz = await fetchStateSsz();
+    stateView = BeaconState.deserializeToView(stateSsz);
+  }
 
   const blockTree = blockView.tree.clone();
   const stateRootGIndex = blockView.type.getPropertyGindex("stateRoot");

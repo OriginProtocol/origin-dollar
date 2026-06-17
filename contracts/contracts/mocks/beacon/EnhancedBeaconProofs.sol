@@ -12,4 +12,16 @@ contract EnhancedBeaconProofs is BeaconProofs {
     ) external pure returns (uint256 genIndex) {
         return BeaconProofsLib.concatGenIndices(index1, height2, index2);
     }
+
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
+        external
+        pure
+        returns (uint256)
+    {
+        return
+            BeaconProofsLib.balanceAtIndex(
+                validatorBalanceLeaf,
+                validatorIndex
+            );
+    }
 }

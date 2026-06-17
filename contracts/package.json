@@ -5,6 +5,7 @@
   "main": "index.js",
   "packageManager": "pnpm@10.18.3",
   "scripts": {
+    "check:storage": "node scripts/check-storage-layout.js",
     "deploy": "rm -rf deployments/hardhat && npx hardhat deploy",
     "deploy:mainnet": "VERIFY_CONTRACTS=true npx hardhat deploy --network mainnet --verbose",
     "deploy:arbitrum": "FORK_NETWORK_NAME=arbitrumOne npx hardhat deploy --network arbitrumOne --tags arbitrumOne --verbose",

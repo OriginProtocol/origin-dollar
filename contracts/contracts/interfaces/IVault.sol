@@ -48,6 +48,8 @@ interface IVault {
 
     function governor() external view returns (address);
 
+    function isGovernor() external view returns (bool);
+
     // VaultAdmin.sol
     function setVaultBuffer(uint256 _vaultBuffer) external;
 
