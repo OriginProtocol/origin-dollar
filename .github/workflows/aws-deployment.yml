@@ -5,7 +5,7 @@ name: AWS — build runner image
 # `bun run release:propose` in the talos repo so a deliberate human
 # approves what deploys.
 #
-# Triggers on `talos`.
+# Triggers on `master`.
 #
 # Requires the TALOS_DEPLOY_KEY repo secret for the @talos/client
 # git-install (SSH deploy key against oplabs/talos).
@@ -15,7 +15,7 @@ name: AWS — build runner image
 
 on:
   push:
-    branches: [talos]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
