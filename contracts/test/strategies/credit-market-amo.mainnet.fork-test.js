@@ -75,11 +75,11 @@ describe("ForkTest: Credit Market AMO Strategy (OUSD)", function () {
       usdcUnits("100500")
     );
 
-    // Redeem and burn the principal. The accrued interest stays in the position
-    // (illiquid until repaid).
+    // Burn the 100k of liquid OToken. Yield-first accounting draws the 500 of accrued
+    // interest down first, so netMinted settles on the 500 residual position value.
     await creditAMOStrategy.connect(governor).redeemAndBurn(oUnits("100000"));
 
-    expect(await creditAMOStrategy.netMinted()).to.equal(0);
+    expect(await creditAMOStrategy.netMinted()).to.equal(oUnits("500"));
     expect(await creditAMOStrategy.positionValue()).to.equal(oUnits("500"));
     expect(await creditAMOStrategy.maxWithdrawable()).to.equal(0);
     expect(await creditAMOStrategy.checkBalance(hardAsset.address)).to.equal(

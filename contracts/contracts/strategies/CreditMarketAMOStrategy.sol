@@ -47,12 +47,13 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
     /// @notice Decimals of the hard asset, for checkBalance scaling.
     uint8 public immutable hardAssetDecimals;
 
-    /// @notice Total OToken minted minus total burned by this strategy. The principal for
-    ///         analytics and the value bounded by `mintCap`.
-    /// @dev Analytics/cap accounting only. It may drift below the true principal once accrued
-    ///      interest is burned (redeemAndBurn lowers it by the amount withdrawn, floored at 0).
-    ///      That drift is harmless to Vault solvency: a burn lowers both supply and checkBalance
-    ///      by the same amount.
+    /// @notice The strategy's principal still deployed in the credit vault, in OToken units, and
+    ///         the value bounded by `mintCap`. Raised by mintAndSupply; on a burn it is lowered to
+    ///         the position's remaining value when that is smaller, i.e. accrued interest is drawn
+    ///         down before principal. Hence the invariant `netMinted <= positionValue()` holds.
+    /// @dev Burns are NAV-neutral (a burn lowers both OToken supply and checkBalance by the same
+    ///      amount), so how a burn is split between interest and principal is only an accounting
+    ///      label here, never an input to Vault solvency.
     uint256 public netMinted;
     /// @notice Maximum allowed `netMinted`. Starts at 0, so minting is off until governance raises it.
     uint256 public mintCap;
@@ -166,8 +167,14 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
      *      be capped at maxWithdrawable() and be greater than zero.
      */
     function _redeemAndBurn(uint256 withdrawn) internal {
-        // Update accounting before the external calls (checks-effects-interactions).
-        netMinted = netMinted > withdrawn ? netMinted - withdrawn : 0;
+        // Yield-first accounting: principal is whatever the position is worth after this burn,
+        // capped at its prior value. Interest is drawn down before principal, preserving the
+        // invariant netMinted <= positionValue(). Written before the external calls (CEI).
+        uint256 pv = positionValue();
+        uint256 remaining = pv > withdrawn ? pv - withdrawn : 0; // clamp guards rounding dust
+        if (netMinted > remaining) {
+            netMinted = remaining;
+        }
 
         // Withdraw to self, then burn from self.
         uint256 shares = creditVault.withdraw(
@@ -196,22 +203,20 @@ contract CreditMarketAMOStrategy is AbstractMerkleClaimStrategy {
             );
     }
 
-    /// @notice Same as maxWithdrawable(); the liquid portion of the position.
-    function liquidValue() external view returns (uint256) {
-        return maxWithdrawable();
-    }
-
     /// @notice Full position value (principal plus accrued interest), in OToken units.
+    /// @dev Uses previewRedeem, which on a Morpho V2 vault is pure share-accounting: it reports the
+    ///      vault's full asset value per share, including assets lent out / borrowed, and does NOT
+    ///      drop when utilization is high. That full claim is exactly what checkBalance and rebase
+    ///      need; the liquid portion is tracked separately by maxWithdrawable(). A liquidity-aware
+    ///      ERC-4626 (e.g. an Aave vault) would need convertToAssets instead, but this strategy is
+    ///      Morpho V2 specific.
     function positionValue() public view returns (uint256) {
         return creditVault.previewRedeem(creditVault.balanceOf(address(this)));
     }
 
-    /// @notice The principal, ie net OToken minted into the position.
-    function principal() external view returns (uint256) {
-        return netMinted;
-    }
-
-    /// @notice Interest accrued on the position above the principal, in OToken units.
+    /// @notice Interest currently embedded in the position above the deployed principal, in OToken
+    ///         units. A live snapshot under yield-first accounting (netMinted <= positionValue()),
+    ///         not lifetime yield earned.
     function accruedYield() external view returns (uint256) {
         uint256 value = positionValue();
         return value > netMinted ? value - netMinted : 0;

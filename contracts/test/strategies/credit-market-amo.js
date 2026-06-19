@@ -75,11 +75,9 @@ describe("Unit test: Credit Market AMO Strategy", function () {
             0.01
           );
           expect(await strategy.netMinted()).to.equal(oUnits("100"));
-          expect(await strategy.principal()).to.equal(oUnits("100"));
           expect(await strategy.positionValue()).to.equal(oUnits("100"));
           expect(await strategy.accruedYield()).to.equal(0);
           expect(await strategy.maxWithdrawable()).to.equal(oUnits("100"));
-          expect(await strategy.liquidValue()).to.equal(oUnits("100"));
           expect(await strategy.checkBalance(hardAsset.address)).to.equal(
             hardUnits("100")
           );
@@ -170,6 +168,20 @@ describe("Unit test: Credit Market AMO Strategy", function () {
           await expect(
             strategy.connect(governor).redeemAndBurn(oUnits("100"))
           ).to.be.revertedWith("Nothing to withdraw");
+        });
+
+        it("draws interest down before principal (yield-first)", async () => {
+          await strategy.connect(governor).mintAndSupply(oUnits("100"));
+          // Position grows to 130 (30 of accrued interest); liquidity stays at 100.
+          await creditVault.simulateInterest(oUnits("30"));
+
+          // Burn 50 of the liquid principal. Yield-first accounting draws the 30 of
+          // interest down first, so netMinted falls by only 20 (50 - 30) to 80.
+          await strategy.connect(governor).redeemAndBurn(oUnits("50"));
+
+          expect(await strategy.positionValue()).to.equal(oUnits("80"));
+          expect(await strategy.netMinted()).to.equal(oUnits("80"));
+          expect(await strategy.accruedYield()).to.equal(0);
         });
       });
 
