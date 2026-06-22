@@ -46,7 +46,7 @@ async function snapSonicStaking(taskArguments) {
   let totalStaked = ethers.BigNumber.from(0);
   let totalPendingRewards = ethers.BigNumber.from(0);
   for (const validatorId of [15, 16, 17, 18]) {
-    console.log(`${validatorId}:`);
+    log(`${validatorId}:`);
     const stakedAmount = await sfc.getStake(
       sonicStakingStrategy.address,
       validatorId,
@@ -62,37 +62,33 @@ async function snapSonicStaking(taskArguments) {
     );
     totalPendingRewards = totalPendingRewards.add(pendingRewards);
 
-    console.log(`   Staked amount          : ${formatUnits(stakedAmount, 18)}`);
-    console.log(
-      `   Pending rewards        : ${formatUnits(pendingRewards, 18)}`
-    );
+    log(`   Staked amount          : ${formatUnits(stakedAmount, 18)}`);
+    log(`   Pending rewards        : ${formatUnits(pendingRewards, 18)}`);
   }
 
   const stakedPercent = totalStaked.mul(10000).div(strategyBalance);
   const pendingRewardsPercentage = totalPendingRewards
     .mul(10000)
     .div(strategyBalance);
-  console.log(
+  log(
     `\nTotal Staked              : ${formatUnits(
       totalStaked,
       18
     )} ${formatUnits(stakedPercent, 2)}%`
   );
-  console.log(
+  log(
     `Total pending withdrawals : ${formatUnits(
       pendingWithdrawals,
       18
     )} ${formatUnits(pendingWithdrawalsPercentage, 2)}%`
   );
-  console.log(
+  log(
     `Total pending rewards     : ${formatUnits(
       totalPendingRewards,
       18
     )} ${formatUnits(pendingRewardsPercentage, 2)}%`
   );
-  console.log(
-    `Strategy balance          : ${formatUnits(strategyBalance, 18)}`
-  );
+  log(`Strategy balance          : ${formatUnits(strategyBalance, 18)}`);
 }
 
 module.exports = {

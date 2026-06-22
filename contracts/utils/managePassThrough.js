@@ -2,6 +2,7 @@ const addresses = require("../utils/addresses");
 const { ethers } = require("ethers");
 const passThroughAbi = require("../abi/passThrough.json");
 const { logTxDetails } = require("../utils/txLogger");
+const log = require("../utils/logger")("utils:managePassThrough");
 
 async function transferTokens({ signer }) {
   const OUSD = addresses.mainnet.OUSDProxy;
@@ -19,7 +20,7 @@ async function transferTokens({ signer }) {
     ],
   };
 
-  console.log("DEBUG: Token PassThroughs mapping", tokenPassThroughs);
+  log("DEBUG: Token PassThroughs mapping", tokenPassThroughs);
 
   // Process all tokens and their passThrough contracts
   for (const [token, passThroughAddresses] of Object.entries(

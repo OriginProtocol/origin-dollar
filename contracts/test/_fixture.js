@@ -1090,16 +1090,8 @@ async function nativeStakingSSVStrategyFixture() {
   if (isFork) {
     const { nativeStakingSSVStrategy, ssv } = fixture;
 
-    // // The Defender Relayer
-    // fixture.validatorRegistrator = await impersonateAndFund(
-    //   addresses.mainnet.validatorRegistrator
-    // );
-    // Set to the consolidation controller while the validator consolidation is ongoing
-    const consolidationController = await ethers.getContract(
-      "ConsolidationController"
-    );
     fixture.validatorRegistrator = await impersonateAndFund(
-      consolidationController.address
+      addresses.mainnet.validatorRegistrator
     );
 
     // Fund some SSV to the native staking strategy
@@ -1233,6 +1225,80 @@ async function compoundingStakingSSVStrategyFixture() {
 
     fixture.validatorRegistrator = sRegistrator;
   }
+
+  return fixture;
+}
+
+/**
+ * CompoundingStakingStrategy fixture
+ */
+async function compoundingStakingStrategyFixture() {
+  const fixture = await beaconChainFixture();
+  await hotDeployOption(fixture, "compoundingStakingStrategyFixture", {
+    isOethFixture: true,
+  });
+
+  const { deployerAddr, governorAddr, registratorAddr } =
+    await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sRegistrator = await ethers.provider.getSigner(registratorAddr);
+  const { oethVault, weth, beaconProofs } = fixture;
+
+  const cCompoundingStakingStrategyProxy = await (
+    await ethers.getContractFactory("CompoundingStakingStrategyProxy")
+  ).deploy();
+
+  const dCompoundingStakingStrategy = await (
+    await ethers.getContractFactory("CompoundingStakingStrategy")
+  ).deploy(
+    [addresses.zero, oethVault.address],
+    weth.address,
+    (
+      await getAssetAddresses(deployments)
+    ).beaconChainDepositContract,
+    beaconProofs.address,
+    1606824023
+  );
+
+  const initData = dCompoundingStakingStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[],uint256)",
+    [
+      [], // reward token addresses
+      [], // asset token addresses
+      [], // platform token addresses
+      ethers.utils.parseEther("1"), // initial validator deposit amount
+    ]
+  );
+
+  const initializeProxy =
+    cCompoundingStakingStrategyProxy.connect(sDeployer)[
+      "initialize(address,address,bytes)"
+    ];
+  await initializeProxy(
+    dCompoundingStakingStrategy.address,
+    governorAddr,
+    initData
+  );
+
+  fixture.compoundingStakingStrategy = await ethers.getContractAt(
+    "CompoundingStakingStrategy",
+    cCompoundingStakingStrategyProxy.address
+  );
+
+  await oethVault
+    .connect(sGovernor)
+    .approveStrategy(fixture.compoundingStakingStrategy.address);
+
+  await fixture.compoundingStakingStrategy
+    .connect(sGovernor)
+    .setRegistrator(registratorAddr);
+
+  await fixture.compoundingStakingStrategy
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.simpleOETHHarvester.address);
+
+  fixture.validatorRegistrator = sRegistrator;
 
   return fixture;
 }
@@ -1632,8 +1698,10 @@ async function crossChainFixture() {
     addresses.CCTPTokenMessengerV2
   );
 
+  // The cross-chain operator is repointed during the Talos signer migration
+  // (deploy 196), so read it from the strategy instead of hardcoding a relayer.
   fixture.relayer = await impersonateAndFund(
-    addresses.mainnet.validatorRegistrator
+    await cCrossChainMasterStrategy.operator()
   );
 
   await setERC20TokenBalance(
@@ -1714,6 +1782,7 @@ module.exports = {
   instantRebaseVaultFixture,
   rebornFixture,
   nativeStakingSSVStrategyFixture,
+  compoundingStakingStrategyFixture,
   compoundingStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyMerkleProofsMockedFixture,
   nodeSnapshot,

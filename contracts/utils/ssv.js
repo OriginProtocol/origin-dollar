@@ -15,6 +15,17 @@ const emptyCluster = {
   balance: 0,
 };
 
+const normalizeCluster = (cluster) => ({
+  validatorCount: cluster.validatorCount,
+  networkFeeIndex: cluster.networkFeeIndex,
+  index: cluster.index,
+  active: cluster.active,
+  balance:
+    cluster.migrated && cluster.ethBalance !== undefined
+      ? cluster.ethBalance
+      : cluster.balance,
+});
+
 const splitValidatorKey = async ({
   keystorelocation,
   keystorepass,
@@ -130,7 +141,7 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
 
     return {
       block: response.data.cluster.blockNumber,
-      cluster: response.data.cluster,
+      cluster: normalizeCluster(response.data.cluster),
     };
   } catch (err) {
     if (err.response) {
@@ -196,6 +207,7 @@ module.exports = {
   printClusterInfo,
   getClusterInfo,
   getClusterNonce,
+  normalizeCluster,
   sortOperatorIds,
   splitOperatorIds,
   splitValidatorKey,

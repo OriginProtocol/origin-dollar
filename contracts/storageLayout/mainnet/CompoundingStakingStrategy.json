@@ -1,0 +1,370 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "_paused",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_bool",
+      "contract": "Pausable",
+      "src": "@openzeppelin/contracts/security/Pausable.sol:28"
+    },
+    {
+      "label": "validatorRegistrator",
+      "offset": 1,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:64"
+    },
+    {
+      "label": "firstDeposit",
+      "offset": 21,
+      "slot": "51",
+      "type": "t_bool",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:105"
+    },
+    {
+      "label": "deposits",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_mapping(t_bytes32,t_struct(DepositData)41517_storage)",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:107"
+    },
+    {
+      "label": "depositList",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_array(t_bytes32)dyn_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:116"
+    },
+    {
+      "label": "verifiedValidators",
+      "offset": 0,
+      "slot": "54",
+      "type": "t_array(t_bytes32)dyn_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:138"
+    },
+    {
+      "label": "validator",
+      "offset": 0,
+      "slot": "55",
+      "type": "t_mapping(t_bytes32,t_struct(ValidatorData)41546_storage)",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:141"
+    },
+    {
+      "label": "snappedBalance",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_struct(Balances)41564_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:152"
+    },
+    {
+      "label": "lastVerifiedEthBalance",
+      "offset": 0,
+      "slot": "58",
+      "type": "t_uint256",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:154"
+    },
+    {
+      "label": "depositedWethAccountedFor",
+      "offset": 0,
+      "slot": "59",
+      "type": "t_uint256",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:166"
+    },
+    {
+      "label": "initialDepositAmountWei",
+      "offset": 0,
+      "slot": "60",
+      "type": "t_uint256",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:168"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "61",
+      "type": "t_array(t_uint256)40_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:171"
+    },
+    {
+      "label": "_deprecated_platformAddress",
+      "offset": 0,
+      "slot": "101",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+    },
+    {
+      "label": "_deprecated_vaultAddress",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
+    },
+    {
+      "label": "assetToPToken",
+      "offset": 0,
+      "slot": "103",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "label": "assetsMapped",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "label": "_deprecated_rewardTokenAddress",
+      "offset": 0,
+      "slot": "105",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+    },
+    {
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "offset": 0,
+      "slot": "106",
+      "type": "t_uint256",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
+    },
+    {
+      "label": "harvesterAddress",
+      "offset": 0,
+      "slot": "107",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
+    },
+    {
+      "label": "rewardTokenAddresses",
+      "offset": 0,
+      "slot": "108",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
+    },
+    {
+      "label": "_reserved",
+      "offset": 0,
+      "slot": "109",
+      "type": "t_array(t_int256)98_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_bytes32)dyn_storage": {
+      "label": "bytes32[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]",
+      "numberOfBytes": "3136"
+    },
+    "t_array(t_uint256)40_storage": {
+      "label": "uint256[40]",
+      "numberOfBytes": "1280"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_enum(DepositStatus)41504": {
+      "label": "enum CompoundingValidatorStorage.DepositStatus",
+      "members": [
+        "UNKNOWN",
+        "PENDING",
+        "VERIFIED"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_enum(ValidatorState)41540": {
+      "label": "enum CompoundingValidatorStorage.ValidatorState",
+      "members": [
+        "NON_REGISTERED",
+        "REGISTERED",
+        "STAKED",
+        "VERIFIED",
+        "ACTIVE",
+        "EXITING",
+        "EXITED",
+        "REMOVED",
+        "INVALID"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_struct(DepositData)41517_storage)": {
+      "label": "mapping(bytes32 => struct CompoundingValidatorStorage.DepositData)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_struct(ValidatorData)41546_storage)": {
+      "label": "mapping(bytes32 => struct CompoundingValidatorStorage.ValidatorData)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(Balances)41564_storage": {
+      "label": "struct CompoundingValidatorStorage.Balances",
+      "members": [
+        {
+          "label": "blockRoot",
+          "type": "t_bytes32",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "timestamp",
+          "type": "t_uint64",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "ethBalance",
+          "type": "t_uint128",
+          "offset": 8,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(DepositData)41517_storage": {
+      "label": "struct CompoundingValidatorStorage.DepositData",
+      "members": [
+        {
+          "label": "pubKeyHash",
+          "type": "t_bytes32",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "amountGwei",
+          "type": "t_uint64",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "slot",
+          "type": "t_uint64",
+          "offset": 8,
+          "slot": "1"
+        },
+        {
+          "label": "depositIndex",
+          "type": "t_uint32",
+          "offset": 16,
+          "slot": "1"
+        },
+        {
+          "label": "status",
+          "type": "t_enum(DepositStatus)41504",
+          "offset": 20,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(ValidatorData)41546_storage": {
+      "label": "struct CompoundingValidatorStorage.ValidatorData",
+      "members": [
+        {
+          "label": "state",
+          "type": "t_enum(ValidatorState)41540",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "index",
+          "type": "t_uint40",
+          "offset": 1,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_uint128": {
+      "label": "uint128",
+      "numberOfBytes": "16"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint32": {
+      "label": "uint32",
+      "numberOfBytes": "4"
+    },
+    "t_uint40": {
+      "label": "uint40",
+      "numberOfBytes": "5"
+    },
+    "t_uint64": {
+      "label": "uint64",
+      "numberOfBytes": "8"
+    }
+  },
+  "namespaces": {}
+}
