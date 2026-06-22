@@ -31,13 +31,16 @@
     "node:anvil:sonic": "anvil --fork-url $SONIC_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:hoodi": "anvil --fork-url $HOODI_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:hyperevm": "anvil --fork-url $HYPEREVM_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
-    "lint": "pnpm run lint:js && pnpm run lint:sol",
+    "lint": "pnpm run lint:js && pnpm run lint:ts && pnpm run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "lint:ts": "eslint \"tasks/actions/**/*.ts\" \"tasks/lib/**/*.ts\"",
     "prettier": "pnpm run prettier:js && pnpm run prettier:sol",
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:js": "prettier --write \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:sol": "prettier --write --plugin=prettier-plugin-solidity \"contracts/**/*.sol\"",
+    "prettier:ts": "prettier --write \"tasks/actions/**/*.ts\" \"tasks/lib/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
     "test": "rm -rf deployments/hardhat && IS_TEST=true npx hardhat test",
     "test:base": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=base IS_TEST=true npx hardhat test",
     "test:sonic": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=sonic IS_TEST=true npx hardhat test",
@@ -73,9 +76,10 @@
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
-    "@aws-sdk/client-kms": "3.598.0",
+    "@aws-sdk/client-kms": "^3.675.0",
     "@aws-sdk/client-s3": "3.600.0",
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
+    "@lastdotnet/purrikey": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "1.0.9",
     "@nomicfoundation/hardhat-verify": "2.1.1",
     "@nomiclabs/hardhat-ethers": "2.2.3",
@@ -88,6 +92,8 @@
     "@rollup/plugin-commonjs": "29.0.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3 ",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "@uniswap/v3-core": "1.0.1",
     "@uniswap/v3-periphery": "1.4.3",
     "axios": "1.4.0",
@@ -118,9 +124,12 @@
     "solidity-bytes-utils": "0.8.4",
     "solidity-coverage": "0.8.14",
     "ssv-keys": "1.1.0",
-    "ssv-scanner": "github:bloxapp/ssv-scanner#v1.0.5",
+    "ssv-scanner": "github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f",
     "sync-fetch": "0.5.2",
-    "uuid": "9.0.1"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0",
+    "uuid": "9.0.1",
+    "viem": "^2.27.0"
   },
   "husky": {
     "hooks": {
@@ -136,7 +145,10 @@
     "@lodestar/state-transition": "^1.41.0",
     "@lodestar/types": "^1.41.0",
     "@lodestar/utils": "^1.41.0",
-    "origin-morpho-utils": "^0.1.1"
+    "@talos/client": "github:oplabs/talos#0a6ecc9c273561dfad4dbe69c3708f3521a1670b&path:packages/client",
+    "@types/pg": "^8.20.0",
+    "origin-morpho-utils": "^0.1.1",
+    "pg": "^8.20.0"
   },
   "resolutions": {
     "@openzeppelin/contracts": "4.4.2"

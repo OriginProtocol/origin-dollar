@@ -24,6 +24,7 @@
 ######################
 *.log
 *.sql
+!contracts/migrations/*.sql
 *.sqlite
 *.html
 

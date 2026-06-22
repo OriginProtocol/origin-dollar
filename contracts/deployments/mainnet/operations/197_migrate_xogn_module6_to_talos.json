@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "chainId": "1",
+  "createdAt": 1780930872,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0x046750A8106461d9826a8Ab32890B23753A5245e",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "bytes32",
+            "name": "role"
+          },
+          {
+            "type": "address",
+            "name": "account"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929",
+        "account": "0x739212d5bAfE6AAC8Be49a60B7d003bD41DBf38b"
+      }
+    },
+    {
+      "to": "0x046750A8106461d9826a8Ab32890B23753A5245e",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "bytes32",
+            "name": "role"
+          },
+          {
+            "type": "address",
+            "name": "account"
+          }
+        ],
+        "name": "revokeRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929",
+        "account": "0x4b91827516f79d6F6a1F292eD99671663b09169a"
+      }
+    }
+  ]
+}
