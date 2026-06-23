@@ -1,11 +1,11 @@
 # OUSD Credit Market — Working Context (handoff)
 
-_Last updated: 2026-06-22. Purpose: resume this research cold without re-deriving everything._
+_Last updated: 2026-06-23. Purpose: resume this research cold without re-deriving everything._
 
 ## TL;DR
 Research + tooling for an **OUSD Credit-Market AMO**: mint OUSD, supply it as the sole lender into a deposit-gated Morpho Vault V2, let borrowers post collateral and borrow OUSD; interest reaches OUSD holders as rebase yield, and everything withdrawn is **burned** (the book can only shrink). Smart-contract work landed in **PR #2927**. Most of my effort has been a **spread/feasibility analysis** (is there room to lend OUSD?) backed by a local Python charting script and three Notion docs.
 
-**Current verdict (2026-06-22):** little/no room on the blue-chip ETH/BTC markets; the **standout is `PT-stcUSD/USDC`** (and the non-dated spot `stcUSD/USDC`), the only USDC market whose borrow rate clears OUSD APY — consistent with the Metronome finding that a **yield-bearing stablecoin** is the right pilot collateral.
+**Feasibility verdict (2026-06-23):** sound mechanism, but **out-of-the-money today and size-constrained — keep built and dormant, don't deploy capital now.** OUSD's rebase makes its rate floor ≈ its own APY (~5%), so unlike non-rebasing msUSD it can't lend cheaply; only Ethereum yield-bearing **stablecoin** markets clear the 30d floor (and only ~flat after the peg haircut, partly Cap-airdrop-driven), while the markets that clear comfortably (Base cbXRP, HyperEVM HYPE) are the riskiest to unwind. **The binding limit is liquidity, not rate:** live extractable USDC is only ~$510K (Curve pool) + ~$2.7K (unreserved vault) → safe `mintCap` ~$100–250K. Flips positive only if OUSD/USDC liquidity gets multiples deeper or the Ethereum spread structurally reopens above the floor. (Full verdict added to the Feasibility Notion doc; also note the `burnForStrategy` `whenNotCapitalPaused` unwind gap to fix before any deploy.)
 
 ## Notion docs (canonical sources — fetch via Notion MCP, not WebFetch)
 1. **OUSD Credit Market Idea** (original spec) — https://app.notion.com/p/originprotocol/OUSD-Credit-Market-Idea-35a84d46f53c80799842c5d7278f75b7
@@ -49,36 +49,43 @@ Research + tooling for an **OUSD Credit-Market AMO**: mint OUSD, supply it as th
 The loop = borrow OUSD → dump on the Curve OUSD/USDC pool for USDC. Concerns: it **drains protocol-owned USDC** (the pool funds borrowers' exit), **converts liquid USDC backing into illiquid credit receivables**, can trigger **reflexive minting spirals** (credit-side, Curve-side, cross-AMO), and **LP flight shrinks the very liquidity the cap was sized against**. The credit AMO's "only shrink/burn" safety does NOT protect the pool (only repayment pulls borrowed OUSD back). Mitigations: cap on non-POL executable depth; unified cross-AMO mint budget; pool-imbalance-aware mint gate; correct Curve defense direction; sell-velocity monitoring (not just parked-share — closes the S1b gap); robust OUSD oracle in the markets so depeg can't suppress liquidations.
 
 ## Spread analysis tooling (scripts + this doc live in `brownie/scripts/` = trackable; `brownie/reports/` is gitignored, charts/data are regenerable)
-- **Main:** `brownie/scripts/ousd_credit_spread.py` → writes `overlay.png` (rates + bottom OUSD-peg strip), `spread.png`, `data.csv` to `brownie/reports/ousd-credit-spread/`.
+- **Main:** `brownie/scripts/ousd_credit_spread.py` → writes **3 per-class spread charts** `spread_stablecoin.png` (+ peg-adjusted dashed lines), `spread_eth.png`, `spread_btc.png`, plus `data.csv`, to `brownie/reports/ousd-credit-spread/`. Markets = OUSD's actual 13 (above), grouped by collateral class so no chart is overwhelming. Spread chart: 0-line = OUSD APY, green/amber/red floor band, teal peg-stress shading.
   - OUSD APY: DefiLlama pool `529258ee-9b27-4fcf-a32c-b82abb3fda68` (chart endpoint).
   - Morpho borrow: Blue API `https://blue-api.morpho.org/graphql` `marketById(...).historicalState.borrowApy` (DAY).
   - OUSD peg: CoinGecko `origin-dollar` market_chart (proxy for Curve pool); OUSD token `0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86`. Current Curve spot via Origin MCP `get_amo_pool_price`.
   - Aave/Compound: DefiLlama `/lendBorrow` CURRENT only (pools `aa70268e-…` / `7da72d09-…`); **historical-borrow endpoint is paywalled (402)**.
   - 30-day trailing smoothing; floor band green ≥+0.5 / amber 0–0.5 / red <0.
-- **Variants:** `brownie/scripts/ousd_credit_spread_pegvariants.py` → reads `data.csv` (no refetch), writes `spread_v1_shading.png` (teal peg-stress shading + rug), `spread_v2_panel.png` (spread + peg strip), `spread_v3_pegadj_{30,60,180}d.png` (peg-adjusted dashed pilot lines). User chose **V2 for Chart 2, the three V3 variants for Chart 3**.
+- **Variants (obsolete):** `ousd_credit_spread_pegvariants.py` produced the earlier all-markets V1/V2/V3 spread variants (shading / peg-panel / peg-adjusted hold-30-60-180). Superseded by the per-class split above — safe to delete. The peg-adjusted idea now lives inside the stablecoin chart.
 - **venv:** `/tmp/ousd-chart-venv/bin/python` (matplotlib+numpy). **May need recreating** if /tmp is cleared: `python3 -m venv /tmp/ousd-chart-venv && /tmp/ousd-chart-venv/bin/pip install matplotlib numpy`.
 - `FINDINGS.md` (older 2-market summary) also in the report dir.
 
-## Current snapshot (2026-06-22)
-OUSD APY spot **4.34%** / 30d **5.12%**. OUSD peg ~**0.9996** (Curve 0.9998 sell / 1.0000 buy — on peg). Spreads vs OUSD (spot / 30d), best first:
-- **PT-stcUSD/USDC** 5.03/5.50% → **+0.70 / +0.38** (only positive 30d; amber)
-- weETH/USDC ·77% 4.77/5.13% → +0.44 / +0.01 (at the line)
-- OETH/USDC (pilot) 4.74/5.04% → +0.41 / −0.09
-- WBTC·138M −0.56, cbBTC·264M −0.62, WETH −0.65, wstETH(pilot) −0.69, wstETH·46M/cbBTC·43M/WBTC·44M −0.73 (all 30d, red)
-- Aave 3.88%, Compound 3.94% (reference only)
+## Current read (moves daily — re-run before quoting)
+The **stablecoin class is the only one clearing the floor.** Latest 30d spreads vs OUSD APY (by class):
+- **Stablecoin:** PT-cUSD **+0.94**, stcUSD **+0.86**, PT-stcUSD **+0.37** (all clear floor); syrupUSDC −1.31. Peg-adjusted (30d hold) they tighten to ~flat: stcUSD +0.05, PT-cUSD +0.13, PT-stcUSD −0.44 → room is real but thin once peg-sourcing cost is priced in.
+- **ETH:** all sub-floor — OETH −0.10 (closest), weETH −0.36, wstETH −0.70 / −2.05.
+- **BTC:** all red — −0.48 … −2.05 (tBTC least negative).
+- OUSD peg healthy (~0.999, Curve on peg). Aave ~3.9% / Compound ~3.9% USDC borrow (reference only).
 
-## Markets tracked (Morpho Blue, mainnet, USDC loan) — marketIds
-- OETH/USDC (pilot): `0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e`
-- wstETH/USDC (pilot): `0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc`
-- cbBTC/USDC ·264M: `0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64`
-- WBTC/USDC ·138M: `0x3a85e619751152991742810df6ec69ce473daef99e28a64ab2340d7b7ccfee49`
-- WETH/USDC: `0x94b823e6bd8ea533b4e33fbc307faea0b307301bc48763acc4d4aa4def7636cd`
-- weETH/USDC ·77%: `0x34377fc4f617c51818e92c79df31ff270c6a91bc94ad32e367fdf59b9f4ac5dd`
-- wstETH/USDC ·46M (public-allocator): `0x7e585a933ffe8443c371b4f8cfeb4430f5f6a14c2f32a898c26662c67a1cb8b8`
-- WBTC/USDC ·44M: `0x09dc9e7eb5d8fc54b2bc41d1135fd4e99057a580f680321faeb90c7a21e631c1`
-- cbBTC/USDC ·43M: `0xbc99de6a88904cd0e69042ad6f266e63182801f030c636507c3caf590ffd84fe`
-- PT-stcUSD-23JUL2026/USDC: `0x2fb3713487c7812e7309935b034f40228841666f6b048faf31fd2110ae674f20`
-- spot **stcUSD/USDC** (non-dated, ~$4.39M, 91.5% LLTV, ~7.34% borrow): id not captured — find via Morpho `markets(where:{chainId_in:[1]})` filtering collateral symbol == "stcUSD".
+## Markets OUSD actually supports (Morpho Blue, mainnet, USDC loan) — marketIds
+Source of truth: the **OUSD V1 MetaMorpho vault `0x5B8b9FA8e4145eE06025F642cAdB1B47e5F39F04`**, which the **OUSD Vault V2 `0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960`** allocates 100% through (via a MetaMorpho adapter `0xD8F093…`). 13 markets + idle; **currently funded: OETH ~$3.05M + stcUSD ~$0.26M** (= the vault's ~$3.3M total). Grouped by collateral class (= how the charts are split):
+- **Stablecoin / yield-stable** (the pilot-relevant class):
+  - stcUSD/USDC (91.5%): `0xeb17955ea422baeddbfb0b8d8c9086c5be7a9cfdefb292119a102e981a30062e`  ← funded ~$0.26M; the non-dated spot stcUSD market
+  - PT-stcUSD-23JUL2026 (91.5%): `0x2fb3713487c7812e7309935b034f40228841666f6b048faf31fd2110ae674f20`
+  - PT-cUSD-23JUL2026 (91.5%): `0x702b7ec7628de2622e51e1bb34a7e6ad9e95f3a25a2ed361e4ce621f23f5e642`
+  - syrupUSDC/USDC (91.5%): `0x729badf297ee9f2f6b3f717b96fd355fc6ec00422284ce1968e76647b258cf44`
+- **ETH LSTs:**
+  - OETH/USDC (86%): `0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e`  ← funded ~$3.05M
+  - weETH/USDC (86%): `0x61765602144e91e5ac9f9e98b8584eae308f9951596fd7f5e0f59f21cd2bf664`
+  - wstETH/USDC (86%): `0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc`
+  - wstETH/USDC #2 (86%): `0x6d2fba32b8649d92432d036c16aa80779034b7469b63abc259b17678857f31c2`
+- **BTC:**
+  - WBTC/USDC (86%): `0x3a85e619751152991742810df6ec69ce473daef99e28a64ab2340d7b7ccfee49`
+  - cbBTC/USDC (86%): `0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64`
+  - cbBTC/USDC #2 (86%): `0xba3ba077d9c838696b76e29a394ae9f0d1517a372e30fd9a0fc19c516fb4c5a7`
+  - LBTC/USDC (86%): `0xbf02d6c6852fa0b8247d5514d0c91e6c1fbde9a168ac3fd2033028b5ee5ce6d0`
+  - tBTC/USDC (77%): `0xe4cfbee9af4ad713b41bf79f009ca02b17c001a0c0e7bd2e6a89b1111b3d3f08`
+
+**⚠️ Corrected 2026-06-22:** the first chart set used a generic blue-chip screenshot, not OUSD's book. 5 were the WRONG markets and were dropped: WETH/USDC (`0x94b823…`, OUSD has no WETH), weETH ·77% (`0x34377f…`, OUSD uses the 86% one), and public-allocator dups WBTC ·44M (`0x09dc9e…`), wstETH ·46M (`0x7e585a…`), cbBTC ·43M (`0xbc99de…`). Only 5 of the original 10 were genuine OUSD markets.
 
 ## stcUSD & Pendle
 - **stcUSD = Cap protocol's** yield-bearing stablecoin (staked cUSD); reserves deployed mainly into Aave; heavy airdrop farm ("Caps" points). So demand is partly incentive-driven (may thin at Cap TGE).
