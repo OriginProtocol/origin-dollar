@@ -81,37 +81,47 @@ ETH on the strategy is **never** counted in `checkBalance` — `checkBalance`
 only reads bridge-asset-denominated slots. Sweep via
 `transferNative(amount) onlyGovernor`.
 
+### Diagram conventions
+
+In the sequence diagrams below:
+
+- **Solid arrows** (`A->>B: call(...)`) are function calls or cross-chain messages.
+- **Arrows tagged `«asset N»`** are ERC20 token movements (a `transfer` / `transferFrom`),
+  drawn from the party that gives up the asset to the party that receives it. To keep the
+  diagrams readable the token contract is not drawn as its own lifeline.
+- **`actor`** lifelines are EOAs (operator, users); **`participant`** lifelines are contracts.
+
 ---
 
 ## 2. Topology
 
 ### OETHb (single pair)
 
-```
-                          BASE                          │      ETHEREUM
-                                                        │
-   L2 OETHb vault                                       │
-        │                                               │
-        ▼                                               │
-   ┌─────────────┐    CCIPAdapter outbound        ┌─────────────┐
-   │   Master    │──────────────────────────────▶│ CCIPAdapter │
-   │  (Base)     │     (yield + bridge channel    │ (Ethereum)  │
-   │             │      messages; native fee)     │   inbound   │
-   │             │◀─────────────────────────────  │             │
-   │             │  SuperbridgeAdapter inbound    │             │
-   │             │  (split delivery: CCIP msg     │             │
-   │             │   + L1StandardBridge ETH)      │             │
-   └─────────────┘                                 └─────────────┘
-                                                          │
-                                                          ▼
-                                                    ┌──────────┐
-                                                    │  Remote  │──holds──▶ wOETH shares
-                                                    │(Ethereum)│           (earning OETH yield)
-                                                    └──────────┘
-                                                          │
-                                                          ▼
-                                                    OETH vault on Ethereum
-                                                    (mint/redeem OETH ↔ WETH)
+```mermaid
+flowchart LR
+    subgraph BASE
+        L2V[L2 OETHb vault]
+        Master[Master Strategy]
+        CCIPb[CCIPAdapter<br/>Base]
+        Superb[SuperbridgeAdapter<br/>Base]
+    end
+    subgraph ETHEREUM
+        CCIPe[CCIPAdapter<br/>Ethereum]
+        Supere[SuperbridgeAdapter<br/>Ethereum]
+        Remote[Remote Strategy]
+        wOETH[wOETH 4626]
+        OEV[OETH vault]
+    end
+
+    L2V --> Master
+    Master -->|outbound: msgs + WETH via CCIP| CCIPb
+    CCIPb -->|CCIP| CCIPe
+    CCIPe --> Remote
+    Remote -->|outbound: msg via CCIP,<br/>ETH via canonical bridge| Supere
+    Supere -->|split delivery| Superb
+    Superb --> Master
+    Remote -->|holds| wOETH
+    Remote -->|mint/redeem OETH ↔ WETH| OEV
 ```
 
 Adapters: `CCIPAdapter` (both sides) and `SuperbridgeAdapter` (both sides; L1
@@ -124,30 +134,25 @@ sub-OUSD vault lives); Remote on Ethereum (where the wOUSD yield wrapper
 lives). One pair per spoke. CCTPAdapter on each chain handles both directions
 of that lane atomically.
 
-```
-                                       ETHEREUM (hub)
-                            ┌─────────────────────────────────┐
-                            │   OUSD vault                    │
-                            │       │                         │
-                            │       │ mint/redeem             │
-                            │       ▼                         │
-                            │  Remote_Base ── holds ──▶ wOUSD │   ← yield-earning
-                            │  Remote_Hyper ── holds ──▶ wOUSD│      wrapper of OUSD
-                            │  Remote_Sonic ── holds ──▶ wOUSD│
-                            └────────┬────────┬────────┬──────┘
-                                     │        │        │
-                                  CCTP      CCTP     CCTP
-                                     │        │        │
-              ┌──────────────────────┘        │        └──────────────────────┐
-              ▼                               ▼                               ▼
-       ┌─────────────┐                 ┌─────────────┐                 ┌─────────────┐
-       │ BASE        │                 │ HYPER       │                 │ SONIC       │
-       │  sub-OUSD   │                 │  sub-OUSD   │                 │  sub-OUSD   │
-       │  vault      │                 │  vault      │                 │  vault      │
-       │      │      │                 │      │      │                 │      │      │
-       │      ▼      │                 │      ▼      │                 │      ▼      │
-       │  Master     │                 │  Master     │                 │  Master     │
-       └─────────────┘                 └─────────────┘                 └─────────────┘
+```mermaid
+flowchart TB
+    subgraph ETHEREUM [ETHEREUM hub]
+        OUSDV[OUSD vault]
+        RB[Remote Strategy<br/>Base] --> wB[wOUSD]
+        RH[Remote Strategy<br/>Hyper] --> wH[wOUSD]
+        RS[Remote Strategy<br/>Sonic] --> wS[wOUSD]
+        OUSDV -.->|mint/redeem| RB
+        OUSDV -.->|mint/redeem| RH
+        OUSDV -.->|mint/redeem| RS
+    end
+    subgraph SPOKES [Spoke chains]
+        MB[Master Strategy<br/>Base sub-OUSD vault]
+        MH[Master Strategy<br/>Hyper sub-OUSD vault]
+        MS[Master Strategy<br/>Sonic sub-OUSD vault]
+    end
+    MB <-->|CCTP| RB
+    MH <-->|CCTP| RH
+    MS <-->|CCTP| RS
 ```
 
 Each spoke gets its own (Master, Remote) pair. Remote lives on Ethereum
@@ -169,37 +174,40 @@ single transaction that lands tokens on Master.
 sequenceDiagram
     autonumber
     participant Vault as L2 Vault
-    participant Master
+    participant Master as Master Strategy
     participant Adapter as CCIPAdapter (Base, Master outbound)
     participant Bridge as CCIP DON
     participant AdapterEth as CCIPAdapter (Eth, Remote inbound)
-    participant Remote
+    participant Remote as Remote Strategy
     participant OEV as OETH Vault (Ethereum)
     participant wOETH as wOETH (4626)
     participant SuperEth as SuperbridgeAdapter (Eth, Remote outbound)
     participant SuperBase as SuperbridgeAdapter (Base, Master inbound)
 
     Note over Master: state: lastYieldNonce=N
+    Vault->>Master: «WETH X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(bridgeAsset, X)
     Note over Master,Vault: Master.deposit is non-payable.<br/>msg.value = 0 by construction.
     Master->>Master: _getNextYieldNonce → N+1
     Master->>Master: pendingDepositAmount = X
-    Master->>Master: approve adapter for X
     Master->>Adapter: sendMessageAndTokens(WETH, X, payload[DEPOSIT, N+1, ""])
+    Master->>Adapter: «WETH X» (adapter pulls via standing max allowance)
     Note over Master,Adapter: _send (userFunded=false): pool funds CCIP fee from<br/>address(this).balance. quoteFee returns (fee, native, true).
-    Adapter->>Adapter: pull WETH, build CCIP message
-    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg)
+    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg) [WETH bridged over CCIP]
     Bridge-->>AdapterEth: ccipReceive (DON pushes)
     AdapterEth->>AdapterEth: _validateInbound:<br/>transportSender == address(this) (peer parity)<br/>sourceChain == BASE_SELECTOR<br/>authorised[Remote] == true<br/>!cfg.paused
+    AdapterEth->>Remote: «WETH X» transfer (adapter delivers tokens first)
     AdapterEth->>Remote: receiveMessage(Remote, WETH, X, payload)
     Remote->>Remote: unpackPayload → (DEPOSIT, N+1, "")
-    Remote->>OEV: mint(X) [pulls WETH]
-    OEV-->>Remote: OETH minted
-    Remote->>wOETH: deposit(OETHbalance, Remote)
-    wOETH-->>Remote: shares minted
+    Remote->>OEV: mint(X)
+    Remote->>OEV: «WETH X» (vault pulls WETH on mint)
+    OEV-->>Remote: «OETH X» minted
+    Remote->>wOETH: deposit(OETH balance, Remote)
+    Remote->>wOETH: «OETH X» (wrapper pulls OETH on deposit)
+    wOETH-->>Remote: «wOETH shares» minted
     Remote->>Remote: yieldBaseline = _viewCheckBalance()
     Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
-    Note over Remote,SuperEth: Remote's outbound = SuperbridgeAdapter on Eth.<br/>Message-only path goes via CCIP under the hood<br/>(no canonical leg). Pool funds the fee.
+    Note over Remote,SuperEth: Remote's configured outbound is the SuperbridgeAdapter. A message-only<br/>send (no tokens) rides purely its CCIP leg (_sendMessage → _sendCCIPMessage,<br/>no canonical bridge). Adapters are swappable: pointing Remote's outbound at the<br/>plain CCIPAdapter also works (atomic; pays the CCIP token fee on token-bearing legs).<br/>Pool funds the fee.
     Remote->>Remote: _acceptYieldNonce(N+1)<br/>lastYieldNonce=N+1, nonceProcessed=true
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
@@ -213,8 +221,8 @@ sequenceDiagram
 - `lastYieldNonce: N → N+1`
 - `pendingDepositAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
   disappear during the bridge round trip)
-- WETH allowance to `outboundAdapter`: `0 → X`
-- `Master.WETH balance: X → 0` (pulled by adapter)
+- `Master.WETH balance: X → 0` (pulled by the outbound adapter via its standing max allowance)
+- `outboundAdapter.WETH balance: 0 → X → 0` (held momentarily, then handed to the CCIP router)
 
 **Phase 2 — `Remote._processDeposit(N+1, X)` (Ethereum):**
 - WETH consumed by OETH vault mint; OETH wrapped to wOETH.
@@ -231,6 +239,50 @@ mid-flight = X (pendingDepositAmount) + B (stale remoteStrategyBalance), post-ac
 yieldBaseline ≈ B + X.
 
 ### OUSD V3 differences
+
+The same choreography over CCTP — atomic burn+mint instead of CCIP, and every inbound is
+operator-relayed:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Vault as Spoke sub-OUSD Vault
+    participant Master as Master Strategy
+    actor Op as Operator
+    participant Adapter as CCTPAdapter (spoke)
+    participant CCTP as Circle CCTP
+    participant AdapterEth as CCTPAdapter (Ethereum)
+    participant Remote as Remote Strategy
+    participant OUV as OUSD Vault (Ethereum)
+    participant wOUSD as wOUSD (4626)
+
+    Vault->>Master: «USDC X» transfer (vault funds the strategy first)
+    Vault->>Master: deposit(USDC, X)
+    Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
+    Master->>Adapter: «USDC X» (adapter pulls)
+    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false).<br/>Native fee 0; msg.value = 0, no pool needed.
+    Adapter->>CCTP: depositForBurnWithHook(X) [burns USDC; hook carries the envelope]
+    Note over Op: polls for Circle's attestation
+    Op->>AdapterEth: relay(message, attestation)
+    AdapterEth->>AdapterEth: decodeBurnBody → amount, feeExecuted, envelope<br/>messageTransmitter.receiveMessage → mints USDC to adapter
+    AdapterEth->>Remote: «USDC landed» transfer (landed = min(mint, amount − feeExecuted))
+    AdapterEth->>Remote: receiveMessage(Remote, USDC, landed, payload)
+    Remote->>OUV: mint(landed)
+    Remote->>OUV: «USDC landed» (vault pulls on mint)
+    OUV-->>Remote: «OUSD» minted
+    Remote->>wOUSD: deposit(OUSD balance, Remote)
+    Remote->>wOUSD: «OUSD» (wrapper pulls on deposit)
+    wOUSD-->>Remote: «wOUSD shares» minted
+    Remote->>Remote: yieldBaseline = _viewCheckBalance()
+    Remote->>AdapterEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
+    Note over Remote,AdapterEth: DEPOSIT_ACK is a pure message (intendedAmount = 0):<br/>messageTransmitter.sendMessage, no token leg.
+    AdapterEth->>CCTP: sendMessage (message-only)
+    Op->>Adapter: relay(message, attestation) [spoke side]
+    Adapter->>Master: receiveMessage(Master, 0, 0, payload)
+    Master->>Master: _processDepositAck:<br/>remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
+```
+
+Key differences:
 
 - Outbound adapter: `CCTPAdapter`. `quoteFee` returns `(getMinFeeAmount(X),
   USDC, false)` — native fee 0, token-side fee handled by CCTP itself.
@@ -274,12 +326,12 @@ leg 2 after the OToken vault's withdrawal queue has matured.
 sequenceDiagram
     autonumber
     participant Vault as L2 Vault
-    participant Master
-    participant Op as Operator
+    participant Master as Master Strategy
+    actor Op as Operator
     participant Adapter as CCIPAdapter (Base)
     participant Bridge as CCIP DON
     participant AdapterEth as CCIPAdapter (Eth, Master→Remote inbound)
-    participant Remote
+    participant Remote as Remote Strategy
     participant OEV as OETH Vault (Ethereum)
     participant wOETH as wOETH (4626)
     participant SuperEth as SuperbridgeAdapter (Eth, Remote outbound)
@@ -295,14 +347,16 @@ sequenceDiagram
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
     Remote->>wOETH: withdraw(amount, Remote, Remote) [unwrap shares to OETH]
+    wOETH-->>Remote: «OETH A» unwrapped
     Remote->>OEV: requestWithdrawal(amount)
+    Remote->>OEV: «OETH A» queued for withdrawal
     OEV-->>Remote: requestId
     Note over Remote: outstandingRequestId = requestId<br/>outstandingRequestAmount = amount
 
     Note over Master,Remote: ─── Phase B: Remote sends WITHDRAW_REQUEST_ACK ───
     Remote->>Remote: yieldBaseline = _viewCheckBalance()
     Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline)])
-    Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only → uses CCIP under the hood.
+    Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only rides its CCIP leg (no canonical bridge).
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
@@ -320,18 +374,20 @@ sequenceDiagram
     AdapterEth->>Remote: receiveMessage(...)
     Remote->>Remote: _opportunisticClaim()
     Remote->>OEV: claimWithdrawal(requestId)
-    OEV-->>Remote: bridgeAsset (claimed)
-    Note over Remote: outstandingRequestId = 0<br/>outstandingRequestAmount = claimed
+    OEV-->>Remote: «WETH claimed» paid out
+    Note over Remote: claimed = the WETH the vault actually paid out<br/>outstandingRequestId = 0<br/>outstandingRequestAmount = claimed (refined to the payout)
     alt claim succeeded and tokens are in hand
         Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
+        Remote->>SuperEth: «WETH claimed» (adapter pulls)
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
-        SuperEth-->>SuperBase: canonical bridge delivers ETH (receive() wraps to WETH on Base side)
+        SuperEth-->>SuperBase: «ETH claimed» canonical bridge (receive() wraps to WETH on Base)
         SuperEth-->>SuperBase: ccipReceive delivers the envelope
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
+        SuperBase->>Master: «WETH claimed» transfer (adapter delivers tokens first)
         SuperBase->>Master: receiveMessage(Master, WETH, claimed, payload)
         Master->>Master: _processWithdrawClaimAck success:<br/>_markYieldNonceProcessed(N+2)<br/>pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = yieldBaseline
-        Master->>Vault: transfer(WETH, claimed)
-        Note over Master: emit Withdrawal(WETH, WETH, claimed)
+        Master->>Vault: «WETH» transfer (forwards its full bridgeAsset balance)
+        Note over Master: safeTransfer(vaultAddress, balanceOf(this))<br/>emit Withdrawal(WETH, WETH, claimed)
     else queue not yet matured (NACK)
         Remote->>SuperEth: sendMessage(payload[WITHDRAW_CLAIM_ACK, N+2, ack(false)])
         SuperEth->>Bridge: ccipSend
@@ -410,6 +466,58 @@ request is outstanding, and `0` once claimed).
 
 ### OUSD V3 differences
 
+The same two-leg cycle over CCTP — message-only legs plus an atomic burn+mint claim, every
+inbound operator-relayed:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Vault as Spoke sub-OUSD Vault
+    participant Master as Master Strategy
+    actor Op as Operator
+    participant Adapter as CCTPAdapter (spoke)
+    participant CCTP as Circle CCTP
+    participant AdapterEth as CCTPAdapter (Ethereum)
+    participant Remote as Remote Strategy
+    participant OUV as OUSD Vault (Ethereum)
+    participant wOUSD as wOUSD (4626)
+
+    Note over Master,Remote: ─── Leg 1: request (message-only) ───
+    Vault->>Master: withdraw(vault, USDC, amount)
+    Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, amount])
+    Adapter->>CCTP: sendMessage (message-only, native fee 0)
+    Op->>AdapterEth: relay(message, attestation)
+    AdapterEth->>Remote: receiveMessage(...)
+    Remote->>wOUSD: withdraw(amount) [unwrap to OUSD]
+    Remote->>OUV: requestWithdrawal(amount) → requestId
+    Remote->>AdapterEth: sendMessage(WITHDRAW_REQUEST_ACK, yieldBaseline)
+    AdapterEth->>CCTP: sendMessage (message-only)
+    Op->>Adapter: relay(message, attestation) [spoke side]
+    Adapter->>Master: receiveMessage(...) → remoteStrategyBalance = yieldBaseline
+
+    Note over Master,Remote: ─── queue delay (~30 min for OUSD) ───
+
+    Note over Master,Remote: ─── Leg 2: claim (atomic burn+mint, carries tokens) ───
+    Op->>Master: triggerClaim()
+    Master->>Adapter: sendMessage(payload[WITHDRAW_CLAIM, N+2, ""])
+    Adapter->>CCTP: sendMessage (message-only)
+    Op->>AdapterEth: relay(message, attestation)
+    AdapterEth->>Remote: receiveMessage(...)
+    Remote->>OUV: claimWithdrawal(requestId)
+    OUV-->>Remote: «USDC claimed» paid out
+    Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, [WITHDRAW_CLAIM_ACK, N+2, ack(true)])
+    Remote->>AdapterEth: «USDC claimed» (adapter pulls)
+    AdapterEth->>CCTP: depositForBurnWithHook(claimed) [burns USDC + hook, atomic]
+    Op->>Adapter: relay(message, attestation) [spoke side]
+    Adapter->>Adapter: messageTransmitter.receiveMessage → mints USDC to adapter
+    Adapter->>Master: «USDC landed» transfer (landed = min(mint, claimed − feeExecuted))
+    Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
+    Master->>Vault: «USDC» transfer (forwards its full bridgeAsset balance)
+    Note over Master: pendingWithdrawalAmount = 0<br/>emit Withdrawal(USDC, USDC, landed)
+```
+
+Key differences:
+
 - Both legs use CCTP. Leg-2 (`WITHDRAW_CLAIM_ACK` with tokens) is atomic —
   CCTP burns USDC + carries the hook payload in one shot, mints on destination
   on `relay`.
@@ -437,12 +545,12 @@ other yield ops.
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Op as Operator
-    participant Master
+    actor Op as Operator
+    participant Master as Master Strategy
     participant Adapter as Outbound (Base→ETH)
     participant Bridge as CCIP DON
     participant AdapterEth as Inbound (ETH side)
-    participant Remote
+    participant Remote as Remote Strategy
     participant ReturnA as Outbound (ETH→Base)
     participant ReturnB as Inbound (Base side)
 
@@ -534,21 +642,22 @@ configurable `bridgeFeeBps` as protocol yield.
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Alice as User (Alice)
-    participant Master
+    actor Alice as User (Alice)
+    participant Master as Master Strategy
     participant L2V as L2 OETHb Vault
     participant Adapter as CCIPAdapter (Base)
     participant Bridge as CCIP DON
     participant AdapterEth as CCIPAdapter (Ethereum)
-    participant Remote
+    participant Remote as Remote Strategy
     participant wOETH as wOETH (4626)
-    participant OETH as OETH ERC20
+    actor AliceEth as Alice (Ethereum)
 
     Alice->>Master: approve(Master, X) [OETHb]
     Alice->>Master: bridgeOTokenToPeer{value: fee}(X, alice_eth, "0x", 0)
     Master->>Master: fee = X * bridgeFeeBps / 10_000<br/>net = X - fee<br/>require(net > 0)
     Master->>Master: liquidity gate:<br/>require(net <= availableBridgeLiquidity())<br/>(rsb + bridgeAdjustment - pendingWithdrawalAmount)
-    Master->>L2V: burnForStrategy(X) [pulled X OETHb from Alice]
+    Master->>L2V: burnForStrategy(X)
+    Alice-->>L2V: «OETHb X» pulled from Alice & burned
     Note over Master: bridgeAdjustment -= net (NOT -= X)<br/>bridgeIdCounter += 1<br/>bridgeId = keccak256(strategy, counter)
     Master->>Master: _send(userFunded=true):<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
     Master->>Adapter: sendMessage{value: fee}(payload[BRIDGE_OUT, 0, BridgeUserPayload{<br/>  bridgeId, amount=net, recipient=alice_eth, callData, callGasLimit<br/>}])
@@ -558,8 +667,8 @@ sequenceDiagram
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Remote->>Remote: unpack → BRIDGE_OUT, decode BridgeUserPayload<br/>require(!consumedBridgeIds[bridgeId])<br/>consumedBridgeIds[bridgeId] = true<br/>bridgeAdjustment -= net
     Remote->>wOETH: withdraw(net, Remote, Remote) [shares→OETH]
-    wOETH-->>Remote: OETH (net)
-    Remote->>OETH: transfer(alice_eth, net)
+    wOETH-->>Remote: «OETH net» unwrapped
+    Remote->>AliceEth: «OETH net» transfer
     Note over Remote: emit BridgeDelivered(bridgeId, alice_eth, net)
     opt callData provided
         Remote->>Remote: _postDeliveryCall(p):<br/>recipient.call{value:0, gas:p.callGasLimit}(p.callData)
@@ -647,12 +756,12 @@ settlement is no longer correctness-critical, just hygiene.
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Op as Operator
-    participant Master
+    actor Op as Operator
+    participant Master as Master Strategy
     participant Adapter as Outbound
     participant Bridge as CCIP DON
     participant AdapterEth as Inbound (ETH)
-    participant Remote
+    participant Remote as Remote Strategy
     participant ReturnA as Outbound (ETH→Base)
     participant ReturnB as Inbound (Base)
 
@@ -866,6 +975,7 @@ accept inbound (pure-message) deliveries; the difference is the finality gate:
 | **remoteStrategyBalance** | Master's cached snapshot of Remote's `_viewCheckBalance` minus Remote's `bridgeAdjustment` (i.e., yield-only baseline). Updated by balance check and settlement acks. |
 | **pendingDepositAmount** | Master's in-flight deposit value. Counts in `checkBalance` so vault doesn't see backing dip during bridge round-trip. |
 | **pendingWithdrawalAmount** | Master's in-flight withdrawal amount. Gates concurrent ops; NOT in `checkBalance` (value is already in `remoteStrategyBalance` until claim ack). |
+| **claimed** | The bridgeAsset the OToken vault actually paid out on `claimWithdrawal(requestId)` (`RemoteWOTokenStrategy._opportunisticClaim`). `outstandingRequestAmount` is refined to it so leg-2 ships exactly the vault's payout, not the originally-requested amount. |
 | **settlementSnapshot** | `bridgeAdjustment` value captured at request time, persisted on Master so the ack handler can subtract exactly that delta. Preserves in-flight bridge ops. |
 | **lastBalanceCheckTimestamp** | Most recently accepted balance check timestamp. Enforces strict monotonic ordering across out-of-order CCIP delivery. |
 | **bridgeId** | `keccak256(strategy, counter)`. Unique per user bridge op. Recorded in `consumedBridgeIds[bridgeId]` on destination for replay protection. |
