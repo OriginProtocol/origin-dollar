@@ -379,6 +379,32 @@ power, and the only bounded levers (`bridgeFeeBps <= 1000` with `net > 0`; the
 per-tx `maxTransferAmount` cap) constrain the operator/economic paths, not the
 governor.
 
+### 3.13 We bridge messages + the backing asset, never the OToken or wOToken
+
+**Decision.** No OToken or wOToken ever crosses the bridge. What moves differs
+by channel:
+- **Yield channel** (operator deposit / withdraw): the strategy bridges the
+  **backing asset** (WETH / USDC) plus a message. Remote mints OToken from that
+  asset at the local OToken vault and wraps it to wOToken; on withdraw it
+  unwraps, redeems to the backing asset, and bridges the asset back.
+- **Bridge channel** (user `bridgeOTokenToPeer`): the source **burns** the
+  user's OToken and sends a message only (no token transfer); the destination
+  **mints** `net = amount - fee` fresh OToken to the recipient.
+
+**Why.** Bridging the rebasing OToken directly would force every chain to track
+the other's rebase, and the in-flight value would be ambiguous while a rebase
+lands mid-transit. Burning + re-minting sidesteps that: the OToken supply is
+authoritative per chain, and value-in-transit is carried as the backing asset
+(yield channel) or as an accounting delta (`bridgeAdjustment`, bridge channel).
+A side effect — by design — is that a user who bridges does **not** earn the
+OToken's appreciation during transit: they receive `net`, and the retained
+`fee` plus any in-flight appreciation accrues to the protocol as yield (the
+burn-full / deliver-net mechanic; see §3.6 and `FLOWS.md` §6). This is the
+intended behaviour, not a loss path.
+
+See the OUSD V3 spec for the OToken-vs-wOToken bridging design decision:
+https://app.notion.com/p/originprotocol/OUSD-V3-Spec-33c84d46f53c807c80c2c187e0c6c2df
+
 ---
 
 ## 4. Caveats & operational concerns

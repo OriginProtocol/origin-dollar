@@ -94,7 +94,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     );
 
     /// @dev Reserved for future expansion of this abstract layer (proxy upgradeable).
-    uint256[44] private __gap;
+    uint256[50] private __gap;
 
     constructor() {
         // For standalone deployments (tests, scratch). When behind a proxy, the proxy's

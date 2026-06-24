@@ -34,6 +34,13 @@ contract MockEthOTokenVault {
     /// @notice Optional delay applied to async withdrawal claims (seconds). Default 0 = instant.
     uint256 public withdrawalClaimDelay;
 
+    /// @notice TEST-ONLY: when true, `mint` reverts — mirrors a paused / disabled vault so the
+    ///         Remote deposit handler's revert-free path can be exercised.
+    bool public revertOnMint;
+    /// @notice TEST-ONLY: when true, `requestWithdrawal` reverts — mirrors a paused withdrawal
+    ///         queue so the Remote withdraw-request handler's failure path can be exercised.
+    bool public revertOnRequestWithdrawal;
+
     struct WithdrawalRequest {
         address owner;
         uint256 amount; // asset-decimals payout
@@ -66,6 +73,16 @@ contract MockEthOTokenVault {
         withdrawalClaimDelay = _delay;
     }
 
+    /// @notice TEST-ONLY: toggle whether `mint` reverts.
+    function setRevertOnMint(bool _revert) external {
+        revertOnMint = _revert;
+    }
+
+    /// @notice TEST-ONLY: toggle whether `requestWithdrawal` reverts.
+    function setRevertOnRequestWithdrawal(bool _revert) external {
+        revertOnRequestWithdrawal = _revert;
+    }
+
     /// @notice TEST-ONLY: seed the next requestId. Set to 0 to mimic a fresh vault whose
     ///         first-ever withdrawal returns requestId 0 (exercises the Remote offset-by-one).
     function setNextRequestId(uint256 _id) external {
@@ -76,6 +93,7 @@ contract MockEthOTokenVault {
 
     /// @param _amount Amount of bridgeAsset deposited (asset decimals). Mints scaled OToken.
     function mint(uint256 _amount) external {
+        require(!revertOnMint, "MockEthVault: mint disabled");
         IERC20(bridgeAsset).safeTransferFrom(
             msg.sender,
             address(this),
@@ -104,6 +122,10 @@ contract MockEthOTokenVault {
         external
         returns (uint256 id, uint256 queued)
     {
+        require(
+            !revertOnRequestWithdrawal,
+            "MockEthVault: withdrawals disabled"
+        );
         // Burn the OToken upfront, mirroring the real vault flow.
         oToken.burn(msg.sender, _oTokenAmount);
         uint256 assetAmount = _oTokenAmount.scaleBy(

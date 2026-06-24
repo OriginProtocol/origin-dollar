@@ -38,6 +38,14 @@ contract MockOTokenVault {
         strategistAddr = _strategist;
     }
 
+    /// @notice TEST-ONLY: mint OToken to an arbitrary holder, mirroring a real user deposit
+    ///         (the vault minting OToken against collateral). Lets a test give a user OToken
+    ///         that did NOT come from a bridge-in, so a BRIDGE_OUT can drive `bridgeAdjustment`
+    ///         negative.
+    function mintOTokenTo(address _to, uint256 _amount) external {
+        oToken.mint(_to, _amount);
+    }
+
     function whitelistStrategy(address _strategy) external {
         isMintWhitelistedStrategy[_strategy] = true;
         emit StrategyWhitelisted(_strategy);

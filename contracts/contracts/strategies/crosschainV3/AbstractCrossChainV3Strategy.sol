@@ -64,7 +64,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     uint256 public lastBalanceCheckTimestamp;
 
     /// @dev Reserved for future expansion of this abstract layer.
-    uint256[43] private __gap;
+    uint256[50] private __gap;
 
     // --- Modifiers ----------------------------------------------------------
 

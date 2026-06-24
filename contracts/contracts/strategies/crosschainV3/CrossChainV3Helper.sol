@@ -99,7 +99,7 @@ library CrossChainV3Helper {
     // DEPOSIT                       : payload empty; amount is carried by the adapter
     // DEPOSIT_ACK                   : payload = abi.encode(yieldBaseline)
     // WITHDRAW_REQUEST              : payload = abi.encode(amount)
-    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(yieldBaseline)
+    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(yieldBaseline, success)
     // WITHDRAW_CLAIM                : payload empty
     // WITHDRAW_CLAIM_ACK            : payload = abi.encode(yieldBaseline, success, amount)
     // BALANCE_CHECK_REQUEST         : payload = abi.encode(timestamp)
@@ -110,8 +110,8 @@ library CrossChainV3Helper {
 
     /**
      * @notice Encode a single-`uint256` payload — shared by every message whose body is one
-     *         uint256: DEPOSIT_ACK / WITHDRAW_REQUEST_ACK / SETTLE_BRIDGE_ACCOUNTING_ACK (a
-     *         balance), WITHDRAW_REQUEST (an amount), BALANCE_CHECK_REQUEST (a timestamp).
+     *         uint256: DEPOSIT_ACK / SETTLE_BRIDGE_ACCOUNTING_ACK (a balance),
+     *         WITHDRAW_REQUEST (an amount), BALANCE_CHECK_REQUEST (a timestamp).
      */
     function encodeUint256(uint256 value) internal pure returns (bytes memory) {
         return abi.encode(value);
@@ -154,6 +154,29 @@ library CrossChainV3Helper {
         )
     {
         return abi.decode(payload, (uint256, bool, uint256));
+    }
+
+    /**
+     * @notice Encode the WITHDRAW_REQUEST_ACK payload.
+     * @param yieldBaseline Remote's yield-only baseline (OToken 18dp) after the leg-1 request.
+     * @param success    `true` if Remote queued the withdrawal; `false` if the unwrap/queue failed
+     *                   (Remote queued nothing, so Master must clear its pending withdrawal and the
+     *                   two-leg flow does not proceed to a claim).
+     */
+    function encodeWithdrawRequestAckPayload(
+        uint256 yieldBaseline,
+        bool success
+    ) internal pure returns (bytes memory) {
+        return abi.encode(yieldBaseline, success);
+    }
+
+    /// @notice Decode the WITHDRAW_REQUEST_ACK 2-tuple payload.
+    function decodeWithdrawRequestAckPayload(bytes memory payload)
+        internal
+        pure
+        returns (uint256 yieldBaseline, bool success)
+    {
+        return abi.decode(payload, (uint256, bool));
     }
 
     /// @notice Encode the BALANCE_CHECK_RESPONSE payload (balance + originating ts).

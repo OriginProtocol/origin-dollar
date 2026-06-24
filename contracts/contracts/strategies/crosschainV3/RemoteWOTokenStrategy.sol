@@ -71,6 +71,16 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     );
     event WithdrawClaimNack(uint64 nonce, uint256 yieldBaseline);
     event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
+    /// @dev DEPOSIT mint/wrap reverted; bridgeAsset/oToken left idle (recoverable via retryDeposit).
+    event DepositUnderlyingFailed(uint64 nonce, uint256 amount, bytes reason);
+    /// @dev WITHDRAW_REQUEST unwrap/queue reverted; nothing queued, Master told to clear pending.
+    event WithdrawRequestUnderlyingFailed(
+        uint64 nonce,
+        uint256 amount,
+        bytes reason
+    );
+    /// @dev Operator re-ran the mint/wrap pipeline on idle bridgeAsset/oToken.
+    event IdleDepositRetried(uint256 mintedBridgeAsset, uint256 wrappedOToken);
 
     // --- Construction / initialisation -------------------------------------
 
@@ -94,6 +104,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         );
         woToken = _woToken;
         oTokenVault = _oTokenVault;
+        // This is an implementation contract. The governor is set in the proxy contract.
+        _setGovernor(address(0));
     }
 
     function initialize(address _operator) external onlyGovernor initializer {
@@ -284,31 +296,49 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         // and the OToken-vault queue operate in OToken (18dp) units.
         uint256 oTokenAmount = _toOToken(amount);
 
-        // Unwrap wOToken → OToken to satisfy the queue request.
-        uint256 sharesNeeded = IERC4626(woToken).previewWithdraw(oTokenAmount);
-        require(
-            IERC20(woToken).balanceOf(address(this)) >= sharesNeeded,
-            "Remote: insufficient shares"
-        );
-        IERC4626(woToken).withdraw(oTokenAmount, address(this), address(this));
+        // Unwrap + queue can revert (insufficient shares, vault queue paused, 4626 edge). A revert
+        // must NOT brick the serialized channel, so each external call is guarded individually
+        // (mirrors crosschain/CrossChainRemoteStrategy). On failure we queue nothing and tell Master
+        // success=false so it clears its pending withdrawal; the next op can proceed. 291's gate makes
+        // the insufficient-shares case unreachable in normal flow — this covers the residual reverts.
+        // Non-atomic: if the unwrap succeeds but the queue fails, the unwrapped OToken is left idle
+        // here (counted by _viewCheckBalance, re-wrappable via retryDeposit) rather than rolled back.
+        bool success = false;
+        uint256 requestId = 0;
+        bool unwrapped = false;
+        try
+            IERC4626(woToken).withdraw(
+                oTokenAmount,
+                address(this),
+                address(this)
+            )
+        returns (uint256) {
+            unwrapped = true;
+        } catch (bytes memory reason) {
+            emit WithdrawRequestUnderlyingFailed(nonce, amount, reason);
+        }
+        if (unwrapped) {
+            try IVault(oTokenVault).requestWithdrawal(oTokenAmount) returns (
+                uint256 id,
+                uint256
+            ) {
+                // Store offset by one so a vault requestId of 0 (first withdrawal on a fresh vault)
+                // is distinguishable from the "no request" sentinel. See `outstandingRequestId` doc.
+                // slither-disable-next-line reentrancy-no-eth
+                outstandingRequestId = id + 1;
+                // outstandingRequestAmount tracks the bridgeAsset value leg 2 will ship back.
+                outstandingRequestAmount = amount;
+                requestId = id;
+                success = true;
+            } catch (bytes memory reason) {
+                emit WithdrawRequestUnderlyingFailed(nonce, amount, reason);
+            }
+        }
 
-        // Queue the withdrawal on the OToken vault. Allowance pre-granted by
-        // `safeApproveAllTokens`.
-        (uint256 requestId, ) = IVault(oTokenVault).requestWithdrawal(
-            oTokenAmount
-        );
-        // Store offset by one so a vault requestId of 0 (first withdrawal on a fresh vault)
-        // is distinguishable from the "no request" sentinel. See `outstandingRequestId` doc.
-        // slither-disable-next-line reentrancy-no-eth
-        outstandingRequestId = requestId + 1;
-        // outstandingRequestAmount tracks the bridgeAsset value leg 2 will ship back.
-        outstandingRequestAmount = amount;
-
-        // Reply to Master with the new total.
+        // Reply to Master with the new total and whether the queue was created.
         uint256 yieldBaseline = _yieldOnlyBaseline();
-        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
-            yieldBaseline
-        );
+        bytes memory ackPayload = CrossChainV3Helper
+            .encodeWithdrawRequestAckPayload(yieldBaseline, success);
         _send(
             address(0),
             0,
@@ -439,25 +469,35 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     function _processDeposit(uint64 nonce, uint256 amount) internal {
-        // bridgeAsset already arrived with the tokens-with-message delivery. Mint OToken
-        // from the Ethereum vault, then wrap to wOToken.
+        // bridgeAsset already arrived with the tokens-with-message delivery.
         require(
             IERC20(bridgeAsset).balanceOf(address(this)) >= amount,
             "Remote: deposit asset missing"
         );
 
-        // Mint OToken via the yield-side vault. The real OUSD / OETH vault pulls
-        // bridgeAsset via transferFrom inside `mint`; allowance pre-granted by
-        // `safeApproveAllTokens`.
-        IVault(oTokenVault).mint(amount);
-
-        // Whatever OToken we now hold gets wrapped to wOToken (allowance pre-granted).
+        // Mint OToken, then wrap to wOToken. These touch trusted contracts but can still revert
+        // (vault paused, 4626 edge). A revert here must NOT brick the serialized yield channel, so
+        // each external call is guarded individually (mirrors crosschain/CrossChainRemoteStrategy):
+        // on failure the bridgeAsset/oToken stays idle on this strategy — still counted by
+        // `_viewCheckBalance`, recoverable via `retryDeposit` — and we still ack Master below.
+        try IVault(oTokenVault).mint(amount) {
+            // OToken minted; wrapped below.
+        } catch (bytes memory reason) {
+            emit DepositUnderlyingFailed(nonce, amount, reason);
+        }
         uint256 oTokenBalance = IERC20(oToken).balanceOf(address(this));
         if (oTokenBalance > 0) {
-            IERC4626(woToken).deposit(oTokenBalance, address(this));
+            try
+                IERC4626(woToken).deposit(oTokenBalance, address(this))
+            returns (uint256) {
+                // wOToken shares minted to this strategy.
+            } catch (bytes memory reason) {
+                emit DepositUnderlyingFailed(nonce, amount, reason);
+            }
         }
 
-        // Reply to Master with the new balance and mark the yield nonce processed.
+        // Reply to Master with the new balance and mark the yield nonce processed (always — the
+        // baseline counts any idle bridgeAsset/oToken, so Master's accounting stays correct).
         uint256 yieldBaseline = _yieldOnlyBaseline();
         bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
             yieldBaseline
@@ -473,6 +513,42 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         _acceptYieldNonce(nonce);
 
         emit DepositProcessed(nonce, amount, yieldBaseline);
+    }
+
+    /// @dev Mint `mintAmount` of bridgeAsset into OToken via the vault (allowance pre-granted by
+    ///      `safeApproveAllTokens`), then wrap all idle OToken into wOToken shares. Used by the
+    ///      operator `retryDeposit`, where a revert SHOULD surface (unlike the message path).
+    function _mintAndWrap(uint256 mintAmount) internal {
+        if (mintAmount > 0) {
+            IVault(oTokenVault).mint(mintAmount);
+        }
+        uint256 oTokenBalance = IERC20(oToken).balanceOf(address(this));
+        if (oTokenBalance > 0) {
+            IERC4626(woToken).deposit(oTokenBalance, address(this));
+        }
+    }
+
+    /**
+     * @notice Recover a deposit whose mint/wrap previously failed: re-runs the pipeline on any
+     *         idle bridgeAsset (mint → OToken) and idle OToken (wrap → wOToken), returning the
+     *         stranded value to productive wOToken. `checkBalance` already counts the idle assets,
+     *         so this changes nothing for accounting — it just stops the value sitting unproductive.
+     * @dev Operator/strategist/governor; reverts loudly if the underlying still fails (unlike the
+     *      message path, a manual retry SHOULD surface the error).
+     */
+    function retryDeposit()
+        external
+        onlyOperatorGovernorOrStrategist
+        nonReentrant
+    {
+        uint256 idleBridgeAsset = IERC20(bridgeAsset).balanceOf(address(this));
+        uint256 oTokenBefore = IERC20(oToken).balanceOf(address(this));
+        require(
+            idleBridgeAsset > 0 || oTokenBefore > 0,
+            "Remote: nothing to retry"
+        );
+        _mintAndWrap(idleBridgeAsset);
+        emit IdleDepositRetried(idleBridgeAsset, oTokenBefore);
     }
 
     // --- AbstractWOTokenStrategy hooks -------------------------------------

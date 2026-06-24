@@ -91,7 +91,7 @@ abstract contract AbstractWOTokenStrategy is
     uint256 public bridgeFeeBps;
 
     /// @dev Reserved for future expansion of this abstract layer.
-    uint256[43] private __gap;
+    uint256[50] private __gap;
 
     // --- Events -------------------------------------------------------------
 

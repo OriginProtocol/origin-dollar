@@ -51,11 +51,20 @@ differently:
   Nonce-gated (yield-channel nonce machinery in
   `AbstractCrossChainV3Strategy`), serialised — one in-flight at a time —
   except for balance check which is non-blocking. Drives the protocol-level
-  accounting between Master and Remote.
+  accounting between Master and Remote. **All yield-channel messages originate
+  at Master** (the operator/vault side); Remote only ever replies with ACKs.
 
 - **Bridge channel** — BRIDGE_IN and BRIDGE_OUT. Nonceless and user-facing.
   Multiple can be in flight simultaneously. Replay protection via
   `bridgeId = keccak256(strategy, counter)` on the destination side. No ack.
+  Unlike the yield channel, these originate on **either** side: BRIDGE_OUT
+  starts at Master, BRIDGE_IN starts at Remote (each from a user's
+  `bridgeOTokenToPeer`).
+
+No OToken or wOToken ever crosses the bridge. The yield channel moves the
+**backing asset** (WETH / USDC) + a message and mints/wraps on Remote; the
+bridge channel **burns** OToken on the source and **mints** `net` on the
+destination (message-only). See `DESIGN.md` §3.13 for the rationale.
 
 ### Fee model
 

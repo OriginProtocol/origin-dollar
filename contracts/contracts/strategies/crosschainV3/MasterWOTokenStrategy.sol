@@ -88,6 +88,8 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             _stratConfig.vaultAddress != address(0),
             "Master: vault required"
         );
+        // This is an implementation contract. The governor is set in the proxy contract.
+        _setGovernor(address(0));
     }
 
     function initialize(address _operator) external onlyGovernor initializer {
@@ -199,7 +201,9 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         address inbound = inboundAdapter;
         if (inbound == address(0)) return;
         // remoteStrategyBalance is OToken (18dp); withdraw amounts are bridgeAsset units.
-        uint256 amount = _toAsset(remoteStrategyBalance);
+        // Use the drawable balance (folds in a negative bridgeAdjustment) so a sweep can't
+        // over-request more shares than Remote can actually unwrap.
+        uint256 amount = _toAsset(_drawableRemoteBalance());
         if (amount == 0) return;
         uint256 cap = IBridgeAdapter(inbound).maxTransferAmount();
         if (cap > 0 && amount > cap) amount = cap;
@@ -359,11 +363,12 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             pendingDepositAmount == 0 && pendingWithdrawalAmount == 0,
             "Master: deposit or withdrawal pending"
         );
-        // _amount is bridgeAsset units; remoteStrategyBalance is OToken (18dp). Compare in
-        // bridgeAsset units (scaling rsb down rounds conservatively, so the gate can never
-        // over-permit a withdrawal).
+        // _amount is bridgeAsset units; gate against the drawable balance in bridgeAsset units.
+        // _drawableRemoteBalance folds in a negative bridgeAdjustment so that after a net
+        // BRIDGE_OUT the gate can't over-permit a withdrawal Remote couldn't unwrap (it would
+        // revert on Remote). Scaling down also rounds conservatively.
         require(
-            _amount <= _toAsset(remoteStrategyBalance),
+            _amount <= _toAsset(_drawableRemoteBalance()),
             "Master: amount exceeds remote balance"
         );
         // Reject amounts the leg-2 ship can't satisfy, so a withdrawal never commits leg 1
@@ -480,10 +485,15 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         internal
     {
         _markYieldNonceProcessed(nonce);
-        uint256 yieldBaseline = CrossChainV3Helper.decodeUint256(payload);
+        (uint256 yieldBaseline, bool success) = CrossChainV3Helper
+            .decodeWithdrawRequestAckPayload(payload);
         remoteStrategyBalance = yieldBaseline;
-        // pendingWithdrawalAmount stays set — gates concurrent triggerClaim() calls
-        // until the leg-2 ack lands.
+        // On success Remote queued the withdrawal — pendingWithdrawalAmount stays set, gating
+        // concurrent triggerClaim() calls until the leg-2 ack lands. On failure Remote queued
+        // nothing, so clear the pending withdrawal to unblock the channel; it can be re-requested.
+        if (!success) {
+            pendingWithdrawalAmount = 0;
+        }
         emit WithdrawRequestAcked(nonce, yieldBaseline);
         emit RemoteStrategyBalanceUpdated(yieldBaseline);
     }
@@ -557,6 +567,19 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             bridgeAdjustment -
             int256(_toOToken(pendingWithdrawalAmount));
         return a > 0 ? uint256(a) : 0;
+    }
+
+    /// @dev OToken (18dp) value Remote can actually unwrap right now. Remote's shares are worth
+    ///      `remoteStrategyBalance + bridgeAdjustment`; we fold in only the NEGATIVE part of
+    ///      `bridgeAdjustment`. After a net BRIDGE_OUT (which anyone can trigger via
+    ///      `bridgeOTokenToPeer`) `bridgeAdjustment < 0` and Remote holds fewer shares than
+    ///      `remoteStrategyBalance` implies, so a draw gated on `remoteStrategyBalance` alone would
+    ///      over-request and revert on Remote. Positive `bridgeAdjustment` stays excluded here —
+    ///      realise it with `requestSettlement()` first — preserving the conservative draw behaviour.
+    function _drawableRemoteBalance() internal view returns (uint256) {
+        int256 d = int256(remoteStrategyBalance) +
+            (bridgeAdjustment < 0 ? bridgeAdjustment : int256(0));
+        return d > 0 ? uint256(d) : 0;
     }
 
     /// @inheritdoc AbstractWOTokenStrategy
