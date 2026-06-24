@@ -617,11 +617,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     ///      delta. `Master.remoteStrategyBalance` must hold exactly this, because
     ///      `Master.checkBalance` re-adds its OWN `bridgeAdjustment` separately — so every
     ///      R→M balance report routes through here (deposit / withdraw / claim acks, not
-    ///      just balance-check / settle). The `require(>=0)` is an invariant that can't
-    ///      break under normal ops (each BRIDGE_IN/OUT moves `_viewCheckBalance` and
-    ///      `bridgeAdjustment` by the same `net`, leaving this constant); if it ever did,
-    ///      a revert is a loud, safe halt — clamping to 0 would silently crater the vault's
-    ///      reported value and rebase holders down.
+    ///      just balance-check / settle).
     function _yieldOnlyBaseline() internal view returns (uint256) {
         return _yieldOnlyBaselineAfter(0);
     }
@@ -630,6 +626,13 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     ///      on a WITHDRAW_CLAIM_ACK (the bridgeAsset is still held when this is computed).
     ///      `oTokenAmount` is in OToken (18dp) units, matching `_viewCheckBalance`;
     ///      `_yieldOnlyBaseline()` is the `oTokenAmount == 0` case.
+    /// @dev Clamps to 0 rather than reverting on a negative. `_viewCheckBalance - bridgeAdjustment`
+    ///      is principal + yield + retained fees and is never *economically* negative, but the
+    ///      wOToken ERC-4626 rounds against the strategy by ~1 wei on each BRIDGE_IN (floor) /
+    ///      BRIDGE_OUT (ceil), so once a `withdrawAll` drains this near 0 a later bridge op can push
+    ///      it a few wei negative. Reverting there would freeze the whole serialized yield channel on
+    ///      dust; clamping reports a dust-accurate 0 instead (and matches the project-wide
+    ///      checkBalance-never-reverts convention). The accumulated drift is economically nil.
     function _yieldOnlyBaselineAfter(uint256 oTokenAmount)
         internal
         view
@@ -638,7 +641,6 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         int256 v = int256(_viewCheckBalance()) -
             int256(oTokenAmount) -
             bridgeAdjustment;
-        require(v >= 0, "Remote: negative yield baseline");
-        return uint256(v);
+        return v > 0 ? uint256(v) : 0;
     }
 }

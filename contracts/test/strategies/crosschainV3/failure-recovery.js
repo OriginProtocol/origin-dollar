@@ -227,6 +227,36 @@ describe("Unit: V3 failure recovery + drawable-balance gate", function () {
     expect(await remote.outstandingRequestId()).to.not.equal(0);
   });
 
+  it("balance check does not freeze when bridge rounding drives B-A a hair negative (clamp to 0)", async () => {
+    const BIN = oToken18("100"); // 18dp bridge-in amount
+    const BIN_USDC = usdc("100"); // USDC alice spends to acquire the OToken
+
+    // alice acquires OToken on the Eth side and BRIDGE_INs it: Remote wraps it, so
+    // bridgeAdjustment (A) = wOToken value (B) = BIN, i.e. the yield baseline B - A = 0.
+    await bridgeAsset.mintTo(alice.address, BIN_USDC);
+    await bridgeAsset.connect(alice).approve(ethVault.address, BIN_USDC);
+    await ethVault.connect(alice).mint(BIN_USDC);
+    await oTokenEth.connect(alice).approve(remote.address, BIN);
+    await remote.connect(alice).bridgeOTokenToPeer(BIN, alice.address, "0x", 0);
+    expect(await master.bridgeAdjustment()).to.equal(BIN);
+
+    // The wOToken 4626 rounding (here a 1-wei loss) tips B below A → B - A = -1.
+    await woTokenEth.simulateLoss(1);
+
+    // _yieldOnlyBaseline (via the balance-check round-trip) must NOT revert — it clamps to 0
+    // instead of freezing the serialized yield channel on dust.
+    await expect(master.connect(governor).requestBalanceCheck()).to.not.be
+      .reverted;
+    expect(await master.remoteStrategyBalance()).to.equal(0);
+
+    // Channel is alive: a fresh deposit still completes (its ack also routes through
+    // _yieldOnlyBaseline, which would have frozen pre-fix).
+    const DEP = usdc("500");
+    await bridgeAsset.mintTo(master.address, DEP);
+    await mockL2Vault.callDeposit(master.address, bridgeAsset.address, DEP);
+    expect(await master.pendingDepositAmount()).to.equal(0);
+  });
+
   it("291: withdrawAll is bounded by drawable balance after a net BRIDGE_OUT", async () => {
     const SEED = usdc("1000");
     const BRIDGE_OUT = oToken18("300");
