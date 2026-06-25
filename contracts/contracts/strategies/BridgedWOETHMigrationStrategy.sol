@@ -21,7 +21,7 @@ import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.
  *         Base. Adds the ability to ship wOETH to the V3 Master/Remote pair via CCIP, while
  *         retaining V1's local deposit/withdraw + oracle pipeline (inherited unchanged).
  *
- *         Storage carries forward V1's two slot-0 fields (lastOraclePrice, maxPriceDiffBps)
+ *         Storage carries forward V1's two existing fields (lastOraclePrice, maxPriceDiffBps)
  *         and appends three new ones (totalBridged, maxPerBridge, operator) plus an upgrade
  *         gap. All cross-chain configuration that doesn't change between deploys lives in
  *         immutables: `master` is both the local Master strategy on Base (read for
@@ -50,7 +50,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     /// @notice CCIP chain selector for Ethereum mainnet.
     uint64 public immutable ccipChainSelectorMainnet;
 
-    // --- Storage (appended after V1's slot 0) -----------------------------
+    // --- Storage (appended after V1's existing fields) --------------------
 
     /// @notice Cumulative wOETH bridged out to the V3 Remote on Ethereum. Used to compute
     ///         the in-flight component of `checkBalance` until Master reports it.
