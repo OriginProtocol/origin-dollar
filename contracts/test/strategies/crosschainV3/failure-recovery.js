@@ -5,6 +5,8 @@ const { ethers } = require("hardhat");
 const SCALE = ethers.BigNumber.from(10).pow(12);
 const usdc = (n) => ethers.utils.parseUnits(n, 6);
 const oToken18 = (n) => ethers.utils.parseUnits(n, 18);
+// Sentinel for "no outstanding queue request" (RemoteWOTokenStrategy.REQUEST_ID_EMPTY).
+const EMPTY = ethers.constants.MaxUint256;
 
 /**
  * Failure-recovery tests for the V3 Master+Remote pair (PR #2909 review):
@@ -198,7 +200,7 @@ describe("Unit: V3 failure recovery + drawable-balance gate", function () {
     );
 
     // success=false: nothing queued, Master cleared its pending withdrawal, channel free.
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     expect(await master.isYieldOpInFlight()).to.equal(false);
 
@@ -224,7 +226,7 @@ describe("Unit: V3 failure recovery + drawable-balance gate", function () {
       WITHDRAW
     );
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
-    expect(await remote.outstandingRequestId()).to.not.equal(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
   });
 
   it("balance check does not freeze when bridge rounding drives B-A a hair negative (clamp to 0)", async () => {
@@ -285,6 +287,47 @@ describe("Unit: V3 failure recovery + drawable-balance gate", function () {
     //    queues it successfully (success=true → pendingWithdrawalAmount stays set).
     await master.connect(governor).withdrawAll();
     expect(await master.pendingWithdrawalAmount()).to.equal(usdc("700"));
-    expect(await remote.outstandingRequestId()).to.not.equal(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
+  });
+
+  it("post-delivery callback cannot re-enter (nonReentrant blocks it; delivery still completes)", async () => {
+    const SEED = usdc("1000");
+    const AMT = oToken18("100");
+
+    // Seed Remote with shares so a BRIDGE_OUT can be delivered there.
+    await bridgeAsset.mintTo(master.address, SEED);
+    await mockL2Vault.callDeposit(master.address, bridgeAsset.address, SEED);
+
+    // Malicious recipient, armed to re-enter Remote.claimRemoteWithdrawal() (permissionless +
+    // nonReentrant) from the post-delivery callback. Called normally it would succeed (no-op);
+    // under re-entry it must fail because the bridge dispatch holds the shared nonReentrant lock.
+    const receiver = await (
+      await ethers.getContractFactory("MockReentrantReceiver")
+    ).deploy();
+    await receiver.arm(
+      remote.address,
+      remote.interface.encodeFunctionData("claimRemoteWithdrawal")
+    );
+
+    // alice BRIDGE_OUTs OToken to the malicious receiver on Remote, with the callback.
+    await mockL2Vault.mintOTokenTo(alice.address, AMT);
+    await oTokenL2.connect(alice).approve(master.address, AMT);
+    await master
+      .connect(alice)
+      .bridgeOTokenToPeer(
+        AMT,
+        receiver.address,
+        receiver.interface.encodeFunctionData("attack"),
+        500000
+      );
+
+    // The callback ran, but the re-entry was blocked by the nonReentrant guard.
+    expect(await receiver.reentered()).to.equal(true);
+    expect(await receiver.reentrySucceeded()).to.equal(false);
+
+    // Delivery still completed (tokens are sent before the callback, per CEI) and accounting is
+    // applied exactly once.
+    expect(await oTokenEth.balanceOf(receiver.address)).to.equal(AMT);
+    expect(await remote.bridgeAdjustment()).to.equal(AMT.mul(-1));
   });
 });

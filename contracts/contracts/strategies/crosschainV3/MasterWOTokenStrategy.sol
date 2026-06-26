@@ -374,20 +374,20 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         // Reject amounts the leg-2 ship can't satisfy, so a withdrawal never commits leg 1
         // and then bricks leg 2. The inbound adapter mirrors Remote's outbound bounds (the
         // lane-mirror convention). Symmetric with the deposit floor (deposits already reject
-        // out-of-bounds at the adapter). Skipped if no inbound adapter is wired — the
-        // withdrawal can't complete then anyway.
+        // out-of-bounds at the adapter). A withdrawal can't complete without an inbound adapter
+        // (leg-2's ack is delivered through it), so require it rather than skipping the checks —
+        // `setInboundAdapter` rejects zero, so this only guards the pre-configuration window.
         address inbound = inboundAdapter;
-        if (inbound != address(0)) {
-            require(
-                _amount >= IBridgeAdapter(inbound).minTransferAmount(),
-                "Master: amount below bridge min"
-            );
-            uint256 maxT = IBridgeAdapter(inbound).maxTransferAmount();
-            require(
-                maxT == 0 || _amount <= maxT,
-                "Master: amount above bridge max"
-            );
-        }
+        require(inbound != address(0), "Master: inbound not set");
+        require(
+            _amount >= IBridgeAdapter(inbound).minTransferAmount(),
+            "Master: amount below bridge min"
+        );
+        uint256 maxT = IBridgeAdapter(inbound).maxTransferAmount();
+        require(
+            maxT == 0 || _amount <= maxT,
+            "Master: amount above bridge max"
+        );
 
         uint64 nonce = _getNextYieldNonce();
         pendingWithdrawalAmount = _amount;

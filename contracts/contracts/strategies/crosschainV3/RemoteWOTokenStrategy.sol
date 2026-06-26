@@ -38,13 +38,17 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     /// @notice Yield-side OToken vault. Used to convert bridgeAsset ↔ OToken via mint / redeem.
     address public immutable oTokenVault;
 
+    /// @notice Sentinel value of `outstandingRequestId` meaning "no outstanding queue request".
+    ///         Using `type(uint256).max` (not 0) lets the vault's real `requestId` — which starts
+    ///         at 0 for the first-ever withdrawal on a fresh vault — be stored verbatim.
+    uint256 internal constant REQUEST_ID_EMPTY = type(uint256).max;
+
     // --- Storage (all new slots; nothing from any parent is relocated) -----
 
-    /// @notice OToken-vault queue handle, stored **offset by one** (vault `requestId + 1`).
-    ///         The vault's `requestId` starts at 0 for the first-ever withdrawal on a fresh
-    ///         vault, which would be indistinguishable from "no request" if stored verbatim;
-    ///         the +1 offset keeps `0` meaning "no outstanding (unclaimed) queue request" while
-    ///         a real id of 0 is safely represented as 1. Cleared to 0 once the claim lands.
+    /// @notice OToken-vault queue handle, stored verbatim (the vault's `requestId`).
+    ///         `REQUEST_ID_EMPTY` (= `type(uint256).max`) means "no outstanding (unclaimed) queue
+    ///         request"; initialised to it in `initialize` since the storage default of 0 is a
+    ///         valid vault id. Reset to `REQUEST_ID_EMPTY` once the claim lands.
     uint256 public outstandingRequestId;
 
     /// @notice Originally-requested bridgeAsset amount for the outstanding withdrawal.
@@ -110,6 +114,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     function initialize(address _operator) external onlyGovernor initializer {
         operator = _operator;
+        // Storage default is 0, which is a valid vault requestId — start at the empty sentinel.
+        outstandingRequestId = REQUEST_ID_EMPTY;
         // wOToken is the registry platform token for Remote.
         _initWithPToken(woToken);
     }
@@ -290,7 +296,10 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     {
         uint256 amount = CrossChainV3Helper.decodeUint256(payload);
         require(amount > 0, "Remote: zero withdraw");
-        require(outstandingRequestId == 0, "Remote: queue already busy");
+        require(
+            outstandingRequestId == REQUEST_ID_EMPTY,
+            "Remote: queue already busy"
+        );
 
         // `amount` is in bridgeAsset units (what the L2 vault asked back). The wOToken unwrap
         // and the OToken-vault queue operate in OToken (18dp) units.
@@ -322,10 +331,10 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
                 uint256 id,
                 uint256
             ) {
-                // Store offset by one so a vault requestId of 0 (first withdrawal on a fresh vault)
-                // is distinguishable from the "no request" sentinel. See `outstandingRequestId` doc.
+                // Store the vault id verbatim — `REQUEST_ID_EMPTY` is the "no request" sentinel,
+                // so a real id of 0 (first withdrawal on a fresh vault) is unambiguous.
                 // slither-disable-next-line reentrancy-no-eth
-                outstandingRequestId = id + 1;
+                outstandingRequestId = id;
                 // outstandingRequestAmount tracks the bridgeAsset value leg 2 will ship back.
                 outstandingRequestAmount = amount;
                 requestId = id;
@@ -382,7 +391,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         bool shipOutOfBounds = amount < minT || (maxT != 0 && amount > maxT);
 
         if (
-            outstandingRequestId != 0 ||
+            outstandingRequestId != REQUEST_ID_EMPTY ||
             amount == 0 ||
             bridgeAssetHeld < amount ||
             shipOutOfBounds
@@ -405,9 +414,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         }
 
         // Clear queue-side state (re-set if a fresh leg 1 starts) and bridge back.
-        // outstandingRequestId is already 0 here (the guard NACKs otherwise); cleared defensively.
+        // outstandingRequestId is already empty here (the guard NACKs otherwise); cleared defensively.
         // slither-disable-next-line reentrancy-no-eth
-        outstandingRequestId = 0;
+        outstandingRequestId = REQUEST_ID_EMPTY;
         outstandingRequestAmount = 0;
 
         // `amount` (bridgeAsset units) is about to leave us; subtract its OToken-equivalent
@@ -439,11 +448,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     function _opportunisticClaim() internal {
         uint256 stored = outstandingRequestId;
-        if (stored == 0) {
+        if (stored == REQUEST_ID_EMPTY) {
             return;
         }
-        // `outstandingRequestId` is stored offset-by-one; the real vault id is `stored - 1`.
-        uint256 vaultRequestId = stored - 1;
+        // `outstandingRequestId` stores the vault id verbatim.
+        uint256 vaultRequestId = stored;
         // Hoist `claimed` outside the try so its scope is unambiguous to static
         // analysers (avoids the slither uninitialized-local false-positive that
         // fired when `claimed` was named only in the try-returns clause).
@@ -454,7 +463,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         ) {
             claimed = _claimed;
             // slither-disable-next-line reentrancy-no-eth
-            outstandingRequestId = 0;
+            outstandingRequestId = REQUEST_ID_EMPTY;
             // Refine `outstandingRequestAmount` to the vault's actually-returned asset
             // amount so leg-2 ships exactly what the vault paid out. This is a defensive
             // read-back of the authoritative vault value, NOT a rounding correction: the
@@ -603,7 +612,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         uint256 valueOfShares = sharesBalance == 0
             ? 0
             : IERC4626(woToken).previewRedeem(sharesBalance);
-        uint256 queued = outstandingRequestId != 0
+        uint256 queued = outstandingRequestId != REQUEST_ID_EMPTY
             ? _toOToken(outstandingRequestAmount)
             : 0;
         return

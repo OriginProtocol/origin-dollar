@@ -208,13 +208,14 @@ sequenceDiagram
     AdapterEth->>Remote: «WETH X» transfer (adapter delivers tokens first)
     AdapterEth->>Remote: receiveMessage(Remote, WETH, X, payload)
     Remote->>Remote: unpackPayload → (DEPOSIT, N+1, "")
-    Remote->>OEV: mint(X)
+    Note over Remote,OEV: mint + wrap are each try/catch-guarded (revert-free). On failure the<br/>bridgeAsset/OToken is left idle (still counted by _viewCheckBalance, recoverable<br/>via retryDeposit) and the DEPOSIT_ACK is still sent below.
+    Remote->>OEV: try mint(X)
     Remote->>OEV: «WETH X» (vault pulls WETH on mint)
     OEV-->>Remote: «OETH X» minted
-    Remote->>wOETH: deposit(OETH balance, Remote)
+    Remote->>wOETH: try deposit(OETH balance, Remote)
     Remote->>wOETH: «OETH X» (wrapper pulls OETH on deposit)
     wOETH-->>Remote: «wOETH shares» minted
-    Remote->>Remote: yieldBaseline = _viewCheckBalance()
+    Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
     Note over Remote,SuperEth: Remote's configured outbound is the SuperbridgeAdapter. A message-only<br/>send (no tokens) rides purely its CCIP leg (_sendMessage → _sendCCIPMessage,<br/>no canonical bridge). Adapters are swappable: pointing Remote's outbound at the<br/>plain CCIPAdapter also works (atomic; pays the CCIP token fee on token-bearing legs).<br/>Pool funds the fee.
     Remote->>Remote: _acceptYieldNonce(N+1)<br/>lastYieldNonce=N+1, nonceProcessed=true
@@ -227,6 +228,7 @@ sequenceDiagram
 ### State changes
 
 **Phase 1 — `Master.deposit(WETH, X)` (Base):**
+
 - `lastYieldNonce: N → N+1`
 - `pendingDepositAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
   disappear during the bridge round trip)
@@ -234,11 +236,13 @@ sequenceDiagram
 - `outboundAdapter.WETH balance: 0 → X → 0` (held momentarily, then handed to the CCIP router)
 
 **Phase 2 — `Remote._processDeposit(N+1, X)` (Ethereum):**
+
 - WETH consumed by OETH vault mint; OETH wrapped to wOETH.
 - `Remote.wOETH balance: increased by ≈X-worth of shares`
 - `Remote.lastYieldNonce: → N+1`; `nonceProcessed[N+1] = true`
 
 **Phase 3 — `Master._processDepositAck(N+1, yieldBaseline)` (Base):**
+
 - `remoteStrategyBalance: B → yieldBaseline`
 - `pendingDepositAmount: X → 0`
 - `nonceProcessed[N+1] = true`
@@ -282,7 +286,7 @@ sequenceDiagram
     Remote->>wOUSD: deposit(OUSD balance, Remote)
     Remote->>wOUSD: «OUSD» (wrapper pulls on deposit)
     wOUSD-->>Remote: «wOUSD shares» minted
-    Remote->>Remote: yieldBaseline = _viewCheckBalance()
+    Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Remote->>AdapterEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
     Note over Remote,AdapterEth: DEPOSIT_ACK is a pure message (intendedAmount = 0):<br/>messageTransmitter.sendMessage, no token leg.
     AdapterEth->>CCTP: sendMessage (message-only)
@@ -294,10 +298,10 @@ sequenceDiagram
 Key differences:
 
 - Outbound adapter: `CCTPAdapter`. `quoteFee` returns `(getMinFeeAmount(X),
-  USDC, false)` — native fee 0, token-side fee handled by CCTP itself.
+USDC, false)` — native fee 0, token-side fee handled by CCTP itself.
   `msg.value=0` works directly without needing a pool.
 - Inbound is operator-driven: the operator calls `CCTPAdapter.relay(message,
-  attestation)` after Circle's attestation lands. The CCTP wire message is a
+attestation)` after Circle's attestation lands. The CCTP wire message is a
   **burn-message + hook** (sourced from `TokenMessenger.depositForBurnWithHook`),
   whose transport `sender` is the source-side TokenMessenger and `recipient`
   is the destination TokenMessenger — NOT this adapter. Auto-dispatch via
@@ -305,15 +309,15 @@ Key differences:
   not universally available, so `relay()` does NOT rely on it.
 - Manual burn parse: `relay()` decodes the burn body via
   `CCTPMessageHelper.decodeBurnBody` to extract authoritative `amount`,
-  `feeExecuted`, `msgSender` (peer adapter under CREATE3 parity), and
+  `feeExecuted`, `msgSender` (peer adapter under CreateX/CREATE2 parity), and
   `hookData` (our application envelope). It then calls
   `messageTransmitter.receiveMessage` to credit USDC to this adapter,
   computes `landed = min(actualMint, amount - feeExecuted)`, validates the
   envelope, and calls `_deliver(envelopeSender, USDC, landed, feeExecuted,
-  payload)` directly.
+payload)` directly.
 - DEPOSIT_ACK path: a pure message (no token leg). The `handleReceiveFinalizedMessage`
   hook fires, runs `_validateInbound`, and `_deliver(envelopeSender,
-  address(0), 0, 0, payload)`. The hook is restricted to `intendedAmount == 0`
+address(0), 0, 0, payload)`. The hook is restricted to `intendedAmount == 0`
   and reverts otherwise — token-bearing messages MUST go through `relay()`'s
   burn-message path.
 - Token-side fee for CCTP V2 fast-finality: the strategy ignores `feePaid`
@@ -349,28 +353,34 @@ sequenceDiagram
     Note over Master,Remote: ─── Phase A: vault.withdraw triggers leg 1 synchronously ───
     Vault->>Master: withdraw(vault, WETH, amount)
     Master->>Master: require(recipient == vault)<br/>_withdrawRequest(WETH, amount)
-    Master->>Master: _getNextYieldNonce → N+1<br/>pendingWithdrawalAmount = amount<br/>require(amount <= remoteStrategyBalance)
+    Master->>Master: _getNextYieldNonce → N+1<br/>pendingWithdrawalAmount = amount<br/>require(inboundAdapter != 0)<br/>require(amount <= _toAsset(_drawableRemoteBalance()))
     Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
     Note over Master,Adapter: Master.withdraw is non-payable. _send (userFunded=false) uses<br/>pool (address(this).balance) for CCIP fee.
     Adapter->>Bridge: ccipSend
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
-    Remote->>wOETH: withdraw(amount, Remote, Remote) [unwrap shares to OETH]
+    Note over Remote: unwrap + queue are try/catch-guarded (revert-free). On failure: success=false,<br/>nothing queued (any unwrapped OToken left idle, recoverable via retryDeposit).
+    Remote->>wOETH: try withdraw(amount, Remote, Remote) [unwrap shares to OETH]
     wOETH-->>Remote: «OETH A» unwrapped
-    Remote->>OEV: requestWithdrawal(amount)
+    Remote->>OEV: try requestWithdrawal(amount)
     Remote->>OEV: «OETH A» queued for withdrawal
     OEV-->>Remote: requestId
-    Note over Remote: outstandingRequestId = requestId<br/>outstandingRequestAmount = amount
+    Note over Remote: success=true<br/>outstandingRequestId = requestId (verbatim)<br/>outstandingRequestAmount = amount
 
     Note over Master,Remote: ─── Phase B: Remote sends WITHDRAW_REQUEST_ACK ───
-    Remote->>Remote: yieldBaseline = _viewCheckBalance()
-    Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline)])
+    Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
+    Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline, success)])
     Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only rides its CCIP leg (no canonical bridge).
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline
-    Note over Master: pendingWithdrawalAmount stays set — gates leg-2
+    alt success == true (queued)
+        Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline
+        Note over Master: pendingWithdrawalAmount stays set — gates leg-2
+    else success == false (leg-1 NACK, nothing queued)
+        Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount = 0
+        Note over Master: channel freed — the withdrawal can be re-requested
+    end
 
     Note over Master,Remote: ─── Phase C: queue delay (minutes for OUSD, ~10d for OETH) ───
 
@@ -384,7 +394,7 @@ sequenceDiagram
     Remote->>Remote: _opportunisticClaim()
     Remote->>OEV: claimWithdrawal(requestId)
     OEV-->>Remote: «WETH claimed» paid out
-    Note over Remote: claimed = the WETH the vault actually paid out<br/>outstandingRequestId = 0<br/>outstandingRequestAmount = claimed (refined to the payout)
+    Note over Remote: claimed = the WETH the vault actually paid out<br/>outstandingRequestId = REQUEST_ID_EMPTY<br/>outstandingRequestAmount = claimed (refined to the payout)
     alt claim succeeded and tokens are in hand
         Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
         Remote->>SuperEth: «WETH claimed» (adapter pulls)
@@ -454,17 +464,27 @@ From `README.md`, reproduced here for completeness. Each row is a single
 intermediate state; value lives in exactly one slot per row, and `checkBalance`
 equals the total in every row.
 
-| State | wOETH share value | OToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
-|---|---|---|---|---|---|---|
-| Idle | X | 0 | 0 | 0 | 0 | X |
-| Requested (post-leg-1) | X − A | 0 | 0 | A | nonzero | X |
-| Claimed (post-`claimRemoteWithdrawal`) | X − A | 0 | A | 0 | 0 | X |
-| Bridging-out (post-leg-2 send) | X − A | 0 | 0 | 0 | 0 | X − A |
-| Completed | X − A | 0 | 0 | 0 | 0 | X − A |
+| State                                  | wOETH share value | OToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
+| -------------------------------------- | ----------------- | ---------- | --------------- | -------- | -------------------- | ------------ |
+| Idle                                   | X                 | 0          | 0               | 0        | EMPTY                | X            |
+| Requested (post-leg-1)                 | X − A             | 0          | 0               | A        | id (verbatim)        | X            |
+| Claimed (post-`claimRemoteWithdrawal`) | X − A             | 0          | A               | 0        | EMPTY                | X            |
+| Bridging-out (post-leg-2 send)         | X − A             | 0          | 0               | 0        | EMPTY                | X − A        |
+| Completed                              | X − A             | 0          | 0               | 0        | EMPTY                | X − A        |
+
+Failure branches (revert-free handlers; value preserved, recoverable):
+
+| State                               | wOETH share value | OToken bal | bridgeAsset bal | queued | outstandingRequestId | checkBalance |
+| ----------------------------------- | ----------------- | ---------- | --------------- | ------ | -------------------- | ------------ |
+| Deposit mint-failed                 | X                 | 0          | D (idle)        | 0      | EMPTY                | X + D        |
+| Unwrap-ok / queue-fail (leg-1 NACK) | X − A             | A (idle)   | 0               | 0      | EMPTY                | X            |
+
+The idle `D` / `A` are re-wrapped into wOETH by the operator `retryDeposit()`; the leg-1 NACK also
+clears Master's `pendingWithdrawalAmount`. `EMPTY` = `REQUEST_ID_EMPTY` (`type(uint256).max`).
 
 \* `queued` is no longer a stored slot — it's derived as
-`outstandingRequestId != 0 ? outstandingRequestAmount : 0` (so it's `A` only while the queue
-request is outstanding, and `0` once claimed).
+`outstandingRequestId != REQUEST_ID_EMPTY ? outstandingRequestAmount : 0` (so it's `A` only while the
+queue request is outstanding, and `0` once claimed).
 
 ### Permissionless touchpoints
 
@@ -499,7 +519,7 @@ sequenceDiagram
     AdapterEth->>Remote: receiveMessage(...)
     Remote->>wOUSD: withdraw(amount) [unwrap to OUSD]
     Remote->>OUV: requestWithdrawal(amount) → requestId
-    Remote->>AdapterEth: sendMessage(WITHDRAW_REQUEST_ACK, yieldBaseline)
+    Remote->>AdapterEth: sendMessage(WITHDRAW_REQUEST_ACK, abi.encode(yieldBaseline, success))
     AdapterEth->>CCTP: sendMessage (message-only)
     Op->>Adapter: relay(message, attestation) [spoke side]
     Adapter->>Master: receiveMessage(...) → remoteStrategyBalance = yieldBaseline
@@ -571,7 +591,7 @@ sequenceDiagram
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
     Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>(cancels bridge channel effects: see comment in code)
-    Remote->>Remote: require(yieldOnly >= 0)
+    Remote->>Remote: clamp yieldOnly to 0 if negative<br/>(4626 rounding dust only; never significantly negative — no negative rebase)
     Remote->>ReturnA: sendMessage(payload[BALANCE_CHECK_RESPONSE,<br/>nonce=N, abi.encode(yieldOnly, srcTimestamp)])
     Note over Remote: DOES NOT call _acceptYieldNonce.<br/>Read-only on Remote's side.
     ReturnA->>Bridge: ccipSend
@@ -612,7 +632,7 @@ The math:
 - For each BRIDGE_OUT processed on Remote: `_viewCheckBalance` drops by `net`
   AND `bridgeAdjustment -= net`. Difference unchanged.
 - For each BRIDGE_IN processed on Remote: `_viewCheckBalance` grows by `full
-  amount X` AND `bridgeAdjustment += net`. Difference grows by `fee` (the
+amount X` AND `bridgeAdjustment += net`. Difference grows by `fee` (the
   retained protocol fee).
 - Yield accrual on wOToken: `_viewCheckBalance` grows; `bridgeAdjustment`
   unchanged. Difference grows monotonically.
@@ -701,12 +721,12 @@ Same structure with the roles flipped:
 
 ### Yield retention math
 
-| | Source side | Destination side |
-|---|---|---|
-| OToken consumed | full `X` burned (BRIDGE_OUT) or `Y` wrapped (BRIDGE_IN) | — |
-| OToken produced | — | `net` delivered |
-| `bridgeAdjustment` change | `-net` (BRIDGE_OUT) / `+net` (BRIDGE_IN) | `-net` / `+net` |
-| Side note | full amount consumed locally | only net produced locally |
+|                           | Source side                                             | Destination side          |
+| ------------------------- | ------------------------------------------------------- | ------------------------- |
+| OToken consumed           | full `X` burned (BRIDGE_OUT) or `Y` wrapped (BRIDGE_IN) | —                         |
+| OToken produced           | —                                                       | `net` delivered           |
+| `bridgeAdjustment` change | `-net` (BRIDGE_OUT) / `+net` (BRIDGE_IN)                | `-net` / `+net`           |
+| Side note                 | full amount consumed locally                            | only net produced locally |
 
 The `fee` worth of value stays on the wOToken side (Remote retains an extra
 `fee` of wOETH shares per BRIDGE_OUT; Remote wraps an extra `fee` of OToken
@@ -807,9 +827,9 @@ If a new BRIDGE_OUT happens between `requestSettlement` and the ack:
 The same logic applies on Remote, regardless of whether the new BRIDGE_OUT
 arrived on Remote before or after the SETTLE message:
 
-| Ordering on Remote | Before settle | After settle | yield-only reported |
-|---|---|---|---|
-| BRIDGE_OUT first, then SETTLE | bridgeAdj = -15, wOETH-value = X-4.95 | bridgeAdj -= -10 = -5 | (X-4.95) - (-5) = X+0.05 |
+| Ordering on Remote            | Before settle                                    | After settle                                                        | yield-only reported                |
+| ----------------------------- | ------------------------------------------------ | ------------------------------------------------------------------- | ---------------------------------- |
+| BRIDGE_OUT first, then SETTLE | bridgeAdj = -15, wOETH-value = X-4.95            | bridgeAdj -= -10 = -5                                               | (X-4.95) - (-5) = X+0.05           |
 | SETTLE first, then BRIDGE_OUT | bridgeAdj = -10, wOETH-value = X (no unwrap yet) | bridgeAdj -= -10 = 0 → then later -= 4.95 = -4.95 (post BRIDGE_OUT) | At settle ack send-time: X - 0 = X |
 
 The exact reported value depends on Remote's processing order, BUT the
@@ -836,10 +856,10 @@ baseline construction is what makes both orderings converge.
 
 ### Two fee categories, never conflated
 
-| Category | Where paid | When non-zero | How surfaced |
-|---|---|---|---|
-| **Native** | Caller's wallet (`msg.value`) → adapter | CCIP always; Superbridge always (CCIP message leg); CCTP **never** | `quoteFee` returns `requiresExternalPayment = true`, `feeToken = address(0)`; strategy enforces `msg.value >= fee` |
-| **Token-side** | Bridged token (auto-deducted by protocol) | CCTP V2 fast-finality only | Strategy operates on `amountReceived` (delta becomes yield drag); the fee is emitted on the adapter's `MessageDelivered` event, not forwarded to `receiveMessage`. |
+| Category       | Where paid                                | When non-zero                                                      | How surfaced                                                                                                                                                       |
+| -------------- | ----------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Native**     | Caller's wallet (`msg.value`) → adapter   | CCIP always; Superbridge always (CCIP message leg); CCTP **never** | `quoteFee` returns `requiresExternalPayment = true`, `feeToken = address(0)`; strategy enforces `msg.value >= fee`                                                 |
+| **Token-side** | Bridged token (auto-deducted by protocol) | CCTP V2 fast-finality only                                         | Strategy operates on `amountReceived` (delta becomes yield drag); the fee is emitted on the adapter's `MessageDelivered` event, not forwarded to `receiveMessage`. |
 
 ### One send path, two funding modes
 
@@ -857,12 +877,12 @@ who originated it.
 
 ### `quoteFee` return — what each adapter says
 
-| Adapter | `(fee, feeToken, requiresExternalPayment)` | Notes |
-|---|---|---|
-| `CCIPAdapter` | `(routerFee, address(0), true)` | LINK-mode not supported |
-| `CCTPAdapter` (msg-only) | `(0, address(0), false)` | Nothing to pay |
-| `CCTPAdapter` (with tokens) | `(getMinFeeAmount(amount), USDC, false)` | Informational; CCTP auto-deducts |
-| `SuperbridgeAdapter` | `(ccipMessageFee, address(0), true)` | CCIP leg native; canonical bridge free |
+| Adapter                     | `(fee, feeToken, requiresExternalPayment)` | Notes                                  |
+| --------------------------- | ------------------------------------------ | -------------------------------------- |
+| `CCIPAdapter`               | `(routerFee, address(0), true)`            | LINK-mode not supported                |
+| `CCTPAdapter` (msg-only)    | `(0, address(0), false)`                   | Nothing to pay                         |
+| `CCTPAdapter` (with tokens) | `(getMinFeeAmount(amount), USDC, false)`   | Informational; CCTP auto-deducts       |
+| `SuperbridgeAdapter`        | `(ccipMessageFee, address(0), true)`       | CCIP leg native; canonical bridge free |
 
 ### Pool semantics
 
@@ -877,10 +897,10 @@ who originated it.
 
 ### Operational pre-funding by product
 
-| Product | Master pool needs ETH? | Remote pool needs ETH? |
-|---|---|---|
-| **OETHb** | Yes — CCIP outbound from Base | Yes — CCIP outbound from Ethereum for acks |
-| **OUSD V3** | No — CCTP everywhere, fee=0 native | No — same reason |
+| Product     | Master pool needs ETH?             | Remote pool needs ETH?                     |
+| ----------- | ---------------------------------- | ------------------------------------------ |
+| **OETHb**   | Yes — CCIP outbound from Base      | Yes — CCIP outbound from Ethereum for acks |
+| **OUSD V3** | No — CCTP everywhere, fee=0 native | No — same reason                           |
 
 ---
 
@@ -891,25 +911,25 @@ Governor-settable configuration on each adapter. All setters are
 
 ### All adapters (via `AbstractAdapter`)
 
-| Knob | Type | Default | Purpose |
-|---|---|---|---|
-| `authorise(sender, ChainConfig)` | call | — | Adds a strategy to the lane whitelist with `(paused, chainSelector, destGasLimit)`. |
-| `revoke(sender)` | call | — | Removes strategy from whitelist. |
-| `setLaneConfig(sender, ChainConfig)` | call | — | Updates lane config in place (mutates routing — governance-grade). |
-| `pauseLane(sender)` / `unpauseLane(sender)` | call | — | Strategist OR governor: emergency freeze of a single lane. |
-| `addStrategist(addr)` / `removeStrategist(addr)` | call | — | Manage the pause/unpause role list. |
-| `maxTransferAmount` | uint256 | 0 (unlimited) | Per-tx cap enforced in `sendMessageAndTokens`. Strategies on the peer chain read this as "max this adapter can deliver inbound" to size their withdrawAll requests. |
-| `setMaxTransferAmount(amount)` | call | — | Governor sets the cap. `0` re-disables enforcement. |
-| `transferToken(address, amount)` | call | — | Governor sweep of stuck tokens / pool ETH (use `address(0)` for native). |
+| Knob                                             | Type    | Default       | Purpose                                                                                                                                                             |
+| ------------------------------------------------ | ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authorise(sender, ChainConfig)`                 | call    | —             | Adds a strategy to the lane whitelist with `(paused, chainSelector, destGasLimit)`.                                                                                 |
+| `revoke(sender)`                                 | call    | —             | Removes strategy from whitelist.                                                                                                                                    |
+| `setLaneConfig(sender, ChainConfig)`             | call    | —             | Updates lane config in place (mutates routing — governance-grade).                                                                                                  |
+| `pauseLane(sender)` / `unpauseLane(sender)`      | call    | —             | Strategist OR governor: emergency freeze of a single lane.                                                                                                          |
+| `addStrategist(addr)` / `removeStrategist(addr)` | call    | —             | Manage the pause/unpause role list.                                                                                                                                 |
+| `maxTransferAmount`                              | uint256 | 0 (unlimited) | Per-tx cap enforced in `sendMessageAndTokens`. Strategies on the peer chain read this as "max this adapter can deliver inbound" to size their withdrawAll requests. |
+| `setMaxTransferAmount(amount)`                   | call    | —             | Governor sets the cap. `0` re-disables enforcement.                                                                                                                 |
+| `transferToken(address, amount)`                 | call    | —             | Governor sweep of stuck tokens / pool ETH (use `address(0)` for native).                                                                                            |
 
 ### CCTPAdapter-specific
 
-| Knob | Type | Default | Purpose |
-|---|---|---|---|
-| `MAX_TRANSFER_AMOUNT` | constant | `10_000_000 * 10**6` (10M USDC) | CCTP V2 protocol cap per burn. Hard-coded; not settable. Enforced ON TOP of the configurable `maxTransferAmount`. |
-| `minTransferAmount` | uint256 | 0 | Dust floor. Reject sends below this. Governor-settable. |
-| `minFinalityThreshold` | uint32 | 0 (must be set post-deploy) | CCTP V2 finality threshold for outbound sends. 2000 = finalised (zero fee, ~13 min). 1000–1999 = fast finality (non-zero token-side fee, sub-minute). `_sendMessage` / `_sendMessageAndTokens` revert with `"CCTP: threshold not set"` if unset. NOT initialised at declaration to stay proxy-safe. |
-| `operator` | address | `address(0)` | The single address authorised to call `relay(message, attestation)` (the off-chain attestation poller). Required for inbound finalisation since `destinationCaller == address(this)` on every burn. |
+| Knob                   | Type     | Default                         | Purpose                                                                                                                                                                                                                                                                                             |
+| ---------------------- | -------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAX_TRANSFER_AMOUNT`  | constant | `10_000_000 * 10**6` (10M USDC) | CCTP V2 protocol cap per burn. Hard-coded; not settable. Enforced ON TOP of the configurable `maxTransferAmount`.                                                                                                                                                                                   |
+| `minTransferAmount`    | uint256  | 0                               | Dust floor. Reject sends below this. Governor-settable.                                                                                                                                                                                                                                             |
+| `minFinalityThreshold` | uint32   | 0 (must be set post-deploy)     | CCTP V2 finality threshold for outbound sends. 2000 = finalised (zero fee, ~13 min). 1000–1999 = fast finality (non-zero token-side fee, sub-minute). `_sendMessage` / `_sendMessageAndTokens` revert with `"CCTP: threshold not set"` if unset. NOT initialised at declaration to stay proxy-safe. |
+| `operator`             | address  | `address(0)`                    | The single address authorised to call `relay(message, attestation)` (the off-chain attestation poller). Required for inbound finalisation since `destinationCaller == address(this)` on every burn.                                                                                                 |
 
 ### Inbound dispatch paths
 
@@ -948,48 +968,49 @@ accept inbound (pure-message) deliveries; the difference is the finality gate:
   `outboundAdapter.maxTransferAmount()` before sending. Vault sweep larger
   than the bridge's per-tx limit becomes a partial deposit; remainder stays on
   Master for the next cycle.
-- `Master.withdrawAll` clamps `remoteStrategyBalance` to
-  `inboundAdapter.maxTransferAmount()` before sending WITHDRAW_REQUEST. Same
-  partial-fill rationale. Inbound adapter is used because Master can't query
-  Remote's outbound across chains — the symmetric inbound adapter on this
-  chain holds the same protocol-level cap (outbound + inbound are mirrors of
-  the same lane).
+- `Master.withdrawAll` draws `_drawableRemoteBalance()` (`remoteStrategyBalance +
+min(bridgeAdjustment, 0)` — folds in a negative bridge adjustment so a net
+  BRIDGE_OUT can't over-request), clamped to `inboundAdapter.maxTransferAmount()`
+  before sending WITHDRAW_REQUEST. Same partial-fill rationale. Inbound adapter is
+  used because Master can't query Remote's outbound across chains — the symmetric
+  inbound adapter on this chain holds the same protocol-level cap (outbound +
+  inbound are mirrors of the same lane).
 - `Master.deposit` and `Master.withdraw` (specific-amount, vault-driven) do
   NOT clamp — they propagate the adapter's revert if amount exceeds the cap.
   Operator splits via depositAll/withdrawAll or sequenced batches.
 
 ### Suggested per-deployment values
 
-| Deployment | Adapter | maxTransferAmount | Other |
-|---|---|---|---|
-| OETHb / Base CCIPAdapter (Master outbound) | `1000 ether` | CCIP lane rate ~1000 WETH/hour | — |
-| OETHb / Eth SuperbridgeAdapter (Remote outbound) | `0` (unlimited) | canonical bridge has no per-tx limit | — |
-| OETHb / Base SuperbridgeAdapter (Master inbound) | match Remote outbound | mirror; `0` works | — |
-| OETHb / Eth CCIPAdapter (Remote inbound) | match Master outbound (`1000 ether`) | — | — |
-| OUSD V3 / Spoke CCTPAdapter | `10_000_000 * 10**6` (or less for tighter ops) | also set `minTransferAmount = 1 USDC`, `minFinalityThreshold = 2000` | — |
-| OUSD V3 / Eth CCTPAdapter | same | — | — |
+| Deployment                                       | Adapter                                        | maxTransferAmount                                                    | Other |
+| ------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------- | ----- |
+| OETHb / Base CCIPAdapter (Master outbound)       | `1000 ether`                                   | CCIP lane rate ~1000 WETH/hour                                       | —     |
+| OETHb / Eth SuperbridgeAdapter (Remote outbound) | `0` (unlimited)                                | canonical bridge has no per-tx limit                                 | —     |
+| OETHb / Base SuperbridgeAdapter (Master inbound) | match Remote outbound                          | mirror; `0` works                                                    | —     |
+| OETHb / Eth CCIPAdapter (Remote inbound)         | match Master outbound (`1000 ether`)           | —                                                                    | —     |
+| OUSD V3 / Spoke CCTPAdapter                      | `10_000_000 * 10**6` (or less for tighter ops) | also set `minTransferAmount = 1 USDC`, `minFinalityThreshold = 2000` | —     |
+| OUSD V3 / Eth CCTPAdapter                        | same                                           | —                                                                    | —     |
 
 ---
 
 ## 10. Glossary
 
-| Term | Meaning |
-|---|---|
-| **Master** | Strategy on the chain that hosts the rebasing OToken vault. Registered with that vault. |
-| **Remote** | Strategy on the chain that hosts the wOToken (yield-earning wrapper). Not registered with any vault — custodian for shares. |
-| **wOToken** | ERC-4626 wrapper of the OToken (wOETH wraps OETH; wOUSD wraps OUSD). |
-| **Yield channel** | Protocol-internal messages (deposit/withdraw/ack/balance check/settle). Nonce-gated except balance check. |
-| **Bridge channel** | User-facing messages (BRIDGE_IN, BRIDGE_OUT). Nonceless. |
-| **bridgeAdjustment** | Signed net delta from bridge-channel activity since last settlement. Tracked on both sides; always equal in magnitude. |
-| **remoteStrategyBalance** | Master's cached snapshot of Remote's `_viewCheckBalance` minus Remote's `bridgeAdjustment` (i.e., yield-only baseline). Updated by balance check and settlement acks. |
-| **pendingDepositAmount** | Master's in-flight deposit value. Counts in `checkBalance` so vault doesn't see backing dip during bridge round-trip. |
-| **pendingWithdrawalAmount** | Master's in-flight withdrawal amount. Gates concurrent ops; NOT in `checkBalance` (value is already in `remoteStrategyBalance` until claim ack). |
-| **claimed** | The bridgeAsset the OToken vault actually paid out on `claimWithdrawal(requestId)` (`RemoteWOTokenStrategy._opportunisticClaim`). `outstandingRequestAmount` is refined to it so leg-2 ships exactly the vault's payout, not the originally-requested amount. |
-| **settlementSnapshot** | `bridgeAdjustment` value captured at request time, persisted on Master so the ack handler can subtract exactly that delta. Preserves in-flight bridge ops. |
-| **lastBalanceCheckTimestamp** | Most recently accepted balance check timestamp. Enforces strict monotonic ordering across out-of-order CCIP delivery. |
-| **bridgeId** | `keccak256(strategy, counter)`. Unique per user bridge op. Recorded in `consumedBridgeIds[bridgeId]` on destination for replay protection. |
-| **bridgeFeeBps** | Protocol fee on the bridge channel in basis points. Default 0; capped at 1000 (10%). Burn-full / deliver-net: full `_amount` consumed locally; only `net = _amount - fee` flows to destination; difference becomes rebase yield. |
-| **Yield-only baseline** | `_viewCheckBalance() - bridgeAdjustment` — strips bridge-channel effects from the reported balance. Master adds back its own `bridgeAdjustment` to reconstruct true backing. |
+| Term                          | Meaning                                                                                                                                                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Master**                    | Strategy on the chain that hosts the rebasing OToken vault. Registered with that vault.                                                                                                                                                                       |
+| **Remote**                    | Strategy on the chain that hosts the wOToken (yield-earning wrapper). Not registered with any vault — custodian for shares.                                                                                                                                   |
+| **wOToken**                   | ERC-4626 wrapper of the OToken (wOETH wraps OETH; wOUSD wraps OUSD).                                                                                                                                                                                          |
+| **Yield channel**             | Protocol-internal messages (deposit/withdraw/ack/balance check/settle). Nonce-gated except balance check.                                                                                                                                                     |
+| **Bridge channel**            | User-facing messages (BRIDGE_IN, BRIDGE_OUT). Nonceless.                                                                                                                                                                                                      |
+| **bridgeAdjustment**          | Signed net delta from bridge-channel activity since last settlement. Tracked on both sides; always equal in magnitude.                                                                                                                                        |
+| **remoteStrategyBalance**     | Master's cached snapshot of Remote's `_viewCheckBalance` minus Remote's `bridgeAdjustment` (i.e., yield-only baseline). Updated by balance check and settlement acks.                                                                                         |
+| **pendingDepositAmount**      | Master's in-flight deposit value. Counts in `checkBalance` so vault doesn't see backing dip during bridge round-trip.                                                                                                                                         |
+| **pendingWithdrawalAmount**   | Master's in-flight withdrawal amount. Gates concurrent ops; NOT in `checkBalance` (value is already in `remoteStrategyBalance` until claim ack).                                                                                                              |
+| **claimed**                   | The bridgeAsset the OToken vault actually paid out on `claimWithdrawal(requestId)` (`RemoteWOTokenStrategy._opportunisticClaim`). `outstandingRequestAmount` is refined to it so leg-2 ships exactly the vault's payout, not the originally-requested amount. |
+| **settlementSnapshot**        | `bridgeAdjustment` value captured at request time, persisted on Master so the ack handler can subtract exactly that delta. Preserves in-flight bridge ops.                                                                                                    |
+| **lastBalanceCheckTimestamp** | Most recently accepted balance check timestamp. Enforces strict monotonic ordering across out-of-order CCIP delivery.                                                                                                                                         |
+| **bridgeId**                  | `keccak256(strategy, counter)`. Unique per user bridge op. Recorded in `consumedBridgeIds[bridgeId]` on destination for replay protection.                                                                                                                    |
+| **bridgeFeeBps**              | Protocol fee on the bridge channel in basis points. Default 0; capped at 1000 (10%). Burn-full / deliver-net: full `_amount` consumed locally; only `net = _amount - fee` flows to destination; difference becomes rebase yield.                              |
+| **Yield-only baseline**       | `_viewCheckBalance() - bridgeAdjustment` — strips bridge-channel effects from the reported balance. Master adds back its own `bridgeAdjustment` to reconstruct true backing.                                                                                  |
 
 ---
 

@@ -2,6 +2,9 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
+// Sentinel for "no outstanding queue request" (RemoteWOTokenStrategy.REQUEST_ID_EMPTY).
+const EMPTY = ethers.constants.MaxUint256;
+
 /**
  * End-to-end exercise of the cross-chain withdrawal flow with idempotent claim, run on the
  * paired Master+Remote loopback.
@@ -177,14 +180,14 @@ describe("Unit: V3 Withdrawal", function () {
     // Remote's checkBalance stays at SEED — queue + remaining shares. outstandingRequestAmount
     // tracks the bridgeAsset value (6dp) committed to the queue.
     expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW);
-    expect(await remote.outstandingRequestId()).to.be.gt(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
     expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
 
     // Advance past the queue delay and claim from Ethereum (permissionless).
     await time.increase(DELAY + 1);
     await remote.connect(alice).claimRemoteWithdrawal();
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
 
@@ -203,11 +206,11 @@ describe("Unit: V3 Withdrawal", function () {
     );
   });
 
-  it("handles a fresh-vault requestId of 0 without bricking (P1 offset-by-one)", async () => {
-    // Fresh OToken vault: the first-ever withdrawal returns requestId 0. Pre-fix, Remote
-    // stored 0 verbatim — indistinguishable from "no request" — which dropped the queued
-    // value from checkBalance and NACK-looped leg-2 forever. With the offset, id 0 is stored
-    // as 1, so the full lifecycle completes.
+  it("handles a fresh-vault requestId of 0 without bricking (REQUEST_ID_EMPTY sentinel)", async () => {
+    // Fresh OToken vault: the first-ever withdrawal returns requestId 0. A 0-sentinel scheme would
+    // make this indistinguishable from "no request" (dropping the queued value from checkBalance and
+    // NACK-looping leg-2). With the REQUEST_ID_EMPTY (= MaxUint256) sentinel, id 0 is stored verbatim
+    // and recognised as a live queue request, so the full lifecycle completes.
     await ethVault.setNextRequestId(0);
 
     // Leg 1.
@@ -218,8 +221,8 @@ describe("Unit: V3 Withdrawal", function () {
       WITHDRAW
     );
 
-    // Real vault requestId 0 → stored offset-by-one as 1 (recognised as a live queue request).
-    expect(await remote.outstandingRequestId()).to.equal(1);
+    // Real vault requestId 0 → stored verbatim as 0 (recognised as a live queue request).
+    expect(await remote.outstandingRequestId()).to.equal(0);
     // Queued value still counted (not lost) — checkBalance preserved.
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
     expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
@@ -229,7 +232,7 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).triggerClaim();
 
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
   });
 
@@ -247,7 +250,7 @@ describe("Unit: V3 Withdrawal", function () {
     // Leg 2 triggers the opportunistic claim inside Remote._processWithdrawClaim.
     await master.connect(governor).triggerClaim();
 
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
   });
@@ -263,14 +266,14 @@ describe("Unit: V3 Withdrawal", function () {
     // No advance — queue delay not yet met.
     // Permissionless claim attempt is a no-op.
     await remote.claimRemoteWithdrawal();
-    expect(await remote.outstandingRequestId()).to.be.gt(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
 
     // Leg 2 attempts and gets a NACK.
     await master.connect(governor).triggerClaim();
 
     // Pending state must still be set so retry is possible.
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
-    expect(await remote.outstandingRequestId()).to.be.gt(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
     // No tokens reached the vault.
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0);
 
@@ -289,7 +292,7 @@ describe("Unit: V3 Withdrawal", function () {
       bridgeAsset.address,
       WITHDRAW
     );
-    expect(await remote.outstandingRequestId()).to.be.gt(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
 
     // An attacker donates >= the target bridgeAsset to Remote DURING the delay window.
     await bridgeAsset.mintTo(remote.address, WITHDRAW);
@@ -301,7 +304,7 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).triggerClaim();
 
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW); // still pending
-    expect(await remote.outstandingRequestId()).to.be.gt(0); // queue intact, not orphaned
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY); // queue intact, not orphaned
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0); // nothing shipped
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW); // donation stays
 
@@ -310,7 +313,7 @@ describe("Unit: V3 Withdrawal", function () {
     await time.increase(DELAY + 1);
     await master.connect(governor).triggerClaim();
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
     // The donation (WITHDRAW) remains on Remote — never attributed to the withdrawal.
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
@@ -326,11 +329,11 @@ describe("Unit: V3 Withdrawal", function () {
 
     await time.increase(DELAY + 1);
     await remote.claimRemoteWithdrawal();
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
 
     // Second call is a no-op — does not revert.
     await remote.claimRemoteWithdrawal();
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(WITHDRAW);
   });
 
@@ -489,12 +492,12 @@ describe("Unit: V3 Withdrawal", function () {
       expect(await master.pendingWithdrawalAmount()).to.equal(0);
     });
 
-    it("withdrawAll no-ops when the inbound adapter is unset", async () => {
-      await master
-        .connect(governor)
-        .setInboundAdapter(ethers.constants.AddressZero);
-      await mockL2Vault.callWithdrawAll(master.address);
-      expect(await master.pendingWithdrawalAmount()).to.equal(0);
+    it("setInboundAdapter rejects the zero address", async () => {
+      // A withdrawal's leg-2 ack is delivered through the inbound adapter, so it must never be
+      // zeroed (even mid-flight). The "unset" state only exists pre-configuration (storage default).
+      await expect(
+        master.connect(governor).setInboundAdapter(ethers.constants.AddressZero)
+      ).to.be.revertedWith("V3: zero inbound adapter");
     });
 
     it("leg-2 NACKs (no revert/brick) on a bounds desync, then completes once resolved", async () => {
@@ -515,7 +518,7 @@ describe("Unit: V3 Withdrawal", function () {
       await master.connect(governor).triggerClaim();
       expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
       expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(0);
-      expect(await remote.outstandingRequestId()).to.equal(0); // claimed, held on Remote
+      expect(await remote.outstandingRequestId()).to.equal(EMPTY); // claimed, held on Remote
       expect(await master.isYieldOpInFlight()).to.equal(false);
 
       // Resolve the desync and retry — the withdrawal completes.

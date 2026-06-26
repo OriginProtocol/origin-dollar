@@ -7,6 +7,9 @@ const { getCreate2ProxyAddress } = require("../../../deploy/deployActions");
 
 const { MSG, encodeBridgeUserPayload } = require("./_helpers");
 
+// Sentinel for "no outstanding queue request" (RemoteWOTokenStrategy.REQUEST_ID_EMPTY).
+const EMPTY = ethers.constants.MaxUint256;
+
 const mainnetFixture = createFixtureLoader(defaultFixture);
 
 /**
@@ -77,7 +80,7 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
 
   it("claimRemoteWithdrawal is idempotent when nothing is outstanding", async () => {
     await expect(remote.claimRemoteWithdrawal()).to.not.be.reverted;
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await remote.outstandingRequestAmount()).to.equal(0);
   });
 

@@ -4,6 +4,9 @@ const { isCI } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const addresses = require("../../../utils/addresses");
+
+// Sentinel for "no outstanding queue request" (RemoteWOTokenStrategy.REQUEST_ID_EMPTY).
+const EMPTY = ethers.constants.MaxUint256;
 const { getCreate2ProxyAddress } = require("../../../deploy/deployActions");
 
 const { MSG, encodePackedEnvelope } = require("./_helpers");
@@ -116,7 +119,7 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     // wOETH shares should have been unwrapped.
     expect(await woeth.balanceOf(remote.address)).to.be.lt(sharesBefore);
     expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW_AMOUNT);
-    expect(await remote.outstandingRequestId()).to.be.gt(0);
+    expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
 
     // Invariant: checkBalance is preserved (within rounding) — value shifted from shares → queue.
     const totalAfter = await remote.checkBalance(addresses.mainnet.WETH);
@@ -155,7 +158,7 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
         envelope
       );
     const requestId = await remote.outstandingRequestId();
-    expect(requestId).to.be.gt(0);
+    expect(requestId).to.not.equal(EMPTY);
 
     // Read the OETH vault's claim delay from its metadata. Use try-catch in case the layout
     // changes; fall back to 600s.
@@ -179,7 +182,7 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     await remote.claimRemoteWithdrawal();
 
     // After claim: outstandingRequestId cleared, WETH on Remote increased.
-    expect(await remote.outstandingRequestId()).to.equal(0);
+    expect(await remote.outstandingRequestId()).to.equal(EMPTY);
     expect(await weth.balanceOf(remote.address)).to.be.gt(wethBefore);
   });
 
@@ -211,7 +214,7 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     await time.increase(86400);
 
     await remote.claimRemoteWithdrawal();
-    // Second call: outstandingRequestId is 0, so early-return.
+    // Second call: outstandingRequestId is the empty sentinel, so early-return.
     await expect(remote.claimRemoteWithdrawal()).to.not.be.reverted;
   });
 });

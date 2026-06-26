@@ -82,6 +82,9 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         external
         onlyGovernor
     {
+        // Reject zero: outbound sends (deposits / withdraw requests / acks) all route through it;
+        // a zero outbound would silently break the channel. Symmetric with setInboundAdapter.
+        require(_outboundAdapter != address(0), "V3: zero outbound adapter");
         _setOutboundAdapter(_outboundAdapter);
     }
 
@@ -97,6 +100,11 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     }
 
     function setInboundAdapter(address _inboundAdapter) external onlyGovernor {
+        // Reject zero: a withdrawal's leg-2 ack is delivered through the inbound adapter
+        // (`onlyInboundAdapter`), so zeroing it — even mid-flight — would stall an in-flight
+        // withdrawal. Keeping it non-zero also makes the bounds checks in `_withdrawRequest`
+        // unconditional.
+        require(_inboundAdapter != address(0), "V3: zero inbound adapter");
         emit InboundAdapterUpdated(inboundAdapter, _inboundAdapter);
         inboundAdapter = _inboundAdapter;
     }

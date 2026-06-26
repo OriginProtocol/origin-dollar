@@ -25,10 +25,10 @@ adapter family that drives it. Concretely:
 - **Adapter family** on a shared `AbstractAdapter` base: `CCIPAdapter`,
   `CCTPAdapter`, `SuperbridgeAdapter`. Each carries a multi-tenant whitelist,
   per-lane config, and a governor-settable `maxTransferAmount` cap.
-- **CREATE3 proxies** (`BridgeAdapterProxy`, `CrossChainStrategyProxy`) so the
-  proxy address is byte-identical on paired chains. Adapter impls are
-  deployed plain — only the proxy address matters for the
-  `transportSender == address(this)` peer-parity check.
+- **CreateX/CREATE2 proxies** (`BridgeAdapterProxy`, `CrossChainStrategyProxy`),
+  deployed via `deployProxyWithCreateX` so the proxy address is byte-identical on
+  paired chains. Adapter impls are deployed plain — only the proxy address matters
+  for the `transportSender == address(this)` peer-parity check.
 - **CCTPAdapter.relay()** manually parses the CCTP V2 burn body via
   `CCTPMessageHelper.decodeBurnBody`, dispatches the strategy directly with
   authoritative `amount`, `feeExecuted`, and `hookData` — works on both V2.0
@@ -46,8 +46,8 @@ adapter family that drives it. Concretely:
   addresses, scripts, mock-vault deploys. End-to-end deploy-able for
   rehearsal.
 - **Production OETHb deploys** at `deploy/base/100-104_*` and
-  `deploy/mainnet/210-211_*`. Master/Remote proxies via CREATE3; adapters
-  behind `BridgeAdapterProxy` (also CREATE3) for paired-chain address
+  `deploy/mainnet/210-211_*`. Master/Remote proxies via CreateX/CREATE2; adapters
+  behind `BridgeAdapterProxy` (also CreateX/CREATE2) for paired-chain address
   matching.
 - **Docs** — `FLOWS.md` (sequence diagrams), `README.md` refresh,
   `.claude/skills/add-network/SKILL.md`.
@@ -74,11 +74,12 @@ Two strategy contracts, one bridge-agnostic adapter API:
 │   (proxy)  (proxy)      │                    │   (proxy)  (proxy)      │
 └─────────────────────────┘                    └─────────────────────────┘
                        ▲                              ▲
-                       └──── byte-identical via CREATE3
+                       └──── byte-identical via CreateX/CREATE2
                             (peer-parity precondition)
 ```
 
 **Roles:**
+
 - **Master** lives on the chain hosting the rebasing OToken vault. It's the
   strategy that vault registers. Vault calls `deposit` / `withdraw`. Master
   doesn't hold yield-earning shares; it tracks `remoteStrategyBalance` (last
@@ -90,10 +91,11 @@ Two strategy contracts, one bridge-agnostic adapter API:
   mint/redeem.
 
 **Two channels:**
+
 - **Yield channel.** DEPOSIT / WITHDRAW_REQUEST / WITHDRAW_CLAIM /
   BALANCE_CHECK / SETTLE and their ACKs. Each message has a yield nonce.
   Master gates concurrent yield ops via `pendingDepositAmount == 0 &&
-  pendingWithdrawalAmount == 0`. The balance check is the only non-blocking
+pendingWithdrawalAmount == 0`. The balance check is the only non-blocking
   yield op (nonce-echo, no advance).
 - **Bridge channel.** BRIDGE_IN / BRIDGE_OUT. Nonceless. User-driven via
   `bridgeOTokenToPeer`. Replay protection via `consumedBridgeIds[bridgeId]`.
@@ -103,6 +105,7 @@ Two strategy contracts, one bridge-agnostic adapter API:
 **Three adapters, one interface.** The strategy talks to adapters via
 `IBridgeAdapter` (outbound) + `IBridgeReceiver` (inbound). Each adapter
 encapsulates one bridge transport:
+
 - **CCIPAdapter** — Chainlink CCIP, atomic token + message.
 - **CCTPAdapter** — Circle CCTP V2. Burn messages parsed manually in `relay()`;
   pure messages go through the V2 hook callback.
@@ -130,9 +133,10 @@ spamming bridge ops). Splitting the channels lets the operator handle the
 two cadences independently.
 
 **How.**
+
 - Yield channel: `_acceptYieldNonce` + `_markYieldNonceProcessed` enforce
   monotonic advance. Sender gate `pendingDepositAmount == 0 &&
-  pendingWithdrawalAmount == 0` blocks concurrent yield sends.
+pendingWithdrawalAmount == 0` blocks concurrent yield sends.
 - Bridge channel: no nonce, no global gate. Replay protection is
   per-message via `consumedBridgeIds[bridgeId]` on the destination side.
 
@@ -149,6 +153,7 @@ flight. Instead: nonce-echo means a balance check can be in flight
 concurrently with a deposit/withdraw without locking either out.
 
 The three guards on the response (`MasterWOTokenStrategy._processBalanceCheckResponse`):
+
 1. `isYieldOpInFlight()` — if a deposit/withdraw started after the balance
    check fired, ignore the now-stale reading.
 2. `nonce == lastYieldNonce` — if the nonce advanced between request and
@@ -174,10 +179,11 @@ By parsing the burn body ourselves, the V3 adapter works identically on
 V2.0 and V2.1 deployments — no chain-specific code paths.
 
 **How.**
+
 - `CCTPMessageHelper.decodeBurnBody` extracts `(burnToken, amount, msgSender,
-  feeExecuted, hookData)` using the CCTP V2 wire-format offsets.
+feeExecuted, hookData)` using the CCTP V2 wire-format offsets.
 - `relay()` distinguishes burn vs pure messages by `transportSender ==
-  tokenMessenger` and routes accordingly.
+tokenMessenger` and routes accordingly.
 - Pure messages still go through `handleReceiveFinalizedMessage` /
   `handleReceiveUnfinalizedMessage` hooks. Those handlers now revert if
   `intendedAmount != 0` — a token-bearing message arriving through the
@@ -209,10 +215,13 @@ would just create another knob to tune (and revert path to handle). If
 Remote ships much less than requested, it shows up as yield drag on the
 next balance check — operationally visible.
 
-### 3.5 CREATE3 peer parity for both proxies and adapter proxies
+### 3.5 CreateX / CREATE2 peer parity for both proxies and adapter proxies
 
-**Decision.** Master, Remote, and every adapter live behind a CREATE3-deployed
-proxy. Impl contracts are deployed plain (chain-specific addresses are fine).
+**Decision.** Master, Remote, and every adapter live behind a proxy deployed
+deterministically through the **CreateX factory** (same factory address on every
+chain) using **CREATE2** — `deployProxyWithCreateX` → `factory.deployCreate2`,
+addresses resolved via `getCreate2ProxyAddress` (the CREATE3 path in the helper is
+unused). Impl contracts are deployed plain (chain-specific addresses are fine).
 The proxy address matches on both chains.
 
 **Why.** The `transportSender == address(this)` check inside `_validateInbound`
@@ -220,16 +229,17 @@ requires the source-side adapter address to equal the destination-side
 adapter address. The strategy `_deliver` similarly dispatches to
 `envelopeSender` (the source strategy), which must resolve to the
 destination strategy on the receiving chain. Both checks need byte-identical
-addresses across chains. CREATE3 gives that.
+addresses across chains. CREATE2 from the same CreateX factory with a fixed
+per-proxy salt and identical proxy initcode gives that.
 
-**Why proxy + plain impl, not CREATE3 the impl directly.** Impls have
+**Why proxy + plain impl, not deploy the impl directly.** Impls have
 chain-specific constructor args (CCIPRouter, L1StandardBridge, USDC,
-WETH, etc.) — different bytecode → different CREATE3 addresses. The proxy
-has a uniform constructor (just `address governor`) so its CREATE3 address
-is deterministic. The proxy delegates to the chain-specific impl.
+WETH, etc.) — different initcode → different CREATE2 address. The proxy has
+uniform initcode across chains, so its CREATE2 address is identical. The proxy
+delegates to the chain-specific impl.
 
 **See:** `BridgeAdapterProxy.sol`, `CrossChainStrategyProxy.sol`,
-`deployBridgeAdapterProxy` helper in `contracts/utils/createXProxyHelper.js`.
+`deployProxyWithCreateX` / `getCreate2ProxyAddress` in `contracts/deploy/deployActions.js`.
 
 ### 3.6 Signed `bridgeAdjustment` + settlement snapshot-subtract
 
@@ -268,6 +278,14 @@ Including it as `pendingWithdrawalAmount` too would double-count.
 `pendingWithdrawalAmount` is purely a gate for "is there an in-flight
 withdraw," not a balance component.
 
+**Draw bound.** A withdrawal is gated by `_drawableRemoteBalance()` —
+`remoteStrategyBalance + min(bridgeAdjustment, 0)`, scaled via `_toAsset` — not
+by `remoteStrategyBalance` alone. After a net BRIDGE_OUT (`bridgeAdjustment < 0`),
+Remote holds fewer shares than `remoteStrategyBalance` implies, so folding in the
+negative part stops Master over-requesting more than Remote can actually unwrap.
+Positive `bridgeAdjustment` stays excluded (realise it via `requestSettlement`
+first), preserving the conservative draw.
+
 **Trade-off.** If Remote's outbound ack is permanently lost (transport
 failure),`pendingWithdrawalAmount` stays set forever, blocking future
 withdrawals. Mitigation: governor swaps `outboundAdapter` /
@@ -278,6 +296,7 @@ adapter. Not a code change — operational only.
 
 **Decision.** A single `_send(token, amount, msgType, nonce, body, userFunded)`
 helper with two funding modes selected by `userFunded`:
+
 - **User-paid** (`userFunded = true`): the caller supplies `msg.value` ≥ `fee`.
   Used by `bridgeOTokenToPeer`. Any excess `msg.value` stays in the adapter's
   balance — no refund.
@@ -330,17 +349,22 @@ Remote's external `checkBalance` is likewise total: it scales the
 OToken-denominated `_viewCheckBalance` down to bridgeAsset units (see 3.11) and
 never reverts. The internal `_yieldOnlyBaseline` (`_viewCheckBalance -
 bridgeAdjustment`, used only for the R→M yield reports — never for
-`checkBalance`) DELIBERATELY reverts if it would go negative: a loud halt is
-safer than shipping a wrong value on the balance-bearing path, and a negative
-baseline shouldn't arise under normal ops (each BRIDGE_IN/OUT moves
-`_viewCheckBalance` and `bridgeAdjustment` by the same amount). Governor recovers
-via an implementation upgrade if a slashing / negative rebase ever trips it.
+`checkBalance`) likewise **clamps to 0** rather than reverting. It can't go
+_significantly_ negative because (w)OTokens never negative-rebase, so the value
+is principal + yield + retained fees; the only thing that drives it slightly
+negative is the wOToken 4626's ~1-wei-per-bridge-op rounding, and reverting on
+that dust would freeze the whole serialized yield channel. Clamping reports a
+dust-accurate 0 instead (consistent with the checkBalance-never-reverts rule
+above). The one scenario the clamp masks is a real **negative rebase**: it would
+make Master read 0 instead of the true (negative) value — out of scope here,
+recoverable by governor via an implementation upgrade.
 
 ---
 
 ### 3.11 Decimal domains — OToken (18dp) internal, bridgeAsset at the vault edge
 
 **Decision.** The strategy keeps two unit domains and scales only at the seams:
+
 - **OToken (18dp):** `remoteStrategyBalance`, `bridgeAdjustment`, the whole OToken
   bridge channel, and Remote's `_viewCheckBalance` / `_yieldOnlyBaseline`. Remote
   reports its yield baseline to Master in **18dp**.
@@ -366,6 +390,7 @@ decimals like every other strategy. Mirrors `CurveAMOStrategy`.
 
 **Decision / note.** The governor is a fully-trusted role here, on par with the
 proxy-upgrade power it already holds:
+
 - `AbstractAdapter.transferToken` can sweep ANY asset off an adapter, including
   bridge tokens that rest there transiently or across blocks (e.g. Superbridge
   split-delivery WETH stranded until `processStoredMessage`). It is intentionally
@@ -383,6 +408,7 @@ governor.
 
 **Decision.** No OToken or wOToken ever crosses the bridge. What moves differs
 by channel:
+
 - **Yield channel** (operator deposit / withdraw): the strategy bridges the
   **backing asset** (WETH / USDC) plus a message. Remote mints OToken from that
   asset at the local OToken vault and wraps it to wOToken; on withdraw it
@@ -441,6 +467,21 @@ blocking future withdrawals. **Mitigation:** governor calls
 `setOutboundAdapter` (Remote) / `setInboundAdapter` (Master) to swap to a
 fresh adapter pair; the new pair can re-deliver the ack. No code change
 needed — operational only.
+
+**On-chain handler-failure recovery (not just lost transport).** Remote's
+inbound yield handlers are revert-free so a failed underlying call can't brick
+the serialized channel:
+
+- **Leg-1 NACK.** If the unwrap/queue in `_processWithdrawRequest` reverts,
+  Remote queues nothing and the `WITHDRAW_REQUEST_ACK` carries `success = false`;
+  Master clears `pendingWithdrawalAmount` so the channel frees up (the withdrawal
+  simply didn't happen and can be re-requested). The unwrap is non-atomic — any
+  OToken it unwrapped before the queue failed is left idle, counted by
+  `_viewCheckBalance` and re-wrappable via `retryDeposit`.
+- **Failed deposit.** If `_processDeposit`'s mint/wrap reverts, the bridgeAsset
+  (or OToken) is left idle on Remote — still counted, value preserved — and the
+  operator-only **`retryDeposit()`** re-runs the mint/wrap pipeline to put it back
+  into productive wOToken. The DEPOSIT_ACK is still sent with the true baseline.
 
 ### 4.5 `bridgeAdjustment` unbounded
 
@@ -518,9 +559,9 @@ pending list. Top of mind for the next PR:
   Mermaid sequence diagrams + fee model reference.
 - **`.claude/skills/add-network/SKILL.md`** — checklist for adding a new
   network to the repo (reusable for OUSD V3 spoke rollouts).
-- **`contracts/utils/createXProxyHelper.js`** — shared
-  `deployBridgeAdapterProxy` / `initBridgeAdapterProxy` helpers for testnet
-  + production deploys.
+- **`contracts/deploy/deployActions.js`** — shared `deployProxyWithCreateX` /
+  `getCreate2ProxyAddress` helpers (CreateX/CREATE2) used by the strategy and
+  adapter proxy deploy scripts.
 
 ---
 
@@ -531,20 +572,20 @@ For an auditor or on-call engineer reviewing the code quickly:
 - **Master.checkBalance never reverts and never returns negative.** Clamping
   to 0 on hypothetical negative totals is intentional.
 - **Yield ops are serialised on Master.** `pendingDepositAmount == 0 &&
-  pendingWithdrawalAmount == 0` must hold before a new yield op fires.
+pendingWithdrawalAmount == 0` must hold before a new yield op fires.
 - **Balance check is non-blocking** but acceptance requires all three guards
   (`isYieldOpInFlight()`, nonce match, timestamp monotonic).
 - **Bridge channel is replay-protected** per-`bridgeId`. Same `bridgeId`
   delivered twice → second call reverts.
 - **Adapter peer parity** (`transportSender == address(this)`) is enforced
-  on every inbound. CREATE3 deployment gives byte-identical proxy addresses
-  across paired chains.
+  on every inbound. CreateX/CREATE2 deployment gives byte-identical proxy
+  addresses across paired chains.
 - **Yield-only baseline** on Remote: `_viewCheckBalance() - bridgeAdjustment`
   strips bridge-channel effects so out-of-order delivery between balance
   check and bridge messages doesn't desync `remoteStrategyBalance` on
   Master.
 - **Settlement preserves in-flight bridge ops.** `bridgeAdjustment -=
-  settlementSnapshot` (not `= 0`) so a bridge op that landed between
+settlementSnapshot` (not `= 0`) so a bridge op that landed between
   request and ack survives the settlement round.
 - **Pool drains only for op-funded sends.** User-funded sends require
   `msg.value >= fee` explicitly; pool is never tapped for user paths.
@@ -564,10 +605,11 @@ For an auditor or on-call engineer reviewing the code quickly:
   leg 1 (pre-check against the inbound/mirror adapter) and, as defense in
   depth, NACK'd — not reverted — at Remote leg 2. A sub-floor / above-cap
   amount can never deadlock the one-op-in-flight channel.
-- **Queue requestId is stored offset-by-one.** `outstandingRequestId =
-  vault.requestId + 1`, so a real requestId of 0 (first withdrawal on a fresh
-  vault) is distinguishable from "no request"; `outstandingRequestId != 0`
-  means "pending, unclaimed".
+- **Queue requestId uses a `REQUEST_ID_EMPTY` sentinel.** `outstandingRequestId`
+  stores the vault's `requestId` verbatim; `REQUEST_ID_EMPTY` (`type(uint256).max`,
+  set in `initialize`) means "no request", so a real requestId of 0 (first
+  withdrawal on a fresh vault) is unambiguous. `outstandingRequestId !=
+REQUEST_ID_EMPTY` means "pending, unclaimed".
 - **OToken (18dp) internal, bridgeAsset units at the vault edge** (see §3.11):
   `remoteStrategyBalance` / `bridgeAdjustment` / the bridge channel are 18dp;
   conversions happen only at the documented seams (identity for 18/18 OETHb).
