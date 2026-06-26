@@ -172,7 +172,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
      *      only to tests — production bridge delivery is always a separate tx).
      */
     function receiveMessage(
-        address, // sender — redundant with onlyInboundAdapter + CREATE3 peer parity
+        address, // sender — redundant with onlyInboundAdapter + CreateX/CREATE2 peer parity
         address, // token — inbound paths that need the delivered token read balanceOf directly
         uint256 amountReceived,
         bytes calldata payload

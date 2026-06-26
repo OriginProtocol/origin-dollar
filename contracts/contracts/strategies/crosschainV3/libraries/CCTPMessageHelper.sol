@@ -90,11 +90,11 @@ library CCTPMessageHelper {
      * @param body The inner CCTP V2 burn message body.
      * @return burnToken The token burned on source (the SOURCE-chain USDC; informational —
      *                  the local mint is always `usdcToken`).
-     * @return mintRecipient Destination mint recipient from the burn body; under CREATE3
+     * @return mintRecipient Destination mint recipient from the burn body; under CreateX/CREATE2
      *                  parity this must be the relaying adapter (`relay` enforces it).
      * @return amount Source-side burn amount.
      * @return msgSender The source-side caller of `depositForBurnWithHook` (peer adapter
-     *                  under CREATE3 parity).
+     *                  under CreateX/CREATE2 parity).
      * @return feeExecuted Protocol fee deducted from `amount` on destination. `amount -
      *                    feeExecuted` USDC arrives at the mintRecipient.
      * @return hookData Opaque payload set by the source side via the `hookData` arg of

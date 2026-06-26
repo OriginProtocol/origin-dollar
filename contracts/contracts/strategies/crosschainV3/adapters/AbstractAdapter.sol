@@ -14,7 +14,7 @@ import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceive
  *
  * @notice Shared base for OUSD V3 bridge adapters. One adapter deployment serves a single
  *         (chain, bridge protocol) — multi-tenant across strategies on that chain, with per-
- *         sender lane configuration. Under CREATE3 cross-chain parity, the peer adapter on
+ *         sender lane configuration. Under CreateX/CREATE2 cross-chain parity, the peer adapter on
  *         the destination chain shares this contract's own address, so outbound routing and
  *         inbound trust checks both reference `address(this)`.
  *
@@ -49,7 +49,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     }
 
     /// @notice Sender → authorised flag. Gates both outbound `msg.sender` and inbound
-    ///         envelopeSender. CREATE3 parity means the same address represents the same
+    ///         envelopeSender. CreateX/CREATE2 parity means the same address represents the same
     ///         strategy on every chain it lives on.
     mapping(address => bool) public authorised;
 
@@ -355,7 +355,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
      *      pass:
      *        - `srcChain`        — source chain ID extracted from the bridge transport.
      *        - `transportSender` — source-chain caller that originated the bridge tx. Under
-     *                              CREATE3 parity, this must equal `address(this)` (the peer
+     *                              CreateX/CREATE2 parity, this must equal `address(this)` (the peer
      *                              adapter has the same address).
      *        - `envelope`        — full wrapped bytes received from the transport.
      *      Returns the decoded `envelopeSender` (also the destination strategy address on
@@ -389,7 +389,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     /**
      * @dev Atomically transfer `amountReceived` of `token` to the target strategy and call
      *      `receiveMessage`. The target strategy address equals `envelopeSender` under
-     *      CREATE3 parity.
+     *      CreateX/CREATE2 parity.
      */
     function _deliver(
         address envelopeSender,
@@ -404,7 +404,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         // feePaid is NOT forwarded to the strategy (no strategy reads it); off-chain
         // consumers read it from the MessageDelivered event below.
         // The call target and the `sender` argument are the same `envelopeSender`: the
-        // target == sender under CREATE3 parity (see @dev), and the strategy expects its
+        // target == sender under CreateX/CREATE2 parity (see @dev), and the strategy expects its
         // own peer address as `sender`.
         IBridgeReceiver(envelopeSender).receiveMessage(
             envelopeSender,

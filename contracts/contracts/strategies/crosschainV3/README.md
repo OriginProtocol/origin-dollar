@@ -45,8 +45,8 @@ contracts/strategies/crosschainV3/libraries/
   NativeFeeHelper.sol     — shared native-fee consumption helper
 
 contracts/proxies/create2/
-  CrossChainStrategyProxy.sol — Master/Remote strategy proxy (CREATE3-deployable for peer parity)
-  BridgeAdapterProxy.sol      — Adapter proxy (CREATE3-deployable for peer parity)
+  CrossChainStrategyProxy.sol — Master/Remote strategy proxy (CreateX/CREATE2-deployable for peer parity)
+  BridgeAdapterProxy.sol      — Adapter proxy (CreateX/CREATE2-deployable for peer parity)
 
 contracts/strategies/
   BridgedWOETHMigrationStrategy.sol — Phase 1 upgrade impl for the existing Base proxy
@@ -80,7 +80,7 @@ The protocol uses two nested envelopes:
 | 1 | DEPOSIT | Yield | M→R | empty | tokens carried via adapter |
 | 2 | DEPOSIT_ACK | Yield | R→M | `(uint256 yieldBaseline)` | |
 | 3 | WITHDRAW_REQUEST | Yield | M→R | `(uint256 amount)` | leg 1 |
-| 4 | WITHDRAW_REQUEST_ACK | Yield | R→M | `(uint256 yieldBaseline)` | requestId stays on Remote |
+| 4 | WITHDRAW_REQUEST_ACK | Yield | R→M | `(uint256 yieldBaseline, bool success)` | success=false ⇒ leg-1 NACK (nothing queued) |
 | 5 | WITHDRAW_CLAIM | Yield | M→R | empty | leg 2 trigger |
 | 6 | WITHDRAW_CLAIM_ACK | Yield | R→M | `(uint256 yieldBaseline, bool success, uint256 amount)` | tokens carried on success |
 | 7 | BALANCE_CHECK_REQUEST | Yield | M→R | `(uint256 timestamp)` | |
@@ -174,7 +174,7 @@ Current total: **111 unit tests** + the per-network `*.fork-test.js` files.
 
 ## Operational runbook (mainnet / testnet)
 
-Deploy scripts (testnet at `deploy/sepolia/*` + `deploy/baseSepolia/*`, production at `deploy/base/100-104_*` + `deploy/mainnet/210-211_*`) deploy both the strategy proxies and the adapter proxies via CREATE3 (deterministic peer-parity addresses) with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, CCTP TokenMessengers, OP Stack L1StandardBridge addresses, governance multisigs).
+Deploy scripts (testnet at `deploy/sepolia/*` + `deploy/baseSepolia/*`, production at `deploy/base/100-104_*` + `deploy/mainnet/210-211_*`) deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses) with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, CCTP TokenMessengers, OP Stack L1StandardBridge addresses, governance multisigs).
 
 Key cadences (production targets):
 
@@ -188,7 +188,7 @@ These were intentionally not authored as part of the protocol code because they 
 
 | # | Item | Status |
 |---|---|---|
-| 1 | **Testnet registration (Sepolia + Base Sepolia)** — full network registration + mock vault/token + deploy scripts wiring `MasterWOTokenStrategy`/`RemoteWOTokenStrategy` + `CCIPAdapter` + `SuperbridgeAdapter` (all behind `BridgeAdapterProxy` via CREATE3 for peer parity). OETHb topology only — no CCTP wiring in this scope. | Done |
+| 1 | **Testnet registration (Sepolia + Base Sepolia)** — full network registration + mock vault/token + deploy scripts wiring `MasterWOTokenStrategy`/`RemoteWOTokenStrategy` + `CCIPAdapter` + `SuperbridgeAdapter` (all behind `BridgeAdapterProxy` via CreateX/CREATE2 for peer parity). OETHb topology only — no CCTP wiring in this scope. | Done |
 | 2 | **CCTP testnet path** — `CCTPAdapter` on Sepolia/Base Sepolia + Iris-sandbox attestation relayer setup for OUSD V3 testnet rehearsal. | Follow-up |
 | 3 | **OETHb Phase 1 base fork test** — `oethb-phase1-migration.base.fork-test.js` driving 9 × `bridgeToRemote(1000e18)` against a Base fork, validating CCIP rate-limit pacing. | Pending |
 | 4 | **Mainnet + Base production deploy scripts** — `deploy/mainnet/200-203_*` and `deploy/base/100-105_*` to wire Master/Remote pair + adapters on production. | Pending |

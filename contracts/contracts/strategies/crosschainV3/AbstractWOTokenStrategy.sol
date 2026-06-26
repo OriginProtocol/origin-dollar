@@ -75,7 +75,7 @@ abstract contract AbstractWOTokenStrategy is
     mapping(bytes32 => bool) public consumedBridgeIds;
 
     /// @notice Monotonic counter used to generate fresh bridgeIds for outbound BRIDGE_IN
-    ///         / BRIDGE_OUT operations. NOT globally unique on its own — under CREATE3 parity
+    ///         / BRIDGE_OUT operations. NOT globally unique on its own — under CreateX/CREATE2 parity
     ///         Master and Remote share `address(this)`, so the same counter yields the same id
     ///         on both. Replay safety instead comes from `consumedBridgeIds` being per-chain:
     ///         each side only ever consumes the PEER's ids (Master consumes Remote's BRIDGE_INs,
@@ -351,7 +351,7 @@ abstract contract AbstractWOTokenStrategy is
             p.callGasLimit <= MAX_BRIDGE_CALL_GAS,
             "WOT: callGasLimit too high"
         );
-        // Defense-in-depth: the trusted CREATE3 peer always sets a non-zero recipient
+        // Defense-in-depth: the trusted CreateX/CREATE2 peer always sets a non-zero recipient
         // (outbound defaults it to msg.sender), but reject a zero recipient explicitly so a
         // malformed payload can't consume the bridgeId and then revert in delivery.
         require(p.recipient != address(0), "WOT: zero recipient");

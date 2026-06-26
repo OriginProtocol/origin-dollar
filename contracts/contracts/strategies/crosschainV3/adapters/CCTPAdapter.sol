@@ -155,7 +155,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
      *            exercised in production.
      *
      *         2. **Pure message** (sourced from `MessageTransmitter.sendMessage`). Transport
-     *            `sender` and `recipient` are both this adapter (CREATE3 parity). The body
+     *            `sender` and `recipient` are both this adapter (CreateX/CREATE2 parity). The body
      *            is our application envelope directly. `messageTransmitter.receiveMessage`
      *            triggers our own `handleReceiveFinalizedMessage` hook, which calls
      *            `_handleInbound` and dispatches.
@@ -177,7 +177,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         );
 
         // Burn messages have the source TokenMessenger as their transport sender. Pure
-        // messages have this adapter as both transport sender and recipient (CREATE3
+        // messages have this adapter as both transport sender and recipient (CreateX/CREATE2
         // parity).
         // INVARIANT: this branch compares the SOURCE-chain TokenMessenger (transportSender)
         // against THIS chain's `tokenMessenger` immutable. It is only correct because CCTP V2
@@ -318,7 +318,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         uint256 /* fee */
     ) internal override {
         // Hook-only message via the transmitter (no token leg). destinationCaller is the
-        // peer adapter address (CREATE3 parity) so only it can finalise on the destination.
+        // peer adapter address (CreateX/CREATE2 parity) so only it can finalise on the destination.
         require(minFinalityThreshold > 0, "CCTP: threshold not set");
         messageTransmitter.sendMessage(
             uint32(cfg.chainSelector),

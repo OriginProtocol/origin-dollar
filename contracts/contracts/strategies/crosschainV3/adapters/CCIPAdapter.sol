@@ -21,7 +21,7 @@ import { CCIPMessageBuilder } from "../libraries/CCIPMessageBuilder.sol";
  *         (`sendMessageAndTokens`) or message-only (`sendMessage`) to the configured peer.
  *         Receives inbound via `ccipReceive`, validates against the lane config (source
  *         chain, peer adapter identity), and forwards to the destination strategy
- *         (CREATE3 parity: envelope sender == destination strategy on this chain).
+ *         (CreateX/CREATE2 parity: envelope sender == destination strategy on this chain).
  *
  *         The CCIP fee is paid in native and sourced from `msg.value`; excess is NOT
  *         refunded — it stays on the adapter (recover via `transferToken`).
@@ -66,7 +66,7 @@ contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
             token,
             amount,
             envelope,
-            address(this), // peer adapter address (CREATE3 parity)
+            address(this), // peer adapter address (CreateX/CREATE2 parity)
             cfg.destGasLimit
         );
         fee = ccipRouter.getFee(cfg.chainSelector, ccipMessage);

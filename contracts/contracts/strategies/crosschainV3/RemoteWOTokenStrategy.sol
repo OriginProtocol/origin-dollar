@@ -25,7 +25,7 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *         on Ethereum).
  *
  *         For the full Remote state-transition table (Idle → Requested → Claimed → Bridging-out
- *         → Completed) see the V3 implementation plan.
+ *         → Completed) see `FLOWS.md`.
  */
 contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     using SafeERC20 for IERC20;

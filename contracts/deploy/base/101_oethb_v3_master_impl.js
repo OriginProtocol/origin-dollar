@@ -8,7 +8,7 @@ const {
 // Default per-receive destination gas limit for cross-chain message handling.
 const DEFAULT_DEST_GAS_LIMIT = 500000;
 
-// CREATE3 salts for the adapter proxies. MUST match the Ethereum-side salts used
+// CreateX/CREATE2 salts for the adapter proxies. MUST match the Ethereum-side salts used
 // in `deploy/mainnet/211_oethb_v3_remote_impl.js` so the proxy addresses are
 // identical across chains (peer-parity requirement on the
 // `transportSender == address(this)` check).
@@ -67,7 +67,7 @@ module.exports = deployOnBase(
 
     // --- 3. Deploy adapter impls (plain; chain-specific args baked into bytecode) ---
     //
-    // Adapters live behind `BridgeAdapterProxy` (CREATE3 → identical address on both
+    // Adapters live behind `BridgeAdapterProxy` (CreateX/CREATE2 → identical address on both
     // chains, mandatory for the `transportSender == address(this)` peer-parity check).
     // The impls are deployed plain — their addresses differ across chains but only the
     // proxy is part of the parity check.
@@ -90,7 +90,7 @@ module.exports = deployOnBase(
     const dSuperImpl = await ethers.getContract("SuperbridgeAdapter");
     console.log(`SuperbridgeAdapter impl: ${dSuperImpl.address}`);
 
-    // --- 4. Deploy adapter proxies via CREATE3 ---
+    // --- 4. Deploy adapter proxies via CreateX/CREATE2 ---
     const ccipProxyAddr = await deployProxyWithCreateX(
       CCIP_ADAPTER_PROXY_SALT,
       "BridgeAdapterProxy",

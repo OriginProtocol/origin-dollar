@@ -16,7 +16,7 @@ import { InitializeGovernedUpgradeabilityProxy2 } from "../InitializeGovernedUpg
  * crosschainV3 adapter implementation (CCIPAdapter, CCTPAdapter,
  * SuperbridgeAdapter).
  *
- * Deployed via CREATE3 with a coordinated salt across chains so
+ * Deployed via CreateX/CREATE2 with a coordinated salt across chains so
  * the peer adapter on the destination chain shares this contract's
  * own address — the adapter family relies on that parity to validate
  * inbound `transportSender == address(this)`.

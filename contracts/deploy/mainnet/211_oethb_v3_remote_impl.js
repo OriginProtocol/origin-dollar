@@ -11,7 +11,7 @@ const DEFAULT_DEST_GAS_LIMIT = 500000;
 // Canonical bridge minGasLimit hint for the ETH deposit (OP Stack default).
 const CANONICAL_MIN_GAS = 200000;
 
-// CREATE3 salts for the adapter proxies. MUST match the Base-side salts used
+// CreateX/CREATE2 salts for the adapter proxies. MUST match the Base-side salts used
 // in `deploy/base/101_oethb_v3_master_impl.js` so the proxy addresses are
 // identical across chains (peer-parity requirement on the
 // `transportSender == address(this)` check).
@@ -73,7 +73,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // --- 3. Deploy adapter impls (plain; chain-specific args baked into bytecode) ---
     //
-    // Adapters live behind `BridgeAdapterProxy` (CREATE3 → identical address on both
+    // Adapters live behind `BridgeAdapterProxy` (CreateX/CREATE2 → identical address on both
     // chains, mandatory for the `transportSender == address(this)` peer-parity check).
     // The impls are deployed plain — their addresses differ across chains but only the
     // proxy is part of the parity check.
@@ -95,7 +95,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dCCIPImpl = await ethers.getContract("CCIPAdapter");
     console.log(`CCIPAdapter impl: ${dCCIPImpl.address}`);
 
-    // --- 4. Deploy adapter proxies via CREATE3 (deterministic, peer-parity addresses) ---
+    // --- 4. Deploy adapter proxies via CreateX/CREATE2 (deterministic, peer-parity addresses) ---
     const superProxyAddr = await deployProxyWithCreateX(
       SUPERBRIDGE_ADAPTER_PROXY_SALT,
       "BridgeAdapterProxy",

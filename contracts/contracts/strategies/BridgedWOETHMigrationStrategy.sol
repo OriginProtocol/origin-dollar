@@ -159,7 +159,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
         // Same shape (single token amount, native fee, V1 extraArgs) the V3 CCIPAdapter
         // builds — `require(_amount > 0)` above guarantees the token-amount branch.
         // The CCIP recipient `master` is the peer strategy on Ethereum (the V3 Remote, which
-        // custodies the wOETH); Master and Remote share an address via CREATE3 deployment.
+        // custodies the wOETH); Master and Remote share an address via CreateX/CREATE2 deployment.
         Client.EVM2AnyMessage memory ccipMessage = CCIPMessageBuilder.build(
             address(bridgedWOETH),
             _amount,

@@ -18,7 +18,7 @@ pragma solidity ^0.8.0;
 interface IBridgeReceiver {
     /**
      * @notice Called by the authorised inbound adapter when a message lands.
-     * @param sender         Strategy address on the source chain — under CREATE3 parity, the
+     * @param sender         Strategy address on the source chain — under CreateX/CREATE2 parity, the
      *                       same address as the destination strategy on this chain.
      * @param token          Token delivered alongside the message; `address(0)` for
      *                       message-only deliveries.

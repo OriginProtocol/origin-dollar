@@ -23,7 +23,7 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *
  *         Master is intentionally dumb on the withdrawal queue. It never sees a `requestId`,
  *         never tracks per-withdrawal state beyond a single in-flight amount flag — Remote
- *         owns the queue lifecycle. See the V3 design plan for the full state-transition table.
+ *         owns the queue lifecycle. See `FLOWS.md` (Remote state-transition table) and `DESIGN.md`.
  */
 contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     using SafeERC20 for IERC20;
