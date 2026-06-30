@@ -206,7 +206,7 @@ sequenceDiagram
     Master->>Master: _getNextYieldNonce → N+1
     Master->>Master: pendingDepositAmount = X
     Master->>Adapter: sendMessageAndTokens(WETH, X, payload[DEPOSIT, N+1, ""])
-    Master->>Adapter: «WETH X» (adapter pulls via standing max allowance)
+    Note over Master,Adapter: adapter transfers X WETH from Master via standing max allowance
     Note over Master,Adapter: _send (userFunded=false): pool funds CCIP fee from<br/>address(this).balance. quoteFee returns (fee, native, true).
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg) [WETH bridged over CCIP]
     Bridge-->>AdapterEth: ccipReceive (DON pushes)
@@ -216,10 +216,10 @@ sequenceDiagram
     Remote->>Remote: unpackPayload → (DEPOSIT, N+1, "")
     Note over Remote,OEV: mint + wrap are each try/catch-guarded (revert-free). On failure the<br/>bridgeAsset/OToken is left idle (still counted by _viewCheckBalance, recoverable<br/>via retryDeposit) and the DEPOSIT_ACK is still sent below.
     Remote->>OEV: try mint(X)
-    Remote->>OEV: «WETH X» (vault pulls WETH on mint)
+    Note over Remote,OEV: vault transfers X WETH from Remote on mint
     OEV-->>Remote: «OETH X» minted
     Remote->>wOETH: try deposit(OETH balance, Remote)
-    Remote->>wOETH: «OETH X» (wrapper pulls OETH on deposit)
+    Note over Remote,wOETH: wrapper transfers X OETH from Remote on deposit
     wOETH-->>Remote: «wOETH shares» minted
     Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
@@ -241,7 +241,7 @@ sequenceDiagram
 - `lastYieldNonce: N → N+1`
 - `pendingDepositAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
   disappear during the bridge round trip)
-- `Master.WETH balance: X → 0` (pulled by the outbound adapter via its standing max allowance)
+- `Master.WETH balance: X → 0` (transferred by the outbound adapter via its standing max allowance)
 - `outboundAdapter.WETH balance: 0 → X → 0` (held momentarily, then handed to the CCIP router)
 
 **Phase 2 — `Remote._processDeposit(N+1, X)` (Ethereum):**
@@ -287,19 +287,20 @@ sequenceDiagram
     Vault->>Master: «USDC X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(USDC, X)
     Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
-    Master->>Adapter: «USDC X» (adapter pulls)
-    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false).<br/>Native fee 0; msg.value = 0, no pool needed.
-    Adapter->>CCTP: depositForBurnWithHook(X) [burns USDC; hook carries the envelope]
+    Note over Master,Adapter: adapter transfers X USDC from Master
+    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no pool needed
+    Adapter->>CCTP: depositForBurnWithHook(X)
+    Note over Adapter,CCTP: burns USDC<br/>hook carries the envelope
     Note over Op: polls for Circle's attestation
     Op->>AdapterEth: relay(message, attestation)
     AdapterEth->>AdapterEth: decodeBurnBody → amount, feeExecuted, envelope<br/>messageTransmitter.receiveMessage → mints USDC to adapter
     AdapterEth->>Remote: «USDC landed» transfer (landed = min(mint, amount − feeExecuted))
     AdapterEth->>Remote: receiveMessage(Remote, USDC, landed, payload)
     Remote->>OUV: mint(landed)
-    Remote->>OUV: «USDC landed» (vault pulls on mint)
+    Note over Remote,OUV: vault transfers landed USDC from Remote on mint
     OUV-->>Remote: «OUSD» minted
     Remote->>wOUSD: deposit(OUSD balance, Remote)
-    Remote->>wOUSD: «OUSD» (wrapper pulls on deposit)
+    Note over Remote,wOUSD: wrapper transfers OUSD from Remote on deposit
     wOUSD-->>Remote: «wOUSD shares» minted
     Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Remote->>AdapterEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
@@ -427,7 +428,7 @@ sequenceDiagram
     Note over Remote: claimed = the WETH the vault actually paid out<br/>outstandingRequestId = REQUEST_ID_EMPTY<br/>outstandingRequestAmount = claimed (refined to the payout)
     alt claim succeeded and tokens are in hand
         Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
-        Remote->>SuperEth: «WETH claimed» (adapter pulls)
+        Note over Remote,SuperEth: adapter transfers claimed WETH from Remote
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
         SuperEth-->>SuperBase: «ETH claimed» canonical bridge (receive() wraps to WETH on Base)
         SuperEth-->>SuperBase: ccipReceive delivers the envelope
@@ -575,7 +576,7 @@ sequenceDiagram
     Remote->>OUV: claimWithdrawal(requestId)
     OUV-->>Remote: «USDC claimed» paid out
     Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, [WITHDRAW_CLAIM_ACK, N+2, ack(true)])
-    Remote->>AdapterEth: «USDC claimed» (adapter pulls)
+    Note over Remote,AdapterEth: adapter transfers claimed USDC from Remote
     AdapterEth->>CCTP: depositForBurnWithHook(claimed) [burns USDC + hook, atomic]
     Op->>Adapter: relay(message, attestation) [spoke side]
     Adapter->>Adapter: messageTransmitter.receiveMessage → mints USDC to adapter
@@ -637,7 +638,7 @@ sequenceDiagram
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
     Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>(cancels bridge channel effects: see comment in code)
-    Remote->>Remote: clamp yieldOnly to 0 if negative<br/>(4626 rounding dust only; never significantly negative — no negative rebase)
+    Remote->>Remote: clamp yieldOnly to 0 if negative<br/>4626 rounding dust only<br/>never significantly negative — no negative rebase
     Remote->>ReturnA: sendMessage(payload[BALANCE_CHECK_RESPONSE,<br/>nonce=N, abi.encode(yieldOnly, srcTimestamp)])
     Note over Remote: DOES NOT call _acceptYieldNonce.<br/>Read-only on Remote's side.
     ReturnA->>Bridge: ccipSend
@@ -738,7 +739,7 @@ sequenceDiagram
     Master->>Master: fee = X * bridgeFeeBps / 10_000<br/>net = X - fee<br/>require(net > 0)
     Master->>Master: liquidity gate:<br/>require(net <= availableBridgeLiquidity())<br/>(rsb + bridgeAdjustment - pendingWithdrawalAmount)
     Master->>L2V: burnForStrategy(X)
-    Alice-->>L2V: «OETHb X» pulled from Alice & burned
+    Alice-->>L2V: «OETHb X» transferred from Alice and burned
     Note over Master: bridgeAdjustment -= net (NOT -= X)<br/>bridgeIdCounter += 1<br/>bridgeId = keccak256(strategy, counter)
     Master->>Master: _send(userFunded=true):<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
     Master->>Adapter: sendMessage{value: fee}(payload[BRIDGE_OUT, 0, BridgeUserPayload{<br/>  bridgeId, amount=net, recipient=alice_eth, callData, callGasLimit<br/>}])
