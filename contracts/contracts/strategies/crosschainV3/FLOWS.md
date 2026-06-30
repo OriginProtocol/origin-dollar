@@ -173,9 +173,24 @@ requires an operator-driven `relay(message, attestation)` call.
 
 ## 3. Deposit
 
-User-facing entry: `Vault.allocate()` (or any other path that ends up calling
-`Master.deposit()`). The cross-chain machinery runs synchronously inside the
-single transaction that lands tokens on Master.
+Entry points that move Vault funds into the Master Strategy:
+
+- `Vault.allocate()` is a permissionless vault operation. It calls
+  `Master.deposit(asset, amount)` after transferring the allocatable bridge asset
+  to the Master Strategy.
+- `Vault.mint(amount)` is the LP deposit path. It can auto-allocate when
+  `amount >= autoAllocateThreshold`, which follows the same internal
+  `_allocate()` path and calls `Master.deposit(asset, amount)`.
+- `Vault.depositToStrategy(Master Strategy, [asset], [amount])` is the
+  governor/strategist direct path. It transfers funds to the Master Strategy,
+  then calls `Master.depositAll()`, which enters the same cross-chain deposit
+  machinery.
+
+The sequence below shows the `Vault.allocate()` / auto-allocation shape where
+the Vault calls `Master.deposit()`. In that same transaction, the Master
+Strategy receives the bridge asset and asks its outbound adapter to send the
+cross-chain deposit message. Delivery to the Remote Strategy, and the later ACK
+back to the Master Strategy, happen asynchronously via the bridge.
 
 ### Sequence diagram
 
@@ -213,23 +228,23 @@ sequenceDiagram
     Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
     Note over Master: Master strategy pays the CCIP fee from its own ETH balance
     Master->>Adapter: sendMessageAndTokens{value:fee}<br/>(WETH, X, payload)
-    Note over Adapter: adapter transfers X WETH from Master Strategy via standing max allowance
+    Note over Adapter: transfers X WETH from Master Strategy to CCIPAdapter via standing max allowance
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = WETH X, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = X, payload)
     Bridge->>AdapterEth: ccipReceive(message)
     Note over Bridge: delivers the message via the destination router
     AdapterEth->>AdapterEth: _validateInbound<br/>(BASE_SELECTOR, transportSender, message.data)
     Note over AdapterEth: checks source chain, peer adapter, authorised recipient, and pause status
-    Note over AdapterEth: transfers WETH X to Remote before receiveMessage
+    Note over AdapterEth: transfers X WETH from CCIPAdapter to Remote Strategy
     AdapterEth->>Remote: receiveMessage<br/>(Remote, WETH, X, payload)
     Remote->>Remote: unpackPayload(payload)
     Note over Remote: decoded payload = (DEPOSIT, N+1, "")
     Note over Remote: mint + wrap are each try/catch-guarded (revert-free). On failure the<br/>bridgeAsset/OToken is left idle (still counted by _viewCheckBalance, recoverable<br/>via retryDeposit) and the DEPOSIT_ACK is still sent below.
     Remote->>OEV: try mint(X)
-    Note over OEV: transfers X WETH from Remote
+    Note over OEV: transfers X WETH from Remote Strategy to OETH Vault
     OEV-->>Remote: «OETH X» minted
     Remote->>wOETH: try deposit(OETH balance, Remote)
-    Note over wOETH: transfers X OETH from Remote
+    Note over wOETH: transfers X OETH from Remote Strategy to wOETH
     wOETH-->>Remote: «wOETH shares» minted
     Note over Remote: minted wOETH shares are held by the Remote Strategy
     Remote->>Remote: _viewCheckBalance()
@@ -258,6 +273,10 @@ sequenceDiagram
 
 **Phase 1 — `Master.deposit(WETH, X)` (Base):**
 
+Assumes `X >= outboundAdapter.minTransferAmount()`. If `X` is below the
+adapter minimum, Master leaves the WETH on the Master Strategy and returns
+without advancing the nonce.
+
 - `lastYieldNonce: N → N+1`
 - `pendingDepositAmount: 0 → X` (counts in `checkBalance` so vault doesn't see backing
   disappear during the bridge round trip)
@@ -266,19 +285,23 @@ sequenceDiagram
 
 **Phase 2 — `Remote._processDeposit(N+1, X)` (Ethereum):**
 
-- WETH consumed by OETH vault mint; OETH wrapped to wOETH.
-- `Remote.wOETH balance: increased by ≈X-worth of shares`
+- Happy path: WETH is consumed by the OETH Vault mint, then the minted OETH is
+  wrapped into wOETH.
+- `Remote.wOETH balance: increased by ≈X-worth of shares` on the happy path.
+- If mint or wrap fails, the WETH or OETH stays idle on the Remote Strategy and
+  is still counted by `_viewCheckBalance()`.
 - `Remote.lastYieldNonce: → N+1`; `nonceProcessed[N+1] = true`
 
 **Phase 3 — `Master._processDepositAck(N+1, yieldBaseline)` (Base):**
 
-- `remoteStrategyBalance: B → yieldBaseline`
+- `remoteStrategyBalance: B → yieldBaseline` (the Remote Strategy's reported
+  yield-only baseline)
 - `pendingDepositAmount: X → 0`
 - `nonceProcessed[N+1] = true`
 
 `Master.checkBalance(WETH)` is consistent throughout: pre-deposit = B,
 mid-flight = X (pendingDepositAmount) + B (stale remoteStrategyBalance), post-ack =
-yieldBaseline ≈ B + X.
+yieldBaseline ≈ B + X on the happy path.
 
 ### OUSD V3 differences
 
@@ -307,7 +330,7 @@ sequenceDiagram
     Vault->>Master: «USDC X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(USDC, X)
     Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
-    Note over Master,Adapter: transfers X USDC from Master Strategy
+    Note over Adapter: transfers X USDC from Master Strategy to CCTPAdapter
     Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no ETH needed
     Adapter->>CCTP: depositForBurnWithHook(X)
     Note over Adapter,CCTP: burns USDC<br/>hook carries the envelope
@@ -317,10 +340,10 @@ sequenceDiagram
     AdapterEth->>Remote: «USDC landed» transfer (landed = min(mint, amount − feeExecuted))
     AdapterEth->>Remote: receiveMessage(Remote, USDC, landed, payload)
     Remote->>OUV: mint(landed)
-    Note over Remote,OUV: vault transfers landed USDC from Remote on mint
+    Note over OUV: transfers landed USDC from Remote Strategy to OUSD Vault on mint
     OUV-->>Remote: «OUSD» minted
     Remote->>wOUSD: deposit(OUSD balance, Remote)
-    Note over Remote,wOUSD: wrapper transfers OUSD from Remote on deposit
+    Note over wOUSD: transfers OUSD from Remote Strategy to wOUSD on deposit
     wOUSD-->>Remote: «wOUSD shares» minted
     Remote->>Remote: _viewCheckBalance()
     Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
@@ -458,18 +481,18 @@ sequenceDiagram
     Note over Remote: claimed = the WETH the vault actually paid out<br/>store outstandingRequestId = REQUEST_ID_EMPTY<br/>store outstandingRequestAmount = claimed (refined to the payout)
     alt claim succeeded and tokens are in hand
         Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
-        Note over Remote,SuperEth: adapter transfers claimed WETH from Remote
+        Note over SuperEth: transfers claimed WETH from Remote Strategy to SuperbridgeAdapter
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
         Note over SuperEth,SuperBase: canonical bridge delivers ETH<br/>receive() wraps it to WETH on Base
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
         Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = claimed, payload)
         Bridge->>SuperBase: ccipReceive(message)
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
-        Note over SuperBase,Master: adapter transfers claimed WETH to Master before receiveMessage
+        Note over SuperBase: transfers claimed WETH from SuperbridgeAdapter to Master Strategy
         SuperBase->>Master: receiveMessage(Master, WETH, claimed, payload)
         Master->>Master: _processWithdrawClaimAck(N+2, claimed, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
-        Note over Master,Vault: Master transfers its full WETH balance to the vault
+        Note over Master: transfers full WETH balance from Master Strategy to L2 Vault
         Note over Master: safeTransfer(vaultAddress, balanceOf(this))<br/>emit Withdrawal(WETH, WETH, claimed)
     else queue not yet matured (NACK)
         Remote->>SuperEth: sendMessage(payload[WITHDRAW_CLAIM_ACK, N+2, ack(false)])
@@ -620,17 +643,17 @@ sequenceDiagram
     Remote->>OUV: claimWithdrawal(requestId)
     OUV-->>Remote: «USDC claimed» paid out
     Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, [WITHDRAW_CLAIM_ACK, N+2, ack(true)])
-    Note over Remote,AdapterEth: adapter transfers claimed USDC from Remote
+    Note over AdapterEth: transfers claimed USDC from Remote Strategy to CCTPAdapter
     AdapterEth->>CCTP: depositForBurnWithHook(claimed)
     Note over AdapterEth,CCTP: burns USDC and carries the ACK hook atomically
     Op->>Adapter: relay(message, attestation)
     Note over Op,Adapter: spoke side relay
     Adapter->>Adapter: messageTransmitter.receiveMessage(message, attestation)
-    Note over Adapter: CCTP mints USDC to Adapter
-    Note over Adapter,Master: adapter transfers landed USDC to Master before receiveMessage<br/>landed = min(mint, claimed - feeExecuted)
+    Note over Adapter: CCTP mints USDC to CCTPAdapter
+    Note over Adapter: transfers landed USDC from CCTPAdapter to Master Strategy<br/>landed = min(mint, claimed - feeExecuted)
     Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
     Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
-    Note over Master,Vault: Master transfers its full USDC balance to the vault
+    Note over Master,Vault: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
     Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline<br/>emit Withdrawal(USDC, USDC, landed)
 ```
 
