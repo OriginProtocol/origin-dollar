@@ -214,8 +214,8 @@ sequenceDiagram
     Note over Master: Master strategy pays the CCIP fee from its own ETH balance
     Master->>Adapter: sendMessageAndTokens{value:fee}<br/>(WETH, X, payload)
     Note over Adapter: adapter transfers X WETH from Master Strategy via standing max allowance
-    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg)
-    Note over Bridge: WETH bridged over CCIP
+    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = WETH X, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = X, payload)
     Bridge-->>AdapterEth: ccipReceive(message)
     Note over Bridge: delivers the message via the destination router
     AdapterEth->>AdapterEth: _validateInbound<br/>(BASE_SELECTOR, transportSender, message.data)
@@ -234,15 +234,15 @@ sequenceDiagram
     Remote->>Remote: _viewCheckBalance()
     Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Note over Remote: Remote sends ACKs through its outbound adapter: SuperbridgeAdapter.<br/>Because this ACK carries no assets, Superbridge uses only its CCIP message leg.<br/>No canonical ETH bridge transfer happens on this path.<br/>The outbound adapter could be changed to plain CCIPAdapter.<br/>The Remote strategy pays the message fee.
-    Remote->>Remote: _send(address(0), 0, DEPOSIT_ACK, N+1, ackPayload, false)
-    Note over Remote: ackPayload = abi.encode(yieldBaseline)<br/>payload = packPayload(DEPOSIT_ACK, N+1, ackPayload)
+    Remote->>Remote: _send(address(0), 0, DEPOSIT_ACK, N+1, body, false)
+    Note over Remote: body = abi.encode(yieldBaseline)<br/>payload = packPayload(DEPOSIT_ACK, N+1, body)
     Remote->>SuperEth: sendMessage(payload)
     SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
-    Note over SuperEth,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
+    Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Remote->>Remote: _acceptYieldNonce(N+1)
     Note over Remote: store lastYieldNonce = N+1<br/>store nonceProcessed[N+1] = true
     Bridge-->>SuperBase: ccipReceive(message)
-    Note over Bridge,SuperBase: CCIP message -> message.data -> adapter envelope<br/>envelope = (envelopeSender, intendedAmount, strategy payload)<br/>decoded intendedAmount = 0
+    Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
     Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
     Master->>Master: _processDepositAck(body)
@@ -404,7 +404,7 @@ sequenceDiagram
     Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
     Note over Master,Adapter: withdraw is non-payable<br/>calls with msg.value > 0 revert<br/>Master strategy pays the CCIP fee from address(this).balance
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
-    Note over Adapter,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>AdapterEth: ccipReceive(message)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
@@ -423,9 +423,9 @@ sequenceDiagram
     Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline, success)])
     Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only rides its CCIP leg (no canonical bridge).
     SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
-    Note over SuperEth,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
+    Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>SuperBase: ccipReceive(message)
-    Note over Bridge,SuperBase: CCIP message -> message.data -> adapter envelope<br/>envelope = (envelopeSender, intendedAmount, strategy payload)<br/>decoded intendedAmount = 0
+    Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
     Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
     alt success == true (queued)
@@ -446,7 +446,7 @@ sequenceDiagram
     Note over Master: store lastYieldNonce = N+2<br/>returns N+2
     Master->>Adapter: sendMessage(payload[WITHDRAW_CLAIM, N+2, ""])
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
-    Note over Adapter,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>AdapterEth: ccipReceive(message)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
@@ -460,7 +460,7 @@ sequenceDiagram
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
         Note over SuperEth,SuperBase: canonical bridge delivers ETH<br/>receive() wraps it to WETH on Base
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
-        Note over SuperEth,Bridge: ccipMessage carries the envelope for the claim ACK
+        Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = claimed, payload)
         Bridge-->>SuperBase: ccipReceive(message)
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
         Note over SuperBase,Master: adapter transfers claimed WETH to Master before receiveMessage
@@ -472,9 +472,9 @@ sequenceDiagram
     else queue not yet matured (NACK)
         Remote->>SuperEth: sendMessage(payload[WITHDRAW_CLAIM_ACK, N+2, ack(false)])
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
-        Note over SuperEth,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
+        Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
         Bridge-->>SuperBase: ccipReceive(message)
-        Note over Bridge,SuperBase: CCIP message -> message.data -> adapter envelope<br/>envelope = (envelopeSender, intendedAmount, strategy payload)<br/>decoded intendedAmount = 0
+        Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
         Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
         Master->>Master: _processWithdrawClaimAck(N+2, 0, body)
@@ -681,6 +681,7 @@ sequenceDiagram
     Master->>Adapter: sendMessage(payload[BALANCE_CHECK_REQUEST, nonce=N, timestamp])
     Note over Master: NONCE ECHOED, NOT ADVANCED.<br/>lastYieldNonce stays N.
     Adapter->>Bridge: ccipSend
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
     Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>(cancels bridge channel effects: see comment in code)
@@ -688,8 +689,9 @@ sequenceDiagram
     Remote->>ReturnA: sendMessage(payload[BALANCE_CHECK_RESPONSE,<br/>nonce=N, abi.encode(yieldOnly, srcTimestamp)])
     Note over Remote: DOES NOT call _acceptYieldNonce.<br/>Read-only on Remote's side.
     ReturnA->>Bridge: ccipSend
+    Note over ReturnA,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>ReturnB: ccipReceive(message)
-    Note over Bridge,ReturnB: CCIP message -> message.data -> adapter envelope<br/>envelope = (envelopeSender, intendedAmount, strategy payload)<br/>decoded intendedAmount = 0
+    Note over Bridge,ReturnB: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
     Note over ReturnB,Master: params: sender = Master, token = address(0), amountReceived = 0
     Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
@@ -792,6 +794,7 @@ sequenceDiagram
     Master->>Master: _send(userFunded=true):<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
     Master->>Adapter: sendMessage{value: fee}(payload[BRIDGE_OUT, 0, BridgeUserPayload{<br/>  bridgeId, amount=net, recipient=alice_eth, callData, callGasLimit<br/>}])
     Adapter->>Bridge: ccipSend
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Note over Master: emit BridgeRequested(bridgeId, alice, alice_eth, net, fee, ...)
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
@@ -910,6 +913,7 @@ sequenceDiagram
     Master->>Adapter: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING, nonce,<br/>abi.encode(int256(-10))])
     Note over Master: emit SettlementRequested(nonce, -10)<br/>Master.bridgeAdjustment STILL -10 (NOT zeroed yet)
     Adapter->>Bridge: ccipSend
+    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
 
     Note over Master,Bridge: (optional: a new BRIDGE_OUT for net=5 happens here.<br/>Master.bridgeAdjustment becomes -15. This is the in-flight case.)
 
@@ -923,6 +927,7 @@ sequenceDiagram
     Remote->>Remote: _acceptYieldNonce(nonce)
     Note over Remote: store lastYieldNonce = nonce<br/>store nonceProcessed[nonce] = true
     ReturnA->>Bridge: ccipSend
+    Note over ReturnA,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge-->>ReturnB: ccipReceive
     ReturnB->>Master: receiveMessage(...)
     Master->>Master: _processSettlementAck
