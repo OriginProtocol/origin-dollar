@@ -246,7 +246,7 @@ sequenceDiagram
     Bridge->>SuperBase: ccipReceive(message)
     Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(DEPOSIT_ACK, N+1, body)
     Master->>Master: _processDepositAck(body)
     Note over Master: body = abi.encode(yieldBaseline)
     Master->>Master: _markYieldNonceProcessed(N+1)
@@ -409,7 +409,7 @@ sequenceDiagram
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge->>AdapterEth: ccipReceive(message)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
     Note over Remote: unwrap + queue are try/catch-guarded (revert-free). On failure: success=false,<br/>nothing queued (any unwrapped OToken left idle, recoverable via retryDeposit).
     Remote->>wOETH: try withdraw(amount, Remote, Remote)
     Note over Remote,wOETH: unwrap shares to OETH
@@ -429,7 +429,7 @@ sequenceDiagram
     Bridge->>SuperBase: ccipReceive(message)
     Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST_ACK, N+1, body)
     alt success == true (queued)
         Master->>Master: _processWithdrawRequestAck(N+1, body)
         Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline
@@ -451,7 +451,7 @@ sequenceDiagram
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge->>AdapterEth: ccipReceive(message)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
     Remote->>Remote: _opportunisticClaim()
     Remote->>OEV: claimWithdrawal(requestId)
     OEV-->>Remote: «WETH claimed» paid out
@@ -478,7 +478,7 @@ sequenceDiagram
         Bridge->>SuperBase: ccipReceive(message)
         Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-        Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0
+        Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
         Master->>Master: _processWithdrawClaimAck(N+2, 0, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
         Note over Master: operator retries triggerClaim later
@@ -592,7 +592,7 @@ sequenceDiagram
     Note over Adapter,CCTP: message-only leg<br/>native fee = 0
     Op->>AdapterEth: relay(message, attestation)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
     Remote->>wOUSD: withdraw(amount)
     Note over Remote,wOUSD: unwrap wOUSD to OUSD
     Remote->>OUV: requestWithdrawal(amount)
@@ -603,7 +603,7 @@ sequenceDiagram
     Op->>Adapter: relay(message, attestation)
     Note over Op,Adapter: spoke side relay
     Adapter->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over Adapter,Master: params: sender = Master, token = address(0), amountReceived = 0
+    Note over Adapter,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST_ACK, N+1, body)
     Master->>Master: _processWithdrawRequestAck(N+1, body)
     Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline
 
@@ -616,7 +616,7 @@ sequenceDiagram
     Note over Adapter,CCTP: message-only leg<br/>native fee = 0
     Op->>AdapterEth: relay(message, attestation)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
     Remote->>OUV: claimWithdrawal(requestId)
     OUV-->>Remote: «USDC claimed» paid out
     Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, [WITHDRAW_CLAIM_ACK, N+2, ack(true)])
@@ -695,7 +695,7 @@ sequenceDiagram
     Bridge->>ReturnB: ccipReceive(message)
     Note over Bridge,ReturnB: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over ReturnB,Master: params: sender = Master, token = address(0), amountReceived = 0
+    Note over ReturnB,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
     Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
     alt all guards pass
         Note over Master: store lastBalanceCheckTimestamp = respTimestamp<br/>store remoteStrategyBalance = yieldBaseline
