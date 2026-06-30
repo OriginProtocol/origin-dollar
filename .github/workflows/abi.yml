@@ -8,6 +8,12 @@ concurrency:
   cancel-in-progress: true
   group: ${{ github.ref_name }}
 
+# security/LOW: scope GITHUB_TOKEN to read-only. Publishes use
+# NPM_TOKEN_ORIGIN_DEFI (env-scoped to `master` environment), not
+# GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   abi-gen:
     name: "Generate and publish ABI"
@@ -15,6 +21,8 @@ jobs:
     environment: master
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4

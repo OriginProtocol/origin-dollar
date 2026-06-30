@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { CompoundingStakingStrategy } from "./CompoundingStakingStrategy.sol";
 
 /// @title Compounding Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
-contract CompoundingStakingSSVStrategy is
-    CompoundingValidatorManager,
-    InitializableAbstractStrategy
-{
+contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
+    /// @notice The address of the SSV Network contract used to interface with
+    address internal immutable SSV_NETWORK;
+
     // For future use
     uint256[50] private __gap;
+
+    error CannotRemoveSsvValidator(); // 0x2c45bd75
+    error AlreadyRegistered(); // 0x3a81d6fc
+    error NotRegisteredOrVerified(); // 0x99088a6b
+
+    event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
 
     /// @param _baseConfig Base strategy config with
     ///   `platformAddress` not used so empty address
@@ -33,184 +36,126 @@ contract CompoundingStakingSSVStrategy is
         address _beaconProofs,
         uint64 _beaconGenesisTimestamp
     )
-        InitializableAbstractStrategy(_baseConfig)
-        CompoundingValidatorManager(
+        CompoundingStakingStrategy(
+            _baseConfig,
             _wethAddress,
-            _baseConfig.vaultAddress,
             _beaconChainDepositContract,
-            _ssvNetwork,
             _beaconProofs,
             _beaconGenesisTimestamp
         )
     {
-        // Make sure nobody owns the implementation contract
-        _setGovernor(address(0));
+        SSV_NETWORK = _ssvNetwork;
     }
-
-    /// @notice Set up initial internal state including
-    /// 1. approving the SSVNetwork to transfer SSV tokens from this strategy contract
-    /// @param _rewardTokenAddresses Not used so empty array
-    /// @param _assets Not used so empty array
-    /// @param _pTokens Not used so empty array
-    function initialize(
-        address[] memory _rewardTokenAddresses,
-        address[] memory _assets,
-        address[] memory _pTokens
-    ) external onlyGovernor initializer {
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-    }
-
-    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
-    /// It just checks the asset is WETH and emits the Deposit event.
-    /// To deposit WETH into validators, `registerSsvValidator` and `stakeEth` must be used.
-    /// @param _asset Address of the WETH token.
-    /// @param _amount Amount of WETH that was transferred to the strategy by the vault.
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
-        require(_asset == WETH, "Unsupported asset");
-        require(_amount > 0, "Must deposit something");
-
-        // Account for the new WETH
-        depositedWethAccountedFor += _amount;
-
-        emit Deposit(_asset, address(0), _amount);
-    }
-
-    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
-    /// It just emits the Deposit event.
-    /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
-    function depositAll() external override onlyVault nonReentrant {
-        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
-        uint256 newWeth = wethBalance - depositedWethAccountedFor;
-
-        if (newWeth > 0) {
-            // Account for the new WETH
-            depositedWethAccountedFor = wethBalance;
-
-            emit Deposit(WETH, address(0), newWeth);
-        }
-    }
-
-    /// @notice Withdraw ETH and WETH from this strategy contract.
-    /// @param _recipient Address to receive withdrawn assets.
-    /// @param _asset Address of the WETH token.
-    /// @param _amount Amount of WETH to withdraw.
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override nonReentrant {
-        require(_asset == WETH, "Unsupported asset");
-        require(
-            msg.sender == vaultAddress || msg.sender == validatorRegistrator,
-            "Caller not Vault or Registrator"
-        );
-
-        _withdraw(_recipient, _amount, address(this).balance);
-    }
-
-    function _withdraw(
-        address _recipient,
-        uint256 _withdrawAmount,
-        uint256 _ethBalance
-    ) internal {
-        require(_withdrawAmount > 0, "Must withdraw something");
-        require(_recipient == vaultAddress, "Recipient not Vault");
-
-        // Convert any ETH from validator partial withdrawals, exits
-        // or execution rewards to WETH and do the necessary accounting.
-        if (_ethBalance > 0) _convertEthToWeth(_ethBalance);
-
-        // Transfer WETH to the recipient and do the necessary accounting.
-        _transferWeth(_withdrawAmount, _recipient);
-
-        emit Withdrawal(WETH, address(0), _withdrawAmount);
-    }
-
-    /// @notice Transfer all WETH deposits, ETH from validator withdrawals and ETH from
-    /// execution rewards in this strategy to the vault.
-    /// This does not withdraw from the validators. That has to be done separately with the
-    /// `validatorWithdrawal` operation.
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 ethBalance = address(this).balance;
-        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
-            ethBalance;
-
-        if (withdrawAmount > 0) {
-            _withdraw(vaultAddress, withdrawAmount, ethBalance);
-        }
-    }
-
-    /// @notice Accounts for all the assets managed by this strategy which includes:
-    /// 1. The current WETH in this strategy contract
-    /// 2. The last verified ETH balance, total deposits and total validator balances
-    /// @param _asset      Address of WETH asset.
-    /// @return balance    Total value in ETH
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
-        require(_asset == WETH, "Unsupported asset");
-
-        // Load the last verified balance from the storage
-        // and add to the latest WETH balance of this strategy.
-        balance =
-            lastVerifiedEthBalance +
-            IWETH9(WETH).balanceOf(address(this));
-    }
-
-    /// @notice Returns bool indicating whether asset is supported by the strategy.
-    /// @param _asset The address of the WETH token.
-    function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == WETH;
-    }
-
-    /// @notice Does nothing but needed as this function is abstract on InitializableAbstractStrategy
-    /// @dev Use to be used to approve SSV tokens but that is no longer used by the SSV Network.
-    function safeApproveAllTokens() public override {}
 
     /**
-     * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting
-     * like it did in the legacy NativeStakingStrategy.
-     * The new ETH will be accounted for in `checkBalance` after the next snapBalances and verifyBalances txs.
+     *
+     *             Validator Management
+     *
      */
-    receive() external payable {}
 
-    /***************************************
-                Internal functions
-    ****************************************/
+    // slither-disable-start reentrancy-no-eth
+    /// @notice Registers a single validator in a SSV Cluster.
+    /// Only the Registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param sharesData The shares data for the validator
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
+    function registerSsvValidator(
+        bytes calldata publicKey,
+        uint64[] calldata operatorIds,
+        bytes calldata sharesData,
+        Cluster calldata cluster
+    ) external payable onlyRegistrator whenNotPaused {
+        // Hash the public key using the Beacon Chain's format
+        bytes32 pubKeyHash = _hashPubKey(publicKey);
 
-    /// @notice is not supported for this strategy as there is no platform token.
-    function setPTokenAddress(address, address) external pure override {
-        revert("Unsupported function");
+        if (validator[pubKeyHash].state != ValidatorState.NON_REGISTERED) {
+            revert AlreadyRegistered();
+        }
+
+        // Store the validator state as registered
+        validator[pubKeyHash].state = ValidatorState.REGISTERED;
+
+        ISSVNetwork(SSV_NETWORK).registerValidator{ value: msg.value }(
+            publicKey,
+            operatorIds,
+            sharesData,
+            cluster
+        );
     }
 
-    /// @notice is not supported for this strategy as there is no platform token.
-    function removePToken(uint256) external pure override {
-        revert("Unsupported function");
+    /// @notice Remove the validator from the SSV Cluster after:
+    /// - the validator has been exited from `validatorWithdrawal` or slashed
+    /// - the validator has incorrectly registered and can not be staked to
+    /// - the initial deposit was front-run and the withdrawal address is not this strategy's address.
+    /// Make sure `validatorWithdrawal` is called with a zero amount and the validator has exited the Beacon chain.
+    /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
+    /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
+    function removeSsvValidator(
+        bytes calldata publicKey,
+        uint64[] calldata operatorIds,
+        Cluster calldata cluster
+    ) external onlyRegistrator {
+        // Hash the public key using the Beacon Chain's format
+        bytes32 pubKeyHash = _hashPubKey(publicKey);
+        ValidatorState currentState = validator[pubKeyHash].state;
+        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
+        if (
+            currentState != ValidatorState.REGISTERED &&
+            currentState != ValidatorState.EXITED &&
+            currentState != ValidatorState.INVALID
+        ) {
+            revert CannotRemoveSsvValidator();
+        }
+
+        validator[pubKeyHash].state = ValidatorState.REMOVED;
+
+        ISSVNetwork(SSV_NETWORK).removeValidator(
+            publicKey,
+            operatorIds,
+            cluster
+        );
+
+        emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
 
-    /// @dev This strategy does not use a platform token like the old Aave and Compound strategies.
-    function _abstractSetPToken(address _asset, address) internal override {}
+    /// @notice Withdraw ETH funding from this strategy's SSV cluster.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param amount The amount of ETH to withdraw from the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and ETH balance
+    function withdrawSsvClusterEth(
+        uint64[] calldata operatorIds,
+        uint256 amount,
+        Cluster calldata cluster
+    ) external onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, amount, cluster);
 
-    /// @dev Consensus rewards are compounded to the validator's balance instead of being
-    /// swept to this strategy contract.
-    /// Execution rewards from MEV and tx priority accumulate as ETH in this strategy contract.
-    /// Withdrawals from validators also accumulate as ETH in this strategy contract.
-    /// It's too complex to separate the rewards from withdrawals so this function is not implemented.
-    /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can now regulate
-    /// the increase in assets.
-    function _collectRewardTokens() internal pure override {
-        revert("Unsupported function");
+        uint256 ethBalance = address(this).balance;
+        if (ethBalance > 0) {
+            _withdraw(vaultAddress, ethBalance, ethBalance);
+        }
+    }
+
+    // slither-disable-end reentrancy-no-eth
+
+    function _admitStake(bytes32 pubKeyHash, uint256 depositAmountWei)
+        internal
+        override
+    {
+        ValidatorState currentState = validator[pubKeyHash].state;
+        if (
+            currentState != ValidatorState.REGISTERED &&
+            currentState != ValidatorState.VERIFIED &&
+            currentState != ValidatorState.ACTIVE
+        ) {
+            revert NotRegisteredOrVerified();
+        }
+
+        if (currentState == ValidatorState.REGISTERED) {
+            _recordFirstDeposit(pubKeyHash, depositAmountWei);
+        }
     }
 }

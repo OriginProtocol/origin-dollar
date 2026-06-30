@@ -38,80 +38,88 @@
       "offset": 1,
       "slot": "51",
       "type": "t_address",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:68"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:64"
     },
     {
       "label": "firstDeposit",
       "offset": 21,
       "slot": "51",
       "type": "t_bool",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:109"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:105"
     },
     {
       "label": "deposits",
       "offset": 0,
       "slot": "52",
-      "type": "t_mapping(t_bytes32,t_struct(DepositData)46186_storage)",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:111"
+      "type": "t_mapping(t_bytes32,t_struct(DepositData)41517_storage)",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:107"
     },
     {
       "label": "depositList",
       "offset": 0,
       "slot": "53",
       "type": "t_array(t_bytes32)dyn_storage",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:120"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:116"
     },
     {
       "label": "verifiedValidators",
       "offset": 0,
       "slot": "54",
       "type": "t_array(t_bytes32)dyn_storage",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:142"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:138"
     },
     {
       "label": "validator",
       "offset": 0,
       "slot": "55",
-      "type": "t_mapping(t_bytes32,t_struct(ValidatorData)46215_storage)",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:145"
+      "type": "t_mapping(t_bytes32,t_struct(ValidatorData)41546_storage)",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:141"
     },
     {
       "label": "snappedBalance",
       "offset": 0,
       "slot": "56",
-      "type": "t_struct(Balances)46233_storage",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:156"
+      "type": "t_struct(Balances)41564_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:152"
     },
     {
       "label": "lastVerifiedEthBalance",
       "offset": 0,
       "slot": "58",
       "type": "t_uint256",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:158"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:154"
     },
     {
       "label": "depositedWethAccountedFor",
       "offset": 0,
       "slot": "59",
       "type": "t_uint256",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:170"
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:166"
+    },
+    {
+      "label": "initialDepositAmountWei",
+      "offset": 0,
+      "slot": "60",
+      "type": "t_uint256",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:168"
     },
     {
       "label": "__gap",
       "offset": 0,
-      "slot": "60",
-      "type": "t_array(t_uint256)41_storage",
-      "contract": "CompoundingValidatorManager",
-      "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:173"
+      "slot": "61",
+      "type": "t_array(t_uint256)40_storage",
+      "contract": "CompoundingValidatorStorage",
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:171"
     },
     {
       "label": "_deprecated_platformAddress",
@@ -191,7 +199,7 @@
       "slot": "207",
       "type": "t_array(t_uint256)50_storage",
       "contract": "CompoundingStakingSSVStrategy",
-      "src": "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:18"
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:15"
     }
   ],
   "types": {
@@ -211,9 +219,9 @@
       "label": "int256[98]",
       "numberOfBytes": "3136"
     },
-    "t_array(t_uint256)41_storage": {
-      "label": "uint256[41]",
-      "numberOfBytes": "1312"
+    "t_array(t_uint256)40_storage": {
+      "label": "uint256[40]",
+      "numberOfBytes": "1280"
     },
     "t_array(t_uint256)50_storage": {
       "label": "uint256[50]",
@@ -227,8 +235,8 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(DepositStatus)46173": {
-      "label": "enum CompoundingValidatorManager.DepositStatus",
+    "t_enum(DepositStatus)41504": {
+      "label": "enum CompoundingValidatorStorage.DepositStatus",
       "members": [
         "UNKNOWN",
         "PENDING",
@@ -236,8 +244,8 @@
       ],
       "numberOfBytes": "1"
     },
-    "t_enum(ValidatorState)46209": {
-      "label": "enum CompoundingValidatorManager.ValidatorState",
+    "t_enum(ValidatorState)41540": {
+      "label": "enum CompoundingValidatorStorage.ValidatorState",
       "members": [
         "NON_REGISTERED",
         "REGISTERED",
@@ -259,16 +267,16 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(DepositData)46186_storage)": {
-      "label": "mapping(bytes32 => struct CompoundingValidatorManager.DepositData)",
+    "t_mapping(t_bytes32,t_struct(DepositData)41517_storage)": {
+      "label": "mapping(bytes32 => struct CompoundingValidatorStorage.DepositData)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(ValidatorData)46215_storage)": {
-      "label": "mapping(bytes32 => struct CompoundingValidatorManager.ValidatorData)",
+    "t_mapping(t_bytes32,t_struct(ValidatorData)41546_storage)": {
+      "label": "mapping(bytes32 => struct CompoundingValidatorStorage.ValidatorData)",
       "numberOfBytes": "32"
     },
-    "t_struct(Balances)46233_storage": {
-      "label": "struct CompoundingValidatorManager.Balances",
+    "t_struct(Balances)41564_storage": {
+      "label": "struct CompoundingValidatorStorage.Balances",
       "members": [
         {
           "label": "blockRoot",
@@ -291,8 +299,8 @@
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(DepositData)46186_storage": {
-      "label": "struct CompoundingValidatorManager.DepositData",
+    "t_struct(DepositData)41517_storage": {
+      "label": "struct CompoundingValidatorStorage.DepositData",
       "members": [
         {
           "label": "pubKeyHash",
@@ -320,19 +328,19 @@
         },
         {
           "label": "status",
-          "type": "t_enum(DepositStatus)46173",
+          "type": "t_enum(DepositStatus)41504",
           "offset": 20,
           "slot": "1"
         }
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(ValidatorData)46215_storage": {
-      "label": "struct CompoundingValidatorManager.ValidatorData",
+    "t_struct(ValidatorData)41546_storage": {
+      "label": "struct CompoundingValidatorStorage.ValidatorData",
       "members": [
         {
           "label": "state",
-          "type": "t_enum(ValidatorState)46209",
+          "type": "t_enum(ValidatorState)41540",
           "offset": 0,
           "slot": "0"
         },

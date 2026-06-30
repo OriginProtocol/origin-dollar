@@ -78,5 +78,11 @@
   "189_harvesting_eip1271_ogn": 1774552993,
   "190_remove_3rd_native_staking_strategy": 1775468903,
   "192_migrate_ssv_clusters_to_eth": 1777859891,
-  "193_permissioned_rebase_module": 1778095857
+  "193_permissioned_rebase_module": 1778095857,
+  "195_claim_ssv_from_staking_strategies": 1778480807,
+  "197_migrate_xogn_module6_to_talos": 1780930872,
+  "198_migrate_strategist_modules_to_talos": 1780930872,
+  "199_deploy_compounding_staking_strategy": 1781093567,
+  "200_remove_old_compounding_ssv_strategy": 1781561627,
+  "201_remove_oeth_convex_amo": 1782091931
 }
