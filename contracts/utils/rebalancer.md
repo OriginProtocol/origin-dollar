@@ -1,8 +1,8 @@
 # OUSD Rebalancer
 
 The rebalancer moves USDC between OUSD strategies to maximise yield.
-An off-chain operator (OpenZeppelin Defender) calls `buildRebalancePlan` periodically,
-then submits the resulting strategy/amount arrays to the on-chain `RebalancerModule`.
+An off-chain operator (Talos action) calls `buildRebalancePlan` periodically, then
+submits the resulting strategy/amount arrays to the on-chain `RebalancerModule`.
 
 ## Running
 
@@ -41,6 +41,20 @@ npx hardhat planRebalance --sim-vault 500000 --sim-eth -100000
 | `--sim-hyper` | Additional USDC in HyperEVM Morpho strategy           |
 
 When simulation is active, a header is printed showing the adjustments applied.
+
+## Talos execution action
+
+The production execution path is the `ousdRebalancer` task/action:
+
+```bash
+cd contracts
+npx hardhat ousdRebalancer
+```
+
+Useful options:
+
+- `--dryrun true` computes and reports a plan but does not submit transactions
+- `--discord-webhook <url>` overrides `DISCORD_WEBHOOK_URL` for one run
 
 ## Reading the Output
 
@@ -122,7 +136,7 @@ Excess withdrawals are cancelled smallest-first (fewer bridge transactions).
 
 ### 3. Execute (`RebalancerModule.sol`)
 
-The Defender Action always calls `processWithdrawalsAndDeposits`. Either array may be
+The Talos action always calls `processWithdrawalsAndDeposits`. Either array may be
 empty — the contract loops over zero entries without reverting.
 
 If there is a cross-chain withdrawal, deposit arrays are passed empty so deposits are
@@ -187,5 +201,6 @@ The before/after/Δ are shown in the table header and returned from
 - `utils/rebalancer-config.js` - strategy configs and constraints
 - `utils/morpho-apy.js` - Morpho APY fetching
 - `tasks/rebalancer.js` - Hardhat task entry point
-- `scripts/defender-actions/ousdRebalancer.js` - OpenZeppelin Defender automation
+- `tasks/actions/ousdRebalancer.ts` - Talos execution automation
+- `scripts/defender-actions/ousdRebalancer.js` - legacy Defender automation
 - `test/rebalancer/rebalancer.js` - unit tests
