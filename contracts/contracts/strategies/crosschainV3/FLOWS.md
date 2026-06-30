@@ -205,7 +205,7 @@ sequenceDiagram
     Vault->>Master: deposit(bridgeAsset, X)
     Note over Master,Vault: deposit is non-payable<br/>calls with msg.value > 0 revert
     Master->>Master: _getNextYieldNonce()
-    Note over Master: returns N+1
+    Note over Master: lastYieldNonce = N+1<br/>returns N+1
     Note over Master: pendingDepositAmount = X
     Master->>Master: _send(WETH, X, DEPOSIT, N+1, "", false)
     Note over Master: payload = packPayload(DEPOSIT, N+1, "")
@@ -246,6 +246,7 @@ sequenceDiagram
     Master->>Master: _processDepositAck(body)
     Note over Master: body = abi.encode(yieldBaseline)
     Master->>Master: _markYieldNonceProcessed(N+1)
+    Note over Master: lastYieldNonce stays N+1<br/>nonceProcessed[N+1] = true
     Note over Master: remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
 ```
 
@@ -394,7 +395,7 @@ sequenceDiagram
     Master->>Master: require(recipient == vault)
     Master->>Master: _withdrawRequest(WETH, amount)
     Master->>Master: _getNextYieldNonce()
-    Note over Master: returns N+1
+    Note over Master: lastYieldNonce = N+1<br/>returns N+1
     Note over Master: pendingWithdrawalAmount = amount
     Master->>Master: require(inboundAdapter != 0)
     Master->>Master: require(amount <= _toAsset(_drawableRemoteBalance()))
@@ -440,7 +441,7 @@ sequenceDiagram
     Note over Master,Remote: ─── Phase D: operator triggers leg 2 ───
     Op->>Master: triggerClaim{value: fee}()
     Master->>Master: _getNextYieldNonce()
-    Note over Master: returns N+2
+    Note over Master: lastYieldNonce = N+2<br/>returns N+2
     Master->>Adapter: sendMessage(payload[WITHDRAW_CLAIM, N+2, ""])
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage carries the envelope only<br/>token = address(0), amount = 0
@@ -900,7 +901,9 @@ sequenceDiagram
 
     Note over Master: bridgeAdjustment = -10 (one BRIDGE_OUT for net=10 happened)<br/>Remote.bridgeAdjustment = -10 also
     Op->>Master: requestSettlement{value: fee}()
-    Master->>Master: nonce = _getNextYieldNonce()<br/>settlementSnapshot = -10<br/>(persisted for ack handler)
+    Master->>Master: _getNextYieldNonce()
+    Note over Master: lastYieldNonce = nonce<br/>returns nonce
+    Note over Master: settlementSnapshot = -10<br/>persisted for ack handler
     Master->>Adapter: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING, nonce,<br/>abi.encode(int256(-10))])
     Note over Master: emit SettlementRequested(nonce, -10)<br/>Master.bridgeAdjustment STILL -10 (NOT zeroed yet)
     Adapter->>Bridge: ccipSend
@@ -915,11 +918,13 @@ sequenceDiagram
     Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>yield-only baseline preserves consistency across orderings
     Remote->>ReturnA: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING_ACK, nonce,<br/>abi.encode(yieldOnly)])
     Remote->>Remote: _acceptYieldNonce(nonce)
+    Note over Remote: lastYieldNonce = nonce<br/>nonceProcessed[nonce] = true
     ReturnA->>Bridge: ccipSend
     Bridge-->>ReturnB: ccipReceive
     ReturnB->>Master: receiveMessage(...)
     Master->>Master: _processSettlementAck
     Master->>Master: _markYieldNonceProcessed(nonce)
+    Note over Master: lastYieldNonce stays nonce<br/>nonceProcessed[nonce] = true
     Note over Master: subtract only settlementSnapshot, do not reset to zero<br/>settlementSnapshot = -10, so bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT happened: -15 - (-10) = -5<br/>then settlementSnapshot = 0 and remoteStrategyBalance = yieldOnly
     Note over Master: emit SettlementAcked(nonce, yieldOnly)
 ```
