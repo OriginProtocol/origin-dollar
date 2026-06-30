@@ -217,11 +217,11 @@ sequenceDiagram
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg)
     Note over Bridge: WETH bridged over CCIP
     Bridge-->>AdapterEth: ccipReceive(message)
-    Note over AdapterEth: CCIP DON delivers the message via the destination router
-    AdapterEth->>AdapterEth: _validateInbound(BASE_SELECTOR, transportSender, message.data)
+    Note over Bridge: delivers the message via the destination router
+    AdapterEth->>AdapterEth: _validateInbound<br/>(BASE_SELECTOR, transportSender, message.data)
     Note over AdapterEth: checks source chain, peer adapter, authorised recipient, and pause status
-    Note over AdapterEth: adapter transfers WETH X to Remote before receiveMessage
-    AdapterEth->>Remote: receiveMessage(Remote, WETH, X, payload)
+    Note over AdapterEth: transfers WETH X to Remote before receiveMessage
+    AdapterEth->>Remote: receiveMessage<br/>(Remote, WETH, X, payload)
     Remote->>Remote: unpackPayload(payload)
     Note over Remote: decoded payload = (DEPOSIT, N+1, "")
     Note over Remote: mint + wrap are each try/catch-guarded (revert-free). On failure the<br/>bridgeAsset/OToken is left idle (still counted by _viewCheckBalance, recoverable<br/>via retryDeposit) and the DEPOSIT_ACK is still sent below.
@@ -233,8 +233,8 @@ sequenceDiagram
     wOETH-->>Remote: «wOETH shares» minted
     Remote->>Remote: _viewCheckBalance()
     Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
+    Note over Remote: Remote sends ACKs through its outbound adapter: SuperbridgeAdapter.<br/>Because this ACK carries no assets, Superbridge uses only its CCIP message leg.<br/>No canonical ETH bridge transfer happens on this path.<br/>The outbound adapter could be changed to plain CCIPAdapter.<br/>The Remote strategy pays the message fee.
     Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
-    Note over SuperEth: Remote sends ACKs through its outbound adapter: SuperbridgeAdapter.<br/>Because this ACK carries no assets, Superbridge uses only its CCIP message leg.<br/>No canonical ETH bridge transfer happens on this path.<br/>The outbound adapter could be changed to plain CCIPAdapter.<br/>The strategy ETH pool pays the message fee.
     Remote->>Remote: _acceptYieldNonce(N+1)
     Note over Remote: lastYieldNonce = N+1<br/>nonceProcessed[N+1] = true
     SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
@@ -303,8 +303,8 @@ sequenceDiagram
     Vault->>Master: «USDC X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(USDC, X)
     Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
-    Note over Master,Adapter: adapter transfers X USDC from Master Strategy
-    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no pool needed
+    Note over Master,Adapter: transfers X USDC from Master Strategy
+    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no ETH needed
     Adapter->>CCTP: depositForBurnWithHook(X)
     Note over Adapter,CCTP: burns USDC<br/>hook carries the envelope
     Note over Op: polls for Circle's attestation
@@ -333,7 +333,7 @@ Key differences:
 
 - Outbound adapter: `CCTPAdapter`. `quoteFee` returns `(getMinFeeAmount(X),
 USDC, false)` — native fee 0, token-side fee handled by CCTP itself.
-  `msg.value=0` works directly without needing a pool.
+  `msg.value=0` works directly without needing ETH in the Master strategy.
 - Inbound is operator-driven: the operator calls `CCTPAdapter.relay(message,
 attestation)` after Circle's attestation lands. The CCTP wire message is a
   **burn-message + hook** (sourced from `TokenMessenger.depositForBurnWithHook`),
