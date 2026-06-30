@@ -182,16 +182,22 @@ single transaction that lands tokens on Master.
 ```mermaid
 sequenceDiagram
     autonumber
+    box Base
     participant Vault as L2 Vault
     participant Master as Master Strategy
-    participant Adapter as CCIPAdapter (Base, Master outbound)
+    participant Adapter as CCIPAdapter <<Master outbound>>
+    participant SuperBase as SuperbridgeAdapter <<Master inbound>>
+    end
+
     participant Bridge as CCIP DON
-    participant AdapterEth as CCIPAdapter (Eth, Remote inbound)
+
+    box Ethereum
+    participant AdapterEth as CCIPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant OEV as OETH Vault (Ethereum)
-    participant wOETH as wOETH (4626)
-    participant SuperEth as SuperbridgeAdapter (Eth, Remote outbound)
-    participant SuperBase as SuperbridgeAdapter (Base, Master inbound)
+    participant OEV as OETH Vault
+    participant wOETH as wOETH <<4626>>
+    participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
+    end
 
     Note over Master: state: lastYieldNonce=N
     Vault->>Master: «WETH X» transfer (vault funds the strategy first)
@@ -217,12 +223,15 @@ sequenceDiagram
     wOETH-->>Remote: «wOETH shares» minted
     Remote->>Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
     Remote->>SuperEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
-    Note over Remote,SuperEth: Remote's configured outbound is the SuperbridgeAdapter. A message-only<br/>send (no tokens) rides purely its CCIP leg (_sendMessage → _sendCCIPMessage,<br/>no canonical bridge). Adapters are swappable: pointing Remote's outbound at the<br/>plain CCIPAdapter also works (atomic; pays the CCIP token fee on token-bearing legs).<br/>Pool funds the fee.
-    Remote->>Remote: _acceptYieldNonce(N+1)<br/>lastYieldNonce=N+1, nonceProcessed=true
+    Note over Remote,SuperEth: Remote sends ACKs through its outbound adapter: SuperbridgeAdapter.<br/>Because this ACK carries no assets, Superbridge uses only its CCIP message leg.<br/>No canonical ETH bridge transfer happens on this path.<br/>The outbound adapter could be changed to plain CCIPAdapter.<br/>The strategy ETH pool pays the message fee.
+    Remote->>Remote: _acceptYieldNonce(N+1)
+    Remote->>Remote: lastYieldNonce=N+1, nonceProcessed=true
     SuperEth->>Bridge: ccipSend
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processDepositAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
+    Master->>Master: _processDepositAck
+    Master->>Master: _markYieldNonceProcessed(N+1)
+    Note over Master: remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
 ```
 
 ### State changes
@@ -259,15 +268,21 @@ operator-relayed:
 ```mermaid
 sequenceDiagram
     autonumber
+    box Spoke
     participant Vault as Spoke sub-OUSD Vault
     participant Master as Master Strategy
     actor Op as Operator
-    participant Adapter as CCTPAdapter (spoke)
+    participant Adapter as CCTPAdapter <<Master outbound>>
+    end
+
     participant CCTP as Circle CCTP
-    participant AdapterEth as CCTPAdapter (Ethereum)
+
+    box Ethereum
+    participant AdapterEth as CCTPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant OUV as OUSD Vault (Ethereum)
-    participant wOUSD as wOUSD (4626)
+    participant OUV as OUSD Vault
+    participant wOUSD as wOUSD <<4626>>
+    end
 
     Vault->>Master: «USDC X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(USDC, X)
@@ -292,7 +307,8 @@ sequenceDiagram
     AdapterEth->>CCTP: sendMessage (message-only)
     Op->>Adapter: relay(message, attestation) [spoke side]
     Adapter->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processDepositAck:<br/>remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
+    Master->>Master: _processDepositAck
+    Note over Master: remoteStrategyBalance = yieldBaseline<br/>pendingDepositAmount = 0
 ```
 
 Key differences:
@@ -338,22 +354,32 @@ leg 2 after the OToken vault's withdrawal queue has matured.
 ```mermaid
 sequenceDiagram
     autonumber
+    box Base
     participant Vault as L2 Vault
     participant Master as Master Strategy
     actor Op as Operator
-    participant Adapter as CCIPAdapter (Base)
+    participant Adapter as CCIPAdapter <<Master outbound>>
+    participant SuperBase as SuperbridgeAdapter <<Master inbound>>
+    end
+
     participant Bridge as CCIP DON
-    participant AdapterEth as CCIPAdapter (Eth, Master→Remote inbound)
+
+    box Ethereum
+    participant AdapterEth as CCIPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant OEV as OETH Vault (Ethereum)
-    participant wOETH as wOETH (4626)
-    participant SuperEth as SuperbridgeAdapter (Eth, Remote outbound)
-    participant SuperBase as SuperbridgeAdapter (Base, Master inbound)
+    participant OEV as OETH Vault
+    participant wOETH as wOETH <<4626>>
+    participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
+    end
 
     Note over Master,Remote: ─── Phase A: vault.withdraw triggers leg 1 synchronously ───
     Vault->>Master: withdraw(vault, WETH, amount)
-    Master->>Master: require(recipient == vault)<br/>_withdrawRequest(WETH, amount)
-    Master->>Master: _getNextYieldNonce → N+1<br/>pendingWithdrawalAmount = amount<br/>require(inboundAdapter != 0)<br/>require(amount <= _toAsset(_drawableRemoteBalance()))
+    Master->>Master: require(recipient == vault)
+    Master->>Master: _withdrawRequest(WETH, amount)
+    Master->>Master: _getNextYieldNonce → N+1
+    Master->>Master: pendingWithdrawalAmount = amount
+    Master->>Master: require(inboundAdapter != 0)
+    Master->>Master: require(amount <= _toAsset(_drawableRemoteBalance()))
     Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
     Note over Master,Adapter: Master.withdraw is non-payable. _send (userFunded=false) uses<br/>pool (address(this).balance) for CCIP fee.
     Adapter->>Bridge: ccipSend
@@ -375,10 +401,14 @@ sequenceDiagram
     Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
     alt success == true (queued)
-        Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline
+        Master->>Master: _processWithdrawRequestAck
+        Master->>Master: _markYieldNonceProcessed(N+1)
+        Note over Master: remoteStrategyBalance = yieldBaseline
         Note over Master: pendingWithdrawalAmount stays set — gates leg-2
     else success == false (leg-1 NACK, nothing queued)
-        Master->>Master: _processWithdrawRequestAck:<br/>_markYieldNonceProcessed(N+1)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount = 0
+        Master->>Master: _processWithdrawRequestAck
+        Master->>Master: _markYieldNonceProcessed(N+1)
+        Note over Master: remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount = 0
         Note over Master: channel freed — the withdrawal can be re-requested
     end
 
@@ -404,7 +434,9 @@ sequenceDiagram
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
         SuperBase->>Master: «WETH claimed» transfer (adapter delivers tokens first)
         SuperBase->>Master: receiveMessage(Master, WETH, claimed, payload)
-        Master->>Master: _processWithdrawClaimAck success:<br/>_markYieldNonceProcessed(N+2)<br/>pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = yieldBaseline
+        Master->>Master: _processWithdrawClaimAck success
+        Master->>Master: _markYieldNonceProcessed(N+2)
+        Note over Master: pendingWithdrawalAmount = 0<br/>remoteStrategyBalance = yieldBaseline
         Master->>Vault: «WETH» transfer (forwards its full bridgeAsset balance)
         Note over Master: safeTransfer(vaultAddress, balanceOf(this))<br/>emit Withdrawal(WETH, WETH, claimed)
     else queue not yet matured (NACK)
@@ -412,7 +444,9 @@ sequenceDiagram
         SuperEth->>Bridge: ccipSend
         Bridge-->>SuperBase: ccipReceive (intendedAmount=0)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-        Master->>Master: _processWithdrawClaimAck nack:<br/>_markYieldNonceProcessed(N+2)<br/>remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
+        Master->>Master: _processWithdrawClaimAck nack
+        Master->>Master: _markYieldNonceProcessed(N+2)
+        Note over Master: remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
         Note over Master: operator retries triggerClaim later
     end
 ```
@@ -501,15 +535,21 @@ inbound operator-relayed:
 ```mermaid
 sequenceDiagram
     autonumber
+    box Spoke
     participant Vault as Spoke sub-OUSD Vault
     participant Master as Master Strategy
     actor Op as Operator
-    participant Adapter as CCTPAdapter (spoke)
+    participant Adapter as CCTPAdapter <<Master outbound>>
+    end
+
     participant CCTP as Circle CCTP
-    participant AdapterEth as CCTPAdapter (Ethereum)
+
+    box Ethereum
+    participant AdapterEth as CCTPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant OUV as OUSD Vault (Ethereum)
-    participant wOUSD as wOUSD (4626)
+    participant OUV as OUSD Vault
+    participant wOUSD as wOUSD <<4626>>
+    end
 
     Note over Master,Remote: ─── Leg 1: request (message-only) ───
     Vault->>Master: withdraw(vault, USDC, amount)
@@ -574,18 +614,24 @@ other yield ops.
 ```mermaid
 sequenceDiagram
     autonumber
+    box Base
     actor Op as Operator
     participant Master as Master Strategy
-    participant Adapter as Outbound (Base→ETH)
+    participant Adapter as Adapter <<Outbound>>
+    participant ReturnB as Adapter <<Inbound>>
+    end
+
     participant Bridge as CCIP DON
-    participant AdapterEth as Inbound (ETH side)
+
+    box Ethereum
+    participant AdapterEth as Adapter <<Inbound>>
     participant Remote as Remote Strategy
-    participant ReturnA as Outbound (ETH→Base)
-    participant ReturnB as Inbound (Base side)
+    participant ReturnA as Adapter <<Outbound>>
+    end
 
     Note over Master: lastYieldNonce = N (any value)<br/>bridgeAdjustment = B (any value)
     Op->>Master: requestBalanceCheck{value: optionalTopUp}()
-    Master->>Adapter: sendMessage(payload[BALANCE_CHECK_REQUEST,<br/>nonce=N, abi.encode(block.timestamp)])
+    Master->>Adapter: sendMessage(payload[BALANCE_CHECK_REQUEST, nonce=N, timestamp])
     Note over Master: NONCE ECHOED, NOT ADVANCED.<br/>lastYieldNonce stays N.
     Adapter->>Bridge: ccipSend
     Bridge-->>AdapterEth: ccipReceive
@@ -599,7 +645,7 @@ sequenceDiagram
     ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
     Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
     alt all guards pass
-        Master->>Master: lastBalanceCheckTimestamp = respTimestamp<br/>remoteStrategyBalance = yieldBaseline
+        Note over Master: lastBalanceCheckTimestamp = respTimestamp<br/>remoteStrategyBalance = yieldBaseline
         Note over Master: emit BalanceCheckResponded
     else any guard fails
         Note over Master: silently discard
@@ -671,15 +717,21 @@ configurable `bridgeFeeBps` as protocol yield.
 ```mermaid
 sequenceDiagram
     autonumber
+    box Base
     actor Alice as User (Alice)
     participant Master as Master Strategy
     participant L2V as L2 OETHb Vault
-    participant Adapter as CCIPAdapter (Base)
+    participant Adapter as CCIPAdapter <<Outbound>>
+    end
+
     participant Bridge as CCIP DON
-    participant AdapterEth as CCIPAdapter (Ethereum)
+
+    box Ethereum
+    participant AdapterEth as CCIPAdapter <<Inbound>>
     participant Remote as Remote Strategy
-    participant wOETH as wOETH (4626)
-    actor AliceEth as Alice (Ethereum)
+    participant wOETH as wOETH <<4626>>
+    actor AliceEth as Alice
+    end
 
     Alice->>Master: approve(Master, X) [OETHb]
     Alice->>Master: bridgeOTokenToPeer{value: fee}(X, alice_eth, "0x", 0)
@@ -785,14 +837,20 @@ settlement is no longer correctness-critical, just hygiene.
 ```mermaid
 sequenceDiagram
     autonumber
+    box Base
     actor Op as Operator
     participant Master as Master Strategy
-    participant Adapter as Outbound
+    participant Adapter as Adapter <<Outbound>>
+    participant ReturnB as Adapter <<Inbound>>
+    end
+
     participant Bridge as CCIP DON
-    participant AdapterEth as Inbound (ETH)
+
+    box Ethereum
+    participant AdapterEth as Adapter <<Inbound>>
     participant Remote as Remote Strategy
-    participant ReturnA as Outbound (ETH→Base)
-    participant ReturnB as Inbound (Base)
+    participant ReturnA as Adapter <<Outbound>>
+    end
 
     Note over Master: bridgeAdjustment = -10 (one BRIDGE_OUT for net=10 happened)<br/>Remote.bridgeAdjustment = -10 also
     Op->>Master: requestSettlement{value: fee}()
@@ -805,14 +863,17 @@ sequenceDiagram
 
     Bridge-->>AdapterEth: ccipReceive
     AdapterEth->>Remote: receiveMessage(...)
-    Remote->>Remote: _processSettlement(nonce, body):<br/>snapshot = -10 (decoded)<br/>bridgeAdjustment -= snapshot  // NOT = 0<br/>(if no in-flight: -10 - -10 = 0)<br/>(if in-flight applied before settle: -15 - -10 = -5)<br/>(if in-flight not yet at Remote: -10 - -10 = 0)
+    Remote->>Remote: _processSettlement(nonce, body)
+    Note over Remote: subtract only the snapshot amount, do not reset to zero<br/>snapshot = -10, so bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT already applied: -15 - (-10) = -5<br/>new BRIDGE_OUT not applied yet: -10 - (-10) = 0
     Remote->>Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>(yield-only baseline preserves consistency across orderings)
     Remote->>ReturnA: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING_ACK, nonce,<br/>abi.encode(yieldOnly)])
     Remote->>Remote: _acceptYieldNonce(nonce)
     ReturnA->>Bridge: ccipSend
     Bridge-->>ReturnB: ccipReceive
     ReturnB->>Master: receiveMessage(...)
-    Master->>Master: _processSettlementAck:<br/>_markYieldNonceProcessed(nonce)<br/>bridgeAdjustment -= settlementSnapshot  // NOT = 0<br/>(if no in-flight: -10 - -10 = 0)<br/>(if in-flight burn: -15 - -10 = -5)<br/>settlementSnapshot = 0<br/>remoteStrategyBalance = yieldOnly
+    Master->>Master: _processSettlementAck
+    Master->>Master: _markYieldNonceProcessed(nonce)
+    Note over Master: subtract only settlementSnapshot, do not reset to zero<br/>settlementSnapshot = -10, so bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT happened: -15 - (-10) = -5<br/>then settlementSnapshot = 0 and remoteStrategyBalance = yieldOnly
     Note over Master: emit SettlementAcked(nonce, yieldOnly)
 ```
 
