@@ -215,8 +215,7 @@ sequenceDiagram
     end
 
     Note over Master: lastYieldNonce = N
-    Vault->>Master: transfer X WETH to strategy
-    Note over Vault: vault funds the strategy first
+    Note over Vault: transfer X WETH from Vault to Master Strategy
     Vault->>Master: deposit(bridgeAsset, X)
     Note over Master,Vault: deposit is non-payable<br/>calls with msg.value > 0 revert
     Master->>Master: _getNextYieldNonce()
@@ -303,10 +302,13 @@ without advancing the nonce.
 mid-flight = X (pendingDepositAmount) + B (stale remoteStrategyBalance), post-ack =
 yieldBaseline ≈ B + X on the happy path.
 
-### OUSD V3 differences
+### OUSD V3 Deposit Differences
 
-The same choreography over CCTP — atomic burn+mint instead of CCIP, and every inbound is
-operator-relayed:
+The strategy-side accounting is the same as the WETH deposit flow: Master sends
+a deposit message, Remote mints/wraps, then Remote ACKs the new baseline. The
+transport is different: CCTP burns USDC on the source chain, mints USDC on the
+destination chain, and each inbound CCTP message is delivered by an operator
+calling `relay(message, attestation)` after Circle attests it.
 
 ```mermaid
 sequenceDiagram
@@ -314,10 +316,10 @@ sequenceDiagram
     box Spoke
     participant Vault as Spoke sub-OUSD Vault
     participant Master as Master Strategy
-    actor Op as Operator
     participant Adapter as CCTPAdapter <<Master outbound>>
     end
 
+    actor Op as Operator
     participant CCTP as Circle CCTP
 
     box Ethereum
@@ -327,65 +329,88 @@ sequenceDiagram
     participant wOUSD as wOUSD <<4626>>
     end
 
-    Vault->>Master: «USDC X» transfer (vault funds the strategy first)
+    Note over Master: lastYieldNonce = N
+    Note over Vault: transfer X USDC from Spoke sub-OUSD Vault to Master Strategy
     Vault->>Master: deposit(USDC, X)
-    Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
+    Note over Master,Vault: deposit is non-payable<br/>calls with msg.value > 0 revert
+    Master->>Master: _getNextYieldNonce()
+    Note over Master: store lastYieldNonce = N+1<br/>returns N+1
+    Note over Master: store pendingDepositAmount = X
+    Master->>Master: _send(USDC, X, DEPOSIT, N+1, "", false)
+    Note over Master: payload = packPayload(DEPOSIT, N+1, "")
+    Master->>Adapter: quoteFee(USDC, X, payload)
+    Adapter-->>Master: fee = getMinFeeAmount(X)<br/>feeToken = USDC<br/>requiresExternalPayment = false
+    Note over Master: no native fee<br/>msg.value = 0<br/>no ETH needed in the Master Strategy
+    Master->>Adapter: sendMessageAndTokens(USDC, X, payload)
     Note over Adapter: transfers X USDC from Master Strategy to CCTPAdapter
-    Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no ETH needed
     Adapter->>CCTP: depositForBurnWithHook(X)
-    Note over Adapter,CCTP: burns USDC<br/>hook carries the envelope
+    Note over Adapter,CCTP: burns USDC<br/>hook carries envelope = (envelopeSender, intendedAmount = X, payload)
     Note over Op: polls for Circle's attestation
     Op->>AdapterEth: relay(message, attestation)
-    AdapterEth->>AdapterEth: decodeBurnBody → amount, feeExecuted, envelope<br/>messageTransmitter.receiveMessage → mints USDC to adapter
-    AdapterEth->>Remote: «USDC landed» transfer (landed = min(mint, amount − feeExecuted))
+    AdapterEth->>AdapterEth: decodeBurnBody → amount, feeExecuted, envelope<br/>messageTransmitter.receiveMessage → mints USDC to CCTPAdapter
+    Note over AdapterEth: landed = min(mint, amount - feeExecuted)
+    Note over AdapterEth: transfers landed USDC from CCTPAdapter to Remote Strategy
     AdapterEth->>Remote: receiveMessage(Remote, USDC, landed, payload)
+    Note over AdapterEth,Remote: params: sender = Remote, token = USDC, amountReceived = landed<br/>payload = packPayload(DEPOSIT, N+1, "")
+    Remote->>Remote: unpackPayload(payload)
+    Note over Remote: decoded payload = (DEPOSIT, N+1, "")
+    Note over Remote: mint + wrap are each try/catch-guarded (revert-free). On failure the<br/>bridgeAsset/OToken is left idle (still counted by _viewCheckBalance, recoverable<br/>via retryDeposit) and the DEPOSIT_ACK is still sent below.
     Remote->>OUV: mint(landed)
     Note over OUV: transfers landed USDC from Remote Strategy to OUSD Vault on mint
     OUV-->>Remote: «OUSD» minted
     Remote->>wOUSD: deposit(OUSD balance, Remote)
     Note over wOUSD: transfers OUSD from Remote Strategy to wOUSD on deposit
     wOUSD-->>Remote: «wOUSD shares» minted
+    Note over Remote: minted wOUSD shares are held by the Remote Strategy
     Remote->>Remote: _viewCheckBalance()
+    Note over Remote: viewCheckBalance = value of held wOUSD shares + idle OUSD + idle USDC scaled to OUSD + queued withdrawal value
     Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
-    Remote->>AdapterEth: sendMessage(payload[DEPOSIT_ACK, N+1, abi.encode(yieldBaseline)])
-    Note over Remote,AdapterEth: DEPOSIT_ACK is a pure message (intendedAmount = 0):<br/>messageTransmitter.sendMessage, no token leg.
-    AdapterEth->>CCTP: sendMessage (message-only)
-    Op->>Adapter: relay(message, attestation) [spoke side]
+    Note over Remote: Remote sends ACKs through its outbound adapter: CCTPAdapter.<br/>Because this ACK carries no assets, CCTP sends a message-only envelope.<br/>No token burn happens on this path.
+    Remote->>Remote: _send(address(0), 0, DEPOSIT_ACK, N+1, body, false)
+    Note over Remote: body = abi.encode(yieldBaseline)<br/>payload = packPayload(DEPOSIT_ACK, N+1, body)
+    Remote->>AdapterEth: sendMessage(payload)
+    AdapterEth->>CCTP: sendMessage(message-only)
+    Note over AdapterEth,CCTP: CCTP message body carries envelope = (envelopeSender, intendedAmount = 0, payload)<br/>no token burn
+    Remote->>Remote: _acceptYieldNonce(N+1)
+    Note over Remote: store lastYieldNonce = N+1<br/>store nonceProcessed[N+1] = true
+    Op->>Adapter: relay(message, attestation)
+    Note over Op,Adapter: spoke side relay after Circle attestation
+    Adapter->>Adapter: messageTransmitter.receiveMessage(message, attestation)
+    Note over Adapter: message body decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     Adapter->>Master: receiveMessage(Master, 0, 0, payload)
-    Master->>Master: _processDepositAck
-    Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>store pendingDepositAmount = 0
+    Note over Adapter,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(DEPOSIT_ACK, N+1, body)
+    Master->>Master: _processDepositAck(body)
+    Note over Master: body = abi.encode(yieldBaseline)
+    Master->>Master: _markYieldNonceProcessed(N+1)
+    Note over Master: lastYieldNonce stays N+1<br/>store nonceProcessed[N+1] = true
+    Note over Master: store remoteStrategyBalance = yieldBaseline<br/>store pendingDepositAmount = 0
 ```
 
 Key differences:
 
-- Outbound adapter: `CCTPAdapter`. `quoteFee` returns `(getMinFeeAmount(X),
-USDC, false)` — native fee 0, token-side fee handled by CCTP itself.
-  `msg.value=0` works directly without needing ETH in the Master strategy.
-- Inbound is operator-driven: the operator calls `CCTPAdapter.relay(message,
-attestation)` after Circle's attestation lands. The CCTP wire message is a
-  **burn-message + hook** (sourced from `TokenMessenger.depositForBurnWithHook`),
-  whose transport `sender` is the source-side TokenMessenger and `recipient`
-  is the destination TokenMessenger — NOT this adapter. Auto-dispatch via
-  the `handleReceiveMessage` hook on the mintRecipient is CCTP V2.1-only and
-  not universally available, so `relay()` does NOT rely on it.
-- Manual burn parse: `relay()` decodes the burn body via
-  `CCTPMessageHelper.decodeBurnBody` to extract authoritative `amount`,
-  `feeExecuted`, `msgSender` (peer adapter under CreateX/CREATE2 parity), and
-  `hookData` (our application envelope). It then calls
-  `messageTransmitter.receiveMessage` to credit USDC to this adapter,
-  computes `landed = min(actualMint, amount - feeExecuted)`, validates the
-  envelope, and calls `_deliver(envelopeSender, USDC, landed, feeExecuted,
-payload)` directly.
-- DEPOSIT_ACK path: a pure message (no token leg). The `handleReceiveFinalizedMessage`
-  hook fires, runs `_validateInbound`, and `_deliver(envelopeSender,
-address(0), 0, 0, payload)`. The hook is restricted to `intendedAmount == 0`
-  and reverts otherwise — token-bearing messages MUST go through `relay()`'s
-  burn-message path.
-- Token-side fee for CCTP V2 fast-finality: the strategy ignores `feePaid`
-  (matches older `_onTokenReceived`'s `solhint-disable-next-line` pattern);
-  the shortfall is yield drag absorbed via the next BALANCE_CHECK. Master's
-  `_processWithdrawClaimAck` uses `amount <= ackAmount` (not strict equality)
-  to tolerate this gap.
+- Outbound adapter: `CCTPAdapter`. For the token-bearing deposit,
+  `quoteFee(USDC, X, payload)` returns `(getMinFeeAmount(X), USDC, false)`.
+  There is no native fee, so `msg.value = 0` works without ETH in the Master
+  Strategy. CCTP handles any token-side fee by deducting it from the burned
+  USDC.
+- Token-bearing inbound uses the CCTP burn-message path. The source-side
+  `depositForBurnWithHook` burns USDC and puts the adapter envelope in the
+  hook. The destination operator later calls
+  `CCTPAdapter.relay(message, attestation)` after Circle attests the message.
+- `relay()` manually decodes the CCTP burn body to read `amount`,
+  `feeExecuted`, `msgSender` (the peer adapter), and `hookData` (the adapter
+  envelope). It then calls `messageTransmitter.receiveMessage`, computes
+  `landed = min(actualMint, amount - feeExecuted)`, validates the envelope, and
+  calls `_deliver(envelopeSender, USDC, landed, feeExecuted, payload)`.
+- `intendedAmount` in the adapter envelope is the full burn amount `X`.
+  `amountReceived` passed to the Remote Strategy is `landed`, which may be
+  lower if CCTP took a token-side fee. The Deposit ACK's `yieldBaseline`
+  reflects the Remote Strategy's actual post-mint/wrap accounting.
+- `DEPOSIT_ACK` is message-only. The ACK has no token leg, so CCTP sends a pure
+  message whose body is the adapter envelope. On the Master side,
+  `relay(message, attestation)` triggers the message hook path, validates
+  `intendedAmount == 0`, and dispatches
+  `_deliver(envelopeSender, address(0), 0, 0, payload)`.
 
 ---
 
@@ -653,7 +678,7 @@ sequenceDiagram
     Note over Adapter: transfers landed USDC from CCTPAdapter to Master Strategy<br/>landed = min(mint, claimed - feeExecuted)
     Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
     Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
-    Note over Master,Vault: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
+    Note over Master: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
     Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline<br/>emit Withdrawal(USDC, USDC, landed)
 ```
 
