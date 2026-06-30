@@ -199,20 +199,21 @@ sequenceDiagram
     participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
     end
 
-    Note over Master: state: lastYieldNonce=N
+    Note over Master: lastYieldNonce = N
     Vault->>Master: transfer X WETH to strategy
-    Note over Master: vault funds the strategy first
+    Note over Vault: vault funds the strategy first
     Vault->>Master: deposit(bridgeAsset, X)
     Note over Master,Vault: deposit is non-payable<br/>calls with msg.value > 0 revert
     Master->>Master: _getNextYieldNonce()
     Note over Master: returns N+1
     Note over Master: pendingDepositAmount = X
-    Master->>Adapter: sendMessageAndTokens(WETH, X, payload[DEPOSIT, N+1, ""])
-    Note over Adapter: adapter transfers X WETH from Master via standing max allowance
-    Master->>Master: _send(userFunded=false)
-    Master->>Adapter: quoteFee(...)
+    Master->>Master: _send(WETH, X, DEPOSIT, N+1, "", false)
+    Note over Master: payload = packPayload(DEPOSIT, N+1, "")
+    Master->>Adapter: quoteFee(WETH, X, payload)
     Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
     Note over Master: Master strategy pays the CCIP fee from its own ETH balance
+    Master->>Adapter: sendMessageAndTokens{value:fee}<br/>(WETH, X, payload)
+    Note over Adapter: adapter transfers X WETH from Master Strategy via standing max allowance
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, msg)
     Note over Bridge: WETH bridged over CCIP
     Bridge-->>AdapterEth: ccipReceive(message)
@@ -301,7 +302,7 @@ sequenceDiagram
     Vault->>Master: «USDC X» transfer (vault funds the strategy first)
     Vault->>Master: deposit(USDC, X)
     Master->>Adapter: sendMessageAndTokens(USDC, X, payload[DEPOSIT, N+1, ""])
-    Note over Master,Adapter: adapter transfers X USDC from Master
+    Note over Master,Adapter: adapter transfers X USDC from Master Strategy
     Note over Master,Adapter: quoteFee = (getMinFeeAmount(X), USDC, false)<br/>Native fee 0<br/>msg.value = 0<br/>no pool needed
     Adapter->>CCTP: depositForBurnWithHook(X)
     Note over Adapter,CCTP: burns USDC<br/>hook carries the envelope
