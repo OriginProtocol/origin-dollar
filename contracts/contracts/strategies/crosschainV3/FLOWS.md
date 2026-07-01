@@ -775,39 +775,51 @@ other yield ops.
 sequenceDiagram
     autonumber
     box Base
-    actor Op as Operator
     participant Master as Master Strategy
-    participant Adapter as Adapter <<Outbound>>
-    participant ReturnB as Adapter <<Inbound>>
+    participant Adapter as CCIPAdapter <<Master outbound>>
+    participant SuperBase as SuperbridgeAdapter <<Master inbound>>
     end
 
+    actor Op as Operator
     participant Bridge as CCIP DON
 
     box Ethereum
-    participant AdapterEth as Adapter <<Inbound>>
+    participant AdapterEth as CCIPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant ReturnA as Adapter <<Outbound>>
+    participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
     end
 
     Note over Master: lastYieldNonce = N (any value)<br/>bridgeAdjustment = B (any value)
     Op->>Master: requestBalanceCheck{value: optionalTopUp}()
-    Master->>Adapter: sendMessage(payload[BALANCE_CHECK_REQUEST, nonce=N, timestamp])
+    Note over Master: timestamp = block.timestamp<br/>body = abi.encode(timestamp)<br/>payload = packPayload(BALANCE_CHECK_REQUEST, N, body)
+    Master->>Adapter: quoteFee(address(0), 0, payload)
+    Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
+    Note over Master: Master Strategy pays the CCIP fee from its own ETH balance
+    Master->>Adapter: sendMessage{value:fee}(payload)
+    Note over Master,Adapter: adapter call is payable<br/>fee is forwarded as msg.value
     Note over Master: NONCE ECHOED, NOT ADVANCED.<br/>lastYieldNonce stays N.
-    Adapter->>Bridge: ccipSend
+    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
-    Bridge->>AdapterEth: ccipReceive
-    AdapterEth->>Remote: receiveMessage(...)
-    Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>(cancels bridge channel effects: see comment in code)
-    Remote->>Remote: clamp yieldOnly to 0 if negative<br/>4626 rounding dust only<br/>never significantly negative — no negative rebase
-    Remote->>ReturnA: sendMessage(payload[BALANCE_CHECK_RESPONSE,<br/>nonce=N, abi.encode(yieldOnly, srcTimestamp)])
-    Note over Remote: DOES NOT call _acceptYieldNonce.<br/>Read-only on Remote's side.
-    ReturnA->>Bridge: ccipSend
-    Note over ReturnA,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
-    Bridge->>ReturnB: ccipReceive(message)
-    Note over Bridge,ReturnB: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
-    ReturnB->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over ReturnB,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
-    Master->>Master: _processBalanceCheckResponse(N, body):<br/>guard 1: if isYieldOpInFlight() → return<br/>guard 2: if respNonce != lastYieldNonce → return<br/>guard 3: if respTimestamp <= lastBalanceCheckTimestamp → return
+    Bridge->>AdapterEth: ccipReceive(message)
+    Note over Bridge,AdapterEth: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
+    AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_REQUEST, N, body)
+    Remote->>Remote: _yieldOnlyBaseline()
+    Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment, clamped to 0<br/>clamp only covers tiny 4626 rounding dust
+    Note over Remote: srcTimestamp = timestamp from request body<br/>body = encode(yieldBaseline, srcTimestamp)<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
+    Remote->>SuperEth: quoteFee(address(0), 0, payload)
+    SuperEth-->>Remote: fee, feeToken = native, requiresExternalPayment = true
+    Note over Remote: Remote Strategy pays the CCIP fee from its own ETH balance
+    Remote->>SuperEth: sendMessage{value:fee}(payload)
+    Note over Remote,SuperEth: DOES NOT call _acceptYieldNonce<br/>read-only on Remote Strategy<br/>adapter call is payable and forwards fee as msg.value
+    SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
+    Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
+    Bridge->>SuperBase: ccipReceive(message)
+    Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
+    SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
+    Master->>Master: _processBalanceCheckResponse(N, body)
+    Note over Master: guard 1: if isYieldOpInFlight() then return<br/>guard 2: if response nonce != lastYieldNonce then return<br/>guard 3: if response timestamp <= lastBalanceCheckTimestamp then return
     alt all guards pass
         Note over Master: store lastBalanceCheckTimestamp = respTimestamp<br/>store remoteStrategyBalance = yieldBaseline
         Note over Master: emit BalanceCheckResponded
