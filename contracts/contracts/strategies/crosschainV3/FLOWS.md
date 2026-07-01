@@ -416,8 +416,11 @@ Key differences:
 
 ## 4. Withdraw
 
-Async, two-leg cycle. Vault triggers leg 1 synchronously; operator triggers
-leg 2 after the OToken vault's withdrawal queue has matured.
+Withdraw is split into two cross-chain legs. The Vault starts leg 1 by asking
+the Master Strategy to request liquidity from the Remote Strategy, which unwraps
+wOToken and queues a withdrawal from the Ethereum OToken vault. After that queue
+has matured, an operator starts leg 2: the Remote Strategy claims the withdrawn
+bridge asset and sends it back to the Master Strategy.
 
 ### Sequence diagram
 
@@ -427,11 +430,11 @@ sequenceDiagram
     box Base
     participant Vault as L2 Vault
     participant Master as Master Strategy
-    actor Op as Operator
     participant Adapter as CCIPAdapter <<Master outbound>>
     participant SuperBase as SuperbridgeAdapter <<Master inbound>>
     end
 
+    actor Op as Operator
     participant Bridge as CCIP DON
 
     box Ethereum
@@ -444,18 +447,23 @@ sequenceDiagram
 
     Note over Master,Remote: ─── Phase A: vault.withdraw triggers leg 1 synchronously ───
     Vault->>Master: withdraw(vault, WETH, amount)
-    Master->>Master: require(recipient == vault)
-    Master->>Master: _withdrawRequest(WETH, amount)
+    Note over Master,Vault: withdraw is non-payable<br/>calls with msg.value > 0 revert
+    Note over Vault: recipient = Vault
     Master->>Master: _getNextYieldNonce()
     Note over Master: store lastYieldNonce = N+1<br/>returns N+1
     Note over Master: store pendingWithdrawalAmount = amount
-    Master->>Master: require(inboundAdapter != 0)
-    Master->>Master: require(amount <= _toAsset(_drawableRemoteBalance()))
-    Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
-    Note over Master,Adapter: withdraw is non-payable<br/>calls with msg.value > 0 revert<br/>Master strategy pays the CCIP fee from address(this).balance
+    Note over Master: requested amount must fit within the drawable Remote Strategy balance<br/>drawable = remoteStrategyBalance plus any negative bridgeAdjustment, scaled to WETH
+    Note over Master: body = abi.encode(amount)<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
+    Note over Master: message-only send. No token, no amount
+    Master->>Adapter: quoteFee(address(0), 0, payload)
+    Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
+    Note over Master: Master Strategy pays the CCIP fee from its own ETH balance
+    Master->>Adapter: sendMessage{value:fee}(payload)
+    Note over Master,Adapter: adapter call is payable<br/>fee is forwarded as msg.value
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge->>AdapterEth: ccipReceive(message)
+    Note over Bridge,AdapterEth: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
     Note over Remote: unwrap + queue are try/catch-guarded (revert-free). On failure: success=false,<br/>nothing queued (any unwrapped OToken left idle, recoverable via retryDeposit).
@@ -469,8 +477,10 @@ sequenceDiagram
 
     Note over Master,Remote: ─── Phase B: Remote sends WITHDRAW_REQUEST_ACK ───
     Remote->>Remote: _viewCheckBalance()
+    Note over Remote: viewCheckBalance = value of held wOETH shares + idle OETH + idle WETH scaled to OETH + queued withdrawal value
     Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
-    Remote->>SuperEth: sendMessage(payload[WITHDRAW_REQUEST_ACK, N+1, abi.encode(yieldBaseline, success)])
+    Note over Remote: body = abi.encode(yieldBaseline, success)<br/>payload = packPayload(WITHDRAW_REQUEST_ACK, N+1, body)
+    Remote->>SuperEth: sendMessage(payload)
     Note over SuperEth: Remote's outbound = SuperbridgeAdapter (Eth).<br/>Message-only rides its CCIP leg (no canonical bridge).
     SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
     Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
@@ -494,18 +504,20 @@ sequenceDiagram
     Op->>Master: triggerClaim{value: fee}()
     Master->>Master: _getNextYieldNonce()
     Note over Master: store lastYieldNonce = N+2<br/>returns N+2
-    Master->>Adapter: sendMessage(payload[WITHDRAW_CLAIM, N+2, ""])
+    Note over Master: body = ""<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
+    Master->>Adapter: sendMessage(payload)
     Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge->>AdapterEth: ccipReceive(message)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>body = ""<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
     Remote->>Remote: _opportunisticClaim()
     Remote->>OEV: claimWithdrawal(requestId)
     OEV-->>Remote: «WETH claimed» paid out
     Note over Remote: claimed = the WETH the vault actually paid out<br/>store outstandingRequestId = REQUEST_ID_EMPTY<br/>store outstandingRequestAmount = claimed (refined to the payout)
     alt claim succeeded and tokens are in hand
-        Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload[WITHDRAW_CLAIM_ACK, N+2, ack(true)])
+        Note over Remote: yieldBaseline = _yieldOnlyBaselineAfter(_toOToken(claimed))<br/>body = encode(yieldBaseline, true, claimed)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Remote->>SuperEth: sendMessageAndTokens(WETH, claimed, payload)
         Note over SuperEth: transfers claimed WETH from Remote Strategy to SuperbridgeAdapter
         Note over SuperEth: split delivery Ethereum→Base:<br/>WETH unwrapped to ETH → L1StandardBridge<br/>CCIP message in parallel
         Note over SuperEth,SuperBase: canonical bridge delivers ETH<br/>receive() wraps it to WETH on Base
@@ -518,15 +530,15 @@ sequenceDiagram
         Master->>Master: _processWithdrawClaimAck(N+2, claimed, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
         Note over Master: transfers full WETH balance from Master Strategy to L2 Vault
-        Note over Master: safeTransfer(vaultAddress, balanceOf(this))<br/>emit Withdrawal(WETH, WETH, claimed)
     else queue not yet matured (NACK)
-        Remote->>SuperEth: sendMessage(payload[WITHDRAW_CLAIM_ACK, N+2, ack(false)])
+        Note over Remote: currentBalance = _yieldOnlyBaseline()<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Remote->>SuperEth: sendMessage(payload)
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
         Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
         Bridge->>SuperBase: ccipReceive(message)
         Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-        Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
         Master->>Master: _processWithdrawClaimAck(N+2, 0, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
         Note over Master: operator retries triggerClaim later
@@ -679,7 +691,7 @@ sequenceDiagram
     Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
     Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
     Note over Master: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
-    Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline<br/>emit Withdrawal(USDC, USDC, landed)
+    Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
 ```
 
 Key differences:
