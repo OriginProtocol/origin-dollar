@@ -523,6 +523,8 @@ sequenceDiagram
         Note over SuperEth,SuperBase: canonical bridge delivers ETH<br/>receive() wraps it to WETH on Base
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
         Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = claimed, payload)
+        Remote->>Remote: _acceptYieldNonce(N+2)
+        Note over Remote: store lastYieldNonce = N+2<br/>store nonceProcessed[N+2] = true
         Bridge->>SuperBase: ccipReceive(message)
         SuperBase->>SuperBase: processStoredMessage if needed (split fin.)
         Note over SuperBase: transfers claimed WETH from SuperbridgeAdapter to Master Strategy
@@ -535,13 +537,15 @@ sequenceDiagram
         Remote->>SuperEth: sendMessage(payload)
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
         Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
+        Remote->>Remote: _acceptYieldNonce(N+2)
+        Note over Remote: store lastYieldNonce = N+2<br/>store nonceProcessed[N+2] = true
         Bridge->>SuperBase: ccipReceive(message)
         Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
         SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
         Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
         Master->>Master: _processWithdrawClaimAck(N+2, 0, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
-        Note over Master: operator retries triggerClaim later
+        Note over Master: operator retries triggerClaim later<br/>retry uses a fresh nonce, N+3
     end
 ```
 
@@ -621,10 +625,12 @@ queue request is outstanding, and `0` once claimed).
 - **`processStoredMessage(target)`** on the split-delivery adapter — once
   both CCIP envelope and canonical ETH have landed, anyone can finalise.
 
-### OUSD V3 differences
+### OUSD V3 Withdraw Differences
 
-The same two-leg cycle over CCTP — message-only legs plus an atomic burn+mint claim, every
-inbound operator-relayed:
+OUSD uses the same two-leg withdraw cycle, but the transport is CCTP instead
+of CCIP/Superbridge. Request, request ACK, and claim trigger are message-only
+relays; the successful claim ACK burns USDC on Ethereum and mints it on the
+spoke with the ACK payload attached. Every inbound delivery is operator-relayed:
 
 ```mermaid
 sequenceDiagram
@@ -632,10 +638,10 @@ sequenceDiagram
     box Spoke
     participant Vault as Spoke sub-OUSD Vault
     participant Master as Master Strategy
-    actor Op as Operator
     participant Adapter as CCTPAdapter <<Master outbound>>
     end
 
+    actor Op as Operator
     participant CCTP as Circle CCTP
 
     box Ethereum
@@ -647,67 +653,112 @@ sequenceDiagram
 
     Note over Master,Remote: ─── Leg 1: request (message-only) ───
     Vault->>Master: withdraw(vault, USDC, amount)
-    Master->>Adapter: sendMessage(payload[WITHDRAW_REQUEST, N+1, abi.encode(amount)])
+    Note over Master,Vault: withdraw is non-payable<br/>calls with msg.value > 0 revert
+    Note over Vault: recipient = Vault
+    Master->>Master: _getNextYieldNonce()
+    Note over Master: store lastYieldNonce = N+1<br/>returns N+1
+    Note over Master: store pendingWithdrawalAmount = amount
+    Note over Master: requested amount must fit within the drawable Remote Strategy balance<br/>drawable = remoteStrategyBalance plus any negative bridgeAdjustment, scaled to USDC
+    Note over Master: body = abi.encode(amount)<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
+    Master->>Adapter: sendMessage(payload)
     Adapter->>CCTP: sendMessage(message)
     Note over Adapter,CCTP: message-only leg<br/>native fee = 0
     Op->>AdapterEth: relay(message, attestation)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST, N+1, body)
+    Note over Remote: unwrap + queue are try/catch-guarded (revert-free). On failure: success=false,<br/>nothing queued (any unwrapped OToken left idle, recoverable via retryDeposit).
     Remote->>wOUSD: withdraw(amount)
     Note over Remote,wOUSD: unwrap wOUSD to OUSD
     Remote->>OUV: requestWithdrawal(amount)
     OUV-->>Remote: requestId
-    Remote->>AdapterEth: sendMessage(WITHDRAW_REQUEST_ACK, abi.encode(yieldBaseline, success))
+    Note over Remote: success=true<br/>store outstandingRequestId = requestId (verbatim)<br/>store outstandingRequestAmount = amount
+    Remote->>Remote: _viewCheckBalance()
+    Note over Remote: viewCheckBalance = value of held wOUSD shares + idle OUSD + idle USDC scaled to OUSD + queued withdrawal value
+    Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment
+    Note over Remote: body = abi.encode(yieldBaseline, success)<br/>payload = packPayload(WITHDRAW_REQUEST_ACK, N+1, body)
+    Remote->>AdapterEth: sendMessage(payload)
     AdapterEth->>CCTP: sendMessage(message)
     Note over AdapterEth,CCTP: message-only ACK<br/>native fee = 0
     Op->>Adapter: relay(message, attestation)
     Note over Op,Adapter: spoke side relay
     Adapter->>Master: receiveMessage(Master, 0, 0, payload)
     Note over Adapter,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_REQUEST_ACK, N+1, body)
-    Master->>Master: _processWithdrawRequestAck(N+1, body)
-    Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline
+    alt success == true (queued)
+        Master->>Master: _processWithdrawRequestAck(N+1, body)
+        Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline
+        Note over Master: pendingWithdrawalAmount stays set — gates leg-2
+    else success == false (leg-1 NACK, nothing queued)
+        Master->>Master: _processWithdrawRequestAck(N+1, body)
+        Note over Master: store nonceProcessed[N+1] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>store pendingWithdrawalAmount = 0
+        Note over Master: channel freed — the withdrawal can be re-requested
+    end
 
     Note over Master,Remote: ─── queue delay (~30 min for OUSD) ───
 
     Note over Master,Remote: ─── Leg 2: claim (atomic burn+mint, carries tokens) ───
     Op->>Master: triggerClaim()
-    Master->>Adapter: sendMessage(payload[WITHDRAW_CLAIM, N+2, ""])
+    Master->>Master: _getNextYieldNonce()
+    Note over Master: store lastYieldNonce = N+2<br/>returns N+2
+    Note over Master: body = ""<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
+    Master->>Adapter: sendMessage(payload)
     Adapter->>CCTP: sendMessage(message)
     Note over Adapter,CCTP: message-only leg<br/>native fee = 0
     Op->>AdapterEth: relay(message, attestation)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>body = ""<br/>payload = packPayload(WITHDRAW_CLAIM, N+2, body)
+    Remote->>Remote: _opportunisticClaim()
     Remote->>OUV: claimWithdrawal(requestId)
     OUV-->>Remote: «USDC claimed» paid out
-    Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, [WITHDRAW_CLAIM_ACK, N+2, ack(true)])
-    Note over AdapterEth: transfers claimed USDC from Remote Strategy to CCTPAdapter
-    AdapterEth->>CCTP: depositForBurnWithHook(claimed)
-    Note over AdapterEth,CCTP: burns USDC and carries the ACK hook atomically
-    Op->>Adapter: relay(message, attestation)
-    Note over Op,Adapter: spoke side relay
-    Adapter->>Adapter: messageTransmitter.receiveMessage(message, attestation)
-    Note over Adapter: CCTP mints USDC to CCTPAdapter
-    Note over Adapter: transfers landed USDC from CCTPAdapter to Master Strategy<br/>landed = min(mint, claimed - feeExecuted)
-    Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
-    Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
-    Note over Master: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
-    Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
+    Note over Remote: claimed = the USDC the vault actually paid out<br/>store outstandingRequestId = REQUEST_ID_EMPTY<br/>store outstandingRequestAmount = claimed (refined to the payout)
+    alt claim succeeded and tokens are in hand
+        Note over Remote: yieldBaseline = _yieldOnlyBaselineAfter(_toOToken(claimed))<br/>body = encode(yieldBaseline, true, claimed)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Remote->>AdapterEth: sendMessageAndTokens(USDC, claimed, payload)
+        Note over AdapterEth: transfers claimed USDC from Remote Strategy to CCTPAdapter
+        AdapterEth->>CCTP: depositForBurnWithHook(claimed)
+        Note over AdapterEth,CCTP: burns USDC and carries the ACK hook atomically
+        Remote->>Remote: _acceptYieldNonce(N+2)
+        Note over Remote: store lastYieldNonce = N+2<br/>store nonceProcessed[N+2] = true
+        Op->>Adapter: relay(message, attestation)
+        Note over Op,Adapter: spoke side relay
+        Adapter->>Adapter: messageTransmitter.receiveMessage(message, attestation)
+        Note over Adapter: CCTP mints USDC to CCTPAdapter
+        Note over Adapter: transfers landed USDC from CCTPAdapter to Master Strategy<br/>landed = min(mint, claimed - feeExecuted)
+        Adapter->>Master: receiveMessage(Master, USDC, landed, payload)
+        Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
+        Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
+        Note over Master: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
+    else queue not yet matured (NACK)
+        Note over Remote: currentBalance = _yieldOnlyBaseline()<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Remote->>AdapterEth: sendMessage(payload)
+        AdapterEth->>CCTP: sendMessage(message)
+        Note over AdapterEth,CCTP: message-only NACK<br/>native fee = 0
+        Remote->>Remote: _acceptYieldNonce(N+2)
+        Note over Remote: store lastYieldNonce = N+2<br/>store nonceProcessed[N+2] = true
+        Op->>Adapter: relay(message, attestation)
+        Note over Op,Adapter: spoke side relay
+        Adapter->>Master: receiveMessage(Master, 0, 0, payload)
+        Note over Adapter,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
+        Master->>Master: _processWithdrawClaimAck(N+2, 0, body)
+        Note over Master: store nonceProcessed[N+2] = true<br/>store remoteStrategyBalance = yieldBaseline<br/>pendingWithdrawalAmount stays set
+        Note over Master: operator retries triggerClaim later<br/>retry uses a fresh nonce, N+3
+    end
 ```
 
 Key differences:
 
-- Both legs use CCTP. Leg-2 (`WITHDRAW_CLAIM_ACK` with tokens) is atomic —
-  CCTP burns USDC + carries the hook payload in one shot, mints on destination
-  on `relay`.
-- Operator runs `relay(message, attestation)` on each inbound (4 relays per
-  full cycle: request ack, claim ack on the Master side; request, claim on the
-  Remote side).
-- Token-side fee on the claim-ack leg (if fast-finality used) → strategy sees
-  `amountReceived < ackAmount`. Master's success-branch already uses
-  `require(amount <= ackAmount)` (a tolerance window), so the shortfall is
-  absorbed as yield drag and refreshed on the next BALANCE_CHECK; a finalised
-  (fee=0) claim leg sees `amount == ackAmount`. (The fee itself is emitted on the
-  adapter's `MessageDelivered` event, not forwarded to the strategy.)
+- Transport is CCTP for every hop. The request, request ACK, and claim trigger
+  are message-only CCTP relays. The successful claim ACK is token-bearing: CCTP
+  burns USDC on Ethereum, carries the ACK payload as hook data, and mints USDC
+  on the spoke when relayed.
+- Each inbound delivery requires an operator `relay(message, attestation)`.
+  A full successful cycle has four relays: request to Remote Strategy, request
+  ACK to Master Strategy, claim trigger to Remote Strategy, and claim ACK to
+  Master Strategy.
+- On the token-bearing claim ACK, CCTP fast-finality can deduct a token-side fee.
+  Remote encodes the claimed amount in the ACK body, while Master receives the
+  landed amount. Master accepts `landed <= claimed`, forwards the landed USDC to
+  the vault, and the shortfall is absorbed as yield drag until the next balance
+  refresh. With finalised delivery and no token-side fee, `landed == claimed`.
 
 ---
 
