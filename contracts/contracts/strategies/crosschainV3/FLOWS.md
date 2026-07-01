@@ -897,13 +897,13 @@ sequenceDiagram
     actor Alice as User (Alice)
     participant Master as Master Strategy
     participant L2V as L2 OETHb Vault
-    participant Adapter as CCIPAdapter <<Outbound>>
+    participant Adapter as CCIPAdapter <<Master outbound>>
     end
 
     participant Bridge as CCIP DON
 
     box Ethereum
-    participant AdapterEth as CCIPAdapter <<Inbound>>
+    participant AdapterEth as CCIPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
     participant wOETH as wOETH <<4626>>
     actor AliceEth as Alice
@@ -911,43 +911,94 @@ sequenceDiagram
 
     Alice->>Master: approve(Master, X) [OETHb]
     Alice->>Master: bridgeOTokenToPeer{value: fee}(X, alice_eth, "0x", 0)
-    Master->>Master: fee = X * bridgeFeeBps / 10_000<br/>net = X - fee<br/>require(net > 0)
-    Master->>Master: liquidity gate:<br/>require(net <= availableBridgeLiquidity())<br/>(rsb + bridgeAdjustment - pendingWithdrawalAmount)
+    Note over Master: bridgeFee = X * bridgeFeeBps / 10_000<br/>net = X - bridgeFee<br/>net must be greater than 0
+    Note over Master: net must fit within available bridge liquidity<br/>available = remoteStrategyBalance + bridgeAdjustment - pendingWithdrawalAmount
+    Note over Master: transfers X OETHb from Alice to Master Strategy
     Master->>L2V: burnForStrategy(X)
-    Alice-->>L2V: «OETHb X» transferred from Alice and burned
     Note over Master: store bridgeAdjustment -= net (NOT -= X)<br/>store bridgeIdCounter += 1<br/>store bridgeId = keccak256(strategy, counter)
-    Master->>Master: _send(userFunded=true):<br/>require(msg.value >= ccipFee)<br/>(pool NOT consulted)
-    Master->>Adapter: sendMessage{value: fee}(payload[BRIDGE_OUT, 0, BridgeUserPayload{<br/>  bridgeId, amount=net, recipient=alice_eth, callData, callGasLimit<br/>}])
-    Adapter->>Bridge: ccipSend
+    Note over Master: body = encode(bridgeId, net, alice_eth, callData, callGasLimit)<br/>payload = packPayload(BRIDGE_OUT, 0, body)
+    Master->>Adapter: quoteFee(address(0), 0, payload)
+    Adapter-->>Master: ccipFee, feeToken = native, requiresExternalPayment = true
+    Note over Master: user pays CCIP fee with msg.value<br/>strategy ETH pool is not used
+    Master->>Adapter: sendMessage{value:ccipFee}(payload)
+    Note over Master,Adapter: adapter call is payable<br/>ccipFee is forwarded as msg.value<br/>excess user msg.value remains in Master Strategy
+    Adapter->>Bridge: ccipSend{value:ccipFee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
-    Note over Master: emit BridgeRequested(bridgeId, alice, alice_eth, net, fee, ...)
-    Bridge->>AdapterEth: ccipReceive
+    Note over Master: emit BridgeRequested(bridgeId, alice, alice_eth, net, bridgeFee, ...)
+    Bridge->>AdapterEth: ccipReceive(message)
+    Note over Bridge,AdapterEth: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Remote->>Remote: unpack BRIDGE_OUT and decode BridgeUserPayload
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(BRIDGE_OUT, 0, body)
+    Remote->>Remote: unpackPayload(payload)
+    Note over Remote: body decodes to BridgeUserPayload<br/>bridgeId, amount = net, recipient = alice_eth, callData, callGasLimit
     Note over Remote: require(!consumedBridgeIds[bridgeId])<br/>store consumedBridgeIds[bridgeId] = true<br/>store bridgeAdjustment -= net
-    Remote->>wOETH: withdraw(net, Remote, Remote) [shares→OETH]
+    Remote->>wOETH: withdraw(net, Remote, Remote)
+    Note over Remote,wOETH: unwrap wOETH shares to OETH
     wOETH-->>Remote: «OETH net» unwrapped
-    Remote->>AliceEth: «OETH net» transfer
+    Note over Remote: transfers net OETH from Remote Strategy to Alice
     Note over Remote: emit BridgeDelivered(bridgeId, alice_eth, net)
     opt callData provided
-        Remote->>Remote: _postDeliveryCall(p):<br/>recipient.call{value:0, gas:p.callGasLimit}(p.callData)
+        Remote->>Remote: _postDeliveryCall(p)
+        Note over Remote: recipient.call{value:0, gas:callGasLimit}(callData)
         Note over Remote: emit BridgeCallSucceeded / BridgeCallFailed
     end
 ```
 
 ### BRIDGE_IN (Remote wraps, Master mints) — mirror image
 
-Same structure with the roles flipped:
+```mermaid
+sequenceDiagram
+    autonumber
+    box Ethereum
+    actor Bob as User (Bob)
+    participant Remote as Remote Strategy
+    participant wOETH as wOETH <<4626>>
+    participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
+    end
 
-- Bob calls `Remote.bridgeOTokenToPeer{value: fee}(Y, bob_base, ...)` on
-  Ethereum.
-- Remote wraps **full Y** OETH into wOETH shares.
-  - `bridgeAdjustment += net` on Remote.
-  - Sends BRIDGE_IN envelope to Master via `SuperbridgeAdapter` (message-only;
-    no canonical bridge leg needed for bridge channel).
-- Master receives, decodes BRIDGE_IN, mints **only `net`** OETHb via L2 vault,
-  transfers to `bob_base`.
-  - `bridgeAdjustment += net` on Master.
+    participant Bridge as CCIP DON
+
+    box Base
+    participant SuperBase as SuperbridgeAdapter <<Master inbound>>
+    participant Master as Master Strategy
+    participant L2V as L2 OETHb Vault
+    actor BobBase as Bob
+    end
+
+    Bob->>Remote: approve(Remote, Y) [OETH]
+    Bob->>Remote: bridgeOTokenToPeer{value: fee}(Y, bob_base, callData, callGasLimit)
+    Note over Remote: bridgeFee = Y * bridgeFeeBps / 10_000<br/>net = Y - bridgeFee<br/>net must be greater than 0
+    Note over Remote: callGasLimit must be within MAX_BRIDGE_CALL_GAS<br/>callData requires nonzero callGasLimit
+    Note over Remote: transfers Y OETH from Bob to Remote Strategy
+    Remote->>wOETH: deposit(Y, Remote)
+    Note over Remote,wOETH: wrap full Y OETH into wOETH shares held by Remote Strategy
+    Note over Remote: store bridgeAdjustment += net<br/>store bridgeIdCounter += 1<br/>store bridgeId = keccak256(strategy, counter)
+    Note over Remote: body = encode(bridgeId, net, bob_base, callData, callGasLimit)<br/>payload = packPayload(BRIDGE_IN, 0, body)
+    Remote->>SuperEth: quoteFee(address(0), 0, payload)
+    SuperEth-->>Remote: ccipFee, feeToken = native, requiresExternalPayment = true
+    Note over Remote: user pays CCIP fee with msg.value<br/>strategy ETH pool is not used
+    Remote->>SuperEth: sendMessage{value:ccipFee}(payload)
+    Note over Remote,SuperEth: adapter call is payable<br/>ccipFee is forwarded as msg.value<br/>excess user msg.value remains in Remote Strategy
+    Note over SuperEth: message-only send through CCIP leg<br/>no canonical bridge transfer
+    SuperEth->>Bridge: ccipSend{value:ccipFee}(BASE_SELECTOR, ccipMessage)
+    Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
+    Note over Remote: emit BridgeRequested(bridgeId, bob, bob_base, net, bridgeFee, ...)
+    Bridge->>SuperBase: ccipReceive(message)
+    Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
+    SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BRIDGE_IN, 0, body)
+    Master->>Master: unpackPayload(payload)
+    Note over Master: body decodes to BridgeUserPayload<br/>bridgeId, amount = net, recipient = bob_base, callData, callGasLimit
+    Note over Master: require(!consumedBridgeIds[bridgeId])<br/>store consumedBridgeIds[bridgeId] = true<br/>store bridgeAdjustment += net
+    Master->>L2V: mintForStrategy(net)
+    Note over Master: transfers net OETHb from Master Strategy to Bob
+    Note over Master: emit BridgeDelivered(bridgeId, bob_base, net)
+    opt callData provided
+        Master->>Master: _postDeliveryCall(p)
+        Note over Master: recipient.call{value:0, gas:callGasLimit}(callData)
+        Note over Master: emit BridgeCallSucceeded / BridgeCallFailed
+    end
+```
 
 ### Yield retention math
 
