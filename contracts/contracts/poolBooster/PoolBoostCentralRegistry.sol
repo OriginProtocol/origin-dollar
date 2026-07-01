@@ -57,7 +57,6 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
 
             factories[i] = factories[length - 1];
             factories.pop();
-            emit FactoryRemoved(_factoryAddress);
             factoryRemoved = true;
             break;
         }
