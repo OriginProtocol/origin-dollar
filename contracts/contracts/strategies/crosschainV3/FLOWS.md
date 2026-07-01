@@ -1067,18 +1067,18 @@ settlement is no longer correctness-critical, just hygiene.
 sequenceDiagram
     autonumber
     box Base
-    actor Op as Operator
     participant Master as Master Strategy
-    participant Adapter as Adapter <<Outbound>>
-    participant ReturnB as Adapter <<Inbound>>
+    participant Adapter as CCIPAdapter <<Master outbound>>
+    participant SuperBase as SuperbridgeAdapter <<Master inbound>>
     end
 
+    actor Op as Operator
     participant Bridge as CCIP DON
 
     box Ethereum
-    participant AdapterEth as Adapter <<Inbound>>
+    participant AdapterEth as CCIPAdapter <<Remote inbound>>
     participant Remote as Remote Strategy
-    participant ReturnA as Adapter <<Outbound>>
+    participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
     end
 
     Note over Master: bridgeAdjustment = -10 (one BRIDGE_OUT for net=10 happened)<br/>Remote.bridgeAdjustment = -10 also
@@ -1086,31 +1086,45 @@ sequenceDiagram
     Master->>Master: _getNextYieldNonce()
     Note over Master: store lastYieldNonce = nonce<br/>returns nonce
     Note over Master: store settlementSnapshot = -10<br/>persisted for ack handler
-    Master->>Adapter: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING, nonce,<br/>abi.encode(int256(-10))])
+    Note over Master: body = abi.encode(int256(-10))<br/>payload = packPayload(SETTLE_BRIDGE_ACCOUNTING, nonce, body)
+    Master->>Adapter: quoteFee(address(0), 0, payload)
+    Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
+    Note over Master: Master Strategy pays the CCIP fee from its own ETH balance<br/>operator msg.value can top up that balance
+    Master->>Adapter: sendMessage{value:fee}(payload)
+    Note over Master,Adapter: adapter call is payable<br/>fee is forwarded as msg.value
     Note over Master: emit SettlementRequested(nonce, -10)<br/>Master.bridgeAdjustment STILL -10 (NOT zeroed yet)
-    Adapter->>Bridge: ccipSend
+    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
     Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
 
     Note over Master,Bridge: (optional: a new BRIDGE_OUT for net=5 happens here.<br/>Master.bridgeAdjustment becomes -15. This is the in-flight case.)
 
-    Bridge->>AdapterEth: ccipReceive
-    AdapterEth->>Remote: receiveMessage(...)
+    Bridge->>AdapterEth: ccipReceive(message)
+    Note over Bridge,AdapterEth: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
+    AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
+    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(SETTLE_BRIDGE_ACCOUNTING, nonce, body)
     Remote->>Remote: _processSettlement(nonce, body)
     Note over Remote: subtract only the snapshot amount, do not reset to zero<br/>snapshot = -10, so store bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT already applied: -15 - (-10) = -5<br/>new BRIDGE_OUT not applied yet: -10 - (-10) = 0
-    Remote->>Remote: _viewCheckBalance()
-    Note over Remote: yieldOnly = _viewCheckBalance() - bridgeAdjustment<br/>yield-only baseline preserves consistency across orderings
-    Remote->>ReturnA: sendMessage(payload[SETTLE_BRIDGE_ACCOUNTING_ACK, nonce,<br/>abi.encode(yieldOnly)])
+    Remote->>Remote: _yieldOnlyBaseline()
+    Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment, clamped to 0<br/>yield-only baseline preserves consistency across orderings
+    Note over Remote: body = abi.encode(yieldBaseline)<br/>payload = packPayload(SETTLE_BRIDGE_ACCOUNTING_ACK, nonce, body)
+    Remote->>SuperEth: quoteFee(address(0), 0, payload)
+    SuperEth-->>Remote: fee, feeToken = native, requiresExternalPayment = true
+    Note over Remote: Remote Strategy pays the CCIP fee from its own ETH balance
+    Remote->>SuperEth: sendMessage{value:fee}(payload)
+    Note over Remote,SuperEth: adapter call is payable<br/>fee is forwarded as msg.value
     Remote->>Remote: _acceptYieldNonce(nonce)
     Note over Remote: store lastYieldNonce = nonce<br/>store nonceProcessed[nonce] = true
-    ReturnA->>Bridge: ccipSend
-    Note over ReturnA,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
-    Bridge->>ReturnB: ccipReceive
-    ReturnB->>Master: receiveMessage(...)
-    Master->>Master: _processSettlementAck
+    SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
+    Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
+    Bridge->>SuperBase: ccipReceive(message)
+    Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
+    SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(SETTLE_BRIDGE_ACCOUNTING_ACK, nonce, body)
+    Master->>Master: _processSettlementAck(nonce, body)
     Master->>Master: _markYieldNonceProcessed(nonce)
     Note over Master: lastYieldNonce stays nonce<br/>store nonceProcessed[nonce] = true
-    Note over Master: subtract only settlementSnapshot, do not reset to zero<br/>settlementSnapshot = -10, so store bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT happened: -15 - (-10) = -5<br/>then store settlementSnapshot = 0 and store remoteStrategyBalance = yieldOnly
-    Note over Master: emit SettlementAcked(nonce, yieldOnly)
+    Note over Master: subtract only settlementSnapshot, do not reset to zero<br/>settlementSnapshot = -10, so store bridgeAdjustment -= -10<br/>no in-flight bridge: -10 - (-10) = 0<br/>new BRIDGE_OUT happened: -15 - (-10) = -5<br/>then store settlementSnapshot = 0 and store remoteStrategyBalance = yieldBaseline
+    Note over Master: emit SettlementAcked(nonce, yieldBaseline)
 ```
 
 ### Why snapshot-subtract instead of `= 0`
