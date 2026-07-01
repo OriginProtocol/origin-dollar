@@ -44,6 +44,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     Message[] public messages;
     // map of encoded messages to the corresponding message structs
     mapping(bytes32 => Message) public encodedMessages;
+    // tracks relayed messages to mirror CCTP replay protection in tests
+    mapping(bytes32 => bool) public processedMessages;
 
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
@@ -120,7 +122,11 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         override
         returns (bool)
     {
-        Message memory storedMsg = encodedMessages[keccak256(message)];
+        bytes32 messageHash = keccak256(message);
+        require(!processedMessages[messageHash], "Message already processed");
+        processedMessages[messageHash] = true;
+
+        Message memory storedMsg = encodedMessages[messageHash];
         AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(
             address(uint160(uint256(storedMsg.recipient)))
         );
