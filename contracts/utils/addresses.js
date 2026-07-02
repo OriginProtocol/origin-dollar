@@ -146,6 +146,11 @@ addresses.mainnet.chainlinkBAL_ETH =
   "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
 addresses.mainnet.ccipRouterMainnet =
   "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
+// CCIP chain selector for Ethereum mainnet (Chainlink CCIP directory).
+addresses.mainnet.CCIPChainSelector = "5009297550715157269";
+// OP Stack L1StandardBridge for the Base rollup, deployed on Ethereum.
+addresses.mainnet.BaseL1StandardBridge =
+  "0x3154Cf16ccdb4C6d922629664174b904d80F2C35";
 addresses.mainnet.ccipWoethTokenPool =
   "0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0";
 
@@ -478,6 +483,8 @@ addresses.base.HydrexOETHb_WETH.gauge =
   "0x762aEFD13Ec33eb916f124E26336a148177eB093";
 
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
+// CCIP chain selector for Base (Chainlink CCIP directory).
+addresses.base.CCIPChainSelector = "15971525489660198786";
 
 addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
