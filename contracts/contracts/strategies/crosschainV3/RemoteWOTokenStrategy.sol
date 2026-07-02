@@ -448,8 +448,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     function _opportunisticClaim() internal {
         // `outstandingRequestId` stores the vault id verbatim.
-        uint256 vaultRequestId = outstandingRequestId;
-        if (vaultRequestId == REQUEST_ID_EMPTY) {
+        uint256 vaultRequestIdMem = outstandingRequestId;
+        if (vaultRequestIdMem == REQUEST_ID_EMPTY) {
             return;
         }
         // Hoist `claimed` outside the try so its scope is unambiguous to static
@@ -457,7 +457,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         // fired when `claimed` was named only in the try-returns clause).
         uint256 claimed;
         // Use try/catch so a not-yet-claimable queue delay doesn't bubble up as a revert.
-        try IVault(oTokenVault).claimWithdrawal(vaultRequestId) returns (
+        try IVault(oTokenVault).claimWithdrawal(vaultRequestIdMem) returns (
             uint256 _claimed
         ) {
             claimed = _claimed;
@@ -470,7 +470,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             // stores the queued 18dp amount and returns scaleBy(amount, assetDecimals, 18),
             // which is the identity when bridgeAsset and the vault's asset share decimals.
             outstandingRequestAmount = claimed;
-            emit RemoteWithdrawalClaimed(vaultRequestId, claimed);
+            emit RemoteWithdrawalClaimed(vaultRequestIdMem, claimed);
         } catch {
             // Still queued; leave state unchanged.
         }
