@@ -9,8 +9,6 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 
 import { BridgedWOETHStrategy } from "./BridgedWOETHStrategy.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IVault } from "../interfaces/IVault.sol";
-import { NativeFeeHelper } from "./crosschainV3/libraries/NativeFeeHelper.sol";
 import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.sol";
 
 /**
@@ -22,16 +20,15 @@ import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.
  *         retaining V1's local deposit/withdraw + oracle pipeline (inherited unchanged).
  *
  *         Storage carries forward V1's two existing fields (lastOraclePrice, maxPriceDiffBps)
- *         and appends three new ones (totalBridged, maxPerBridge, operator) plus an upgrade
+ *         and appends two new ones (totalBridged, maxPerBridge) plus an upgrade
  *         gap. All cross-chain configuration that doesn't change between deploys lives in
  *         immutables: `master` is both the local Master strategy on Base (read for
  *         in-flight reconciliation) and the cross-chain CCIP recipient on Ethereum (same
  *         address by CreateX-driven parity).
  *
  *         Access pattern:
- *           - `bridgeToRemote` callable by operator, governor, or strategist.
+ *           - `bridgeToRemote` callable by governor or strategist.
  *           - `setMaxPerBridge` callable by governor or strategist.
- *           - `setOperator` callable by governor only.
  *           - V1's `setMaxPriceDiffBps` (governor-only) and depositBridgedWOETH /
  *             withdrawBridgedWOETH (governor or strategist) are inherited unchanged.
  */
@@ -59,15 +56,11 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     /// @notice Per-call cap on `bridgeToRemote`, configurable by governor or strategist.
     uint256 public maxPerBridge;
 
-    /// @notice Automation EOA permitted to drive `bridgeToRemote` calls.
-    address public operator;
-
-    uint256[47] private __gap;
+    uint256[48] private __gap;
 
     // --- Events -----------------------------------------------------------
 
     event MaxPerBridgeSet(uint256 maxPerBridge);
-    event OperatorUpdated(address oldOperator, address newOperator);
     event WOETHBridgedToRemote(uint256 amount, uint256 totalBridged);
 
     // --- Errors -----------------------------------------------------------
@@ -101,24 +94,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
         ccipChainSelectorMainnet = _ccipChainSelectorMainnet;
     }
 
-    // --- Access control ---------------------------------------------------
-
-    modifier onlyOperatorGovernorOrStrategist() {
-        require(
-            msg.sender == operator ||
-                isGovernor() ||
-                msg.sender == IVault(vaultAddress).strategistAddr(),
-            "BWM: not authorised"
-        );
-        _;
-    }
-
-    // --- Operator / cap configuration ------------------------------------
-
-    function setOperator(address _operator) external onlyGovernor {
-        emit OperatorUpdated(operator, _operator);
-        operator = _operator;
-    }
+    // --- Cap configuration ------------------------------------------------
 
     function setMaxPerBridge(uint256 _maxPerBridge)
         external
@@ -147,7 +123,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     function bridgeToRemote(uint256 _amount)
         external
         payable
-        onlyOperatorGovernorOrStrategist
+        onlyGovernorOrStrategist
         nonReentrant
     {
         require(_amount > 0 && _amount <= maxPerBridge, "BWM: bad amount");
@@ -169,7 +145,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
         );
 
         uint256 fee = ccipRouter.getFee(ccipChainSelectorMainnet, ccipMessage);
-        NativeFeeHelper.consume(fee);
+        _consumeNativeFee(fee);
 
         IERC20(address(bridgedWOETH)).safeApprove(address(ccipRouter), _amount);
         ccipRouter.ccipSend{ value: fee }(
@@ -182,6 +158,23 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     }
 
     receive() external payable {}
+
+    /// @dev Consume `fee` in native for the CCIP send. Two sources:
+    ///        - `msg.value == 0` → pre-funded: `address(this).balance` covers the fee.
+    ///        - `msg.value > 0`  → user-paid: excess refunds to `msg.sender`.
+    ///      Reverts when the chosen source doesn't cover `fee`.
+    function _consumeNativeFee(uint256 fee) internal {
+        if (msg.value == 0) {
+            require(address(this).balance >= fee, "Fee: unfunded");
+            return;
+        }
+        require(msg.value >= fee, "Fee: insufficient");
+        if (msg.value > fee) {
+            // slither-disable-next-line low-level-calls
+            (bool ok, ) = msg.sender.call{ value: msg.value - fee }("");
+            require(ok, "Fee: refund failed");
+        }
+    }
 
     // --- checkBalance override (WETH-only accounting) --------------------
 

@@ -457,7 +457,9 @@ The manual burn-relay in `relay()` works on both V2.0 and V2.1. But
 `CCTPAdapter._quoteFee` calls `tokenMessenger.getMinFeeAmount(amount)`,
 which is V2.1-only. If a chain has only V2.0 deployed, `quoteFee(amount > 0)`
 reverts. Current deploys (OETHb) don't use CCTP at all, so this is a
-non-issue. OUSD V3 spoke chains must be on V2.1 — check before deploying.
+non-issue. OUSD V3 spoke chains must be on V2.1 — check before deploying
+against Circle's per-chain contract list:
+https://developers.circle.com/stablecoins/evm-smart-contracts
 
 ### 4.4 Lost claim-ack stalls `pendingWithdrawalAmount`
 

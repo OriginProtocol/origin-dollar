@@ -67,16 +67,12 @@ module.exports = deployOnBase(
           args: [dMigrationImpl.address],
         },
         // 2. Set the per-call cap. (Governor-or-strategist gate; runs as governance here.)
+        // `bridgeToRemote` is governor-or-strategist gated, so the strategist can drive it
+        // directly — no separate operator authorisation needed.
         {
           contract: cMigration,
           signature: "setMaxPerBridge(uint256)",
           args: [MAX_PER_BRIDGE],
-        },
-        // 3. Authorise the multichain strategist as the operator for `bridgeToRemote`.
-        {
-          contract: cMigration,
-          signature: "setOperator(address)",
-          args: [addresses.multichainStrategist],
         },
       ],
     };

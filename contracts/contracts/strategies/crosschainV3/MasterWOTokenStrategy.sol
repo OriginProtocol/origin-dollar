@@ -59,6 +59,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
     event RemoteStrategyBalanceUpdated(uint256 yieldBaseline);
     event DepositRequested(uint64 nonce, uint256 amount);
+    event DepositSkipped(uint256 amount, uint256 minTransfer);
     event DepositAcked(uint64 nonce, uint256 yieldBaseline);
     event WithdrawRequested(uint64 nonce, uint256 amount);
     event WithdrawRequestAcked(uint64 nonce, uint256 yieldBaseline);
@@ -332,11 +333,17 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         // transfers it before calling `deposit`) and stays counted in `checkBalance`, so it
         // auto-deposits once enough accumulates. A revert here would DoS the mint ->
         // `_allocate` -> `deposit` path. Covers both `deposit` and `depositAll`.
-        if (_amount < IBridgeAdapter(outboundAdapter).minTransferAmount()) {
+        uint256 minTransfer = IBridgeAdapter(outboundAdapter)
+            .minTransferAmount();
+        if (_amount < minTransfer) {
+            // Signal the skipped deposit so off-chain monitoring can see the amount stayed
+            // local (still counted in `checkBalance`) instead of being silently dropped.
+            emit DepositSkipped(_amount, minTransfer);
             return;
         }
 
         uint64 nonce = _getNextYieldNonce();
+        // Store the pending deposit amount until the remote deposit is acknowledged.
         pendingDepositAmount = _amount;
 
         // bridgeAsset → outboundAdapter allowance is granted once in `_setOutboundAdapter`.
@@ -390,6 +397,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         );
 
         uint64 nonce = _getNextYieldNonce();
+        // Store the pending withdrawal amount until the remote withdrawal is claimed.
         pendingWithdrawalAmount = _amount;
 
         bytes memory payload = CrossChainV3Helper.encodeUint256(_amount);
@@ -540,6 +548,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     function _processDepositAck(uint64 nonce, bytes memory payload) internal {
         _markYieldNonceProcessed(nonce);
         uint256 yieldBaseline = CrossChainV3Helper.decodeUint256(payload);
+        // Store the acknowledged deposit in the remote balance and clear the pending amount.
         remoteStrategyBalance = yieldBaseline;
         pendingDepositAmount = 0;
         emit DepositAcked(nonce, yieldBaseline);

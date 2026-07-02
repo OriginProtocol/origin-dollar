@@ -447,12 +447,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     }
 
     function _opportunisticClaim() internal {
-        uint256 stored = outstandingRequestId;
-        if (stored == REQUEST_ID_EMPTY) {
+        // `outstandingRequestId` stores the vault id verbatim.
+        uint256 vaultRequestId = outstandingRequestId;
+        if (vaultRequestId == REQUEST_ID_EMPTY) {
             return;
         }
-        // `outstandingRequestId` stores the vault id verbatim.
-        uint256 vaultRequestId = stored;
         // Hoist `claimed` outside the try so its scope is unambiguous to static
         // analysers (avoids the slither uninitialized-local false-positive that
         // fired when `claimed` was named only in the try-returns clause).

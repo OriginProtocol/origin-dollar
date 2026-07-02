@@ -37,6 +37,11 @@ contract CCIPAdapter is AbstractAdapter, IAny2EVMMessageReceiver, IERC165 {
         ccipRouter = _ccipRouter;
     }
 
+    /// @dev Inbound liveness: if the CCIP DON never auto-executes a delivered message, anyone can
+    ///      trigger manual execution. That path still runs `OffRamp.manuallyExecute` ->
+    ///      `Router.routeMessage` -> `ccipReceive`, so `msg.sender` is the Router here even on a
+    ///      manual replay and this guard passes — no governance escape hatch is needed.
+    ///      https://docs.chain.link/ccip/tutorials/evm/manual-execution#trigger-manual-execution
     modifier onlyRouter() {
         require(msg.sender == address(ccipRouter), "CCIP: not router");
         _;

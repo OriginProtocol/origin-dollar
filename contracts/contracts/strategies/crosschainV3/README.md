@@ -42,7 +42,6 @@ contracts/strategies/crosschainV3/adapters/
 contracts/strategies/crosschainV3/libraries/
   CCTPMessageHelper.sol   — CCTP V2 wire-format decoder: transport header + burn-message body
   CCIPMessageBuilder.sol  — shared CCIP `Client.EVM2AnyMessage` construction
-  NativeFeeHelper.sol     — shared native-fee consumption helper
 
 contracts/proxies/create2/
   CrossChainStrategyProxy.sol — Master/Remote strategy proxy (CreateX/CREATE2-deployable for peer parity)

@@ -525,7 +525,10 @@ describe("Unit: Adapter transfer caps", function () {
       await bridgeAsset.mintTo(master.address, ONE_K.div(2)); // 500
       await outbound.setMinTransferAmountOverride(ONE_K); // floor 1000
 
-      await mockL2Vault.callDepositAll(master.address);
+      // Signals the skip so it isn't silently dropped.
+      await expect(mockL2Vault.callDepositAll(master.address))
+        .to.emit(master, "DepositSkipped")
+        .withArgs(ONE_K.div(2), ONE_K);
 
       // Nothing bridged; funds stay local and are still counted in checkBalance.
       expect(await outbound.lastAmountSent()).to.equal(0);
@@ -542,11 +545,15 @@ describe("Unit: Adapter transfer caps", function () {
       await bridgeAsset.mintTo(master.address, ONE_K.div(2)); // 500
       await outbound.setMinTransferAmountOverride(ONE_K); // floor 1000
 
-      await mockL2Vault.callDeposit(
-        master.address,
-        bridgeAsset.address,
-        ONE_K.div(2)
-      );
+      await expect(
+        mockL2Vault.callDeposit(
+          master.address,
+          bridgeAsset.address,
+          ONE_K.div(2)
+        )
+      )
+        .to.emit(master, "DepositSkipped")
+        .withArgs(ONE_K.div(2), ONE_K);
 
       expect(await master.pendingDepositAmount()).to.equal(0);
       expect(await bridgeAsset.balanceOf(master.address)).to.equal(
