@@ -805,7 +805,8 @@ sequenceDiagram
     AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
     Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_REQUEST, N, body)
     Remote->>Remote: _yieldOnlyBaseline()
-    Note over Remote: yieldBaseline = _viewCheckBalance() - bridgeAdjustment, clamped to 0<br/>clamp only covers tiny 4626 rounding dust
+    Note over Remote: viewCheckBalance = value of held wOETH shares + idle OETH + idle WETH scaled to OETH + queued withdrawal value
+    Note over Remote: yieldBaseline = viewCheckBalance - bridgeAdjustment, clamped to 0<br/>clamp only covers tiny 4626 rounding dust
     Note over Remote: srcTimestamp = timestamp from request body<br/>body = encode(yieldBaseline, srcTimestamp)<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
     Remote->>SuperEth: quoteFee(address(0), 0, payload)
     SuperEth-->>Remote: fee, feeToken = native, requiresExternalPayment = true
