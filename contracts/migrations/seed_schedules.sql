@@ -54,6 +54,7 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'module_rebase_mainnet',                    'cd /app && pnpm hardhat permissionedRebase --network mainnet',           '15 10,22 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'module_rebase_base',                       'cd /app && pnpm hardhat permissionedRebase --network base',              '15 10,22 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'module_rebase_sonic',                      'cd /app && pnpm hardhat permissionedRebase --network sonic',             '15 10,22 * * *',        'UTC', false, NULL),
+('origin-dollar', 'ousd_rebalancer',                          'cd /app && pnpm hardhat ousdRebalancer --network mainnet',               '0 0 1 1 *',             'UTC', false, 'Manual: Run now to rebalance OUSD Morpho strategies'),
 ('origin-dollar', 'queue_proposal',                           'cd /app && pnpm hardhat queueGovernorSixProposal --network mainnet',     '0 0 1 1 *',             'UTC', false, 'Manual: add --propid then Run now'),
 ('origin-dollar', 'execute_proposal',                         'cd /app && pnpm hardhat executeGovernorSixProposal --network mainnet',   '0 0 1 1 *',             'UTC', false, 'Manual: add --propid then Run now')
 ON CONFLICT (product, name) DO NOTHING;

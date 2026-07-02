@@ -83,5 +83,6 @@
   "197_migrate_xogn_module6_to_talos": 1780930872,
   "198_migrate_strategist_modules_to_talos": 1780930872,
   "199_deploy_compounding_staking_strategy": 1781093567,
-  "200_remove_old_compounding_ssv_strategy": 1781561627
+  "200_remove_old_compounding_ssv_strategy": 1781561627,
+  "201_remove_oeth_convex_amo": 1782091931
 }
