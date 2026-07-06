@@ -278,6 +278,14 @@ contract SuperbridgeAdapter is
     function processStoredMessage(address _target) external override {
         PendingMessage memory p = pendingFor[_target];
         require(p.exists, "Super: nothing pending");
+        // Re-assert the incident-response levers on the deferred path too. The atomic path
+        // gates on these in `_validateInbound`; a `pauseLane`/`revoke` issued after the message
+        // was stored must block deferred delivery as well, otherwise the pause is ineffective
+        // for exactly the split-delivery window it exists to cover. Check `authorised` first —
+        // `revoke` leaves `paused` untouched. A held slot isn't dropped: its WETH stays on the
+        // adapter until unpause / re-authorise (recoverable via `transferToken`).
+        require(authorised[_target], "Super: not authorised");
+        require(!laneConfig[_target].paused, "Super: lane paused");
         require(
             IERC20(weth).balanceOf(address(this)) >= p.intendedAmount,
             "Super: tokens not yet landed"

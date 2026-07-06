@@ -239,6 +239,49 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     expect(await strategy.callCount()).to.equal(1);
   });
 
+  it("stored message honours a pause/revoke issued after it was stored (incident response)", async () => {
+    const amount = ethers.utils.parseUnits("250", 6);
+    const data = wrapEnvelope(strategy.address, amount, packPayload("pending"));
+    const sRouter = await impersonateAndFund(await receiver.ccipRouter());
+
+    // Message stored while the lane is healthy (token leg not yet landed).
+    await receiver
+      .connect(sRouter)
+      .ccipReceive(
+        buildAny2EvmMessage({ data, transportSender: receiver.address })
+      );
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
+
+    // Canonical-bridge ETH lands and `receive()` wraps it to WETH.
+    await deliverBridgeEth(amount);
+
+    // Incident: governance pauses the lane. Deferred delivery must be blocked too, not just
+    // the atomic ccipReceive path.
+    await receiver.connect(governor).pauseLane(strategy.address);
+    await expect(
+      receiver.processStoredMessage(strategy.address)
+    ).to.be.revertedWith("Super: lane paused");
+
+    // Revoke leaves `paused` untouched, so this exercises the `authorised` check.
+    await receiver.connect(governor).unpauseLane(strategy.address);
+    await receiver.connect(governor).revoke(strategy.address);
+    await expect(
+      receiver.processStoredMessage(strategy.address)
+    ).to.be.revertedWith("Super: not authorised");
+
+    // The message + its WETH were held, not lost: re-authorise + unpause and delivery resumes.
+    await receiver.connect(governor).authorise(strategy.address, {
+      paused: false,
+      chainSelector: PEER_CHAIN,
+      destGasLimit: DEST_GAS_LIMIT,
+    });
+    await receiver.processStoredMessage(strategy.address);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
+    expect(await strategy.callCount()).to.equal(1);
+    expect(await strategy.lastAmount()).to.equal(amount);
+    expect(await wethMock.balanceOf(strategy.address)).to.equal(amount);
+  });
+
   it("multi-tenant: one adapter routes messages to distinct targets by envelope sender", async () => {
     const cfg = {
       paused: false,

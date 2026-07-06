@@ -208,18 +208,17 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         bytes calldata attestation
     ) internal {
         (
-            address burnToken,
+            ,
             address mintRecipient,
             uint256 amount,
             address msgSender,
             uint256 feeExecuted,
             bytes memory hookData
         ) = CCTPMessageHelper.decodeBurnBody(body);
-        // `burnToken` is the SOURCE-chain USDC address, which differs from this chain's
-        // `usdcToken` for cross-chain transfers. CCTP's MessageTransmitter validates the
-        // burn record cryptographically via the attestation; what gets minted here is
-        // always the local USDC by protocol design. So no local burnToken equality check.
-        burnToken; // silence unused-var
+        // The source-chain burn token is intentionally not extracted or checked: it's the
+        // SOURCE-chain USDC address (differs from this chain's `usdcToken` for cross-chain
+        // transfers), CCTP's MessageTransmitter validates the burn record cryptographically via
+        // the attestation, and what gets minted here is always the local USDC by protocol design.
         // The burn branch skips the pure-message branch's `transportRecipient` parity check,
         // so enforce mint-recipient parity here: a forged burn that mints elsewhere reverts
         // cleanly instead of silently delivering 0.
