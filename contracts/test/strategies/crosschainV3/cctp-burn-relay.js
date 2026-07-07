@@ -28,7 +28,13 @@ describe("Unit: CCTPAdapter burn relay", function () {
   const SRC_TOKEN_MESSENGER = "0x000000000000000000000000000000000000C0DE";
 
   // CCTP V2 transport message builder (mirrors CCTPMessageHelper layout).
-  function buildTransportMessage({ sourceDomain, sender, recipient, body }) {
+  function buildTransportMessage({
+    sourceDomain,
+    sender,
+    recipient,
+    body,
+    finalityThresholdExecuted = 2000,
+  }) {
     return ethers.utils.solidityPack(
       [
         "uint32",
@@ -51,7 +57,7 @@ describe("Unit: CCTPAdapter burn relay", function () {
         ethers.utils.hexZeroPad(recipient, 32),
         ethers.constants.HashZero, // destinationCaller
         2000, // minFinalityThreshold
-        2000, // finalityThresholdExecuted
+        finalityThresholdExecuted,
         body,
       ]
     );
@@ -327,5 +333,59 @@ describe("Unit: CCTPAdapter burn relay", function () {
     await expect(
       adapter.connect(operator).relay(message, "0x")
     ).to.be.revertedWith("Adapter: not from peer adapter");
+  });
+
+  it("rejects a burn attested below the configured finality floor", async () => {
+    // Adapter wants finalised (2000, set in beforeEach); the burn is attested fast (1000).
+    const amount = ethers.utils.parseUnits("100", 6);
+    const hookData = wrapAppEnvelope(strategy.address, amount, "0x");
+    const burnBody = buildBurnBody({
+      burnToken: usdc.address,
+      mintRecipient: adapter.address,
+      amount,
+      msgSender: adapter.address, // peer adapter under CREATE3 parity
+      feeExecuted: 0,
+      hookData,
+    });
+    const message = buildTransportMessage({
+      sourceDomain: SOURCE_DOMAIN,
+      sender: tokenMessenger.address,
+      recipient: tokenMessenger.address,
+      body: burnBody,
+      finalityThresholdExecuted: 1000, // fast finality, below the 2000 floor
+    });
+
+    await expect(
+      adapter.connect(operator).relay(message, "0x")
+    ).to.be.revertedWith("CCTP: insufficient finality");
+  });
+
+  it("accepts a fast-finality burn when the floor allows it", async () => {
+    // Lower the floor to fast finality; a burn attested at 1000 now delivers.
+    await adapter.connect(governor).setMinFinalityThreshold(1000);
+
+    const amount = ethers.utils.parseUnits("100", 6);
+    const hookData = wrapAppEnvelope(strategy.address, amount, "0x");
+    const burnBody = buildBurnBody({
+      burnToken: usdc.address,
+      mintRecipient: adapter.address,
+      amount,
+      msgSender: adapter.address, // peer adapter under CREATE3 parity
+      feeExecuted: 0,
+      hookData,
+    });
+    const message = buildTransportMessage({
+      sourceDomain: SOURCE_DOMAIN,
+      sender: tokenMessenger.address,
+      recipient: tokenMessenger.address,
+      body: burnBody,
+      finalityThresholdExecuted: 1000,
+    });
+
+    await expect(adapter.connect(operator).relay(message, "0x")).to.emit(
+      adapter,
+      "MessageDelivered"
+    );
+    expect(await usdc.balanceOf(strategy.address)).to.equal(amount);
   });
 });

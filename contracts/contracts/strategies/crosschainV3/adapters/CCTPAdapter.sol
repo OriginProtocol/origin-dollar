@@ -169,6 +169,7 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
             uint32 sourceDomain,
             address transportSender,
             address transportRecipient,
+            uint32 finalityThresholdExecuted,
             bytes memory body
         ) = CCTPMessageHelper.decodeMessageHeader(message);
         require(
@@ -186,6 +187,16 @@ contract CCTPAdapter is AbstractAdapter, IMessageHandlerV2 {
         // branch and revert at the `transportRecipient == address(this)` check — re-validate
         // before integrating such a chain.
         if (transportSender == address(tokenMessenger)) {
+            // Burn messages bypass CCTP's IMessageHandlerV2 finality callbacks (the transport
+            // recipient is the destination TokenMessenger, not us), so enforce the same
+            // receive-side finality floor the pure-message path gets via
+            // handleReceiveUnfinalizedMessage. For the finalised default (executed = 2000) this
+            // always passes; it only rejects a burn attested below the configured floor.
+            require(minFinalityThreshold > 0, "CCTP: threshold not set");
+            require(
+                finalityThresholdExecuted >= minFinalityThreshold,
+                "CCTP: insufficient finality"
+            );
             _relayBurn(sourceDomain, body, message, attestation);
         } else {
             require(transportRecipient == address(this), "CCTP: not for us");

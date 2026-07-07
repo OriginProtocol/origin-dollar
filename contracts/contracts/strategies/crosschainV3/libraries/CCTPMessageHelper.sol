@@ -37,6 +37,7 @@ library CCTPMessageHelper {
     uint256 private constant SOURCE_DOMAIN_INDEX = 4;
     uint256 private constant SENDER_INDEX = 44;
     uint256 private constant RECIPIENT_INDEX = 76;
+    uint256 private constant FINALITY_THRESHOLD_EXECUTED_INDEX = 144;
     uint256 private constant MESSAGE_BODY_INDEX = 148;
 
     /// @notice Inner burn-message body offsets for CCTP V2 burn messages. The burn body is
@@ -62,6 +63,10 @@ library CCTPMessageHelper {
      *         `messageBody`. The body is either:
      *           - a burn-message body (for `depositForBurnWithHook`-sourced messages), or
      *           - the raw application envelope (for `MessageTransmitter.sendMessage`).
+     *
+     *         Also returns `finalityThresholdExecuted` — the finality Circle actually attested
+     *         this message at (2000 = finalised, 1000–1999 = fast). Callers gate delivery against
+     *         their configured floor; the burn path has no `IMessageHandlerV2` callback to do it.
      * @param message The CCTP V2 wire message bytes as received from Circle's attestation API.
      */
     function decodeMessageHeader(bytes memory message)
@@ -72,6 +77,7 @@ library CCTPMessageHelper {
             uint32 sourceDomain,
             address sender,
             address recipient,
+            uint32 finalityThresholdExecuted,
             bytes memory messageBody
         )
     {
@@ -79,6 +85,9 @@ library CCTPMessageHelper {
         sourceDomain = message.extractUint32(SOURCE_DOMAIN_INDEX);
         sender = message.extractAddress(SENDER_INDEX);
         recipient = message.extractAddress(RECIPIENT_INDEX);
+        finalityThresholdExecuted = message.extractUint32(
+            FINALITY_THRESHOLD_EXECUTED_INDEX
+        );
         messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
     }
 
