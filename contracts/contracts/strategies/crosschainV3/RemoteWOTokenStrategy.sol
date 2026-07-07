@@ -295,6 +295,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         internal
     {
         uint256 amount = CrossChainV3Helper.decodeUint256(payload);
+        // Defensive / unreachable in normal flow: Master validates amount > 0 before shipping
+        // WITHDRAW_REQUEST — this only guards a malformed/forged inbound message.
         require(amount > 0, "Remote: zero withdraw");
         require(
             outstandingRequestId == REQUEST_ID_EMPTY,
@@ -635,12 +637,15 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     ///      `oTokenAmount` is in OToken (18dp) units, matching `_viewCheckBalance`;
     ///      `_yieldOnlyBaseline()` is the `oTokenAmount == 0` case.
     /// @dev Clamps to 0 rather than reverting on a negative. `_viewCheckBalance - bridgeAdjustment`
-    ///      is principal + yield + retained fees and is never *economically* negative, but the
-    ///      wOToken ERC-4626 rounds against the strategy by ~1 wei on each BRIDGE_IN (floor) /
-    ///      BRIDGE_OUT (ceil), so once a `withdrawAll` drains this near 0 a later bridge op can push
-    ///      it a few wei negative. Reverting there would freeze the whole serialized yield channel on
-    ///      dust; clamping reports a dust-accurate 0 instead (and matches the project-wide
-    ///      checkBalance-never-reverts convention). The accumulated drift is economically nil.
+    ///      is principal + yield + retained fees and is never *economically* negative **while
+    ///      (w)OTokens are up-only** — the only thing that pushes it a few wei negative is the
+    ///      wOToken 4626 rounding against the strategy (~1 wei per BRIDGE_IN floor / BRIDGE_OUT
+    ///      ceil) once a `withdrawAll` drains it near 0. Reverting on that dust would freeze the
+    ///      serialized yield channel, so we clamp (matches checkBalance-never-reverts).
+    ///      CAVEAT: a real negative rebase (loss/slashing) would make this genuinely negative; the
+    ///      clamp then masks it, and because Master re-adds its OWN `bridgeAdjustment`,
+    ///      `checkBalance` OVER-reports by ~`bridgeAdjustment` (not 0). Out of scope while
+    ///      (w)OTokens never negative-rebase; revisit (signed baseline) if that changes. See DESIGN §3.10.
     function _yieldOnlyBaselineAfter(uint256 oTokenAmount)
         internal
         view

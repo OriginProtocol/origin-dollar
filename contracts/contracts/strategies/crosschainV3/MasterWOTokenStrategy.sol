@@ -164,11 +164,14 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     ///      must equal the vault (enforced by the require below); Master always forwards the
     ///      received bridgeAsset to `vaultAddress` on the leg-2 ack.
     ///
-    ///      Only the `remoteStrategyBalance` slice is drawable here: `_amount` must be
-    ///      `<= remoteStrategyBalance` even though `checkBalance` can report more (local
-    ///      bridgeAsset + positive bridgeAdjustment). To realise the remainder, the strategist
-    ///      can `requestSettlement()` (folding bridgeAdjustment into remoteStrategyBalance)
-    ///      and/or use the locally-held bridgeAsset, then withdraw.
+    ///      Drawable bound is `_drawableRemoteBalance()` = `remoteStrategyBalance +
+    ///      min(0, bridgeAdjustment)`, NOT `remoteStrategyBalance` alone:
+    ///        - a NEGATIVE `bridgeAdjustment` (net BRIDGE_OUT) is folded in, lowering the cap so we
+    ///          never request more shares than Remote can actually unwrap (else it NACKs on Remote);
+    ///        - a POSITIVE `bridgeAdjustment` is excluded here even though `checkBalance` counts it
+    ///          (that + local bridgeAsset can report more). To realise it, `requestSettlement()`
+    ///          first (folds bridgeAdjustment into remoteStrategyBalance) and/or use the local
+    ///          bridgeAsset, then withdraw.
     function withdraw(
         address _recipient,
         address _asset,
@@ -197,8 +200,8 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         ) {
             return;
         }
-        // Best-effort: a mid-migration cleared inbound adapter must no-op the sweep, not
-        // revert it (honors the "best-effort no-op" contract).
+        // Best-effort no-op if the inbound adapter isn't wired yet (pre-configuration only —
+        // setInboundAdapter now rejects zero, so it can't be cleared mid-migration).
         address inbound = inboundAdapter;
         if (inbound == address(0)) return;
         // remoteStrategyBalance is OToken (18dp); withdraw amounts are bridgeAsset units.

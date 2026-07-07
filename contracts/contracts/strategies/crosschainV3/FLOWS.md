@@ -532,7 +532,7 @@ sequenceDiagram
         Master->>Master: _processWithdrawClaimAck(N+2, claimed, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
         Note over Master: transfers full WETH balance from Master Strategy to L2 Vault
-    else queue not yet matured (NACK)
+    else NACK (outstandingRequestId != EMPTY / amount == 0 / bridgeAssetHeld < amount / ship out of [min,max])
         Note over Remote: currentBalance = _yieldOnlyBaseline()<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
         Remote->>SuperEth: sendMessage(payload)
         SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
@@ -563,7 +563,7 @@ message comes from Master's local ETH pool (`_send (userFunded=false)` uses
 leg-2 claim ack lands.
 
 For `withdrawAll` (vault or governor sweep), `_withdrawRequest` is called with
-`min(remoteStrategyBalance, inboundAdapter.maxTransferAmount())` so a sweep
+`min(_drawableRemoteBalance(), inboundAdapter.maxTransferAmount())` so a sweep
 larger than the bridge's per-tx limit lands as a partial withdrawal rather
 than reverting.
 
@@ -727,7 +727,7 @@ sequenceDiagram
         Master->>Master: _processWithdrawClaimAck(N+2, landed, body)
         Note over Master: store nonceProcessed[N+2] = true<br/>store pendingWithdrawalAmount = 0<br/>store remoteStrategyBalance = yieldBaseline
         Note over Master: transfers full USDC balance from Master Strategy to Spoke sub-OUSD Vault
-    else queue not yet matured (NACK)
+    else NACK (outstandingRequestId != EMPTY / amount == 0 / bridgeAssetHeld < amount / ship out of [min,max])
         Note over Remote: currentBalance = _yieldOnlyBaseline()<br/>body = encode(currentBalance, false, 0)<br/>payload = packPayload(WITHDRAW_CLAIM_ACK, N+2, body)
         Remote->>AdapterEth: sendMessage(payload)
         AdapterEth->>CCTP: sendMessage(message)
