@@ -24,6 +24,13 @@ contract MockVault is VaultAdmin {
         return storedTotalValue;
     }
 
+    /// @dev Mirror production's gross-assets surface so the backing-ratio
+    /// circuit breaker (`_postRedeem`) and mint gate can be exercised. The mock
+    /// has no withdrawal queue netting, so gross assets == the stored value.
+    function _grossAssets() internal view override returns (uint256) {
+        return storedTotalValue;
+    }
+
     function _checkBalance(address _asset)
         internal
         view

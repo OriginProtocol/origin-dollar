@@ -366,6 +366,15 @@ abstract contract VaultAdmin is VaultCore {
     }
 
     /**
+     * @notice Sets the maximum shortfall in the backing ratio below 1.0 that
+     *      still permits user mints. 18 decimals. eg 0.01e18 = 1%.
+     */
+    function setMintTolerance(uint256 _mintTolerance) external onlyGovernor {
+        mintTolerance = _mintTolerance;
+        emit MintToleranceChanged(_mintTolerance);
+    }
+
+    /**
      * @notice Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */

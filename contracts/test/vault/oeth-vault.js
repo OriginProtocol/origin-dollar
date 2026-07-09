@@ -596,6 +596,96 @@ describe("OETH Vault", function () {
     });
   });
 
+  describe("Loss socialization: mint gating", () => {
+    let mockStrategy;
+    beforeEach(async () => {
+      const { governor, oethVault, daniel } = fixture;
+      mockStrategy = await deployWithConfirmation("MockStrategy");
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+      await oethVault
+        .connect(governor)
+        .setDefaultStrategy(mockStrategy.address);
+
+      // Mint 100 OETH; it auto-allocates into the strategy so it can be slashed
+      await oethVault.connect(daniel).mint(oethUnits("100"));
+      await oethVault.connect(governor).allocate();
+    });
+
+    const slash = async (amount) => {
+      const { weth } = fixture;
+      await weth
+        .connect(await impersonateAndFund(mockStrategy.address))
+        .transfer(addresses.dead, oethUnits(amount));
+    };
+
+    it("Should block a user mint when under-backed (default zero tolerance)", async () => {
+      const { oethVault, josh, weth } = fixture;
+      await slash("10");
+      expect(await oethVault.backingRatio()).to.be.lt(oethUnits("1"));
+
+      await weth.connect(josh).approve(oethVault.address, oethUnits("1"));
+      await expect(
+        oethVault.connect(josh).mint(oethUnits("1"))
+      ).to.be.revertedWith("Vault under-backed");
+    });
+
+    it("Should allow a user mint when the shortfall is within mintTolerance", async () => {
+      const { oethVault, governor, oeth, josh, weth } = fixture;
+      await slash("10");
+      // Set the tolerance to exactly cover the current shortfall
+      const ratio = await oethVault.backingRatio();
+      const shortfall = oethUnits("1").sub(ratio);
+      await oethVault.connect(governor).setMintTolerance(shortfall);
+
+      const before = await oeth.balanceOf(josh.address);
+      await weth.connect(josh).approve(oethVault.address, oethUnits("1"));
+      await oethVault.connect(josh).mint(oethUnits("1"));
+      expect(await oeth.balanceOf(josh.address)).to.equal(
+        before.add(oethUnits("1"))
+      );
+    });
+
+    it("Should block a user mint when the shortfall exceeds mintTolerance", async () => {
+      const { oethVault, governor, josh, weth } = fixture;
+      await slash("10");
+      const ratio = await oethVault.backingRatio();
+      const shortfall = oethUnits("1").sub(ratio);
+      // One wei short of covering the shortfall
+      await oethVault.connect(governor).setMintTolerance(shortfall.sub(1));
+
+      await weth.connect(josh).approve(oethVault.address, oethUnits("1"));
+      await expect(
+        oethVault.connect(josh).mint(oethUnits("1"))
+      ).to.be.revertedWith("Vault under-backed");
+    });
+
+    it("Should still allow mintForStrategy (AMO) when under-backed", async () => {
+      const { oethVault, oeth, governor, weth } = fixture;
+      // Whitelist an AMO strategy for direct minting
+      const dMockAMO = await deployWithConfirmation("MockAMOStrategy");
+      const mockAMO = await ethers.getContractAt(
+        "MockAMOStrategy",
+        dMockAMO.address
+      );
+      await mockAMO.initialize(oethVault.address, oeth.address, weth.address);
+      await oethVault.connect(governor).approveStrategy(mockAMO.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(mockAMO.address);
+
+      await slash("10");
+      expect(await oethVault.backingRatio()).to.be.lt(oethUnits("1"));
+
+      const amoSigner = await impersonateAndFund(mockAMO.address);
+      const before = await oeth.balanceOf(mockAMO.address);
+      // Not gated by the backing ratio - stays a strategist decision
+      await oethVault.connect(amoSigner).mintForStrategy(oethUnits("5"));
+      expect(await oeth.balanceOf(mockAMO.address)).to.equal(
+        before.add(oethUnits("5"))
+      );
+    });
+  });
+
   describe("Withdrawal Queue", () => {
     const delayPeriod = 10 * 60; // 10 minutes
     describe("with all 60 WETH in the vault", () => {
@@ -898,7 +988,7 @@ describe("OETH Vault", function () {
           .connect(daniel)
           .requestWithdrawal(firstRequestAmount);
 
-        await expect(tx).to.revertedWith("Backing supply liquidity error");
+        await expect(tx).to.revertedWith("Backing ratio out of range");
       });
       it("Fail to claim request because of solvency check too high", async () => {
         const { oethVault, daniel, weth } = fixture;
@@ -914,7 +1004,7 @@ describe("OETH Vault", function () {
         // Claim the withdrawal
         const tx = oethVault.connect(daniel).claimWithdrawal(0);
 
-        await expect(tx).to.revertedWith("Backing supply liquidity error");
+        await expect(tx).to.revertedWith("Backing ratio out of range");
       });
       it("Fail multiple claim requests because of solvency check too high", async () => {
         const { oethVault, matt, weth } = fixture;
@@ -931,7 +1021,7 @@ describe("OETH Vault", function () {
         // Claim the withdrawal
         const tx = oethVault.connect(matt).claimWithdrawals([0, 1]);
 
-        await expect(tx).to.revertedWith("Backing supply liquidity error");
+        await expect(tx).to.revertedWith("Backing ratio out of range");
       });
 
       it("Fail request withdrawal because of solvency check too low", async () => {
@@ -946,7 +1036,7 @@ describe("OETH Vault", function () {
           .connect(daniel)
           .requestWithdrawal(firstRequestAmount);
 
-        await expect(tx).to.revertedWith("Backing supply liquidity error");
+        await expect(tx).to.revertedWith("Backing ratio out of range");
       });
 
       describe("when deposit 15 WETH to a strategy, leaving 60 - 15 = 45 WETH in the vault; request withdrawal of 5 + 18 = 23 OETH, leaving 45 - 23 = 22 WETH unallocated", () => {
@@ -1855,29 +1945,40 @@ describe("OETH Vault", function () {
 
         await oethVault.connect(josh).addWithdrawalQueueLiquidity();
       });
-      it("Should allow first user to claim the request of 10 WETH", async () => {
+      it("Should allow first user to claim the request of 10 WETH (haircut)", async () => {
         const { oethVault, daniel } = fixture;
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
 
+        // Loss is socialised: ratio = gross 59 / effectiveSupply 60 = 0.98333.
+        // The claim is haircut to that ratio; the emitted event still carries
+        // the full nominal amount.
+        const ratio = await oethVault.backingRatio();
+        const nominal = oethUnits("10");
+        const payout = nominal.mul(ratio).div(oethUnits("1"));
+
         const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
-        expect(tx)
+        await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(daniel.address, 0, oethUnits("10"));
+          .withArgs(daniel.address, 0, nominal);
 
         await assertChangedData(
           dataBefore,
           {
             oethTotalSupply: 0,
+            // Total value is flat: the retained (nominal - payout) difference
+            // stays as backing, and the ratio is invariant under the claim.
             oethTotalValue: 0,
-            vaultCheckBalance: 0,
+            // Retained difference becomes available backing for everyone else.
+            vaultCheckBalance: nominal.sub(payout),
             userOeth: 0,
-            userWeth: oethUnits("10"),
-            vaultWeth: oethUnits("10").mul(-1),
+            userWeth: payout,
+            vaultWeth: payout.mul(-1),
             queued: 0,
             claimable: 0,
-            claimed: oethUnits("10"),
+            // claimed bumps by the FULL nominal even though only payout is sent.
+            claimed: nominal,
             nextWithdrawalIndex: 0,
           },
           fixtureWithUser
@@ -1890,15 +1991,20 @@ describe("OETH Vault", function () {
 
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
-      it("Should allow a user to create a new request with solvency check off", async () => {
-        // maxSupplyDiff is set to 0 so no insolvency check
+      it("Should allow a user to create a new request with the circuit breaker off", async () => {
+        // maxSupplyDiff is set to 0 so the ratio-band check is skipped
         const { oethVault, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
         const dataBefore = await snapData(fixtureWithUser);
 
+        // Queuing 10 more removes them from supply but adds them to the queue at
+        // par, so total value falls by the SOCIALISED value of those 10 units.
+        const ratio = await oethVault.backingRatio();
+        const valueDrop = oethUnits("10").mul(ratio).div(oethUnits("1"));
+
         const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
 
-        expect(tx)
+        await expect(tx)
           .to.emit(oethVault, "WithdrawalRequested")
           .withArgs(matt.address, 3, oethUnits("10"), oethUnits("50"));
 
@@ -1906,7 +2012,7 @@ describe("OETH Vault", function () {
           dataBefore,
           {
             oethTotalSupply: oethUnits("10").mul(-1),
-            oethTotalValue: oethUnits("10").mul(-1),
+            oethTotalValue: valueDrop.mul(-1),
             vaultCheckBalance: oethUnits("10").mul(-1),
             userOeth: oethUnits("10").mul(-1),
             userWeth: 0,
@@ -1919,35 +2025,35 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      describe("with solvency check at 3%", () => {
+      describe("with circuit breaker at 1% (below the 1.67% socialised loss)", () => {
         beforeEach(async () => {
           const { oethVault } = fixture;
-          // Turn on insolvency check with 3% buffer
+          // 1.67% socialised loss exceeds this 1% band, so the fuse trips.
           await oethVault
             .connect(await impersonateAndFund(await oethVault.governor()))
-            .setMaxSupplyDiff(oethUnits("0.03"));
+            .setMaxSupplyDiff(oethUnits("0.01"));
         });
-        it("Fail to allow user to create a new request due to insolvency check", async () => {
+        it("Fail to allow user to create a new request: loss exceeds the band", async () => {
           const { oethVault, matt } = fixture;
 
           const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
 
-          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+          await expect(tx).to.be.revertedWith("Backing ratio out of range");
         });
-        it("Fail to allow first user to claim a withdrawal due to insolvency check", async () => {
+        it("Fail to allow first user to claim: loss exceeds the band", async () => {
           const { oethVault, daniel } = fixture;
 
           await advanceTime(delayPeriod);
 
           const tx = oethVault.connect(daniel).claimWithdrawal(0);
 
-          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+          await expect(tx).to.be.revertedWith("Backing ratio out of range");
         });
       });
-      describe("with solvency check at 10%", () => {
+      describe("with circuit breaker at 10% (above the 1.67% socialised loss)", () => {
         beforeEach(async () => {
           const { oethVault } = fixture;
-          // Turn on insolvency check with 10% buffer
+          // 1.67% socialised loss is inside this 10% band, so claims flow.
           await oethVault
             .connect(await impersonateAndFund(await oethVault.governor()))
             .setMaxSupplyDiff(oethUnits("0.1"));
@@ -1959,18 +2065,26 @@ describe("OETH Vault", function () {
             .connect(matt)
             .requestWithdrawal(oethUnits("1"));
 
-          expect(tx)
+          await expect(tx)
             .to.emit(oethVault, "WithdrawalRequested")
             .withArgs(matt.address, 3, oethUnits("1"), oethUnits("41"));
         });
-        it("Should allow first user to claim the request of 10 WETH", async () => {
-          const { oethVault, daniel } = fixture;
+        it("Should allow first user to claim their request with a haircut", async () => {
+          const { oethVault, daniel, weth } = fixture;
+
+          const ratio = await oethVault.backingRatio();
+          const payout = oethUnits("10").mul(ratio).div(oethUnits("1"));
+          const before = await weth.balanceOf(daniel.address);
 
           const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
-          expect(tx)
+          // Event carries the full nominal; transfer is the haircut payout.
+          await expect(tx)
             .to.emit(oethVault, "WithdrawalClaimed")
             .withArgs(daniel.address, 0, oethUnits("10"));
+          expect(await weth.balanceOf(daniel.address)).to.equal(
+            before.add(payout)
+          );
         });
       });
     });
@@ -2014,7 +2128,7 @@ describe("OETH Vault", function () {
           .connect(await impersonateAndFund(await oethVault.governor()))
           .setMaxSupplyDiff(oethUnits("0.01"));
       });
-      describe("with 2 ether slashed leaving 100 - 40 - 2 = 58 WETH in the strategy", () => {
+      describe("with 2 ether slashed (2% loss, beyond the 1% circuit breaker)", () => {
         beforeEach(async () => {
           const { weth } = fixture;
 
@@ -2023,33 +2137,35 @@ describe("OETH Vault", function () {
             .connect(await impersonateAndFund(mockStrategy.address))
             .transfer(addresses.dead, oethUnits("2"));
         });
-        it("Should have total value of zero", async () => {
-          // 100 from mints - 99 outstanding withdrawals - 2 from slashing = -1 value which is rounder up to zero
-          expect(await fixture.oethVault.totalValue()).to.equal(0);
+        it("Should socialise the loss into total value, not clamp to zero", async () => {
+          // gross 98 - queue 99 * ratio 0.98 = 98 - 97.02 = 0.98
+          expect(await fixture.oethVault.totalValue()).to.equal(
+            oethUnits("0.98")
+          );
         });
-        it("Should have check balance of zero", async () => {
+        it("Should still report check balance of zero (queue at par exceeds gross)", async () => {
           const { oethVault, weth } = fixture;
-          // 100 from mints - 99 outstanding withdrawals - 2 from slashing = -1 value which is rounder up to zero
+          // checkBalance is unchanged: raw 98 + claimed 0 - queued 99 < 0 => 0
           expect(await oethVault.checkBalance(weth.address)).to.equal(0);
         });
-        it("Fail to allow user to create a new request due to too many outstanding requests", async () => {
+        it("Fail to allow a new request: 2% loss trips the 1% circuit breaker", async () => {
           const { oethVault, matt } = fixture;
 
           const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
 
-          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+          await expect(tx).to.be.revertedWith("Backing ratio out of range");
         });
-        it("Fail to allow first user to claim a withdrawal due to too many outstanding requests", async () => {
+        it("Fail to allow first user to claim: 2% loss trips the 1% circuit breaker", async () => {
           const { oethVault, daniel } = fixture;
 
           await advanceTime(delayPeriod);
 
           const tx = oethVault.connect(daniel).claimWithdrawal(0);
 
-          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+          await expect(tx).to.be.revertedWith("Backing ratio out of range");
         });
       });
-      describe("with 1 ether slashed leaving 100 - 40 - 1 = 59 WETH in the strategy", () => {
+      describe("with 1 ether slashed (1% loss, at the circuit breaker edge)", () => {
         beforeEach(async () => {
           const { weth } = fixture;
 
@@ -2058,68 +2174,68 @@ describe("OETH Vault", function () {
             .connect(await impersonateAndFund(mockStrategy.address))
             .transfer(addresses.dead, oethUnits("1"));
         });
-        it("Should have total value of zero", async () => {
-          // 100 from mints - 99 outstanding withdrawals - 1 from slashing = 0 value
-          expect(await fixture.oethVault.totalValue()).to.equal(0);
+        it("Should socialise the loss into total value", async () => {
+          // gross 99 - queue 99 * ratio 0.99 = 99 - 98.01 = 0.99
+          expect(await fixture.oethVault.totalValue()).to.equal(
+            oethUnits("0.99")
+          );
         });
-        it("Fail to allow user to create a new request due to too many outstanding requests", async () => {
-          const { oethVault, matt } = fixture;
-
-          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
-
-          await expect(tx).to.be.revertedWith("Too many outstanding requests");
-        });
-        it("Fail to allow first user to claim a withdrawal due to too many outstanding requests", async () => {
-          const { oethVault, daniel } = fixture;
+        it("Should allow first user to claim with a 1% haircut (at the band edge)", async () => {
+          const { oethVault, daniel, weth } = fixture;
 
           await advanceTime(delayPeriod);
 
-          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+          const ratio = await oethVault.backingRatio();
+          const payout = oethUnits("20").mul(ratio).div(oethUnits("1"));
+          const before = await weth.balanceOf(daniel.address);
 
-          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+          await oethVault.connect(daniel).claimWithdrawal(0);
+
+          expect(await weth.balanceOf(daniel.address)).to.equal(
+            before.add(payout)
+          );
+          // ratio is invariant under the haircut claim
+          expect(await oethVault.backingRatio()).to.approxEqual(ratio);
         });
       });
-      describe("with 0.02 ether slashed leaving 100 - 40 - 0.02 = 59.98 WETH in the strategy", () => {
+      describe("with 0.02 ether slashed (0.02% loss, well inside the band)", () => {
         beforeEach(async () => {
           const { weth } = fixture;
 
-          // Simulate slash event of 0.001 ethers
+          // Simulate slash event of 0.02 ethers
           await weth
             .connect(await impersonateAndFund(mockStrategy.address))
             .transfer(addresses.dead, oethUnits("0.02"));
         });
-        it("Should have total value of zero", async () => {
-          // 100 from mints - 99 outstanding withdrawals - 0.001 from slashing = 0.999 total value
+        it("Should socialise the loss into total value", async () => {
+          // gross 99.98 - queue 99 * ratio 0.9998 = 0.9998
           expect(await fixture.oethVault.totalValue()).to.equal(
-            oethUnits("0.98")
+            oethUnits("0.9998")
           );
         });
-        it("Fail to allow user to create a new 1 WETH request due to too many outstanding requests", async () => {
+        it("Should allow a new small request", async () => {
           const { oethVault, matt } = fixture;
 
-          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
-
-          await expect(tx).to.be.revertedWith("Too many outstanding requests");
-        });
-
-        it("Fail to allow user to create a new 0.01 WETH request due to insolvency check", async () => {
-          const { oethVault, matt } = fixture;
-
-          const tx = oethVault
+          const tx = await oethVault
             .connect(matt)
             .requestWithdrawal(oethUnits("0.01"));
 
-          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+          await expect(tx).to.emit(oethVault, "WithdrawalRequested");
         });
-        it("Fail to allow first user to claim a withdrawal due to insolvency check", async () => {
-          const { oethVault, daniel } = fixture;
+        it("Should allow first user to claim with a tiny haircut", async () => {
+          const { oethVault, daniel, weth } = fixture;
 
           await advanceTime(delayPeriod);
 
-          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+          const ratio = await oethVault.backingRatio();
+          const payout = oethUnits("20").mul(ratio).div(oethUnits("1"));
+          const before = await weth.balanceOf(daniel.address);
 
-          // diff = 1 total supply / 0.98 assets = 1.020408163265306122 which is > 1 maxSupplyDiff
-          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+          await oethVault.connect(daniel).claimWithdrawal(0);
+
+          expect(await weth.balanceOf(daniel.address)).to.equal(
+            before.add(payout)
+          );
         });
       });
     });
