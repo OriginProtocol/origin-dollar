@@ -4,6 +4,7 @@ import { types } from "hardhat/config";
 import { action } from "../lib/action";
 
 const { verifyBalances } = require("../beacon");
+const { cleanStateCache } = require("../../utils/beacon");
 
 action({
   name: "verifyBalances",
@@ -60,6 +61,10 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    await verifyBalances({ ...args, signer });
+    try {
+      await verifyBalances({ ...args, signer });
+    } finally {
+      cleanStateCache();
+    }
   },
 });

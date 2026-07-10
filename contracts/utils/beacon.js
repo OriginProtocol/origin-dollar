@@ -12,6 +12,26 @@ const log = require("./logger")("utils:beacon");
 
 const SLOTS_PER_EPOCH = 32;
 
+// Beacon state SSZ files are large and each run fetches a unique slot, so a
+// long-lived runner accumulates them in ./cache until the disk fills (ENOSPC).
+// Track the states this process wrote and delete them once the action finishes
+// (cleanStateCache runs from the action wrapper's finally). Only files this
+// invocation created are removed, so a state a concurrently-running action
+// wrote is never touched.
+const createdStateFiles = new Set();
+
+const cleanStateCache = () => {
+  for (const file of createdStateFiles) {
+    try {
+      fs.rmSync(file, { force: true });
+      log(`Removed cached beacon state ${file}`);
+    } catch {
+      // Best-effort cleanup; a missing file is fine.
+    }
+  }
+  createdStateFiles.clear();
+};
+
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
   index: Number(index),
   validatorindex: Number(index),
@@ -130,6 +150,7 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     log(`Writing state to file ${stateFilename}`);
     fs.writeFileSync(stateFilename, stateRes.ssz());
     stateSsz = stateRes.ssz();
+    createdStateFiles.add(stateFilename);
   }
 
   const stateView = BeaconState.deserializeToView(stateSsz);
@@ -456,6 +477,7 @@ const verifyDepositSignatureAndMessageRoot = async ({
 };
 
 module.exports = {
+  cleanStateCache,
   concatProof,
   getBeaconBlock,
   getSlot,
