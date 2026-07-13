@@ -20,11 +20,12 @@ contract Smoke_Concrete_OETHVault_ViewFunctions_Test is Smoke_OETHVault_Shared_T
         assertTrue(oethVault.strategistAddr() != address(0));
     }
 
+    /// @dev Deploy 199 made the vanilla CompoundingStakingStrategy the default,
+    ///      and deploy 200 removed the older SSV strategy from the vault.
     function test_defaultStrategy_isSet() public view {
         address defaultStrat = oethVault.defaultStrategy();
         assertNotEq(defaultStrat, address(0));
-        // Default strategy is CompoundingStakingSSV, resolved separately
-        address compoundingStaking = resolver.resolve("COMPOUNDING_STAKING_SSV_STRATEGY_PROXY");
+        address compoundingStaking = resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY");
         assertEq(defaultStrat, compoundingStaking);
     }
 
@@ -38,11 +39,6 @@ contract Smoke_Concrete_OETHVault_ViewFunctions_Test is Smoke_OETHVault_Shared_T
 
     function test_isMintWhitelistedStrategy_curveAMO() public view {
         assertTrue(oethVault.isMintWhitelistedStrategy(address(curveAMOStrategy)));
-    }
-
-    function test_isMintWhitelistedStrategy_supernovaAMO() public view {
-        address supernovaAMO = resolver.resolve("OETH_SUPERNOVA_AMO_STRATEGY_PROXY");
-        assertTrue(oethVault.isMintWhitelistedStrategy(supernovaAMO));
     }
 
     function test_allStrategies_areSupported() public view {

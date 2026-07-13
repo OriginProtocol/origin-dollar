@@ -35,26 +35,24 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
         assertFalse(compoundingStakingSSVStrategy.supportsAsset(address(mockSsv)));
     }
 
-    function test_migrateClusterToETH_RevertWhen_notGovernor() public {
+    /// @dev `resetFirstDeposit` is callable by the Governor or the Strategist.
+    ///      Reaching the NoFirstDeposit revert proves the Strategist passed the
+    ///      authorization check.
+    function test_resetFirstDeposit_allowsStrategist() public {
         vm.prank(strategist);
-        vm.expectRevert("Caller is not the Governor");
-        compoundingStakingSSVStrategy.migrateClusterToETH(_operatorIds(), _emptyCluster());
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NoFirstDeposit.selector);
+        compoundingStakingSSVStrategy.resetFirstDeposit();
     }
 
-    function test_migrateClusterToETH_onlyGovernor() public {
-        vm.prank(governor);
-        compoundingStakingSSVStrategy.migrateClusterToETH(_operatorIds(), _emptyCluster());
-    }
-
-    function test_resetFirstDeposit_RevertWhen_notGovernor() public {
-        vm.prank(strategist);
-        vm.expectRevert("Caller is not the Governor");
+    function test_resetFirstDeposit_RevertWhen_notGovernorOrStrategist() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Strategist or Governor");
         compoundingStakingSSVStrategy.resetFirstDeposit();
     }
 
     function test_resetFirstDeposit_RevertWhen_noFirstDeposit() public {
         vm.prank(governor);
-        vm.expectRevert("No first deposit");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NoFirstDeposit.selector);
         compoundingStakingSSVStrategy.resetFirstDeposit();
     }
 
@@ -93,7 +91,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
 
     function test_pause_RevertWhen_notRegistratorOrGovernor() public {
         vm.prank(josh);
-        vm.expectRevert("Not Registrator or Governor");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistratorOrGovernor.selector);
         compoundingStakingSSVStrategy.pause();
     }
 

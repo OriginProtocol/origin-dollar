@@ -27,6 +27,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Check Solidity formatting (forge)
         working-directory: contracts
         run: forge fmt --check scripts/ tests/
@@ -53,6 +55,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Check contract sizes
         working-directory: contracts
         run: forge build --sizes --skip "test/**" --skip "tests/**" --skip "script/**" --skip "scripts/**"
@@ -67,6 +71,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run unit tests
         working-directory: contracts
         run: make test-unit
@@ -83,6 +89,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Mainnet fork tests
         working-directory: contracts
         run: make test-fork-mainnet
@@ -97,6 +105,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Base fork tests
         working-directory: contracts
         run: make test-fork-base
@@ -111,6 +121,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Sonic fork tests
         working-directory: contracts
         run: make test-fork-sonic
@@ -125,6 +137,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run HyperEVM fork tests
         working-directory: contracts
         run: make test-fork-hyperevm
@@ -140,6 +154,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Mainnet smoke tests
         working-directory: contracts
         run: make test-smoke-mainnet
@@ -154,6 +170,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Base smoke tests
         working-directory: contracts
         run: make test-smoke-base
@@ -168,6 +186,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run Sonic smoke tests
         working-directory: contracts
         run: make test-smoke-sonic
@@ -182,6 +202,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Run HyperEVM smoke tests
         working-directory: contracts
         run: make test-smoke-hyperevm
@@ -196,6 +218,8 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
+        with:
+          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:

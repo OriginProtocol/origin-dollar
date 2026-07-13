@@ -18,8 +18,6 @@ library Strategies {
     string internal constant GENERALIZED_4626_STRATEGY =
         "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy";
     string internal constant MORPHO_V2_STRATEGY = "contracts/strategies/MorphoV2Strategy.sol:MorphoV2Strategy";
-    string internal constant OETH_SUPERNOVA_AMO_STRATEGY =
-        "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy";
     string internal constant OETH_VAULT_VALUE_CHECKER =
         "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker";
     string internal constant SONIC_STAKING_STRATEGY =

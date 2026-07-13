@@ -16,4 +16,6 @@ library Automation {
         "contracts/automation/CurvePoolBoosterBribesModule.sol:CurvePoolBoosterBribesModule";
     string internal constant ETHEREUM_BRIDGE_HELPER_MODULE =
         "contracts/automation/EthereumBridgeHelperModule.sol:EthereumBridgeHelperModule";
+    string internal constant PERMISSIONED_REBASE_MODULE =
+        "contracts/automation/PermissionedRebaseModule.sol:PermissionedRebaseModule";
 }

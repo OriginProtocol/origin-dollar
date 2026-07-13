@@ -18,29 +18,9 @@ fs_permissions = [
   { access = "read", path = "tests/fork/mainnet/beacon/BeaconProofs/fixtures" }
 ]
 
-# Remappings order matters: transitive (inside deps) first, then root-level.
 remappings = [
-  # --- Transitive remappings (resolve imports inside Soldeer packages) ---
-  # LZ oft-evm imports OZ + oapp-evm
-  "dependencies/@layerzerolabs-oft-evm-3.1.4/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
-  "dependencies/@layerzerolabs-oft-evm-3.1.4/package/:@layerzerolabs/oapp-evm/=dependencies/@layerzerolabs-oapp-evm-0.3.3/package/",
-  # LZ oapp-evm imports OZ + protocol-v2 + messagelib-v2 + solidity-bytes-utils
-  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
-  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@layerzerolabs/lz-evm-protocol-v2/=dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/",
-  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@layerzerolabs/lz-evm-messagelib-v2/=dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/",
-  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
-  # LZ messagelib-v2 imports protocol-v2 + solidity-bytes-utils
-  "dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/:@layerzerolabs/lz-evm-protocol-v2/=dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/",
-  "dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
-  # LZ protocol-v2 imports OZ + solidity-bytes-utils
-  "dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
-  "dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
-
-  # --- Root-level remappings (resolve imports from contracts/contracts/*.sol) ---
   "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
   "@chainlink/contracts-ccip/=dependencies/@chainlink-contracts-ccip-1.2.1/package/",
-  "@layerzerolabs/oft-evm/=dependencies/@layerzerolabs-oft-evm-3.1.4/package/",
-  "@layerzerolabs/oapp-evm/=dependencies/@layerzerolabs-oapp-evm-0.3.3/package/",
   "forge-std/=dependencies/forge-std-1.15.0/src/",
   "tests/=tests/",
   "@solmate/=dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/"
@@ -70,11 +50,6 @@ solmate = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
 "@openzeppelin-contracts" = { version = "4.4.2", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1" }
 # The following npm packages are installed via install-deps.sh (Soldeer does not support tgz).
 # "@chainlink-contracts-ccip" v1.2.1
-# "@layerzerolabs-oft-evm" v3.1.4
-# "@layerzerolabs-oapp-evm" v0.3.3
-# "@layerzerolabs-lz-evm-protocol-v2" v3.0.160
-# "@layerzerolabs-lz-evm-messagelib-v2" v3.0.160
-# "solidity-bytes-utils" v0.8.4
 
 [soldeer]
 recursive_deps = false

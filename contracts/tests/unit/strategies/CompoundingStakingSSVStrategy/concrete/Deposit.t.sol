@@ -6,6 +6,9 @@ import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
+// --- Project imports
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+
 contract Unit_Concrete_CompoundingStakingSSVStrategy_Deposit_Test is Unit_CompoundingStakingSSVStrategy_Shared_Test {
     function test_deposit() public {
         uint256 amount = 10 ether;
@@ -26,7 +29,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Deposit_Test is Unit_Compou
 
     function test_deposit_RevertWhen_wrongAsset() public {
         vm.prank(address(oethVault));
-        vm.expectRevert("Unsupported asset");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedAsset.selector);
         compoundingStakingSSVStrategy.deposit(address(mockSsv), 1 ether);
     }
 

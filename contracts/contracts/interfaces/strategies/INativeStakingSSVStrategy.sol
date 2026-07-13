@@ -185,10 +185,5 @@ interface INativeStakingSSVStrategy {
         Cluster calldata cluster
     ) external;
 
-    function migrateClusterToETH(
-        uint64[] calldata operatorIds,
-        Cluster calldata cluster
-    ) external;
-
     function setFeeRecipient() external;
 }

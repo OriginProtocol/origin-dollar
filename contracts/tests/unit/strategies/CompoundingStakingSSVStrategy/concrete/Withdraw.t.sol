@@ -6,6 +6,9 @@ import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
+// --- Project imports
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+
 contract Unit_Concrete_CompoundingStakingSSVStrategy_Withdraw_Test is Unit_CompoundingStakingSSVStrategy_Shared_Test {
     function setUp() public override {
         super.setUp();
@@ -43,7 +46,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Withdraw_Test is Unit_Compo
 
     function test_withdraw_RevertWhen_wrongAsset() public {
         vm.prank(address(oethVault));
-        vm.expectRevert("Unsupported asset");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedAsset.selector);
         compoundingStakingSSVStrategy.withdraw(address(oethVault), address(mockSsv), 1 ether);
     }
 

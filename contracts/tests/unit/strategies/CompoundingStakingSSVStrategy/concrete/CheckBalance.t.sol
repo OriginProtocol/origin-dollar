@@ -6,6 +6,9 @@ import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
+// --- Project imports
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+
 contract Unit_Concrete_CompoundingStakingSSVStrategy_CheckBalance_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
@@ -19,7 +22,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_CheckBalance_Test is
     }
 
     function test_checkBalance_RevertWhen_unsupportedAsset() public {
-        vm.expectRevert("Unsupported asset");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedAsset.selector);
         compoundingStakingSSVStrategy.checkBalance(address(mockSsv));
     }
 

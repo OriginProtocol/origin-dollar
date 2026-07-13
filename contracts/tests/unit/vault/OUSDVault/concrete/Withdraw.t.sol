@@ -893,28 +893,23 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- REBASE ON REDEEM (REBASETHRESHOLD)
+    /// --- REDEEM DOES NOT REBASE
     //////////////////////////////////////////////////////
 
-    function test_requestWithdrawal_triggersRebaseWhenAboveThreshold() public {
-        // Set rebaseThreshold so redeem triggers a rebase
-        vm.prank(governor);
-        ousdVault.setRebaseThreshold(10e18); // 10 OUSD
-
-        // Simulate yield so rebase has something to distribute
+    /// @dev Rebasing is now operator-gated and no longer auto-triggered on redeem,
+    ///      regardless of the request size. Pending yield stays pending.
+    function test_requestWithdrawal_doesNotTriggerRebase() public {
+        // Simulate yield that a rebase would distribute
         _dealUSDC(address(this), 2e6);
         MockERC20(address(usdc)).transfer(address(ousdVault), 2e6);
 
         uint256 mattBefore = ousd.balanceOf(matt);
 
-        // Request > rebaseThreshold to trigger _rebase() in _postRedeem
         vm.prank(matt);
         ousdVault.requestWithdrawal(50e18);
 
-        // Matt's remaining balance should reflect yield from rebase
-        uint256 mattAfter = ousd.balanceOf(matt);
-        // Matt had ~100 OUSD, requested 50, yield ~1 OUSD (his share of 2 OUSD)
-        assertGt(mattAfter, mattBefore - 50e18, "Rebase should have distributed yield");
+        // Balance drops by exactly the requested amount — no yield distributed
+        assertEq(ousd.balanceOf(matt), mattBefore - 50e18, "Redeem must not trigger a rebase");
     }
 
     //////////////////////////////////////////////////////

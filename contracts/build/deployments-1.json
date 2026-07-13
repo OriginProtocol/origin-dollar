@@ -77,10 +77,6 @@
             "name": "OUSD_CURVE_AMO_STRATEGY"
         },
         {
-            "implementation": "0xf9E04C36CC7e6065cBBcc972613e8Dd75D6B5967",
-            "name": "OETH_SUPERNOVA_AMO_STRATEGY_PROXY"
-        },
-        {
             "implementation": "0x4685dB8bF2Df743c861d71E6cFb5347222992076",
             "name": "NATIVE_STAKING_SSV_STRATEGY_2_PROXY"
         },
@@ -91,6 +87,10 @@
         {
             "implementation": "0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d",
             "name": "COMPOUNDING_STAKING_SSV_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0x25e1d468B14005716111d5e8464573e5135275f4",
+            "name": "COMPOUNDING_STAKING_STRATEGY_PROXY"
         },
         {
             "implementation": "0x7e57a2AF9F41aF41D6bCf53cc3C299fB7e7A51B4",

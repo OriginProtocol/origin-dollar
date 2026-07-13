@@ -12,6 +12,34 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
+    /// --- REBASE AUTHORIZATION
+    //////////////////////////////////////////////////////
+
+    function test_rebase_asGovernor() public {
+        vm.prank(governor);
+        ousdVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_asStrategist() public {
+        vm.prank(ousdVault.strategistAddr());
+        ousdVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_asOperator() public {
+        vm.prank(governor);
+        ousdVault.setOperatorAddr(operator);
+
+        vm.prank(operator);
+        ousdVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller not authorized");
+        ousdVault.rebase();
+    }
+
+    //////////////////////////////////////////////////////
     /// --- REBASE PAUSING — BEHAVIOR
     //////////////////////////////////////////////////////
 
@@ -19,7 +47,10 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         vm.prank(governor);
         ousdVault.pauseRebase();
 
+        // Authorization is checked before the rebase-paused modifier, so prank
+        // the governor to reach the pause revert.
         vm.expectRevert("Rebasing paused");
+        vm.prank(governor);
         ousdVault.rebase();
     }
 
@@ -29,11 +60,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         vm.prank(governor);
         ousdVault.unpauseRebase();
 
-        ousdVault.rebase(); // Should not revert
-    }
-
-    function test_rebase_anyoneCanCall() public {
-        vm.prank(alice);
+        vm.prank(governor);
         ousdVault.rebase(); // Should not revert
     }
 
@@ -51,6 +78,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         assertApproxEqAbs(mattBefore, 100e18, 1e12);
         assertApproxEqAbs(joshBefore, 100e18, 1e12);
 
+        vm.prank(governor);
         ousdVault.rebase();
 
         // Each should get ~1 OUSD of yield (2 OUSD total yield / 2 rebasing users)
@@ -68,6 +96,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         // Simulate yield
         _dealUSDC(address(this), 2e6);
         MockERC20(address(usdc)).transfer(address(ousdVault), 2e6);
+        vm.prank(governor);
         ousdVault.rebase();
 
         // Matt (rebasing) gets all the yield. MockNonRebasing gets none.
@@ -150,6 +179,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         }
 
         uint256 supplyBefore = ousd.totalSupply();
+        vm.prank(governor);
         ousdVault.rebase();
 
         // Total supply should increase by yield amount
@@ -189,6 +219,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         // With no trustee, fee = 0
         vm.expectEmit(true, true, true, false);
         emit IVault.YieldDistribution(address(0), 2e18, 0);
+        vm.prank(governor);
         ousdVault.rebase();
     }
 
@@ -209,6 +240,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // Advance only 1 hour — much less than 1 day drip duration
         vm.warp(block.timestamp + 1 hours);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 distributed = ousd.totalSupply() - supplyBefore;
@@ -229,6 +261,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // First rebase after half a day — sets initial target rate
         vm.warp(block.timestamp + 12 hours);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 supplyAfterFirst = ousd.totalSupply();
@@ -239,6 +272,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // Second rebase after another 12 hours — target rate should increase
         vm.warp(block.timestamp + 12 hours);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 supplyAfterSecond = ousd.totalSupply();
@@ -261,6 +295,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         MockERC20(address(usdc)).transfer(address(ousdVault), 5e6);
 
         uint256 supplyBefore = ousd.totalSupply();
+        vm.prank(governor);
         ousdVault.rebase();
 
         // No rebasing supply → no yield distributed
@@ -273,10 +308,12 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         MockERC20(address(usdc)).transfer(address(ousdVault), 5e6);
 
         // First rebase consumes the yield
+        vm.prank(governor);
         ousdVault.rebase();
         uint256 supplyAfterFirst = ousd.totalSupply();
 
         // Second rebase in same block — elapsed = 0 → no yield
+        vm.prank(governor);
         ousdVault.rebase();
         assertEq(ousd.totalSupply(), supplyAfterFirst, "No double yield in same block");
     }
@@ -303,6 +340,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         vm.warp(block.timestamp + 1);
         vm.expectRevert("Fee must not be greater than yield");
+        vm.prank(governor);
         ousdVault.rebase();
     }
 }

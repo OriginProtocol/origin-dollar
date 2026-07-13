@@ -15,6 +15,7 @@ contract Fork_Concrete_BaseBridgeHelperModule_DepositWETHAndRedeemWOETH_Test is
 
         // Update oracle price and rebase
         bridgedWOETHStrategy.updateWOETHOraclePrice();
+        vm.prank(vault.governor());
         vault.rebase();
 
         uint256 wethPerUnitWOETH = bridgedWOETHStrategy.getBridgedWOETHValue(1 ether);

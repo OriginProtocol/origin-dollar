@@ -6,6 +6,9 @@ import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
+// --- Project imports
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+
 contract Unit_Concrete_CompoundingStakingSSVStrategy_DisabledFunctions_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
@@ -15,17 +18,17 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_DisabledFunctions_Test is
         compoundingStakingSSVStrategy.setHarvesterAddress(governor);
 
         vm.prank(governor);
-        vm.expectRevert("Unsupported function");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedFunction.selector);
         compoundingStakingSSVStrategy.collectRewardTokens();
     }
 
     function test_setPTokenAddress_reverts() public {
-        vm.expectRevert("Unsupported function");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedFunction.selector);
         compoundingStakingSSVStrategy.setPTokenAddress(address(mockWeth), address(mockWeth));
     }
 
     function test_removePToken_reverts() public {
-        vm.expectRevert("Unsupported function");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.UnsupportedFunction.selector);
         compoundingStakingSSVStrategy.removePToken(0);
     }
 }

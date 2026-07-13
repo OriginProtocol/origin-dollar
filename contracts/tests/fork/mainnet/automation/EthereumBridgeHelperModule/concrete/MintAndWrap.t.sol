@@ -8,6 +8,7 @@ import {
 
 contract Fork_Concrete_EthereumBridgeHelperModule_MintAndWrap_Test is Fork_EthereumBridgeHelperModule_Shared_Test {
     function test_mintAndWrap() public {
+        vm.prank(oethVault.governor());
         oethVault.rebase();
 
         uint256 wethAmount = 1 ether;

@@ -27,6 +27,7 @@ interface IVault {
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
+    event OperatorUpdated(address newOperator);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,

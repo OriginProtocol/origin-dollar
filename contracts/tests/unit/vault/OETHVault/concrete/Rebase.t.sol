@@ -9,6 +9,34 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
     //////////////////////////////////////////////////////
+    /// --- REBASE AUTHORIZATION
+    //////////////////////////////////////////////////////
+
+    function test_rebase_asGovernor() public {
+        vm.prank(governor);
+        oethVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_asStrategist() public {
+        vm.prank(oethVault.strategistAddr());
+        oethVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_asOperator() public {
+        vm.prank(governor);
+        oethVault.setOperatorAddr(operator);
+
+        vm.prank(operator);
+        oethVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller not authorized");
+        oethVault.rebase();
+    }
+
+    //////////////////////////////////////////////////////
     /// --- REBASE()
     //////////////////////////////////////////////////////
 
@@ -21,6 +49,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
 
         uint256 supplyBefore = oeth.totalSupply();
 
+        vm.prank(governor);
         oethVault.rebase();
 
         uint256 supplyAfter = oeth.totalSupply();
@@ -34,6 +63,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         // Should emit YieldDistribution event
         vm.expectEmit(false, false, false, false);
         emit IVault.YieldDistribution(address(0), 0, 0);
+        vm.prank(governor);
         oethVault.rebase();
     }
 
@@ -42,6 +72,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         uint256 supplyBefore = oeth.totalSupply();
 
         vm.warp(block.timestamp + 1);
+        vm.prank(governor);
         oethVault.rebase();
 
         assertEq(oeth.totalSupply(), supplyBefore, "Supply should not change without yield");
@@ -52,6 +83,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         oethVault.pauseRebase();
 
         vm.expectRevert("Rebasing paused");
+        vm.prank(governor);
         oethVault.rebase();
     }
 
@@ -59,12 +91,14 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         // Inject yield and advance time so rebase distributes and sets lastRebase
         _dealWETH(address(oethVault), 2e18);
         vm.warp(block.timestamp + 1);
+        vm.prank(governor);
         oethVault.rebase();
 
         // Now inject more yield in the same block — elapsed = 0, should not distribute
         _dealWETH(address(oethVault), 3e18);
 
         uint256 supplyBefore = oeth.totalSupply();
+        vm.prank(governor);
         oethVault.rebase();
         assertEq(oeth.totalSupply(), supplyBefore, "No yield when elapsed=0");
     }
@@ -86,6 +120,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
 
         uint256 aliceBefore = oeth.balanceOf(alice);
 
+        vm.prank(governor);
         oethVault.rebase();
 
         uint256 aliceAfter = oeth.balanceOf(alice);
@@ -104,6 +139,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         // Should emit YieldDistribution with trustee address and non-zero fee
         vm.expectEmit(true, false, false, false);
         emit IVault.YieldDistribution(alice, 0, 0);
+        vm.prank(governor);
         oethVault.rebase();
     }
 
@@ -126,6 +162,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
 
         vm.warp(block.timestamp + 1);
         vm.expectRevert("Fee must not be greater than yield");
+        vm.prank(governor);
         oethVault.rebase();
     }
 
@@ -162,6 +199,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         vm.warp(block.timestamp + 1 hours);
 
         uint256 supplyBefore = oeth.totalSupply();
+        vm.prank(governor);
         oethVault.rebase();
         uint256 supplyAfter = oeth.totalSupply();
 
@@ -183,6 +221,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         for (uint256 i = 0; i < 5; i++) {
             vm.warp(block.timestamp + 1 days);
             uint256 supplyBefore = oeth.totalSupply();
+            vm.prank(governor);
             oethVault.rebase();
             totalYield += oeth.totalSupply() - supplyBefore;
         }
@@ -209,6 +248,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
         _dealWETH(address(oethVault), 10e18);
         vm.warp(block.timestamp + 1);
 
+        vm.prank(governor);
         oethVault.rebase();
 
         // Non-rebasing balance should not change
@@ -220,41 +260,25 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- MINT TRIGGERS REBASE
+    /// --- MINT DOES NOT REBASE
     //////////////////////////////////////////////////////
 
-    function test_mint_triggersRebaseAboveThreshold() public {
-        vm.prank(governor);
-        oethVault.setRebaseThreshold(10e18);
-
+    /// @dev Rebasing is now operator-gated and no longer auto-triggered by mint,
+    ///      regardless of the mint size. Yield only reaches holders via rebase().
+    function test_mint_doesNotTriggerRebase() public {
         // Inject yield
         _dealWETH(address(oethVault), 5e18);
         vm.warp(block.timestamp + 1);
 
         uint256 mattBefore = oeth.balanceOf(matt);
 
-        // Mint above threshold triggers rebase
-        _mintOETH(alice, 20e18);
+        // A large mint must not distribute the pending yield
+        _mintOETH(alice, 100e18);
+        assertEq(oeth.balanceOf(matt), mattBefore, "Mint must not trigger a rebase");
 
-        uint256 mattAfter = oeth.balanceOf(matt);
-        // Matt should have received yield from the rebase triggered by Alice's mint
-        assertGt(mattAfter, mattBefore, "Rebase should have distributed yield to Matt");
-    }
-
-    function test_mint_doesNotRebaseBelowThreshold() public {
+        // The yield is still pending, and an explicit rebase distributes it
         vm.prank(governor);
-        oethVault.setRebaseThreshold(100e18);
-
-        // Inject yield
-        _dealWETH(address(oethVault), 5e18);
-        vm.warp(block.timestamp + 1);
-
-        uint256 mattBefore = oeth.balanceOf(matt);
-
-        // Mint below threshold — no rebase
-        _mintOETH(alice, 10e18);
-
-        // Matt's balance should be unchanged (no rebase happened)
-        assertEq(oeth.balanceOf(matt), mattBefore, "No rebase below threshold");
+        oethVault.rebase();
+        assertGt(oeth.balanceOf(matt), mattBefore, "Explicit rebase should distribute yield");
     }
 }

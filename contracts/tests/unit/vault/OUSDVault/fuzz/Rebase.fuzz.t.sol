@@ -22,6 +22,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // Warp 1 day so per-second cap allows yield through
         vm.warp(block.timestamp + 1 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         assertEq(ousd.totalSupply(), supplyBefore + yield_ * 1e12);
@@ -38,6 +39,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // Warp 30 days so per-second cap is generous, but MAX_REBASE (2%) still caps
         vm.warp(block.timestamp + 30 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 supplyIncrease = ousd.totalSupply() - supplyBefore;
@@ -62,6 +64,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         _injectYield(yield_);
         vm.warp(block.timestamp + 1 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         assertEq(ousd.balanceOf(address(mockNonRebasing)), nonRebasingBefore);
@@ -78,6 +81,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         _injectYield(yield_);
         vm.warp(block.timestamp + 1 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 mattGain = ousd.balanceOf(matt) - mattBefore;
@@ -100,6 +104,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         _injectYield(yield_);
         vm.warp(block.timestamp + 1 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 scaledYield = yield_ * 1e12;
@@ -124,6 +129,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         _injectYield(yield_);
         vm.warp(block.timestamp + 1 days);
+        vm.prank(governor);
         ousdVault.rebase();
 
         uint256 aliceGain = ousd.balanceOf(alice) - aliceBefore;

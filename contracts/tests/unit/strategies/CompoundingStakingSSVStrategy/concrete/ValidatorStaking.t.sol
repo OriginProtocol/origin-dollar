@@ -7,6 +7,7 @@ import {
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
 // --- Project imports
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
 import {
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState
@@ -58,7 +59,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         });
 
         vm.prank(governor);
-        vm.expectRevert("Invalid first deposit amount");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.InvalidFirstDepositAmount.selector);
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(2 ether / 1 gwei));
     }
 
@@ -92,7 +93,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         });
 
         vm.prank(governor);
-        vm.expectRevert("Not registered or verified");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegisteredOrVerified.selector);
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
     }
 
@@ -137,7 +138,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         });
 
         vm.prank(josh);
-        vm.expectRevert("Not Registrator");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistrator.selector);
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
     }
 

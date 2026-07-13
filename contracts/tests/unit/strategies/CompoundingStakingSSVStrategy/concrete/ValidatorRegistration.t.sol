@@ -19,12 +19,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         deal(address(mockSsv), address(compoundingStakingSSVStrategy), 1000 ether);
     }
 
+    /// @dev Registration emits no event on this strategy — only removal does
+    ///      (SSVValidatorRemoved). State is the observable outcome.
     function test_registerSsvValidator() public {
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
         vm.prank(governor);
-        vm.expectEmit(true, false, false, true);
-        emit ICompoundingStakingSSVStrategy.SSVValidatorRegistered(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.registerSsvValidator(
             testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
@@ -38,7 +38,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         _registerValidator(0);
 
         vm.prank(governor);
-        vm.expectRevert("Validator already registered");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.AlreadyRegistered.selector);
         compoundingStakingSSVStrategy.registerSsvValidator(
             testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
@@ -46,7 +46,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
 
     function test_registerSsvValidator_RevertWhen_notRegistrator() public {
         vm.prank(josh);
-        vm.expectRevert("Not Registrator");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistrator.selector);
         compoundingStakingSSVStrategy.registerSsvValidator(
             testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
@@ -82,7 +82,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         _registerAndStake(0);
 
         vm.prank(governor);
-        vm.expectRevert("Validator not regd or exited");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.CannotRemoveSsvValidator.selector);
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
     }
 
@@ -90,14 +90,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         _registerValidator(0);
 
         vm.prank(josh);
-        vm.expectRevert("Not Registrator");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistrator.selector);
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
     }
 
     function test_removeSsvValidator_RevertWhen_notRegistered() public {
         // Try to remove a validator that was never registered (NON_REGISTERED state = 0)
         vm.prank(governor);
-        vm.expectRevert("Validator not regd or exited");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.CannotRemoveSsvValidator.selector);
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
     }
 
@@ -174,7 +174,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
 
         // Try removeSsvValidator → should revert
         vm.prank(governor);
-        vm.expectRevert("Validator not regd or exited");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.CannotRemoveSsvValidator.selector);
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
     }
 
@@ -203,6 +203,5 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
     // Events
     // ----------------
 
-    event SSVValidatorRegistered(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
 }

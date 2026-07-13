@@ -893,28 +893,23 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- REBASE ON REDEEM (REBASETHRESHOLD)
+    /// --- REDEEM DOES NOT REBASE
     //////////////////////////////////////////////////////
 
-    function test_requestWithdrawal_triggersRebaseWhenAboveThreshold() public {
-        // Set rebaseThreshold so redeem triggers a rebase
-        vm.prank(governor);
-        oethVault.setRebaseThreshold(10e18); // 10 OETH
-
-        // Simulate yield so rebase has something to distribute
+    /// @dev Rebasing is now operator-gated and no longer auto-triggered on redeem,
+    ///      regardless of the request size. Pending yield stays pending.
+    function test_requestWithdrawal_doesNotTriggerRebase() public {
+        // Simulate yield that a rebase would distribute
         _dealWETH(address(this), 2e18);
         MockERC20(address(weth)).transfer(address(oethVault), 2e18);
 
         uint256 mattBefore = oeth.balanceOf(matt);
 
-        // Request > rebaseThreshold to trigger _rebase() in _postRedeem
         vm.prank(matt);
         oethVault.requestWithdrawal(50e18);
 
-        // Matt's remaining balance should reflect yield from rebase
-        uint256 mattAfter = oeth.balanceOf(matt);
-        // Matt had ~100 OETH, requested 50, yield ~1 OETH (his share of 2 OETH)
-        assertGt(mattAfter, mattBefore - 50e18, "Rebase should have distributed yield");
+        // Balance drops by exactly the requested amount — no yield distributed
+        assertEq(oeth.balanceOf(matt), mattBefore - 50e18, "Redeem must not trigger a rebase");
     }
 
     //////////////////////////////////////////////////////

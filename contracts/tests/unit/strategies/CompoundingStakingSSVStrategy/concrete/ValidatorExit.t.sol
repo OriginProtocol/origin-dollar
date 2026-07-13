@@ -80,7 +80,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
     function test_validatorWithdrawal_RevertWhen_notRegistrator() public {
         vm.deal(josh, 1 ether);
         vm.prank(josh);
-        vm.expectRevert("Not Registrator");
+        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistrator.selector);
         compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 

@@ -244,26 +244,41 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- SETREBASETHRESHOLD
+    /// --- SETOPERATORADDR
     //////////////////////////////////////////////////////
 
-    function test_setRebaseThreshold_governor() public {
+    function test_setOperatorAddr_governor() public {
         vm.prank(governor);
-        ousdVault.setRebaseThreshold(500e18);
-        assertEq(ousdVault.rebaseThreshold(), 500e18);
+        ousdVault.setOperatorAddr(operator);
+        assertEq(ousdVault.operatorAddr(), operator);
     }
 
-    function test_setRebaseThreshold_emitsEvent() public {
+    function test_setOperatorAddr_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit IVault.RebaseThresholdUpdated(500e18);
-        ousdVault.setRebaseThreshold(500e18);
+        emit IVault.OperatorUpdated(operator);
+        ousdVault.setOperatorAddr(operator);
     }
 
-    function test_setRebaseThreshold_RevertWhen_unauthorized() public {
+    /// @dev Setting the operator to the zero address disables operator rebases.
+    ///      The Governor and Strategist remain authorized.
+    function test_setOperatorAddr_zeroAddress_disablesOperatorRebase() public {
+        vm.startPrank(governor);
+        ousdVault.setOperatorAddr(operator);
+        ousdVault.setOperatorAddr(address(0));
+        vm.stopPrank();
+
+        assertEq(ousdVault.operatorAddr(), address(0));
+
+        vm.prank(operator);
+        vm.expectRevert("Caller not authorized");
+        ousdVault.rebase();
+    }
+
+    function test_setOperatorAddr_RevertWhen_unauthorized() public {
         vm.prank(alice);
         vm.expectRevert("Caller is not the Governor");
-        ousdVault.setRebaseThreshold(500e18);
+        ousdVault.setOperatorAddr(operator);
     }
 
     //////////////////////////////////////////////////////

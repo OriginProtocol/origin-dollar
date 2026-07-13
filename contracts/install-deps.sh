@@ -29,19 +29,4 @@ install_tgz() {
 install_tgz "@chainlink-contracts-ccip-1.2.1" \
   "https://registry.npmjs.org/@chainlink/contracts-ccip/-/contracts-ccip-1.2.1.tgz"
 
-install_tgz "@layerzerolabs-oft-evm-3.1.4" \
-  "https://registry.npmjs.org/@layerzerolabs/oft-evm/-/oft-evm-3.1.4.tgz"
-
-install_tgz "@layerzerolabs-oapp-evm-0.3.3" \
-  "https://registry.npmjs.org/@layerzerolabs/oapp-evm/-/oapp-evm-0.3.3.tgz"
-
-install_tgz "@layerzerolabs-lz-evm-protocol-v2-3.0.160" \
-  "https://registry.npmjs.org/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.160.tgz"
-
-install_tgz "@layerzerolabs-lz-evm-messagelib-v2-3.0.160" \
-  "https://registry.npmjs.org/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-3.0.160.tgz"
-
-install_tgz "solidity-bytes-utils-0.8.4" \
-  "https://registry.npmjs.org/solidity-bytes-utils/-/solidity-bytes-utils-0.8.4.tgz"
-
 echo "==> All dependencies installed."

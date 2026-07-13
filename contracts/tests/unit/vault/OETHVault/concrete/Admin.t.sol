@@ -71,26 +71,41 @@ contract Unit_Concrete_OETHVault_Admin_Test is Unit_OETHVault_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- SETREBASETHRESHOLD
+    /// --- SETOPERATORADDR
     //////////////////////////////////////////////////////
 
-    function test_setRebaseThreshold_works() public {
+    function test_setOperatorAddr_works() public {
         vm.prank(governor);
-        oethVault.setRebaseThreshold(500e18);
-        assertEq(oethVault.rebaseThreshold(), 500e18);
+        oethVault.setOperatorAddr(operator);
+        assertEq(oethVault.operatorAddr(), operator);
     }
 
-    function test_setRebaseThreshold_emitsEvent() public {
+    function test_setOperatorAddr_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit IVault.RebaseThresholdUpdated(500e18);
-        oethVault.setRebaseThreshold(500e18);
+        emit IVault.OperatorUpdated(operator);
+        oethVault.setOperatorAddr(operator);
     }
 
-    function test_setRebaseThreshold_RevertWhen_notGovernor() public {
+    /// @dev Setting the operator to the zero address disables operator rebases.
+    ///      The Governor and Strategist remain authorized.
+    function test_setOperatorAddr_zeroAddress_disablesOperatorRebase() public {
+        vm.startPrank(governor);
+        oethVault.setOperatorAddr(operator);
+        oethVault.setOperatorAddr(address(0));
+        vm.stopPrank();
+
+        assertEq(oethVault.operatorAddr(), address(0));
+
+        vm.prank(operator);
+        vm.expectRevert("Caller not authorized");
+        oethVault.rebase();
+    }
+
+    function test_setOperatorAddr_RevertWhen_notGovernor() public {
         vm.prank(strategist);
         vm.expectRevert("Caller is not the Governor");
-        oethVault.setRebaseThreshold(500e18);
+        oethVault.setOperatorAddr(operator);
     }
 
     //////////////////////////////////////////////////////

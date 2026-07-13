@@ -8,6 +8,9 @@ library CrossChain {
     address internal constant createX = 0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed;
     address internal constant multichainStrategist = 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971;
     address internal constant multichainBuybackOperator = 0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c;
+    /// @dev Talos signer. Set as the vaults' `operatorAddr` (the permissioned rebase caller)
+    ///      on every chain by deploys mainnet/196, base/051 and sonic/030.
+    address internal constant talosRelayer = 0x739212d5bAfE6AAC8Be49a60B7d003bD41DBf38b;
     address internal constant votemarket = 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9;
     address internal constant CCTPTokenMessengerV2 = 0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d;
     address internal constant CCTPMessageTransmitterV2 = 0x81D40F21F12A8F0E3252Bccb954D722d4c464B64;
@@ -218,11 +221,6 @@ library Mainnet {
     address internal constant DaiUsdsMigrationContract = 0x3225737a9Bbb6473CB4a45b7244ACa2BeFdB276A;
     address internal constant ClaimStrategyRewardsSafeModule = 0x1b84E64279D63f48DdD88B9B2A7871e817152A44;
 
-    // LayerZero
-    address internal constant LayerZeroEndpointV2 = 0x1a44076050125825900e736c501f859c50fE728c;
-    address internal constant WOETHOmnichainAdapter = 0x7d1bEa5807e6af125826d56ff477745BB89972b8;
-    address internal constant ETHOmnichainAdapter = 0x77b2043768d28E9C9aB44E1aBfC95944bcE57931;
-
     // Passthrough
     address internal constant passthrough_curve_OUSD_3POOL = 0x261Fe804ff1F7909c27106dE7030d5A33E72E1bD;
     address internal constant passthrough_uniswap_OUSD_USDT = 0xF29c14dD91e3755ddc1BADc92db549007293F67b;
@@ -243,14 +241,6 @@ library Mainnet {
     address internal constant CrossChainMasterStrategy = 0xB1d624fc40824683e2bFBEfd19eB208DbBE00866;
 
     address internal constant oethWhaleAddress = 0xA7c82885072BADcF3D0277641d55762e65318654;
-
-    // Supernova AMM
-    address internal constant supernovaPairFactory = 0x5aEf44EDFc5A7eDd30826c724eA12D7Be15bDc30;
-    address internal constant supernovaGaugeManager = 0x19a410046Afc4203AEcE5fbFc7A6Ac1a4F517AE2;
-    address internal constant supernovaToken = 0x00Da8466B296E382E5Da2Bf20962D0cB87200c78;
-    address internal constant SupernovaOETHWETH_pool = 0x6c4ced4DE136538D10CD805ff68cdE69a52469Fd;
-    address internal constant SupernovaOETHWETH_gauge = 0xE9eAc35efB37Bd839413c5b29A26C6B32AdAE1De;
-    address internal constant OETHSupernovaAMOProxy = 0xf9E04C36CC7e6065cBBcc972613e8Dd75D6B5967;
 }
 
 library Base {
@@ -439,9 +429,6 @@ library Hoodi {
 library Plume {
     address internal constant WETH = 0xca59cA09E5602fAe8B629DeE83FfA819741f14be;
     address internal constant BridgedWOETH = 0xD8724322f44E5c58D7A815F542036fb17DbbF839;
-    address internal constant LayerZeroEndpointV2 = 0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36;
-    address internal constant WOETHOmnichainAdapter = 0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB;
-    address internal constant WETHOmnichainAdapter = 0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066;
     address internal constant timelock = 0x6C6f8F839A7648949873D3D2beEa936FC2932e5c;
     address internal constant WPLUME = 0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1;
     address internal constant MaverickV2Factory = 0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E;

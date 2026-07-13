@@ -10,6 +10,19 @@ import { CompoundingStrategyValidatorProofData } from "./CompoundingStakingTypes
 import { CompoundingFirstPendingDepositSlotProofData } from "./CompoundingStakingTypes.sol";
 
 interface ICompoundingStakingSSVStrategy {
+    // Errors (from CompoundingStakingStrategy)
+    error NotRegistratorOrGovernor(); // 0xbf454a2d
+    error NotRegistrator(); // 0x929df920
+    error NoFirstDeposit(); // 0x30e60c37
+    error InvalidFirstDepositAmount(); // 0x29829bdd
+    error UnsupportedAsset(); // 0x24a01144
+    error UnsupportedFunction(); // 0xea1c702e
+
+    // Errors (from CompoundingStakingSSVStrategy)
+    error CannotRemoveSsvValidator(); // 0x2c45bd75
+    error AlreadyRegistered(); // 0x3a81d6fc
+    error NotRegisteredOrVerified(); // 0x99088a6b
+
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
@@ -29,13 +42,9 @@ interface ICompoundingStakingSSVStrategy {
         address _newHarvesterAddress
     );
 
-    // Events (from CompoundingValidatorManager)
+    // Events (from CompoundingStakingStrategy)
     event RegistratorChanged(address indexed newAddress);
     event FirstDepositReset();
-    event SSVValidatorRegistered(
-        bytes32 indexed pubKeyHash,
-        uint64[] operatorIds
-    );
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
@@ -119,7 +128,8 @@ interface ICompoundingStakingSSVStrategy {
     function initialize(
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
-        address[] calldata _pTokens
+        address[] calldata _pTokens,
+        uint256 _initialDepositAmountWei
     ) external;
 
     function depositedWethAccountedFor() external view returns (uint256);
@@ -147,11 +157,6 @@ interface ICompoundingStakingSSVStrategy {
 
     function removeSsvValidator(
         bytes calldata publicKey,
-        uint64[] calldata operatorIds,
-        Cluster calldata cluster
-    ) external;
-
-    function migrateClusterToETH(
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external;

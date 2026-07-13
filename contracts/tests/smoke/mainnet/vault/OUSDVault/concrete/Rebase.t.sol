@@ -4,12 +4,16 @@ pragma solidity ^0.8.0;
 // --- Test base
 import {Smoke_OUSDVault_Shared_Test} from "tests/smoke/mainnet/vault/OUSDVault/shared/Shared.t.sol";
 
+// --- Project imports
+import {CrossChain} from "tests/utils/Addresses.sol";
+
 contract Smoke_Concrete_OUSDVault_Rebase_Test is Smoke_OUSDVault_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- REBASE
     //////////////////////////////////////////////////////
 
     function test_rebase_succeeds() public {
+        vm.prank(governor);
         ousdVault.rebase();
     }
 
@@ -34,8 +38,29 @@ contract Smoke_Concrete_OUSDVault_Rebase_Test is Smoke_OUSDVault_Shared_Test {
         assertGt(preview, 0);
 
         // After rebase, preview should be zero
+        vm.prank(governor);
         ousdVault.rebase();
         uint256 previewAfter = ousdVault.previewYield();
         assertEq(previewAfter, 0);
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- REBASE AUTHORIZATION
+    //////////////////////////////////////////////////////
+
+    /// @dev The permissioned-rebase operator is the Talos relayer on every chain.
+    function test_operatorAddr_isTalosRelayer() public view {
+        assertEq(ousdVault.operatorAddr(), CrossChain.talosRelayer);
+    }
+
+    function test_rebase_asOperator() public {
+        vm.prank(ousdVault.operatorAddr());
+        ousdVault.rebase(); // Should not revert
+    }
+
+    function test_rebase_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller not authorized");
+        ousdVault.rebase();
     }
 }
