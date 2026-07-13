@@ -15,6 +15,12 @@ action({
   chains: [1, 8453],
   params: (t) => {
     t.addOptionalParam(
+      "txHash",
+      "Source-chain tx hash to relay. When set, skips the recent-events scan and relays only this transaction's message(s). Must be run on the destination chain.",
+      undefined,
+      types.string
+    );
+    t.addOptionalParam(
       "block",
       "Override the block number at which the message emission transaction happened",
       undefined,
