@@ -90,13 +90,13 @@ async function snapMorpho({ block }) {
     { blockTag }
   );
 
-  console.log(
+  log(
     `Strategy balance                : ${formatUnits(
       strategyUSDCBalance,
       6
     )} USDC`
   );
-  console.log(
+  log(
     `Max withdrawable from underlying: ${formatUnits(maxWithdrawal, 6)} USDC`
   );
 
@@ -108,7 +108,7 @@ async function snapMorpho({ block }) {
     .mul(BigNumber.from(10000))
     .div(strategyUSDCBalance);
 
-  console.log(
+  log(
     `Withdraw shortfall              : ${formatUnits(
       shortfall,
       6

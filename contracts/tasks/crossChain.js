@@ -2,6 +2,74 @@
 const ethers = require("ethers");
 const { logTxDetails } = require("../utils/txLogger");
 const { api: cctpApi } = require("../utils/cctp");
+const log = require("../utils/logger")("task:crossChain");
+
+// 0x-prefixed 32-byte tx hash
+const TX_HASH_REGEX = /^0x([A-Fa-f0-9]{64})$/;
+
+// Layout constants mirror the on-chain decoders so the script extracts the
+// same Origin nonce the contract would.
+// Ref: contracts/strategies/crosschain/CrossChainStrategyHelper.sol
+//      and AbstractCCTPIntegrator.sol
+const ORIGIN_MESSAGE_VERSION = 1010; // CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION
+const CCTP_MESSAGE_BODY_INDEX = 148; // CrossChainStrategyHelper.MESSAGE_BODY_INDEX
+const BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228; // AbstractCCTPIntegrator.BURN_MESSAGE_V2_HOOK_DATA_INDEX
+// Origin message: 4 bytes version + 4 bytes type, then the abi-encoded payload
+const ORIGIN_PAYLOAD_INDEX = 8;
+
+// Read a big-endian uint32 from a Uint8Array at the given byte offset.
+const readUint32 = (bytes, start) =>
+  (bytes[start] << 24) |
+  (bytes[start + 1] << 16) |
+  (bytes[start + 2] << 8) |
+  bytes[start + 3];
+
+/**
+ * Decode the Origin transfer nonce from a raw CCTP message, mirroring the
+ * on-chain relay decoding. Returns the nonce as an ethers BigNumber, or null
+ * if the message is not one of our Origin messages (deposit / withdraw /
+ * balance check).
+ *
+ * The Origin message is either:
+ *  - the CCTP message body directly (plain message: withdraw / balance check), or
+ *  - the burn message hook data (deposit), located at byte 228 of the body.
+ * The nonce is the first abi-encoded word of the Origin payload.
+ */
+const decodeOriginNonce = (messageHex) => {
+  if (!messageHex) {
+    return null;
+  }
+  const bytes = ethers.utils.arrayify(messageHex);
+  if (bytes.length < CCTP_MESSAGE_BODY_INDEX + 4) {
+    return null;
+  }
+  const body = bytes.slice(CCTP_MESSAGE_BODY_INDEX);
+
+  let originMessage;
+  if (readUint32(body, 0) === ORIGIN_MESSAGE_VERSION) {
+    // Plain message (withdraw / balance check): body is the Origin message
+    originMessage = body;
+  } else if (
+    body.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX + 4 &&
+    readUint32(body, BURN_MESSAGE_V2_HOOK_DATA_INDEX) === ORIGIN_MESSAGE_VERSION
+  ) {
+    // Burn message (deposit): Origin message is the hook data
+    originMessage = body.slice(BURN_MESSAGE_V2_HOOK_DATA_INDEX);
+  } else {
+    return null;
+  }
+
+  if (originMessage.length < ORIGIN_PAYLOAD_INDEX + 32) {
+    return null;
+  }
+
+  // Nonce is the first 32-byte abi word of the payload (a left-padded uint64)
+  const nonceWord = originMessage.slice(
+    ORIGIN_PAYLOAD_INDEX,
+    ORIGIN_PAYLOAD_INDEX + 32
+  );
+  return ethers.BigNumber.from(nonceWord);
+};
 
 const cctpOperationsConfig = async ({
   destinationChainSigner,
@@ -14,6 +82,7 @@ const cctpOperationsConfig = async ({
     "event TokensBridged(uint32 peerDomainID,address peerStrategy,address usdcToken,uint256 tokenAmount,uint256 maxFee,uint32 minFinalityThreshold,bytes hookData)",
     "event MessageTransmitted(uint32 peerDomainID,address peerStrategy,uint32 minFinalityThreshold,bytes message)",
     "function relay(bytes message, bytes attestation) external",
+    "function isNonceProcessed(uint64 nonce) view returns (bool)",
   ];
 
   const cctpIntegrationContractSource = new ethers.Contract(
@@ -35,7 +104,7 @@ const cctpOperationsConfig = async ({
 };
 
 const fetchAttestations = async ({ transactionHash, cctpChainId }) => {
-  console.log(
+  log(
     `Fetching attestation for transaction hash: ${transactionHash} on cctp chain id: ${cctpChainId}`
   );
   const response = await fetch(
@@ -124,7 +193,7 @@ const fetchTxHashesFromCctpTransactions = async ({
   const messageTransmittedTopic =
     cctpIntegrationContractSource.interface.getEventTopic("MessageTransmitted");
 
-  console.log(
+  log(
     `Fetching event logs from block ${resolvedFromBlock} to block ${resolvedToBlock}`
   );
   const [eventLogsTokenBridged, eventLogsMessageTransmitted] =
@@ -150,12 +219,13 @@ const fetchTxHashesFromCctpTransactions = async ({
   ].map((log) => log.transactionHash);
   const allTxHashes = Array.from(new Set([...possiblyDuplicatedTxHashes]));
 
-  console.log(`Found ${allTxHashes.length} transactions that emitted messages`);
+  log(`Found ${allTxHashes.length} transactions that emitted messages`);
   return { allTxHashes };
 };
 
 const processCctpBridgeTransactions = async ({
   block = undefined,
+  txHash = undefined,
   dryrun = false,
   destinationChainSigner,
   sourceChainProvider,
@@ -167,6 +237,10 @@ const processCctpBridgeTransactions = async ({
   cctpIntegrationContractAddress,
   cctpIntegrationContractAddressDestination,
 }) => {
+  // When a tx hash is passed we relay only that transaction (skipping the
+  // recent-events scan) and bypass the local store dedup, since the operator
+  // explicitly asked for it. On-chain isNonceProcessed is the real safety net.
+  const manualRun = Boolean(txHash);
   const config = await cctpOperationsConfig({
     destinationChainSigner,
     sourceChainProvider,
@@ -174,26 +248,40 @@ const processCctpBridgeTransactions = async ({
     cctpIntegrationContractAddress,
     cctpIntegrationContractAddressDestination,
   });
-  console.log(
+  log(
     `Fetching cctp messages posted on ${config.networkName} network.${
       block ? ` Only for block: ${block}` : " Looking at most recent blocks"
     }`
   );
 
-  const { allTxHashes } = await fetchTxHashesFromCctpTransactions({
-    config,
-    overrideBlock: block,
-    sourceChainProvider,
-    blockLookback,
-  });
+  let allTxHashes;
+  if (manualRun) {
+    if (!TX_HASH_REGEX.test(txHash)) {
+      throw new Error(`Invalid tx hash: ${txHash}`);
+    }
+    allTxHashes = [txHash.toLowerCase()];
+    log(
+      `Relaying only tx ${allTxHashes[0]} (manual). Skipping recent-events scan.`
+    );
+  } else {
+    ({ allTxHashes } = await fetchTxHashesFromCctpTransactions({
+      config,
+      overrideBlock: block,
+      sourceChainProvider,
+      blockLookback,
+    }));
+  }
   for (const txHash of allTxHashes) {
     const txStoreKey = `cctp_message_${txHash}_${cctpDestinationDomainId}`;
     // TODO: Legacy key can be removed after a few days of code deployment
     const txStoreKey_Legacy = `cctp_message_${txHash}`;
     const txStoredValue = await store.get(txStoreKey);
     const txStoredValue_Legacy = await store.get(txStoreKey_Legacy);
-    if (txStoredValue === "processed" || txStoredValue_Legacy === "processed") {
-      console.log(
+    if (
+      !manualRun &&
+      (txStoredValue === "processed" || txStoredValue_Legacy === "processed")
+    ) {
+      log(
         `Transaction with hash ${txHash} has already been processed via tx-level key ${txStoreKey}. Skipping...`
       );
       continue;
@@ -204,7 +292,7 @@ const processCctpBridgeTransactions = async ({
       cctpChainId: cctpSourceDomainId,
     });
 
-    console.log(
+    log(
       `Found ${cctpMessages.length} CCTP messages for transaction hash: ${txHash}`
     );
 
@@ -220,7 +308,7 @@ const processCctpBridgeTransactions = async ({
       const storedValue = await store.get(storeKey);
 
       if (cctpMessage.status !== "complete") {
-        console.log(
+        log(
           `Message ${messageId} from tx ${txHash} is not attested yet (status: ${cctpMessage.status}). Skipping...`
         );
         hasEligibleMessage = true;
@@ -234,34 +322,54 @@ const processCctpBridgeTransactions = async ({
         destinationDomainId: cctpDestinationDomainId,
       });
       if (!messageTargetsDestination) {
-        console.log(
+        log(
           `Skipping message ${messageId} from tx ${txHash} because it does not target destination caller ${destinationAddress} on domain ${cctpDestinationDomainId}`
         );
         continue;
       }
       hasEligibleMessage = true;
 
-      if (storedValue === "processed") {
-        console.log(
+      if (!manualRun && storedValue === "processed") {
+        log(
           `Message with key ${storeKey} has already been processed. Skipping...`
         );
         continue;
       }
 
+      // Check on-chain whether this transfer nonce was already processed on the
+      // destination strategy. If so, relaying would revert, so skip it and
+      // reconcile the local store.
+      const originNonce = decodeOriginNonce(cctpMessage.message);
+      if (
+        originNonce !== null &&
+        (await config.cctpIntegrationContractDestination.isNonceProcessed(
+          originNonce
+        ))
+      ) {
+        log(
+          `Nonce ${originNonce.toString()} for message ${messageId} from tx ${txHash} is already processed on-chain. Skipping relay...`
+        );
+        if (storedValue !== "processed") {
+          await store.put(storeKey, "processed");
+          log(`Marked message with key ${storeKey} as processed in store`);
+        }
+        continue;
+      }
+
       if (!cctpMessage.message || !cctpMessage.attestation) {
-        console.log(
+        log(
           `Message ${messageId} from tx ${txHash} is missing message payload or attestation. Skipping...`
         );
         hasUnprocessedEligibleMessages = true;
         continue;
       }
 
-      console.log(
+      log(
         `Attempting to relay message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
       );
 
       if (dryrun) {
-        console.log(
+        log(
           `Dryrun: Would have relayed message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
         );
         continue;
@@ -272,17 +380,17 @@ const processCctpBridgeTransactions = async ({
         cctpMessage.attestation,
         { gasLimit: 2000000 }
       );
-      console.log(
+      log(
         `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
       );
       const receipt = await logTxDetails(relayTx, "CCTP relay");
 
       // Final verification
       if (receipt.status === 1) {
-        console.log("SUCCESS: Transaction executed successfully!");
+        log("SUCCESS: Transaction executed successfully!");
         await store.put(storeKey, "processed");
       } else {
-        console.log("FAILURE: Transaction reverted!");
+        log("FAILURE: Transaction reverted!");
         throw new Error(`Transaction reverted - status: ${receipt.status}`);
       }
     }
@@ -291,11 +399,9 @@ const processCctpBridgeTransactions = async ({
       !hasEligibleMessage || !hasUnprocessedEligibleMessages;
     if (shouldMarkTxProcessed) {
       await store.put(txStoreKey, "processed");
-      console.log(
-        `Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`
-      );
+      log(`Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`);
     } else {
-      console.log(
+      log(
         `Did not mark tx-level key ${txStoreKey} because eligible messages exist but none were fully processed for tx ${txHash}`
       );
     }
@@ -304,4 +410,6 @@ const processCctpBridgeTransactions = async ({
 
 module.exports = {
   processCctpBridgeTransactions,
+  decodeOriginNonce,
+  TX_HASH_REGEX,
 };

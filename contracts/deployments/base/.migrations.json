@@ -44,5 +44,12 @@
   "044_bridge_helper_module": 1772010908,
   "045_deploy_pool_booster_merkl_factory": 1772622327,
   "046_crosschain_upgrade_remote": 1772750064,
-  "047_merkl_pb_bribes_module": 1773930124
+  "047_merkl_pb_bribes_module": 1773930124,
+  "048_oethb_hydrex_amo": 1778063838,
+  "049_permissioned_rebase_module": 1778095983,
+  "050_vault_permissioned_rebase": 1778496613,
+  "051_migrate_base_operators_to_talos": 1780952712,
+  "052_migrate_base_merkl_module_to_talos": 1780952712,
+  "053_grant_base_claim_bribes_module1_talos": 1780952712,
+  "054_grant_base_claim_bribes_module3_talos": 1780952712
 }

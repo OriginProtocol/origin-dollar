@@ -13,90 +13,6 @@ const { sleep } = require("../utils/time");
 
 const log = require("../utils/logger")("task:p2p");
 
-// This is in a separate file as it uses hardhat.
-// We don't want the registerValidators and stakeValidators functions to use hardhat
-// as they are using in Defender Actions.
-// This is only used by Hardhat tasks registerValidators and stakeValidators
-const validatorOperationsConfig = async (taskArgs) => {
-  const networkName = await getNetworkName();
-
-  const addressesSet = addresses[networkName];
-  const isMainnet = networkName === "mainnet";
-
-  const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
-
-  const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
-    taskArgs.index
-  );
-  const feeAccumulatorAddress =
-    await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-
-  const p2p_api_key = isMainnet
-    ? process.env.P2P_MAINNET_API_KEY
-    : process.env.P2P_HOODI_API_KEY;
-  if (!p2p_api_key) {
-    throw new Error(
-      "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOODI_API_KEY"
-    );
-  }
-  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test.p2p.org";
-
-  const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
-  const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
-  const s3BucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
-
-  if (!awsS3AccessKeyId) {
-    throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
-  }
-  if (!awsS3SexcretAccessKeyId) {
-    throw new Error("Secret AWS_SECRET_S3_ACCESS_KEY not set");
-  }
-  if (!s3BucketName) {
-    throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
-  }
-
-  // Convert the ETH amount to wei in string format if it is provided
-  const ethAmount =
-    taskArgs.eth >= 0
-      ? parseEther(taskArgs.eth.toString()).toString()
-      : undefined;
-
-  // Local/dev mode — simple in-memory store
-  const store = new Map();
-  const kvClient = {
-    async get(key) {
-      return store.get(key) ?? null;
-    },
-    async put(key, value) {
-      store.set(key, value);
-      return value;
-    },
-    async del(key) {
-      store.delete(key);
-    },
-  };
-
-  return {
-    store: kvClient,
-    p2p_api_key,
-    p2p_base_url,
-    nativeStakingStrategy,
-    feeAccumulatorAddress,
-    WETH,
-    // how much SSV (expressed in days of runway) gets deposited into the
-    // SSV Network contract on validator registration. This is calculated
-    // at a Cluster level rather than a single validator.
-    validatorSpawnOperationalPeriodInDays: taskArgs.days,
-    clear: taskArgs.clear,
-    uuid: taskArgs.uuid,
-    maxValidatorsToRegister: taskArgs.validators,
-    ethAmount,
-    awsS3AccessKeyId,
-    awsS3SexcretAccessKeyId,
-    s3BucketName,
-  };
-};
-
 // @dev check validator is eligible for exit -
 // has been active for at least 256 epochs
 async function verifyMinActivationTime({ pubkey }) {
@@ -152,20 +68,35 @@ async function snapValidators({ pubkeys }) {
   }
 }
 
-async function exitValidator({ index, pubkey, operatorids, signer }) {
+async function exitValidator({
+  index,
+  pubkey,
+  operatorids,
+  signer,
+  consol = false,
+}) {
   await verifyMinActivationTime({ pubkey });
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
 
   pubkey = checkPubkeyFormat(pubkey);
 
-  log(`About to exit validator ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .exitSsvValidator(pubkey, operatorIds);
+  log(
+    `About to exit validator ${pubkey} via ${
+      consol ? "ConsolidationController" : "strategy"
+    }`
+  );
+  const tx = consol
+    ? await contract
+        .connect(signer)
+        .exitSsvValidator(strategy.address, pubkey, operatorIds)
+    : await contract.connect(signer).exitSsvValidator(pubkey, operatorIds);
   await logTxDetails(tx, "exitSsvValidator");
 }
 
@@ -388,7 +319,6 @@ const resolveFeeAccumulatorProxy = async (index) => {
 };
 
 module.exports = {
-  validatorOperationsConfig,
   exitValidator,
   doAccounting,
   resetStakeETHTally,

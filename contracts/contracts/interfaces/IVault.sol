@@ -18,7 +18,6 @@ interface IVault {
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event AllocateThresholdUpdated(uint256 _threshold);
-    event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
@@ -60,13 +59,13 @@ interface IVault {
 
     function autoAllocateThreshold() external view returns (uint256);
 
-    function setRebaseThreshold(uint256 _threshold) external;
-
-    function rebaseThreshold() external view returns (uint256);
-
     function setStrategistAddr(address _address) external;
 
     function strategistAddr() external view returns (address);
+
+    function setOperatorAddr(address _operator) external;
+
+    function operatorAddr() external view returns (address);
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
