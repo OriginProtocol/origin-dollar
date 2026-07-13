@@ -69,5 +69,12 @@ ENV MAINNET_PROVIDER_URL="" \
   BEACON_PROVIDER_URL="" \
   HARDHAT_NETWORK=""
 
+# Git commit this image was built from. CI passes
+# --build-arg GIT_COMMIT_SHA=<github.sha>; empty for local builds. @talos/client's
+# runContainer reports it as the runner's `version`, letting the admin announce
+# redeploys to Discord.
+ARG GIT_COMMIT_SHA=""
+ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
+
 USER runner
 CMD ["bun", "run", "runner.ts"]
