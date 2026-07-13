@@ -61,10 +61,7 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    try {
-      await verifyBalances({ ...args, signer });
-    } finally {
-      cleanStateCache();
-    }
+    await verifyBalances({ ...args, signer });
+    cleanStateCache();
   },
 });

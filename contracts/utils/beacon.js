@@ -11,25 +11,42 @@ const {
 const log = require("./logger")("utils:beacon");
 
 const SLOTS_PER_EPOCH = 32;
+const BEACON_STATE_CACHE_DIR = "./cache";
+const BEACON_STATE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 // Beacon state SSZ files are large and each run fetches a unique slot, so a
 // long-lived runner accumulates them in ./cache until the disk fills (ENOSPC).
-// Track the states this process wrote and delete them once the action finishes
-// (cleanStateCache runs from the action wrapper's finally). Only files this
-// invocation created are removed, so a state a concurrently-running action
-// wrote is never touched.
-const createdStateFiles = new Set();
+// After successful beacon actions, prune old beacon state files while leaving
+// recent files available for retries and avoiding unrelated Hardhat cache data.
+const cleanStateCache = (now = Date.now()) => {
+  if (!fs.existsSync(BEACON_STATE_CACHE_DIR)) {
+    return;
+  }
 
-const cleanStateCache = () => {
-  for (const file of createdStateFiles) {
+  for (const entry of fs.readdirSync(BEACON_STATE_CACHE_DIR, {
+    withFileTypes: true,
+  })) {
+    if (
+      !entry.isFile() ||
+      !entry.name.startsWith("state_") ||
+      !entry.name.endsWith(".ssz")
+    ) {
+      continue;
+    }
+
+    const file = `${BEACON_STATE_CACHE_DIR}/${entry.name}`;
     try {
+      const stats = fs.statSync(file);
+      if (now - stats.mtimeMs <= BEACON_STATE_CACHE_MAX_AGE_MS) {
+        continue;
+      }
+
       fs.rmSync(file, { force: true });
-      log(`Removed cached beacon state ${file}`);
+      log(`Removed cached beacon state older than 1 day ${file}`);
     } catch {
       // Best-effort cleanup; a missing file is fine.
     }
   }
-  createdStateFiles.clear();
 };
 
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
@@ -150,7 +167,6 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     log(`Writing state to file ${stateFilename}`);
     fs.writeFileSync(stateFilename, stateRes.ssz());
     stateSsz = stateRes.ssz();
-    createdStateFiles.add(stateFilename);
   }
 
   const stateView = BeaconState.deserializeToView(stateSsz);

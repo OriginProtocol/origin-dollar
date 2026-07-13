@@ -25,10 +25,7 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    try {
-      await verifyDeposits({ ...args, signer });
-    } finally {
-      cleanStateCache();
-    }
+    await verifyDeposits({ ...args, signer });
+    cleanStateCache();
   },
 });
