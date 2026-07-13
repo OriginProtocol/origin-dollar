@@ -11,6 +11,43 @@ const {
 const log = require("./logger")("utils:beacon");
 
 const SLOTS_PER_EPOCH = 32;
+const BEACON_STATE_CACHE_DIR = "./cache";
+const BEACON_STATE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+// Beacon state SSZ files are large and each run fetches a unique slot, so a
+// long-lived runner accumulates them in ./cache until the disk fills (ENOSPC).
+// After successful beacon actions, prune old beacon state files while leaving
+// recent files available for retries and avoiding unrelated Hardhat cache data.
+const cleanStateCache = (now = Date.now()) => {
+  if (!fs.existsSync(BEACON_STATE_CACHE_DIR)) {
+    return;
+  }
+
+  for (const entry of fs.readdirSync(BEACON_STATE_CACHE_DIR, {
+    withFileTypes: true,
+  })) {
+    if (
+      !entry.isFile() ||
+      !entry.name.startsWith("state_") ||
+      !entry.name.endsWith(".ssz")
+    ) {
+      continue;
+    }
+
+    const file = `${BEACON_STATE_CACHE_DIR}/${entry.name}`;
+    try {
+      const stats = fs.statSync(file);
+      if (now - stats.mtimeMs <= BEACON_STATE_CACHE_MAX_AGE_MS) {
+        continue;
+      }
+
+      fs.rmSync(file, { force: true });
+      log(`Removed cached beacon state older than 1 day ${file}`);
+    } catch {
+      // Best-effort cleanup; a missing file is fine.
+    }
+  }
+};
 
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
   index: Number(index),
@@ -456,6 +493,7 @@ const verifyDepositSignatureAndMessageRoot = async ({
 };
 
 module.exports = {
+  cleanStateCache,
   concatProof,
   getBeaconBlock,
   getSlot,
