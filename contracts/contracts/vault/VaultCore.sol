@@ -741,6 +741,16 @@ abstract contract VaultCore is VaultInitializer {
      * This assumes 1 asset equal 1 corresponding OToken.
      */
     function _addWithdrawalQueueLiquidity() internal returns (uint256) {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // Short circuit before computing the socialisation ratio, which walks every
+        // strategy. There is nothing to fund when the queue is already fully
+        // covered, which is the common case on mint/allocate and on every Native
+        // Staking validator withdrawal.
+        if (queue.queued == queue.claimable) {
+            return 0;
+        }
+
         return _addWithdrawalQueueLiquidity(_socialisationRatio());
     }
 
