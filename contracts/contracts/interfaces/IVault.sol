@@ -37,7 +37,8 @@ interface IVault {
     event WithdrawalClaimed(
         address indexed _withdrawer,
         uint256 indexed _requestId,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _paidAmount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);

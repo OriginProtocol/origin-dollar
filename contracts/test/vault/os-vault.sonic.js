@@ -221,7 +221,7 @@ describe("Origin S Vault", function () {
 
       await expect(tx)
         .to.emit(oSonicVault, "WithdrawalClaimed")
-        .withArgs(nick.address, withdrawalId, withdrawAmount);
+        .withArgs(nick.address, withdrawalId, withdrawAmount, withdrawAmount);
 
       await assertChangedData(
         dataBefore,
@@ -264,10 +264,10 @@ describe("Origin S Vault", function () {
 
       await expect(tx)
         .to.emit(oSonicVault, "WithdrawalClaimed")
-        .withArgs(nick.address, 0, withdrawAmount1);
+        .withArgs(nick.address, 0, withdrawAmount1, withdrawAmount1);
       await expect(tx)
         .to.emit(oSonicVault, "WithdrawalClaimed")
-        .withArgs(nick.address, 1, withdrawAmount2);
+        .withArgs(nick.address, 1, withdrawAmount2, withdrawAmount2);
 
       await assertChangedData(
         dataBefore,

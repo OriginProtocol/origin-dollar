@@ -659,6 +659,21 @@ describe("OETH Vault", function () {
       ).to.be.revertedWith("Vault under-backed");
     });
 
+    it("Should cap how far governance can open the mint gate", async () => {
+      const { oethVault, governor } = fixture;
+      const maxMintTolerance = oethUnits("0.5"); // MAX_MINT_TOLERANCE
+
+      // At the ceiling is fine
+      await oethVault.connect(governor).setMintTolerance(maxMintTolerance);
+      expect(await oethVault.mintTolerance()).to.equal(maxMintTolerance);
+
+      // One wei beyond it is not: governance can never let new depositors mint
+      // into a vault that is more than 50% under-backed.
+      await expect(
+        oethVault.connect(governor).setMintTolerance(maxMintTolerance.add(1))
+      ).to.be.revertedWith("Mint tolerance too high");
+    });
+
     it("Should still allow mintForStrategy (AMO) when under-backed", async () => {
       const { oethVault, oeth, governor, weth } = fixture;
       // Whitelist an AMO strategy for direct minting
@@ -683,6 +698,104 @@ describe("OETH Vault", function () {
       expect(await oeth.balanceOf(mockAMO.address)).to.equal(
         before.add(oethUnits("5"))
       );
+    });
+  });
+
+  // The whole protocol is in the queue (live supply 0), so the queue's own
+  // impaired backing is the only thing funding it. The claimable frontier is
+  // denominated in nominal units but funded out of real assets, so it must be
+  // scaled by the backing ratio - otherwise it can never reach `queued` and the
+  // tail of the queue is stranded forever.
+  describe("Loss socialization: FIFO gate drains a fully-queued vault", () => {
+    const delayPeriod = 10 * 60; // 10 minutes
+    let mockStrategy;
+
+    beforeEach(async () => {
+      const { governor, oethVault, weth, daniel, josh, matt } = fixture;
+
+      // Widen the circuit breaker so the 10% loss stays inside the band
+      await oethVault.connect(governor).setMaxSupplyDiff(oethUnits("0.2"));
+
+      mockStrategy = await deployWithConfirmation("MockStrategy");
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+      await oethVault
+        .connect(governor)
+        .setDefaultStrategy(mockStrategy.address);
+
+      // 3 users mint 10 OETH each, then all 30 WETH is moved to the strategy so
+      // the vault holds nothing and the frontier cannot be granted early.
+      await oethVault.connect(daniel).mint(oethUnits("10"));
+      await oethVault.connect(josh).mint(oethUnits("10"));
+      await oethVault.connect(matt).mint(oethUnits("10"));
+      await oethVault.connect(governor).allocate();
+      expect(await weth.balanceOf(oethVault.address)).to.equal(0);
+
+      // The entire protocol queues up: live OETH supply drops to 0, queued = 30
+      await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+      await oethVault.connect(josh).requestWithdrawal(oethUnits("10"));
+      await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+      await advanceTime(delayPeriod);
+
+      // Slash 3 of the 30 WETH => gross 27 / effectiveSupply 30 = 0.9 ratio
+      await weth
+        .connect(await impersonateAndFund(mockStrategy.address))
+        .transfer(addresses.dead, oethUnits("3"));
+
+      // Strategist brings the remaining 27 WETH back to fund the queue
+      await oethVault
+        .connect(fixture.strategist)
+        .withdrawFromStrategy(
+          mockStrategy.address,
+          [weth.address],
+          [oethUnits("27")]
+        );
+      await oethVault.connect(josh).addWithdrawalQueueLiquidity();
+    });
+
+    it("Should have a 0.9 backing ratio with the whole supply queued", async () => {
+      const { oethVault, oeth } = fixture;
+      expect(await oeth.totalSupply()).to.equal(0);
+      expect(await oethVault.grossAssets()).to.equal(oethUnits("27"));
+      expect(await oethVault.effectiveSupply()).to.equal(oethUnits("30"));
+      expect(await oethVault.backingRatio()).to.equal(oethUnits("0.9"));
+    });
+
+    it("Should let all three users claim their haircut and drain the vault", async () => {
+      const { oethVault, weth, daniel, josh, matt } = fixture;
+      const payout = oethUnits("9"); // 10 nominal * 0.9 ratio
+
+      for (const [requestId, user] of [
+        [0, daniel],
+        [1, josh],
+        [2, matt],
+      ]) {
+        const before = await weth.balanceOf(user.address);
+
+        await oethVault.connect(user).claimWithdrawal(requestId);
+
+        expect(
+          await weth.balanceOf(user.address),
+          `user ${requestId} WETH`
+        ).to.equal(before.add(payout));
+
+        // Paying ratio * nominal and removing nominal from the effective supply
+        // leaves the ratio unchanged, so every claimer is haircut identically.
+        // Once the last request settles there is nothing left to back and the
+        // ratio is vacuously 1e18.
+        if ((await oethVault.effectiveSupply()).gt(0)) {
+          expect(
+            await oethVault.backingRatio(),
+            `ratio after claim ${requestId}`
+          ).to.equal(oethUnits("0.9"));
+        }
+      }
+
+      // The queue settled in full and the vault is drained to the wei
+      const queue = await oethVault.withdrawalQueueMetadata();
+      expect(queue.claimed).to.equal(oethUnits("30"));
+      expect(queue.claimed).to.equal(queue.queued);
+      expect(await weth.balanceOf(oethVault.address)).to.equal(0);
+      expect(await oethVault.grossAssets()).to.equal(0);
     });
   });
 
@@ -873,7 +986,12 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(josh.address, requestId, secondRequestAmount);
+          .withArgs(
+            josh.address,
+            requestId,
+            secondRequestAmount,
+            secondRequestAmount
+          );
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimable")
           .withArgs(
@@ -911,10 +1029,10 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, firstRequestAmount);
+          .withArgs(matt.address, 0, firstRequestAmount, firstRequestAmount);
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 1, secondRequestAmount);
+          .withArgs(matt.address, 1, secondRequestAmount, secondRequestAmount);
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimable")
           .withArgs(
@@ -961,7 +1079,7 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, oethUnits("30"));
+          .withArgs(matt.address, 0, oethUnits("30"), oethUnits("30"));
 
         await expect(oethTotalSupply).to.equal(await oeth.totalSupply());
         await expect(totalValueAfter).to.equal(await oethVault.totalValue());
@@ -1140,7 +1258,12 @@ describe("OETH Vault", function () {
 
           await expect(tx)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 0, firstRequestAmount);
+            .withArgs(
+              daniel.address,
+              0,
+              firstRequestAmount,
+              firstRequestAmount
+            );
 
           await assertChangedData(
             dataBefore,
@@ -1180,7 +1303,7 @@ describe("OETH Vault", function () {
 
           await expect(tx)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(matt.address, 2, requestAmount);
+            .withArgs(matt.address, 2, requestAmount, requestAmount);
 
           await assertChangedData(
             dataBefore,
@@ -1519,7 +1642,7 @@ describe("OETH Vault", function () {
 
           await expect(tx)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 2, oethUnits("4"));
+            .withArgs(daniel.address, 2, oethUnits("4"), oethUnits("4"));
 
           await assertChangedData(
             dataBefore,
@@ -1570,13 +1693,13 @@ describe("OETH Vault", function () {
 
           await expect(tx1)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 2, oethUnits("4"));
+            .withArgs(daniel.address, 2, oethUnits("4"), oethUnits("4"));
 
           const tx2 = await oethVault.connect(josh).claimWithdrawal(3);
 
           await expect(tx2)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(josh.address, 3, oethUnits("12"));
+            .withArgs(josh.address, 3, oethUnits("12"), oethUnits("12"));
 
           await assertChangedData(
             dataBefore,
@@ -1779,7 +1902,7 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, oethUnits("10"));
+          .withArgs(matt.address, 2, oethUnits("10"), oethUnits("10"));
 
         await assertChangedData(
           dataBefore,
@@ -1822,7 +1945,7 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, oethUnits("40"));
+          .withArgs(matt.address, 0, oethUnits("40"), oethUnits("40"));
 
         await assertChangedData(
           dataBefore,
@@ -1870,7 +1993,7 @@ describe("OETH Vault", function () {
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 1, oethUnits("60"));
+          .withArgs(matt.address, 1, oethUnits("60"), oethUnits("60"));
 
         await assertChangedData(
           dataBefore,
@@ -1889,22 +2012,37 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("Shouldn't allow user to perform a new request and claim more than the WETH available", async () => {
+      it("Should only pay the haircut when the vault has lost most of its WETH", async () => {
         const { oethVault, oeth, weth, josh, matt, daniel } = fixture;
         await oethVault.connect(matt).claimWithdrawal(0);
         // All user give OETH to another user
         await oeth.connect(josh).transfer(matt.address, oethUnits("20"));
         await oeth.connect(daniel).transfer(matt.address, oethUnits("10"));
 
-        // Matt request more than the remaining 60 OETH to be withdrawn
+        // Matt requests the remaining 60 OETH to be withdrawn
         await oethVault.connect(matt).requestWithdrawal(oethUnits("60"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
         await weth
           .connect(await impersonateAndFund(oethVault.address))
-          .transfer(addresses.dead, oethUnits("50")); // Vault loses 50 WETH
+          .transfer(addresses.dead, oethUnits("50")); // Vault loses 50 of its 60 WETH
 
-        const tx = oethVault.connect(matt).claimWithdrawal(1);
-        await expect(tx).to.be.revertedWith("Queue pending liquidity");
+        // Matt now holds the only claim left: gross 10 / effective supply 60.
+        // He is paid the remaining vault haircut to that ratio, not his 60
+        // nominal. Refusing the claim would strand the last 10 WETH forever.
+        const ratio = await oethVault.backingRatio();
+        const payout = oethUnits("60").mul(ratio).div(oethUnits("1"));
+        const dust = oethUnits("10").sub(payout); // rounds down, favours the vault
+
+        const before = await weth.balanceOf(matt.address);
+        const tx = await oethVault.connect(matt).claimWithdrawal(1);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(matt.address, 1, oethUnits("60"), payout);
+
+        expect(await weth.balanceOf(matt.address)).to.equal(before.add(payout));
+        expect(await weth.balanceOf(oethVault.address)).to.equal(dust);
+        expect(await oethVault.grossAssets()).to.equal(dust);
       });
     });
     describe("with 40 WETH in the queue, 15 WETH in the vault, 44 WETH in the strategy, vault insolvent by 5% => Slash 1 ether (1/20 = 5%), 19 WETH total value", () => {
@@ -1951,17 +2089,18 @@ describe("OETH Vault", function () {
         const dataBefore = await snapData(fixtureWithUser);
 
         // Loss is socialised: ratio = gross 59 / effectiveSupply 60 = 0.98333.
-        // The claim is haircut to that ratio; the emitted event still carries
-        // the full nominal amount.
+        // The claim is haircut to that ratio; the event carries both the full
+        // nominal and the smaller amount actually paid.
         const ratio = await oethVault.backingRatio();
         const nominal = oethUnits("10");
         const payout = nominal.mul(ratio).div(oethUnits("1"));
+        expect(payout).to.be.lt(nominal);
 
         const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
         await expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(daniel.address, 0, nominal);
+          .withArgs(daniel.address, 0, nominal, payout);
 
         await assertChangedData(
           dataBefore,
@@ -2078,10 +2217,10 @@ describe("OETH Vault", function () {
 
           const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
-          // Event carries the full nominal; transfer is the haircut payout.
+          // Event carries the full nominal alongside the haircut payout.
           await expect(tx)
             .to.emit(oethVault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 0, oethUnits("10"));
+            .withArgs(daniel.address, 0, oethUnits("10"), payout);
           expect(await weth.balanceOf(daniel.address)).to.equal(
             before.add(payout)
           );

@@ -368,8 +368,16 @@ abstract contract VaultAdmin is VaultCore {
     /**
      * @notice Sets the maximum shortfall in the backing ratio below 1.0 that
      *      still permits user mints. 18 decimals. eg 0.01e18 = 1%.
+     * @dev Bounded above so governance can never open the mint gate wide enough
+     *      to let new depositors buy meaningfully under-backed OTokens. There is
+     *      deliberately no lower bound: 0 is the strictest setting (mints require
+     *      full backing) and a uint256 cannot go below it.
      */
     function setMintTolerance(uint256 _mintTolerance) external onlyGovernor {
+        require(
+            _mintTolerance <= MAX_MINT_TOLERANCE,
+            "Mint tolerance too high"
+        );
         mintTolerance = _mintTolerance;
         emit MintToleranceChanged(_mintTolerance);
     }

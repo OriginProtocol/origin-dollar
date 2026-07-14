@@ -243,6 +243,12 @@ abstract contract VaultCore is VaultInitializer {
         nonReentrant
         returns (uint256 amount)
     {
+        // Socialisation ratio, capped at 1:1. Computed once before any transfer
+        // so it reflects current backing, and reused for both the queue top up
+        // and the payout. Topping up liquidity does not change it: the ratio is
+        // grossAssets / effectiveSupply, and neither input depends on `claimable`.
+        uint256 ratio = _socialisationRatio();
+
         // Try and get more liquidity if there is not enough available
         if (
             withdrawalRequests[_requestId].queued >
@@ -254,12 +260,8 @@ abstract contract VaultCore is VaultInitializer {
             //  - funds can be withdrawn from a strategy
             //
             // Those funds need to be added to withdrawal queue liquidity
-            _addWithdrawalQueueLiquidity();
+            _addWithdrawalQueueLiquidity(ratio);
         }
-
-        // Socialisation ratio, capped at 1:1. Computed once after topping up
-        // liquidity and before any transfer so it reflects current backing.
-        uint256 ratio = _min(1e18, _backingRatio());
 
         // Scale haircut amount to asset decimals
         amount = _claimWithdrawal(_requestId, ratio);
@@ -290,17 +292,18 @@ abstract contract VaultCore is VaultInitializer {
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
+        // Single socialisation ratio for the whole batch (capped at 1:1) so
+        // every request in the batch is haircut identically. Reused for the
+        // queue top up below; topping up does not change the ratio.
+        uint256 ratio = _socialisationRatio();
+
         // Add any asset to the withdrawal queue
         // this needs to remain here as:
         //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
         //  - funds can be withdrawn from a strategy
         //
         // Those funds need to be added to withdrawal queue liquidity
-        _addWithdrawalQueueLiquidity();
-
-        // Single socialisation ratio for the whole batch (capped at 1:1) so
-        // every request in the batch is haircut identically.
-        uint256 ratio = _min(1e18, _backingRatio());
+        _addWithdrawalQueueLiquidity(ratio);
 
         amounts = new uint256[](_requestIds.length);
         for (uint256 i; i < _requestIds.length; ++i) {
@@ -323,7 +326,7 @@ abstract contract VaultCore is VaultInitializer {
     ///        The caller computes this once so a batch is treated identically.
     function _claimWithdrawal(uint256 requestId, uint256 ratio)
         internal
-        returns (uint256 amount)
+        returns (uint256)
     {
         require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
 
@@ -352,18 +355,19 @@ abstract contract VaultCore is VaultInitializer {
                 StableMath.scaleBy(request.amount, assetDecimals, 18)
             );
 
-        // Nominal amount is emitted (the full size of the settled request); the
-        // asset actually transferred is the haircut `amount` return value.
-        emit WithdrawalClaimed(msg.sender, requestId, request.amount);
-
         // Haircut payout = nominal * min(1, ratio), rounded down (favours the
         // vault so the last claimer cannot over-drain). `ratio` is pre-capped.
-        return
-            StableMath.scaleBy(
-                uint256(request.amount).mulTruncate(ratio),
-                assetDecimals,
-                18
-            );
+        uint256 amount = StableMath.scaleBy(
+            uint256(request.amount).mulTruncate(ratio),
+            assetDecimals,
+            18
+        );
+
+        // Emit both the nominal size of the settled request and the asset
+        // actually paid out. They differ whenever a loss has been socialised.
+        emit WithdrawalClaimed(msg.sender, requestId, request.amount, amount);
+
+        return amount;
     }
 
     function _postRedeem() internal view {
@@ -594,7 +598,7 @@ abstract contract VaultCore is VaultInitializer {
      *          all outstanding withdrawal requests then return a total value of 0.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValue() internal view virtual returns (uint256 value) {
+    function _totalValue() internal view virtual returns (uint256) {
         // Gross assets less the socialised (haircut) value of the outstanding
         // withdrawal queue. When healthy (ratio >= 1) the queue is subtracted at
         // par - identical to the legacy `balance + claimed - queued`. When
@@ -602,10 +606,10 @@ abstract contract VaultCore is VaultInitializer {
         // shared with live holders instead of being reserved for the queue.
         uint256 gross = _grossAssets();
         uint256 queueValue = _outstandingQueue18().mulTruncate(
-            _min(1e18, _backingRatio())
+            _socialisationRatio()
         );
         // queueValue <= gross always holds (see _backingRatio), so no underflow.
-        value = gross - queueValue;
+        return gross - queueValue;
     }
 
     /**
@@ -661,8 +665,8 @@ abstract contract VaultCore is VaultInitializer {
      * withdrawal queue and never clamped to zero. Shared by `_checkBalance`
      * (which nets the queue) and `_grossAssets` (which does not).
      */
-    function _rawAssetBalance() internal view returns (uint256 balance) {
-        balance = IERC20(asset).balanceOf(address(this));
+    function _rawAssetBalance() internal view returns (uint256) {
+        uint256 balance = IERC20(asset).balanceOf(address(this));
         uint256 stratCount = allStrategies.length;
         for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -670,12 +674,13 @@ abstract contract VaultCore is VaultInitializer {
                 balance = balance + strategy.checkBalance(asset);
             }
         }
+        return balance;
     }
 
     /**
      * @dev Gross vault + strategy asset value, scaled to 18 decimals. Unlike
-     * `_checkBalance` this is not netted against the withdrawal queue and is
-     * never clamped, so it is a faithful numerator for the backing ratio.
+     * `_checkBalance` this ignores the withdrawal queue, and is never clamped,
+     * so it is a faithful numerator for the backing ratio.
      */
     function _grossAssets() internal view virtual returns (uint256) {
         return _rawAssetBalance().scaleBy(18, assetDecimals);
@@ -713,6 +718,16 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
+     * @dev The backing ratio capped at 1:1, which is the ratio withdrawal claims
+     * are haircut by. Capped because an over-backed vault still only owes the
+     * queue its nominal amount; the surplus stays with live holders and is
+     * distributed by `rebase`.
+     */
+    function _socialisationRatio() internal view returns (uint256) {
+        return _min(1e18, _backingRatio());
+    }
+
+    /**
      * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
      * @dev is called from the Native Staking strategy when validator withdrawals are processed.
      * It also called before any WETH is allocated to a strategy.
@@ -725,9 +740,20 @@ abstract contract VaultCore is VaultInitializer {
      * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
      * This assumes 1 asset equal 1 corresponding OToken.
      */
-    function _addWithdrawalQueueLiquidity()
+    function _addWithdrawalQueueLiquidity() internal returns (uint256) {
+        return _addWithdrawalQueueLiquidity(_socialisationRatio());
+    }
+
+    /**
+     * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
+     * @param ratio Socialisation ratio (1e18 scaled), already capped at 1:1.
+     *        Callers that have already computed it pass it in to avoid a second
+     *        pass over the strategies. The ratio does not depend on `claimable`,
+     *        so it is unchanged by this function.
+     */
+    function _addWithdrawalQueueLiquidity(uint256 ratio)
         internal
-        returns (uint256 addedClaimable)
+        returns (uint256)
     {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
@@ -742,17 +768,25 @@ abstract contract VaultCore is VaultInitializer {
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));
 
         // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of asset that is currently allocated for the withdrawal queue
-        uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
+        // That is, the amount of asset that is currently allocated for the withdrawal queue.
+        // The frontier is counted in nominal units but funded out of real assets, so an
+        // impaired request of nominal size x only settles for `ratio * x` and only needs
+        // that much reserved. Reserving the full nominal x would over-reserve: the frontier
+        // could then never reach `queued` (the vault only ever holds `ratio * nominal`),
+        // permanently stranding the tail of the queue.
+        uint256 allocatedBaseAsset = uint256(queue.claimable - queue.claimed)
+            .mulTruncate(ratio);
 
         // If there is no unallocated asset then there is nothing to add to the queue
         if (assetBalance <= allocatedBaseAsset) {
             return 0;
         }
 
-        uint256 unallocatedBaseAsset = assetBalance - allocatedBaseAsset;
+        // Convert the free real asset back into nominal frontier capacity
+        uint256 unallocatedBaseAsset = (assetBalance - allocatedBaseAsset)
+            .divPrecisely(ratio);
         // the new claimable amount is the smaller of the queue shortfall or unallocated asset
-        addedClaimable = queueShortfall < unallocatedBaseAsset
+        uint256 addedClaimable = queueShortfall < unallocatedBaseAsset
             ? queueShortfall
             : unallocatedBaseAsset;
         uint256 newClaimable = queue.claimable + addedClaimable;
@@ -762,6 +796,8 @@ abstract contract VaultCore is VaultInitializer {
 
         // emit a WithdrawalClaimable event
         emit WithdrawalClaimable(newClaimable, addedClaimable);
+
+        return addedClaimable;
     }
 
     /**

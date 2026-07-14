@@ -90,6 +90,101 @@ describe("OUSD Vault Withdrawals", function () {
       await vault.connect(josh).claimWithdrawal(0);
       await vault.connect(matt).claimWithdrawal(1);
     });
+
+    // 6-decimal mirror of the OETH FIFO-gate drain test. The claimable frontier
+    // is in nominal units but funded out of real assets, so it must be scaled by
+    // the backing ratio; otherwise it can never reach `queued` and the tail of
+    // the queue is stranded forever.
+    describe("Loss socialization: FIFO gate drains a fully-queued vault", () => {
+      let mockStrategy;
+
+      beforeEach(async () => {
+        const { governor, vault, usdc, daniel, josh, matt } = fixture;
+
+        // Widen the circuit breaker so the 10% loss stays inside the band
+        await vault.connect(governor).setMaxSupplyDiff(ousdUnits("0.2"));
+
+        mockStrategy = await deployWithConfirmation("MockStrategy");
+        await vault.connect(governor).approveStrategy(mockStrategy.address);
+        await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
+
+        // 3 users mint 10 OUSD each, then all 30 USDC is moved to the strategy
+        // so the vault holds nothing and the frontier cannot be granted early.
+        for (const user of [daniel, josh, matt]) {
+          await usdc.mintTo(user.address, usdcUnits("10"));
+          await usdc.connect(user).approve(vault.address, usdcUnits("10"));
+          await vault.connect(user).mint(usdcUnits("10"));
+        }
+        await vault.connect(governor).allocate();
+        expect(await usdc.balanceOf(vault.address)).to.equal(0);
+
+        // The entire protocol queues up: live OUSD supply drops back to 0
+        await vault.connect(daniel).requestWithdrawal(ousdUnits("10"));
+        await vault.connect(josh).requestWithdrawal(ousdUnits("10"));
+        await vault.connect(matt).requestWithdrawal(ousdUnits("10"));
+        await advanceTime(delayPeriod);
+
+        // Slash 3 of the 30 USDC => gross 27 / effectiveSupply 30 = 0.9 ratio
+        await usdc
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(governor.address, usdcUnits("3"));
+
+        // Strategist brings the remaining 27 USDC back to fund the queue
+        await vault
+          .connect(fixture.strategist)
+          .withdrawFromStrategy(
+            mockStrategy.address,
+            [usdc.address],
+            [usdcUnits("27")]
+          );
+        await vault.connect(josh).addWithdrawalQueueLiquidity();
+      });
+
+      it("Should have a 0.9 backing ratio with the whole supply queued", async () => {
+        const { vault, ousd } = fixture;
+        expect(await ousd.totalSupply()).to.equal(0);
+        expect(await vault.grossAssets()).to.equal(ousdUnits("27"));
+        expect(await vault.effectiveSupply()).to.equal(ousdUnits("30"));
+        expect(await vault.backingRatio()).to.equal(ousdUnits("0.9"));
+      });
+
+      it("Should let all three users claim their haircut and drain the vault", async () => {
+        const { vault, usdc, daniel, josh, matt } = fixture;
+        const payout = usdcUnits("9"); // 10 nominal * 0.9 ratio, exact at 6 dp
+
+        for (const [requestId, user] of [
+          [2, daniel],
+          [3, josh],
+          [4, matt],
+        ]) {
+          const before = await usdc.balanceOf(user.address);
+
+          await vault.connect(user).claimWithdrawal(requestId);
+
+          expect(
+            await usdc.balanceOf(user.address),
+            `user ${requestId} USDC`
+          ).to.equal(before.add(payout));
+
+          // Paying ratio * nominal and removing nominal from the effective
+          // supply leaves the ratio unchanged. Once the last request settles
+          // there is nothing left to back and the ratio is vacuously 1e18.
+          if ((await vault.effectiveSupply()).gt(0)) {
+            expect(
+              await vault.backingRatio(),
+              `ratio after claim ${requestId}`
+            ).to.equal(ousdUnits("0.9"));
+          }
+        }
+
+        // The queue settled in full and the vault is drained to the wei
+        const queue = await vault.withdrawalQueueMetadata();
+        expect(queue.claimed).to.equal(queue.queued);
+        expect(await usdc.balanceOf(vault.address)).to.equal(0);
+        expect(await vault.grossAssets()).to.equal(0);
+      });
+    });
+
     describe("with all 60 USDC in the vault", () => {
       beforeEach(async () => {
         const { vault, usdc, daniel, josh, matt } = fixture;
@@ -293,7 +388,12 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(josh.address, requestId, secondRequestAmountOUSD);
+          .withArgs(
+            josh.address,
+            requestId,
+            secondRequestAmountOUSD,
+            secondRequestAmountUSDC
+          );
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimable")
           .withArgs(
@@ -333,10 +433,20 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, firstRequestAmountOUSD);
+          .withArgs(
+            matt.address,
+            2,
+            firstRequestAmountOUSD,
+            firstRequestAmountUSDC
+          );
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 3, secondRequestAmountOUSD);
+          .withArgs(
+            matt.address,
+            3,
+            secondRequestAmountOUSD,
+            secondRequestAmountUSDC
+          );
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimable")
           .withArgs(
@@ -385,7 +495,7 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, ousdUnits("30"));
+          .withArgs(matt.address, 2, ousdUnits("30"), usdcUnits("30"));
 
         await expect(ousdTotalSupply).to.equal(await ousd.totalSupply());
         await expect(totalValueAfter).to.equal(await vault.totalValue());
@@ -566,7 +676,12 @@ describe("OUSD Vault Withdrawals", function () {
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, requestId, firstRequestAmountOUSD);
+            .withArgs(
+              daniel.address,
+              requestId,
+              firstRequestAmountOUSD,
+              firstRequestAmountUSDC
+            );
 
           await assertChangedData(
             dataBefore,
@@ -607,7 +722,7 @@ describe("OUSD Vault Withdrawals", function () {
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(matt.address, requestId, requestAmount);
+            .withArgs(matt.address, requestId, requestAmount, usdcUnits("22"));
 
           await assertChangedData(
             dataBefore,
@@ -965,7 +1080,12 @@ describe("OUSD Vault Withdrawals", function () {
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, requestId, ousdUnits("4"));
+            .withArgs(
+              daniel.address,
+              requestId,
+              ousdUnits("4"),
+              usdcUnits("4")
+            );
 
           await assertChangedData(
             dataBefore,
@@ -1018,13 +1138,13 @@ describe("OUSD Vault Withdrawals", function () {
 
           await expect(tx1)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 4, ousdUnits("4"));
+            .withArgs(daniel.address, 4, ousdUnits("4"), usdcUnits("4"));
 
           const tx2 = await vault.connect(josh).claimWithdrawal(5);
 
           await expect(tx2)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(josh.address, 5, ousdUnits("12"));
+            .withArgs(josh.address, 5, ousdUnits("12"), usdcUnits("12"));
 
           await assertChangedData(
             dataBefore,
@@ -1240,7 +1360,7 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 4, ousdUnits("10"));
+          .withArgs(matt.address, 4, ousdUnits("10"), usdcUnits("10"));
 
         await assertChangedData(
           dataBefore,
@@ -1294,7 +1414,7 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, ousdUnits("40"));
+          .withArgs(matt.address, 2, ousdUnits("40"), usdcUnits("40"));
 
         await assertChangedData(
           dataBefore,
@@ -1342,7 +1462,7 @@ describe("OUSD Vault Withdrawals", function () {
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 3, ousdUnits("60"));
+          .withArgs(matt.address, 3, ousdUnits("60"), usdcUnits("60"));
 
         await assertChangedData(
           dataBefore,
@@ -1361,22 +1481,37 @@ describe("OUSD Vault Withdrawals", function () {
           fixtureWithUser
         );
       });
-      it("Shouldn't allow user to perform a new request and claim more than the USDC available", async () => {
+      it("Should only pay the haircut when the vault has lost most of its USDC", async () => {
         const { vault, ousd, usdc, josh, matt, daniel, governor } = fixture;
         await vault.connect(matt).claimWithdrawal(2);
         // All user give OUSD to another user
         await ousd.connect(josh).transfer(matt.address, ousdUnits("20"));
         await ousd.connect(daniel).transfer(matt.address, ousdUnits("10"));
 
-        // Matt request more than the remaining 60 OUSD to be withdrawn
+        // Matt requests the remaining 60 OUSD to be withdrawn
         await vault.connect(matt).requestWithdrawal(ousdUnits("60"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
         await usdc
           .connect(await impersonateAndFund(vault.address))
-          .transfer(governor.address, usdcUnits("50")); // Vault loses 50 USDC
+          .transfer(governor.address, usdcUnits("50")); // Vault loses 50 of its 60 USDC
 
-        const tx = vault.connect(matt).claimWithdrawal(3);
-        await expect(tx).to.be.revertedWith("Queue pending liquidity");
+        // Matt now holds the only claim left: gross 10 / effective supply 60.
+        // He is paid the remaining vault haircut to that ratio, not his 60
+        // nominal. Refusing the claim would strand the last 10 USDC forever.
+        const ratio = await vault.backingRatio();
+        // Haircut payout, scaled 18 -> 6 decimals, rounded down (matches contract)
+        const payout18 = ousdUnits("60").mul(ratio).div(ousdUnits("1"));
+        const payout6 = payout18.div("1000000000000");
+        const dust = usdcUnits("10").sub(payout6); // rounds down, favours the vault
+
+        const before = await usdc.balanceOf(matt.address);
+
+        await vault.connect(matt).claimWithdrawal(3);
+
+        expect(await usdc.balanceOf(matt.address)).to.equal(
+          before.add(payout6)
+        );
+        expect(await usdc.balanceOf(vault.address)).to.equal(dust);
       });
     });
     describe("with 40 USDC in the queue, 15 USDC in the vault, 44 USDC in the strategy, vault insolvent by 5% => Slash 1 ether (1/20 = 5%), 19 USDC total value", () => {
@@ -1443,10 +1578,10 @@ describe("OUSD Vault Withdrawals", function () {
 
         const tx = await vault.connect(daniel).claimWithdrawal(2);
 
-        // Event carries the full nominal amount; transfer is the haircut
+        // Event carries the 18-dec nominal alongside the 6-dec haircut paid out
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(daniel.address, 2, nominal18);
+          .withArgs(daniel.address, 2, nominal18, payout6);
 
         expect(await usdc.balanceOf(daniel.address)).to.equal(
           userBefore.add(payout6)
@@ -1560,7 +1695,7 @@ describe("OUSD Vault Withdrawals", function () {
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 2, ousdUnits("10"));
+            .withArgs(daniel.address, 2, ousdUnits("10"), payout6);
           expect(await usdc.balanceOf(daniel.address)).to.equal(
             before.add(payout6)
           );
