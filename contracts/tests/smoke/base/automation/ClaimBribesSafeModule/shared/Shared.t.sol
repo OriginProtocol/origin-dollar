@@ -9,6 +9,7 @@ import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBrib
 
 abstract contract Smoke_ClaimBribesSafeModule_Shared_Test is BaseSmoke {
     IClaimBribesSafeModule internal claimBribesModule;
+    bool internal isModuleAvailable;
 
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
@@ -35,14 +36,14 @@ abstract contract Smoke_ClaimBribesSafeModule_Shared_Test is BaseSmoke {
     }
 
     function _resolveActors() internal virtual {
-        // Skip if contract not yet deployed or not properly initialized on this fork
-        (bool ok,) = address(claimBribesModule).staticcall(abi.encodeWithSignature("safeContract()"));
-        if (!ok) {
-            vm.skip(true);
+        // Mark the module unavailable if it is not yet deployed or initialized on this fork.
+        (bool ok, bytes memory data) = address(claimBribesModule).staticcall(abi.encodeWithSignature("safeContract()"));
+        isModuleAvailable = ok && data.length >= 32;
+        if (!isModuleAvailable) {
             return;
         }
 
-        safe = address(claimBribesModule.safeContract());
+        safe = abi.decode(data, (address));
         operator = claimBribesModule.getRoleMember(claimBribesModule.OPERATOR_ROLE(), 0);
     }
 

@@ -58,6 +58,9 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
     //////////////////////////////////////////////////////
 
     function test_bribe() public {
+        // Move past campaigns that may already exist for the next period on live state.
+        vm.warp(block.timestamp + boosterMerkl.duration());
+
         _fundBooster(address(boosterMerkl), 10 ether);
         assertGt(IERC20(Mainnet.OETHProxy).balanceOf(address(boosterMerkl)), 0);
 

@@ -14,20 +14,24 @@ contract Smoke_Concrete_ClaimBribesSafeModule_Test is Smoke_ClaimBribesSafeModul
     /// --- VIEW TESTS
     //////////////////////////////////////////////////////
 
-    function test_voter() public view {
+    function test_voter() public {
+        vm.skip(!isModuleAvailable);
         assertEq(address(claimBribesModule.voter()), Base.aeroVoterAddress);
     }
 
-    function test_veNFT() public view {
+    function test_veNFT() public {
+        vm.skip(!isModuleAvailable);
         assertNotEq(claimBribesModule.veNFT(), address(0));
     }
 
-    function test_getBribePoolsLength() public view {
+    function test_getBribePoolsLength() public {
+        vm.skip(!isModuleAvailable);
         uint256 length = claimBribesModule.getBribePoolsLength();
         assertGe(length, 0);
     }
 
-    function test_getNFTIdsLength() public view {
+    function test_getNFTIdsLength() public {
+        vm.skip(!isModuleAvailable);
         uint256 length = claimBribesModule.getNFTIdsLength();
         assertGe(length, 0);
     }
@@ -37,6 +41,7 @@ contract Smoke_Concrete_ClaimBribesSafeModule_Test is Smoke_ClaimBribesSafeModul
     //////////////////////////////////////////////////////
 
     function test_claimBribes() public {
+        vm.skip(!isModuleAvailable);
         uint256 nftCount = claimBribesModule.getNFTIdsLength();
 
         vm.prank(operator);
@@ -44,6 +49,7 @@ contract Smoke_Concrete_ClaimBribesSafeModule_Test is Smoke_ClaimBribesSafeModul
     }
 
     function test_updateRewardTokenAddresses() public {
+        vm.skip(!isModuleAvailable);
         uint256 poolCountBefore = claimBribesModule.getBribePoolsLength();
 
         vm.prank(operator);
@@ -53,6 +59,7 @@ contract Smoke_Concrete_ClaimBribesSafeModule_Test is Smoke_ClaimBribesSafeModul
     }
 
     function test_fetchNFTIds() public {
+        vm.skip(!isModuleAvailable);
         uint256 lengthBefore = claimBribesModule.getNFTIdsLength();
 
         claimBribesModule.fetchNFTIds(); // public, no auth needed
