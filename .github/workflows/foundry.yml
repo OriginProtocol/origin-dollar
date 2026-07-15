@@ -111,22 +111,6 @@ jobs:
         working-directory: contracts
         run: make test-fork-base
 
-  fork-tests-sonic:
-    name: Fork Tests (Sonic)
-    runs-on: ubuntu-latest
-    env:
-      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-        with:
-          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-      - name: Run Sonic fork tests
-        working-directory: contracts
-        run: make test-fork-sonic
-
   fork-tests-hyperevm:
     name: Fork Tests (HyperEVM)
     runs-on: ubuntu-latest
@@ -175,22 +159,6 @@ jobs:
       - name: Run Base smoke tests
         working-directory: contracts
         run: make test-smoke-base
-
-  smoke-tests-sonic:
-    name: Smoke Tests (Sonic)
-    runs-on: ubuntu-latest
-    env:
-      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-        with:
-          talos-deploy-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-      - name: Run Sonic smoke tests
-        working-directory: contracts
-        run: make test-smoke-sonic
 
   smoke-tests-hyperevm:
     name: Smoke Tests (HyperEVM)

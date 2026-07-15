@@ -83,7 +83,6 @@ test-c-%:
 #   make test-unit               -> run all unit tests
 #   make test-fork               -> run all fork tests
 #   make test-fork-mainnet       -> run fork tests for mainnet
-#   make test-fork-sonic         -> run fork tests for sonic
 #   make test-smoke              -> run all smoke tests
 #   make test-smoke-base         -> run smoke tests for base
 test-unit:
@@ -133,7 +132,6 @@ snapshot:
 # Examples:
 #   make deploy-mainnet          -> deploy to mainnet with verification
 #   make deploy-base             -> deploy to base with verification
-#   make deploy-sonic            -> deploy to sonic with verification
 #   make deploy-local            -> deploy to local node (no verification)
 deploy-mainnet:
 	forge build $(DEPLOY_BUILD)
@@ -142,10 +140,6 @@ deploy-mainnet:
 deploy-base:
 	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(BASE_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
-
-deploy-sonic:
-	forge build $(DEPLOY_BUILD)
-	@forge script $(DEPLOY_SCRIPT) --rpc-url $(SONIC_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvv
 
 deploy-hyperevm:
 	forge build $(DEPLOY_BUILD)
@@ -163,9 +157,8 @@ deploy-local:
 # Examples:
 #   make simulate                -> simulate on mainnet (default)
 #   make simulate NETWORK=base   -> simulate on base
-#   make simulate NETWORK=sonic  -> simulate on sonic
 NETWORK ?= mainnet
-RPC_URL = $(if $(filter sonic,$(NETWORK)),$(SONIC_PROVIDER_URL),$(if $(filter base,$(NETWORK)),$(BASE_PROVIDER_URL),$(if $(filter hyperevm,$(NETWORK)),$(HYPEREVM_PROVIDER_URL),$(MAINNET_PROVIDER_URL))))
+RPC_URL = $(if $(filter base,$(NETWORK)),$(BASE_PROVIDER_URL),$(if $(filter hyperevm,$(NETWORK)),$(HYPEREVM_PROVIDER_URL),$(MAINNET_PROVIDER_URL)))
 
 simulate:
 	forge build $(DEPLOY_BUILD)
@@ -256,5 +249,5 @@ lint-imports:
 
 .PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
         coverage coverage-html gas snapshot build build-% \
-        deploy-mainnet deploy-base deploy-sonic deploy-hyperevm deploy-local simulate \
+        deploy-mainnet deploy-base deploy-hyperevm deploy-local simulate \
         match clean clean-all install update-fork-blocks frame lint-imports
