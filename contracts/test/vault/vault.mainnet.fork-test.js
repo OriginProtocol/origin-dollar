@@ -62,7 +62,6 @@ describe("ForkTest: Vault", function () {
       const { vault } = fixture;
 
       expect(await vault.maxSupplyDiff()).to.equal(ousdUnits("0.2"));
-      expect(await vault.mintTolerance()).to.equal(ousdUnits("0.01"));
 
       // The live vault is healthy, so it is fully backed and pays claims 1:1
       expect(await vault.backingRatio()).to.approxEqualTolerance(

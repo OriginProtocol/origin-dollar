@@ -41,7 +41,6 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault } = fixture;
 
       expect(await oethVault.maxSupplyDiff()).to.equal(parseUnits("0.2", 18));
-      expect(await oethVault.mintTolerance()).to.equal(parseUnits("0.01", 18));
 
       // The live vault is healthy, so it is fully backed and pays claims 1:1
       expect(await oethVault.backingRatio()).to.approxEqualTolerance(

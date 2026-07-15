@@ -8,8 +8,6 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 // loss trips it and governance intervenes.
 // NOTE: confirm these policy values with governance before submitting.
 const MAX_SUPPLY_DIFF = parseUnits("0.2", 18); // 20%
-// Block user mints once the vault is under-backed by more than this. Kept tight.
-const MINT_TOLERANCE = parseUnits("0.01", 18); // 1%
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -62,11 +60,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setMaxSupplyDiff(uint256)",
           args: [MAX_SUPPLY_DIFF],
         },
-        {
-          contract: cOUSDVault,
-          signature: "setMintTolerance(uint256)",
-          args: [MINT_TOLERANCE],
-        },
         // OETH vault
         {
           contract: cOETHVaultProxy,
@@ -77,11 +70,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHVault,
           signature: "setMaxSupplyDiff(uint256)",
           args: [MAX_SUPPLY_DIFF],
-        },
-        {
-          contract: cOETHVault,
-          signature: "setMintTolerance(uint256)",
-          args: [MINT_TOLERANCE],
         },
       ],
     };

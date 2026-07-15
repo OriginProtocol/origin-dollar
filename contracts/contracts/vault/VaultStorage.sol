@@ -35,7 +35,6 @@ abstract contract VaultStorage is Initializable, Governable {
     event AllocateThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
-    event MintToleranceChanged(uint256 mintTolerance);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
@@ -215,19 +214,8 @@ abstract contract VaultStorage is Initializable, Governable {
     ///         and Strategist are always allowed in addition to this address.
     address public operatorAddr;
 
-    /// @notice Max shortfall in the backing ratio (grossAssets / effectiveSupply)
-    ///     below 1.0 that still permits user mints. 18 decimals. eg 0.01e18 = 1%.
-    ///     Blocks new mints once the vault is under-backed by more than this,
-    ///     so fresh deposits don't subsidise the withdrawal queue during a depeg.
-    uint256 public mintTolerance;
-
-    /// @notice Ceiling on `mintTolerance`. Caps how far governance can open the
-    ///     mint gate, so new depositors can never buy OTokens into a vault that
-    ///     is more than 50% under-backed.
-    uint256 internal constant MAX_MINT_TOLERANCE = 0.5 ether;
-
     // For future use
-    uint256[40] private __gap;
+    uint256[41] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
     /// Legacy OETHVaultCore code, relocated here for vault consistency.

@@ -618,7 +618,7 @@ describe("OETH Vault", function () {
         .transfer(addresses.dead, oethUnits(amount));
     };
 
-    it("Should block a user mint when under-backed (default zero tolerance)", async () => {
+    it("Should block a user mint when under-backed", async () => {
       const { oethVault, josh, weth } = fixture;
       await slash("10");
       expect(await oethVault.backingRatio()).to.be.lt(oethUnits("1"));
@@ -629,49 +629,25 @@ describe("OETH Vault", function () {
       ).to.be.revertedWith("Vault under-backed");
     });
 
-    it("Should allow a user mint when the shortfall is within mintTolerance", async () => {
-      const { oethVault, governor, oeth, josh, weth } = fixture;
+    it("Should allow a user mint once backing is restored to exactly 1:1", async () => {
+      const { oethVault, oeth, josh, weth } = fixture;
       await slash("10");
-      // Set the tolerance to exactly cover the current shortfall
-      const ratio = await oethVault.backingRatio();
-      const shortfall = oethUnits("1").sub(ratio);
-      await oethVault.connect(governor).setMintTolerance(shortfall);
+      // Mints are blocked while under-backed
+      await weth.connect(josh).approve(oethVault.address, oethUnits("11"));
+      await expect(
+        oethVault.connect(josh).mint(oethUnits("1"))
+      ).to.be.revertedWith("Vault under-backed");
 
+      // Donate exactly the slashed amount back so grossAssets == effectiveSupply
+      await weth.connect(josh).transfer(oethVault.address, oethUnits("10"));
+      expect(await oethVault.backingRatio()).to.equal(oethUnits("1"));
+
+      // At the 1:1 boundary the mint is allowed (gate is `>=`)
       const before = await oeth.balanceOf(josh.address);
-      await weth.connect(josh).approve(oethVault.address, oethUnits("1"));
       await oethVault.connect(josh).mint(oethUnits("1"));
       expect(await oeth.balanceOf(josh.address)).to.equal(
         before.add(oethUnits("1"))
       );
-    });
-
-    it("Should block a user mint when the shortfall exceeds mintTolerance", async () => {
-      const { oethVault, governor, josh, weth } = fixture;
-      await slash("10");
-      const ratio = await oethVault.backingRatio();
-      const shortfall = oethUnits("1").sub(ratio);
-      // One wei short of covering the shortfall
-      await oethVault.connect(governor).setMintTolerance(shortfall.sub(1));
-
-      await weth.connect(josh).approve(oethVault.address, oethUnits("1"));
-      await expect(
-        oethVault.connect(josh).mint(oethUnits("1"))
-      ).to.be.revertedWith("Vault under-backed");
-    });
-
-    it("Should cap how far governance can open the mint gate", async () => {
-      const { oethVault, governor } = fixture;
-      const maxMintTolerance = oethUnits("0.5"); // MAX_MINT_TOLERANCE
-
-      // At the ceiling is fine
-      await oethVault.connect(governor).setMintTolerance(maxMintTolerance);
-      expect(await oethVault.mintTolerance()).to.equal(maxMintTolerance);
-
-      // One wei beyond it is not: governance can never let new depositors mint
-      // into a vault that is more than 50% under-backed.
-      await expect(
-        oethVault.connect(governor).setMintTolerance(maxMintTolerance.add(1))
-      ).to.be.revertedWith("Mint tolerance too high");
     });
 
     it("Should still allow mintForStrategy (AMO) when under-backed", async () => {

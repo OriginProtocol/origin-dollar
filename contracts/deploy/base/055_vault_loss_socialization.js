@@ -3,10 +3,9 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { parseUnits } = require("ethers/lib/utils");
 
-// See deploy/mainnet/202_vault_loss_socialization.js for the meaning of these.
-// NOTE: confirm these policy values with governance before submitting.
+// See deploy/mainnet/202_vault_loss_socialization.js for the meaning of this.
+// NOTE: confirm this policy value with governance before submitting.
 const MAX_SUPPLY_DIFF = parseUnits("0.2", 18); // 20%
-const MINT_TOLERANCE = parseUnits("0.01", 18); // 1%
 
 module.exports = deployOnBase(
   {
@@ -39,11 +38,6 @@ module.exports = deployOnBase(
           contract: cOETHbVault,
           signature: "setMaxSupplyDiff(uint256)",
           args: [MAX_SUPPLY_DIFF],
-        },
-        {
-          contract: cOETHbVault,
-          signature: "setMintTolerance(uint256)",
-          args: [MINT_TOLERANCE],
         },
       ],
     };

@@ -20,7 +20,6 @@ interface IVault {
     event AllocateThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
-    event MintToleranceChanged(uint256 mintTolerance);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
@@ -70,10 +69,6 @@ interface IVault {
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
     function maxSupplyDiff() external view returns (uint256);
-
-    function setMintTolerance(uint256 _mintTolerance) external;
-
-    function mintTolerance() external view returns (uint256);
 
     function grossAssets() external view returns (uint256);
 
