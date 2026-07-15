@@ -303,6 +303,8 @@ The hardhat action tasks under `contracts/tasks/actions/` are driven in producti
 - **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
 - **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
 
+Every scheduled action — its cadence and one-line purpose — is catalogued in [`docs/ACTIONS.md`](docs/ACTIONS.md).
+
 Every action remains directly executable as a hardhat task on your dev machine — nothing about the local workflow changed:
 
 ```

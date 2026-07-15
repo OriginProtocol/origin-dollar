@@ -127,6 +127,8 @@ Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (
 
 Bundle with: `pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs`
 
+**Scheduled actions (Talos):** distinct from the Defender scripts above — the Talos runner's cron/manual actions live in `contracts/tasks/actions/*.ts`, are scheduled in `contracts/migrations/seed_schedules.sql`, and are catalogued in `contracts/docs/ACTIONS.md`. Update that doc in the same change whenever a scheduled action is added, removed, or its behaviour changes.
+
 ### Cross-Chain
 - CCTP (Circle) for USDC bridging
 - Network-specific bridge contracts in `contracts/bridges/`
