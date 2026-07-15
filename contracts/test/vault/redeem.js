@@ -185,6 +185,88 @@ describe("OUSD Vault Withdrawals", function () {
       });
     });
 
+    // A 6-decimal vault records `queued`/`claimed` floored to 1e-6, but a request's
+    // 18-decimal `amount` can carry dust below that. The payout has to be haircut off
+    // the same asset-decimal nominal the queue retires; haircutting the raw 18-dec
+    // amount pays out more than is removed from effective supply, and the backing
+    // ratio drifts DOWN. Cannot happen on an 18-decimal vault (WETH), where there is
+    // no sub-asset precision to lose.
+    describe("Loss socialization: request carrying sub-precision dust", () => {
+      let mockStrategy;
+      // The 0.0000008 tail is below USDC's 1e-6 precision, so `queued` only ever
+      // records 10.000000 of it.
+      const requestAmount = ousdUnits("10").add(ousdUnits("0.0000008"));
+
+      beforeEach(async () => {
+        const { governor, vault, usdc, daniel, josh, matt } = fixture;
+
+        await vault.connect(governor).setMaxSupplyDiff(ousdUnits("0.2"));
+
+        mockStrategy = await deployWithConfirmation("MockStrategy");
+        await vault.connect(governor).approveStrategy(mockStrategy.address);
+        await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
+
+        // 3 users mint 20 OUSD each; all 60 USDC moves to the strategy
+        for (const user of [daniel, josh, matt]) {
+          await usdc.mintTo(user.address, usdcUnits("20"));
+          await usdc.connect(user).approve(vault.address, usdcUnits("20"));
+          await vault.connect(user).mint(usdcUnits("20"));
+        }
+        await vault.connect(governor).allocate();
+
+        await vault.connect(daniel).requestWithdrawal(requestAmount);
+        await advanceTime(delayPeriod);
+
+        // Slash 1 of the 60 USDC so the vault is impaired and a haircut applies
+        await usdc
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(governor.address, usdcUnits("1"));
+
+        // Strategist funds the queue
+        await vault
+          .connect(fixture.strategist)
+          .withdrawFromStrategy(
+            mockStrategy.address,
+            [usdc.address],
+            [usdcUnits("15")]
+          );
+        await vault.connect(josh).addWithdrawalQueueLiquidity();
+      });
+
+      it("Should record only the 6-decimal nominal in the queue", async () => {
+        const { vault } = fixture;
+        const queue = await vault.withdrawalQueueMetadata();
+        // Outstanding obligation is exactly 10.000000, not 10.0000008: the dust
+        // never made it into the queue, it was burned at request time.
+        expect(queue.queued.sub(queue.claimed)).to.equal(usdcUnits("10"));
+      });
+
+      it("Should not let a dust-carrying claim reduce the backing ratio", async () => {
+        const { vault, usdc, daniel } = fixture;
+
+        const ratioBefore = await vault.backingRatio();
+        // Impaired, so a haircut actually applies
+        expect(ratioBefore).to.be.lt(ousdUnits("1"));
+
+        // The queue only ever retired the 6-dp nominal, so that is what gets haircut
+        const nominalAsset = usdcUnits("10");
+        const expectedPayout = nominalAsset
+          .mul(ratioBefore)
+          .div(ousdUnits("1"));
+
+        const before = await usdc.balanceOf(daniel.address);
+        await vault.connect(daniel).claimWithdrawal(2);
+
+        // The invariant: paying on the same nominal the queue retires means the
+        // ratio can never drift down, however much dust the request carried.
+        expect(await vault.backingRatio()).to.be.gte(ratioBefore);
+
+        expect(await usdc.balanceOf(daniel.address)).to.equal(
+          before.add(expectedPayout)
+        );
+      });
+    });
+
     describe("with all 60 USDC in the vault", () => {
       beforeEach(async () => {
         const { vault, usdc, daniel, josh, matt } = fixture;
@@ -1592,7 +1674,9 @@ describe("OUSD Vault Withdrawals", function () {
         // claimed bumps by the full nominal even though only the haircut is paid
         const queueAfter = await vault.withdrawalQueueMetadata();
         expect(queueAfter.claimed).to.equal(queueBefore.claimed.add(nominal6));
-        // ratio is ~invariant; a tiny upward drift from 6-dp rounding favours the vault
+        // Ratio is invariant under a claim, and can only ever drift UP: the payout
+        // is haircut off the same asset-decimal nominal the queue retires, and it
+        // rounds down, so the vault always keeps at least the fair backing.
         expect(await vault.backingRatio()).to.be.gte(ratio);
         expect(await vault.backingRatio()).to.approxEqual(ratio);
       });

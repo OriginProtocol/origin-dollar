@@ -343,6 +343,21 @@ abstract contract VaultCore is VaultInitializer {
         require(request.withdrawer == msg.sender, "Not requester");
         require(request.claimed == false, "Already claimed");
 
+        // The nominal obligation in ASSET decimals - exactly what `queued` and
+        // `claimed` account for. A request's 18-decimal `amount` can carry dust
+        // below the asset's precision (eg below 1e-6 for USDC); that dust is
+        // burned at request time but never credited to `queued`. Both the queue
+        // bump and the haircut below are therefore taken from THIS number, so
+        // the payout can never exceed what the queue retires from effective
+        // supply. Haircutting the raw 18-decimal `request.amount` instead would
+        // pay out up to one asset-wei more than is removed, nudging the backing
+        // ratio down. No-op on an 18-decimal vault, where there is no such dust.
+        uint256 nominalAsset = StableMath.scaleBy(
+            request.amount,
+            assetDecimals,
+            18
+        );
+
         // Store the request as claimed
         withdrawalRequests[requestId].claimed = true;
         // Bump `claimed` by the FULL nominal amount even though only the haircut
@@ -351,17 +366,11 @@ abstract contract VaultCore is VaultInitializer {
         // what walks the fixed FIFO gate forward under impairment.
         withdrawalQueueMetadata.claimed =
             queue.claimed +
-            SafeCast.toUint128(
-                StableMath.scaleBy(request.amount, assetDecimals, 18)
-            );
+            SafeCast.toUint128(nominalAsset);
 
         // Haircut payout = nominal * min(1, ratio), rounded down (favours the
         // vault so the last claimer cannot over-drain). `ratio` is pre-capped.
-        uint256 amount = StableMath.scaleBy(
-            uint256(request.amount).mulTruncate(ratio),
-            assetDecimals,
-            18
-        );
+        uint256 amount = nominalAsset.mulTruncate(ratio);
 
         // Emit both the nominal size of the settled request and the asset
         // actually paid out. They differ whenever a loss has been socialised.
