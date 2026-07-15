@@ -112,9 +112,6 @@ Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (
 ### OTokens
 `contracts/token/OUSD.sol` and `contracts/token/OETH.sol` - rebasing ERC-20 tokens. OUSD rebases to all holders; OETH uses a similar mechanism for ETH-denominated yield.
 
-### Oracle System
-`contracts/oracle/` - price feed aggregation. `OracleRouter` routes price queries to appropriate Chainlink feeds or Curve pool oracles, with staleness checks. Each network has its own router.
-
 ### Harvesters
 `contracts/harvest/` - collect reward tokens from strategies and swap to yield-bearing assets. `Harvester` for OUSD, `OETHHarvester` for OETH, network-specific variants exist.
 
