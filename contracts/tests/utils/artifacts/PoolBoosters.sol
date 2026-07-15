@@ -11,17 +11,5 @@ library PoolBoosters {
         "contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry";
     string internal constant POOL_BOOSTER_FACTORY_MERKL =
         "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl";
-    string internal constant POOL_BOOSTER_FACTORY_METROPOLIS =
-        "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis";
-    string internal constant POOL_BOOSTER_FACTORY_SWAPX_DOUBLE =
-        "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble";
-    string internal constant POOL_BOOSTER_FACTORY_SWAPX_SINGLE =
-        "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol:PoolBoosterFactorySwapxSingle";
     string internal constant POOL_BOOSTER_MERKL_V2 = "contracts/poolBooster/PoolBoosterMerklV2.sol:PoolBoosterMerklV2";
-    string internal constant POOL_BOOSTER_METROPOLIS =
-        "contracts/poolBooster/PoolBoosterMetropolis.sol:PoolBoosterMetropolis";
-    string internal constant POOL_BOOSTER_SWAPX_DOUBLE =
-        "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble";
-    string internal constant POOL_BOOSTER_SWAPX_SINGLE =
-        "contracts/poolBooster/PoolBoosterSwapxSingle.sol:PoolBoosterSwapxSingle";
 }

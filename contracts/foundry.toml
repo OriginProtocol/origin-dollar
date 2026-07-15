@@ -40,7 +40,6 @@ remappings = [
 [rpc_endpoints]
 mainnet = "${MAINNET_PROVIDER_URL}"
 base = "${BASE_PROVIDER_URL}"
-sonic = "${SONIC_PROVIDER_URL}"
 arbitrum = "${ARBITRUM_PROVIDER_URL}"
 hyperevm = "${HYPEREVM_PROVIDER_URL}"
 

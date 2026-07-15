@@ -20,9 +20,5 @@ library Strategies {
     string internal constant MORPHO_V2_STRATEGY = "contracts/strategies/MorphoV2Strategy.sol:MorphoV2Strategy";
     string internal constant OETH_VAULT_VALUE_CHECKER =
         "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker";
-    string internal constant SONIC_STAKING_STRATEGY =
-        "contracts/strategies/sonic/SonicStakingStrategy.sol:SonicStakingStrategy";
-    string internal constant SONIC_SWAPX_AMO_STRATEGY =
-        "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy";
     string internal constant VAULT_VALUE_CHECKER = "contracts/strategies/VaultValueChecker.sol:VaultValueChecker";
 }

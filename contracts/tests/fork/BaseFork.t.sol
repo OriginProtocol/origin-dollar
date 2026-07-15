@@ -27,17 +27,6 @@ abstract contract BaseFork is Base {
         vm.selectFork(forkIdBase);
     }
 
-    function _createAndSelectForkSonic() internal virtual {
-        // Check if the SONIC_URL is set.
-        require(vm.envExists("SONIC_PROVIDER_URL"), "SONIC_URL not set");
-
-        // Create and select a fork.
-        forkIdSonic = vm.envExists("FORK_BLOCK_NUMBER_SONIC")
-            ? vm.createFork("sonic", vm.envUint("FORK_BLOCK_NUMBER_SONIC"))
-            : vm.createFork("sonic");
-        vm.selectFork(forkIdSonic);
-    }
-
     function _createAndSelectForkArbitrum() internal virtual {
         // Check if the ARBITRUM_URL is set.
         require(vm.envExists("ARBITRUM_PROVIDER_URL"), "ARBITRUM_URL not set");

@@ -55,7 +55,6 @@ abstract contract Base is Test {
 
     uint256 internal forkIdMainnet;
     uint256 internal forkIdBase;
-    uint256 internal forkIdSonic;
     uint256 internal forkIdArbitrum;
     uint256 internal forkIdHyperEVM;
 
