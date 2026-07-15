@@ -12,6 +12,9 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// --- Project imports
+import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
+
 contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMainnet_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS
@@ -57,6 +60,12 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
     function test_bribe() public {
         _fundBooster(address(boosterMerkl), 10 ether);
         assertGt(IERC20(Mainnet.OETHProxy).balanceOf(address(boosterMerkl)), 0);
+
+        // Merkl can update its conditions independently of Origin deployments.
+        // Accept the current conditions so the smoke test exercises campaign creation.
+        IMerklDistributor merklDistributor = IMerklDistributor(boosterMerkl.merklDistributor());
+        vm.prank(address(boosterMerkl));
+        merklDistributor.acceptConditions();
 
         // V1: anyone can call bribe(), V2: needs governor/strategist
         // Try as governor first, fall back to direct call

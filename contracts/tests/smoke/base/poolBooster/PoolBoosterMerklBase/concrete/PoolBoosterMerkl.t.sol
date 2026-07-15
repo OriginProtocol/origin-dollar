@@ -12,6 +12,9 @@ import {Base} from "tests/utils/Addresses.sol";
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// --- Project imports
+import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
+
 contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS
@@ -56,6 +59,12 @@ contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_
     function test_bribe() public {
         _mintAndFundBooster(address(boosterMerkl), 1 ether);
         assertGt(IERC20(Base.OETHBaseProxy).balanceOf(address(boosterMerkl)), 0);
+
+        // Merkl can update its conditions independently of Origin deployments.
+        // Accept the current conditions so the smoke test exercises campaign creation.
+        IMerklDistributor merklDistributor = IMerklDistributor(boosterMerkl.merklDistributor());
+        vm.prank(address(boosterMerkl));
+        merklDistributor.acceptConditions();
 
         // V1: anyone can call. V2: needs governor. Try governor first, fallback to direct.
         (bool hasGovernor, bytes memory govData) =
