@@ -201,6 +201,36 @@ match:
 # ║                                  UTILS                                       ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
+# Update Foundry fork block numbers in .env to latest - 20 blocks.
+update-fork-blocks:
+	@set -euo pipefail; \
+	mainnet_block=$$(( $$(cast block-number --rpc-url "$$MAINNET_PROVIDER_URL") - 20 )); \
+	base_block=$$(( $$(cast block-number --rpc-url "$$BASE_PROVIDER_URL") - 20 )); \
+	arbitrum_block=$$(( $$(cast block-number --rpc-url "$$ARBITRUM_PROVIDER_URL") - 20 )); \
+	awk \
+		-v mainnet="$$mainnet_block" \
+		-v base="$$base_block" \
+		-v arbitrum="$$arbitrum_block" \
+		'BEGIN { \
+			values["FORK_BLOCK_NUMBER_MAINNET"] = mainnet; \
+			values["FORK_BLOCK_NUMBER_BASE"] = base; \
+			values["FORK_BLOCK_NUMBER_ARBITRUM"] = arbitrum; \
+		} \
+		/^(FORK_BLOCK_NUMBER_MAINNET|FORK_BLOCK_NUMBER_BASE|FORK_BLOCK_NUMBER_ARBITRUM)=/ { \
+			key = $$0; sub(/=.*/, "", key); \
+			if (!seen[key]++) print key "=" values[key]; \
+			next; \
+		} \
+		{ print } \
+		END { \
+			if (!seen["FORK_BLOCK_NUMBER_MAINNET"]) print "FORK_BLOCK_NUMBER_MAINNET=" mainnet; \
+			if (!seen["FORK_BLOCK_NUMBER_BASE"]) print "FORK_BLOCK_NUMBER_BASE=" base; \
+			if (!seen["FORK_BLOCK_NUMBER_ARBITRUM"]) print "FORK_BLOCK_NUMBER_ARBITRUM=" arbitrum; \
+		}' .env > .env.tmp; \
+	mv .env.tmp .env; \
+	printf 'Updated fork blocks (latest - 20):\n  mainnet: %s\n  base: %s\n  arbitrum: %s\n' \
+		"$$mainnet_block" "$$base_block" "$$arbitrum_block"
+
 # Print a frame with centered text: make frame text="SECTION NAME"
 frame:
 	@if [ -z "$(text)" ]; then echo "Usage: make frame text=\"SECTION NAME\""; exit 1; fi
@@ -227,4 +257,4 @@ lint-imports:
 .PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
         coverage coverage-html gas snapshot build build-% \
         deploy-mainnet deploy-base deploy-sonic deploy-hyperevm deploy-local simulate \
-        match clean clean-all install frame lint-imports
+        match clean clean-all install update-fork-blocks frame lint-imports
