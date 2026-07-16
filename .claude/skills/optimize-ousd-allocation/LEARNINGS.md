@@ -18,6 +18,13 @@ The highest-value content is **per-market sensitivity** (bps of APY move per $10
 - **Bridge-pending blocks deposits.** `simulate_cross_chain_move` to HyperEVM (999) has intermittently returned a "Bridge transfer to chain 999 is currently pending — deposits are blocked" warning. Check for it before proposing a HyperEVM deposit.
 - **AMO yield gap unresolved** — no realized-APY source wired for the Curve AMO. Held at floor; flag opportunity cost.
 
+## Grafana investigation (session 2026-07-16)
+- Grafana is **Cloud Pro** (`grafana.originprotocol.com`, Cloudflare-fronted). Built-in MCP `/api/mcp` = 404 (toggle off; enabling on Cloud needs Grafana support). Server-admin pages locked.
+- **All needed data is live in Prometheus** (`grafanacloud-prom`): `morpho_vault_apy{chain}` (18 series), `ousd_rebalancer_strategy_{current,target,delta}_balance{name,address}`. Detailed earnings in Postgres. See `references/grafana-history.md`.
+- **Easiest history access = Grafana HTTP API + Viewer token** (datasource proxy `query_range`) — no MCP/container/snapshotter. Core recommendation needs no history anyway.
+- **Production rebalancer exists** and emits current/target/delta. Its current balances matched our on-chain reads exactly (Eth $3,576,082, HyperEVM $880,538). Its live recommendation: **+150k HyperEVM Morpho, −150k OUSD Vault** — same destination our skill derived (150k→HyperEVM).
+- **⚠️ DISCREPANCY to track**: production rebalancer `OUSD Vault current_balance = 150,000` but on-chain/MCP vault USDC ≈ **$17,205**. Either stale metric or buffer changed. Exactly what the independent-verify layer is for. Policy: skill computes independently, `ousd_rebalancer_*` is a cross-check target NOT a source.
+
 ## Run log
 
 ### Merge + on-chain layer (session 2026-07-16) — rebased onto the production rebalancer

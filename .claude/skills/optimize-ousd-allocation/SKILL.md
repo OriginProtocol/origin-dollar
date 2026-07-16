@@ -118,17 +118,23 @@ Before/after tables (bucket, deployed, APY, $/yr; total + blended APY), the net 
 
 Append a dated entry: per-market **sensitivity** (bps per $100k, at what balance), on-chain util readings, any caps/liquidity/bridge limits hit, the allocation found + blended APY, MCP↔on-chain discrepancies, and surprises. This is the skill's memory — seed the next run from it.
 
-## Monitoring & back-check (PROPOSAL — not yet wired)
+## Verify the production rebalancer (don't rely on it)
 
-Periodically snapshot on-chain + APY data so that, days later, we can (a) calibrate the per-market sensitivity priors in `LEARNINGS.md` from real curves, (b) **back-check executed moves** (did the realized post-move APY match the projection, or did it revert?), and (c) detect drift/anomalies. Two tiers:
+A production rebalancer already emits `ousd_rebalancer_strategy_{current,target,delta}_balance` and `morpho_vault_apy{chain}` to Grafana Cloud Prometheus. **Treat these as a cross-check target, NOT an input.** The skill computes its own current/target/delta independently (on-chain `checkBalance` + Morpho Blue util + MCP/IRM APY + its optimizer), then compares — so it independently confirms the production rebalancer is working:
+- our `checkBalance` vs `ousd_rebalancer_strategy_current_balance` — divergence ⇒ production feed stale/wrong.
+- our derived delta vs `ousd_rebalancer_strategy_delta` — agreement corroborates; divergence is a flag.
 
-- **Capture — frequent, cheap, no LLM.** Append one timestamped row (per market: util, liquidity, our balance, supply APY) to a JSONL time-series.
-  - **Preferred source: Grafana**, if it already panels this data. Query it via the `grafana/mcp-grafana` MCP (Prometheus/Loki datasources). Not in the managed connector registry — self-host: run `mcp-grafana` against the Grafana URL with a service-account token, add to Claude's MCP config. Avoids rebuilding capture.
-  - **Fallback / independent-verification source: a pure-`cast` snapshotter** (`references/onchain-verification.md`) computing util/liquidity/balances + IRM-derived APY on-chain. **Cron-safe — no MCP dependency** (scheduled/remote runs often can't reach the MCP; `cast` + RPCs always work). Runs locally where `contracts/.env` lives.
-  - Even when Grafana is the history source, keep `cast` as the spot cross-check — never trust a single source.
-- **Review — infrequent, LLM.** Read the accumulated series; flag anomalies (APY > freeze 50% / caution 15%, util > 90%, MCP↔on-chain divergence trending, a rate reverting after a move); back-check moves logged in `LEARNINGS.md`; append findings.
+**Helper:** `scripts/backcheck.py` (run from `contracts/`; reads `GRAFANA_TOKEN` + `PROVIDER_URL` from `.env`) pulls the `ousd_rebalancer_*` + `morpho_vault_apy` metrics, diffs them against on-chain `checkBalance`, flags any >1% divergence, and surfaces the AMO (which the rebalancer omits). No secrets in the file — the token stays in `.env`.
 
-Suggested cadence: capture ~4h, review daily. Suggested wiring: a **local scheduled script** for capture (reliable RPC/`.env` access; runs while the machine is up), LLM review on demand or daily. Status: proposal — no schedule created yet.
+**Observed 2026-07-16** (baseline for what "working" vs "diverging" looks like): Ethereum & Base matched Grafana to the dollar ✓; **HyperEVM's Grafana `current` was stale** (880k vs on-chain 1,030k — already at the published target); **OUSD Vault diverged 89%** (Grafana 150k vs on-chain 17k); **AMO ($1.02M) is untracked** by the rebalancer entirely. Also seen: a 150k Base→HyperEVM shift had already executed on-chain while Grafana still showed the pre-move `current`. Takeaway: the production `current`/`delta` feed **lags and can be inconsistent** — always reconcile to on-chain before acting.
+
+## Monitoring & back-check (history)
+
+The skill's **core recommendation needs no history** — current state is on-chain + MCP. History matters only to (a) back-check executed moves (did post-move APY hold or revert?) and (b) calibrate sensitivity priors in `LEARNINGS.md`.
+
+**Easiest history source: the Grafana HTTP API + a read-only token — no MCP server, no container, no bespoke snapshotter.** The data already lives in Grafana Cloud Prometheus (`grafanacloud-prom`); one authenticated `query_range` call gets it. Full recipes, metric names, and the verify-vs-production logic are in `references/grafana-history.md`. Access ranking easiest→hardest: Grafana HTTP API + Viewer token ≪ `mcp-grafana` container ≪ built-in MCP (needs Grafana to enable on Cloud) ≪ on-chain snapshotter. Keep `cast` as the spot cross-check regardless.
+
+**Review pass** (infrequent, LLM): pull the series, flag anomalies (APY > freeze 50% / caution 15%, util > 90%, our-vs-production divergence, a rate reverting after a move), back-check moves logged in `LEARNINGS.md`, append findings. Optionally scheduled locally later; no schedule created yet.
 
 ## Guardrails (quick reference)
 - Never cached data — refetch live; verify on-chain; trust on-chain over MCP on conflict.
