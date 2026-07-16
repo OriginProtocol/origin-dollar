@@ -9,7 +9,24 @@ Access ranking, easiest → hardest: **Grafana HTTP API + Viewer token** ≪ `mc
 ## Deployment facts (verified)
 - Grafana is **Cloud Pro** at `https://grafana.originprotocol.com` (Cloudflare-fronted, edition "Cloud Pro").
 - Prometheus datasource UID holding these metrics: **`grafanacloud-prom`**.
-- Auth: a **Viewer service-account token** (Administration → Users and access → Service accounts). Store as `GRAFANA_TOKEN` locally; never commit it.
+- Auth: a **Viewer service-account token** (see below). Store as `GRAFANA_TOKEN` in `contracts/.env` (gitignored); never in a tracked file.
+
+## Getting a GRAFANA_TOKEN (one-time)
+Requires org-admin on the Grafana instance.
+1. Grafana → **Administration → Users and access → Service accounts** (`/org/serviceaccounts`).
+2. **Add service account** → name e.g. `ousd-rebalance-readonly` → role **Viewer** (least privilege) → **Create**.
+3. On the account page → **Add service account token** → (optional expiry) → **Generate token**.
+4. **Copy it immediately** — shown only once. That value is `GRAFANA_TOKEN`.
+5. Put it in `contracts/.env` (gitignored): `GRAFANA_TOKEN=glsa_...`. The tracked `contracts/dev.env` only carries a blank `GRAFANA_TOKEN=` placeholder — never the real value.
+6. If a `query`/`query_range` call returns **403**, the account also needs the **"Data sources → Query"** permission (add via a custom role); Viewer alone usually suffices.
+7. Verify:
+   ```bash
+   curl -s -H "Authorization: Bearer $GRAFANA_TOKEN" \
+     "https://grafana.originprotocol.com/api/datasources/proxy/uid/grafanacloud-prom/api/v1/query?query=morpho_vault_apy" | head -c 200
+   ```
+   `"status":"success"` = working.
+
+> Alternatives to a stack service-account token: the built-in Grafana MCP (`/api/mcp`) — currently **404**, needs Grafana support to enable `mcpServer` on the Cloud stack — or a self-hosted `mcp-grafana` container using the same token. Neither is required; the HTTP API above is the simplest.
 
 ## The metrics we care about
 | Metric | Labels | Meaning |
