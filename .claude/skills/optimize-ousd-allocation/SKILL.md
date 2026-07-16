@@ -114,9 +114,17 @@ Derive net moves: `net_move(s) = targetBalance(s) − deployed(s)`. Filter throu
 
 Before/after tables (bucket, deployed, APY, $/yr; total + blended APY), the net moves with the executing call per leg, `TotalYield` baseline→proposed with the **Δ/yr** headline (star the optimum). Surface: frozen/elevated strategies, AMO opportunity cost, any constraint that bound the solution, any MCP↔on-chain discrepancies found, and low-confidence (within-drift) edges. If nothing clears the gates: **"No rebalancing recommended — current allocation is already optimal."** End with the non-execution note (Strategist multisig).
 
-## Phase 7 — Feed back into LEARNINGS.md
+## Phase 7 — Log the decision
 
-Append a dated entry: per-market **sensitivity** (bps per $100k, at what balance), on-chain util readings, any caps/liquidity/bridge limits hit, the allocation found + blended APY, MCP↔on-chain discrepancies, and surprises. This is the skill's memory — seed the next run from it.
+Every time you produce a rebalancing plan, **append one entry to `decisions/decision-log.jsonl`** (schema + rationale in `references/decision-log.md`): the independent state you read (balances/APY/util per bucket), the recommended moves with the **sustainable** dest rate you valued them at (not the spot), `expectedDeltaPerYr`, constraints that bound it, and the production rebalancer's delta for cross-check. Set `executed` to `unknown` (update later if you learn it executed). Use only your own independent reads here, never the production feed. This log is what makes decisions reviewable.
+
+## Phase 8 — Review past decisions (scoring, closes the loop)
+
+Periodically (or when asked), score prior `decision-log.jsonl` entries against **realized Grafana history**: for each logged move `from → to` at time `T`, `query_range morpho_vault_apy{chain=<to>}` over `[T, T+7d]` and compare realized APY to the `destRateSustainable` you projected (and to the `destRateSpot` you deliberately didn't bank on). Verdict `good`/`marginal`/`bad`, write it into the entry's `review` field, and feed the calibration delta (where our sustainable estimate was off, which markets revert hardest, sizing too big/small) into `LEARNINGS.md`. Full method in `references/decision-log.md`; history recipe in `references/grafana-history.md`.
+
+## Phase 9 — Feed back into LEARNINGS.md
+
+Append a dated entry: per-market **sensitivity** (bps per $100k, at what balance), on-chain util readings, any caps/liquidity/bridge limits hit, the allocation found + blended APY, MCP↔on-chain discrepancies, decision-review calibration deltas, and surprises. This is the skill's memory — seed the next run from it.
 
 ## Verify the production rebalancer (don't rely on it)
 

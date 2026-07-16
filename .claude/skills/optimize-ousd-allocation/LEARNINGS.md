@@ -18,6 +18,12 @@ The highest-value content is **per-market sensitivity** (bps of APY move per $10
 - **Bridge-pending blocks deposits.** `simulate_cross_chain_move` to HyperEVM (999) has intermittently returned a "Bridge transfer to chain 999 is currently pending — deposits are blocked" warning. Check for it before proposing a HyperEVM deposit.
 - **AMO yield gap unresolved** — no realized-APY source wired for the Curve AMO. Held at floor; flag opportunity cost.
 
+## Historical data verified + decision log (session 2026-07-16)
+- **Grafana `query_range` works** with the Viewer token (`references/grafana-history.md`). Confirmed populated history.
+- **HyperEVM `morpho_vault_apy` 7-day range: 6.6% – 11.0%, ~8.5% mean** (6h step). So HyperEVM's *sustainable* rate sits well below its 10.8% spot spike — valuing it at ~9% (the 90%-util anchor) is well-supported by history; **never size off the 10.8% spot.** Ethereum stable ~5.2%, Base ~5.0%.
+- **Decision log added** (`decisions/decision-log.jsonl` + `references/decision-log.md`): recommend → log → (execute) → review vs realized Grafana history → calibrate. Seeded with the 150k Base→HyperEVM decision; review verdict **good** (HyperEVM held ~9% post-move, didn't revert to the 6.6% low → the sustainable-rate valuation was correct).
+- Skill Phases 7 (log), 8 (review/score), 9 (LEARNINGS) added.
+
 ## Grafana investigation (session 2026-07-16)
 - Grafana is **Cloud Pro** (`grafana.originprotocol.com`, Cloudflare-fronted). Built-in MCP `/api/mcp` = 404 (toggle off; enabling on Cloud needs Grafana support). Server-admin pages locked.
 - **All needed data is live in Prometheus** (`grafanacloud-prom`): `morpho_vault_apy{chain}` (18 series), `ousd_rebalancer_strategy_{current,target,delta}_balance{name,address}`. Detailed earnings in Postgres. See `references/grafana-history.md`.
