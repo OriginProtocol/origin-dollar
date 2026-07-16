@@ -118,6 +118,18 @@ Before/after tables (bucket, deployed, APY, $/yr; total + blended APY), the net 
 
 Append a dated entry: per-market **sensitivity** (bps per $100k, at what balance), on-chain util readings, any caps/liquidity/bridge limits hit, the allocation found + blended APY, MCP↔on-chain discrepancies, and surprises. This is the skill's memory — seed the next run from it.
 
+## Monitoring & back-check (PROPOSAL — not yet wired)
+
+Periodically snapshot on-chain + APY data so that, days later, we can (a) calibrate the per-market sensitivity priors in `LEARNINGS.md` from real curves, (b) **back-check executed moves** (did the realized post-move APY match the projection, or did it revert?), and (c) detect drift/anomalies. Two tiers:
+
+- **Capture — frequent, cheap, no LLM.** Append one timestamped row (per market: util, liquidity, our balance, supply APY) to a JSONL time-series.
+  - **Preferred source: Grafana**, if it already panels this data. Query it via the `grafana/mcp-grafana` MCP (Prometheus/Loki datasources). Not in the managed connector registry — self-host: run `mcp-grafana` against the Grafana URL with a service-account token, add to Claude's MCP config. Avoids rebuilding capture.
+  - **Fallback / independent-verification source: a pure-`cast` snapshotter** (`references/onchain-verification.md`) computing util/liquidity/balances + IRM-derived APY on-chain. **Cron-safe — no MCP dependency** (scheduled/remote runs often can't reach the MCP; `cast` + RPCs always work). Runs locally where `contracts/.env` lives.
+  - Even when Grafana is the history source, keep `cast` as the spot cross-check — never trust a single source.
+- **Review — infrequent, LLM.** Read the accumulated series; flag anomalies (APY > freeze 50% / caution 15%, util > 90%, MCP↔on-chain divergence trending, a rate reverting after a move); back-check moves logged in `LEARNINGS.md`; append findings.
+
+Suggested cadence: capture ~4h, review daily. Suggested wiring: a **local scheduled script** for capture (reliable RPC/`.env` access; runs while the machine is up), LLM review on demand or daily. Status: proposal — no schedule created yet.
+
 ## Guardrails (quick reference)
 - Never cached data — refetch live; verify on-chain; trust on-chain over MCP on conflict.
 - Objective = total earnings on all TVL; marginal APY only orders; global Δ is the gate.
