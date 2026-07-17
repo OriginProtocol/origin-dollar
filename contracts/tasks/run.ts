@@ -1,30 +1,17 @@
 #!/usr/bin/env tsx
 /**
- * Standalone viem CLI entrypoint for Talos actions (replaces `pnpm hardhat
- * <task> --network <net>`). The Talos dispatcher spawns this as a tsx/node
- * child, e.g. `pnpm exec tsx tasks/run.ts harvest --network mainnet`.
+ * Standalone (hardhat-free) CLI entrypoint for Talos actions. Replaces
+ * `pnpm hardhat <task> --network <net>`. The Talos dispatcher spawns this as a
+ * tsx/node child, e.g. `pnpm exec tsx tasks/run.ts harvest --network mainnet`.
  *
  * Usage: tsx tasks/run.ts <actionName> --network <net> [--flag value ...]
  */
-import { resolveChain } from "@talos/client";
-import { makePublicClient } from "./lib/clients";
-import { resolveSigner } from "./lib/accounts";
-import { makeSendTx, makeWriteContract } from "./lib/sendTx";
-import { makeResolveContract } from "./lib/resolveContract";
-import { registry, type Logger, type ParamSpec } from "./lib/viemAction";
-// Side-effect: register all migrated viem actions.
-import "./actions-viem";
-
-const CHAIN_NAMES: Record<number, string> = {
-  1: "mainnet",
-  8453: "base",
-  146: "sonic",
-  560048: "hoodi",
-  999: "hyperevm",
-  17000: "holesky",
-  42161: "arbitrum",
-  98866: "plume",
-};
+import "dotenv/config";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+import { CHAIN_NAMES, initNetwork, setSigner } from "./lib/network";
+import { getSigner } from "./lib/signer";
+import { registry, type Logger, type ParamSpec } from "./lib/action";
 
 function makeLog(name: string): Logger {
   const prefix = `[${name}]`;
@@ -39,13 +26,11 @@ function kebabToCamel(s: string): string {
   return s.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 }
 
-interface ParsedCli {
+function parseCli(argv: string[]): {
   name?: string;
   network?: string;
   flags: Record<string, string | boolean>;
-}
-
-function parseCli(argv: string[]): ParsedCli {
+} {
   const [name, ...rest] = argv;
   const flags: Record<string, string | boolean> = {};
   for (let i = 0; i < rest.length; i++) {
@@ -60,8 +45,7 @@ function parseCli(argv: string[]): ParsedCli {
       i++;
     }
   }
-  const network =
-    typeof flags.network === "string" ? flags.network : undefined;
+  const network = typeof flags.network === "string" ? flags.network : undefined;
   delete flags.network;
   return { name, network, flags };
 }
@@ -74,8 +58,8 @@ function coerceParams(
   for (const spec of specs) {
     const raw = flags[spec.name];
     if (raw === undefined) {
-      if (spec.default !== undefined) out[spec.name] = spec.default;
-      else if (spec.flag) out[spec.name] = false;
+      if (spec.hasDefault) out[spec.name] = spec.defaultValue;
+      else if (spec.isFlag) out[spec.name] = false;
       continue;
     }
     if (spec.type === "int") out[spec.name] = parseInt(String(raw), 10);
@@ -87,68 +71,69 @@ function coerceParams(
   return out;
 }
 
+// Load every action file (side-effect: each self-registers into the registry).
+// Resilient during the transition: an action not yet ported off hardhat may
+// fail to import — skip it with a warning rather than sinking the whole CLI.
+async function loadActions(): Promise<void> {
+  const actionsDir = join(__dirname, "actions");
+  for (const file of readdirSync(actionsDir).sort()) {
+    if (!file.endsWith(".ts") || file.startsWith("_")) continue;
+    try {
+      await import(join(actionsDir, file));
+    } catch (err) {
+      console.warn(
+        `[run] skipped ${file}: ${
+          (err as Error).message?.split("\n")[0] ?? err
+        }`
+      );
+    }
+  }
+}
+
 function fail(msg: string, code = 2): never {
   console.error(msg);
   process.exit(code);
 }
 
 async function main(): Promise<void> {
-  const { name, network, flags } = parseCli(process.argv.slice(2));
+  await loadActions();
 
+  const { name, network, flags } = parseCli(process.argv.slice(2));
   if (!name) {
     fail(
       "usage: tsx tasks/run.ts <action> --network <net> [--flag value ...]\n" +
         `known actions: ${[...registry.keys()].sort().join(", ")}`
     );
   }
-  const config = registry.get(name);
-  if (!config) {
+  const entry = registry.get(name);
+  if (!entry) {
     fail(
-      `Unknown action '${name}'. Known: ${[...registry.keys()].sort().join(", ")}`
+      `Unknown action '${name}'. Known: ${[...registry.keys()]
+        .sort()
+        .join(", ")}`
     );
   }
   if (!network) fail("--network is required");
 
-  const chain = resolveChain(network);
+  const { chainId, networkName } = initNetwork(network);
   const log = makeLog(name);
 
-  if (config.chains && config.chains.length && !config.chains.includes(chain.id)) {
-    const valid = config.chains
+  const { chains } = entry.config;
+  if (chains && chains.length && !chains.includes(chainId)) {
+    const valid = chains
       .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
       .join(", ");
-    fail(
-      `${name} only supports ${valid}, not ${chain.name} (${chain.id})`,
-      1
-    );
+    fail(`${name} only supports ${valid}, not ${networkName} (${chainId})`, 1);
   }
 
-  const args = coerceParams(config.params ?? [], flags);
-  const networkName = CHAIN_NAMES[chain.id] ?? chain.name;
+  const signer = await getSigner();
+  setSigner(signer);
+  const args = coerceParams(entry.params, flags);
   const start = Date.now();
-  log.info(`Running on ${networkName} (${chain.id})`);
-
-  const { publicClient } = makePublicClient(chain.id);
-  const { account, walletClient } = await resolveSigner(chain);
-  const sendTx = makeSendTx(walletClient, publicClient, log);
-  const writeContract = makeWriteContract(sendTx);
-  const resolveContract = makeResolveContract(chain.id, {
-    public: publicClient,
-    wallet: walletClient,
-  });
+  log.info(`Running on ${networkName} (${chainId})`);
 
   try {
-    await config.run({
-      publicClient,
-      walletClient,
-      account,
-      chainId: chain.id,
-      networkName,
-      log,
-      args,
-      sendTx,
-      writeContract,
-      resolveContract,
-    });
+    await entry.config.run({ signer, chainId, networkName, log, args });
     log.info(`Completed in ${((Date.now() - start) / 1000).toFixed(1)}s`);
   } catch (err) {
     const e = err as { name?: string; message?: string; stack?: string };

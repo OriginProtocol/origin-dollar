@@ -1,6 +1,5 @@
-/// <reference types="hardhat/types/runtime" />
-
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const SONIC_STAKING_STRATEGY_PROXY_DEPLOYMENT = "SonicStakingStrategyProxy";
@@ -11,11 +10,10 @@ action({
   description: "Restake rewards for Sonic validators",
   chains: [146],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const strategyProxy = await ethers.getContract(
+    const strategyProxy = await getContract(
       SONIC_STAKING_STRATEGY_PROXY_DEPLOYMENT
     );
-    const strategy = await ethers.getContractAt(
+    const strategy = await getContractAt(
       "SonicStakingStrategy",
       strategyProxy.address
     );

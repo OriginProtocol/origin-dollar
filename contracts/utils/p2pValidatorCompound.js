@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+const fetch = globalThis.fetch;
 const { v4: uuidv4 } = require("uuid");
 const { getNetworkName } = require("./hardhat-helpers");
 const log = require("./logger")("task:validator:compounding");

@@ -1,10 +1,9 @@
 import { ethers } from "ethers";
-import { types } from "hardhat/config";
 import { configuration } from "../../utils/cctp";
 import { keyValueStoreLocalClient } from "../../utils/defender";
-import { getNetworkName } from "../../utils/hardhat-helpers";
 import { processCctpBridgeTransactions } from "../crossChain";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
+import { CHAIN_NAMES } from "../lib/network";
 
 action({
   name: "crossChainRelay",
@@ -37,7 +36,8 @@ action({
       );
     }
 
-    const networkName = await getNetworkName(sourceProvider);
+    const { chainId: sourceChainId } = await sourceProvider.getNetwork();
+    const networkName = CHAIN_NAMES[sourceChainId];
 
     let config: any;
     if (networkName === "mainnet") {
