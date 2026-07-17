@@ -21,7 +21,7 @@ const mainExport = async () => {
   await withConfirmation(
     cNativeStakingStrategy
       .connect(sGovernor)
-      // Holesky defender relayer
+      // Holesky validator registrator
       .setStakingMonitor(addresses.holesky.Guardian)
   );
 

@@ -1180,7 +1180,7 @@ async function compoundingStakingSSVStrategyFixture() {
     /*
     const { compoundingStakingSSVStrategy, ssv } = fixture;
 
-    // The Defender Relayer
+    // The automation operator
     fixture.validatorRegistrator = await impersonateAndFund(
       addresses.mainnet.validatorRegistrator
     );
@@ -1414,7 +1414,7 @@ async function crossChainFixtureUnit() {
   );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
 
-  // In unit test environment it is not the off-chain defender action that calls the "relay"
+  // In unit tests it is not the off-chain automation action that calls "relay"
   // to relay the messages but rather the message transmitter.
   await cCrossChainMasterStrategy
     .connect(governor)

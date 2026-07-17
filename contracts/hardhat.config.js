@@ -62,7 +62,6 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
 
 require("./tasks/tasks");
 

@@ -12,7 +12,7 @@ const mainExport = async () => {
 
   await withConfirmation(
     cNativeStakingStrategy
-      // Holesky defender relayer
+      // Holesky validator registrator
       .setRegistrator(addresses.holesky.validatorRegistrator)
   );
 

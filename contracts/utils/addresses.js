@@ -332,7 +332,7 @@ addresses.mainnet.NativeStakingSSVStrategy2Proxy =
 addresses.mainnet.NativeStakingSSVStrategy3Proxy =
   "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63";
 
-// Defender relayer
+// Automation operator
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
@@ -676,10 +676,10 @@ addresses.holesky.NativeStakingSSVStrategyProxy =
 addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
 
 addresses.holesky.Governor = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
-// Address of the Holesky defender relayer
+// Address of the Holesky automation operator
 addresses.holesky.validatorRegistrator =
   "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
-// Address of the Holesky defender relayer
+// Address of the Holesky automation operator
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
@@ -713,7 +713,8 @@ addresses.hoodi.SSV = "0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e";
 addresses.hoodi.SSVNetwork = "0x58410Bef803ECd7E63B23664C586A6DB72DAf59c";
 addresses.hoodi.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
-addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
+addresses.hoodi.validatorRegistrator =
+  "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy

@@ -196,7 +196,7 @@ const networkMap = {
 /**
  * Returns the network name based on the chain ID of the connected network.
  * @param {ethers.Provider} [provider] - Optional ethers provider. Defaults to the Hardhat provider if not supplied.
- * The provider is required for Defender Actions as Hardhat is too big to load as a dependency.
+ * The provider is required by standalone automation code that does not load Hardhat.
  * @returns {Promise<string>} The network name. e.g. `mainnet`, `sonic`, `base`
  */
 const getNetworkName = async (provider) => {

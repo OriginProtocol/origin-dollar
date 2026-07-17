@@ -65,9 +65,6 @@ contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.holesky
 contracts/.localKeyValueStorage.base
-contracts/scripts/defender-actions/dist/
-
-contracts/lib/defender-actions/dist/
 
 todo.txt
 brownie/env-brownie/

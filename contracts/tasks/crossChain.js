@@ -1,4 +1,3 @@
-//const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
 const ethers = require("ethers");
 const { logTxDetails } = require("../utils/txLogger");
 const { api: cctpApi } = require("../utils/cctp");

@@ -118,16 +118,11 @@ Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (
 ### Harvesters
 `contracts/harvest/` - collect reward tokens from strategies and swap to yield-bearing assets. `Harvester` for OUSD, `OETHHarvester` for OETH, network-specific variants exist.
 
-### Automation (Defender Actions)
-`scripts/defender-actions/` - OpenZeppelin Defender automation scripts for:
-- `doAccounting` - periodic vault accounting
-- `harvest` - automated harvesting
-- `sonicRequestWithdrawal` / `sonicClaimWithdrawals` - Sonic staking lifecycle
-- `crossChainRelay` - Base ↔ Mainnet CCTP relay
-
-Bundle with: `pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs`
-
-**Scheduled actions (Talos):** distinct from the Defender scripts above — the Talos runner's cron/manual actions live in `contracts/tasks/actions/*.ts`, are scheduled in `contracts/migrations/seed_schedules.sql`, and are catalogued in `contracts/docs/ACTIONS.md`. Update that doc in the same change whenever a scheduled action is added, removed, or its behaviour changes.
+### Automation (Talos)
+The Talos runner's cron/manual actions live in `contracts/tasks/actions/*.ts`,
+are scheduled in `contracts/migrations/seed_schedules.sql`, and are catalogued
+in `contracts/docs/ACTIONS.md`. Update that doc in the same change whenever a
+scheduled action is added, removed, or its behaviour changes.
 
 ### Cross-Chain
 - CCTP (Circle) for USDC bridging

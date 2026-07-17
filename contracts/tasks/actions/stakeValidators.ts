@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { types } from "hardhat/config";
 import addresses from "../../utils/addresses";
-import { keyValueStoreLocalClient } from "../../utils/defender";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { stakeValidators } from "../../utils/validator";
 import { action } from "../lib/action";
 
