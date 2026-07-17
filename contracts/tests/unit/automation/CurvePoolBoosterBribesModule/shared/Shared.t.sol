@@ -10,6 +10,7 @@ import {Automation} from "tests/utils/artifacts/Automation.sol";
 // --- Project imports
 import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICurvePoolBoosterBribesModule.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockCurvePoolBoosterForBribes} from "tests/mocks/MockCurvePoolBoosterForBribes.sol";
 
 abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -36,9 +37,9 @@ abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
         // Deploy mock safe
         mockSafe = new MockSafeContract();
 
-        // Create pool booster addresses
-        poolBooster1 = makeAddr("PoolBooster1");
-        poolBooster2 = makeAddr("PoolBooster2");
+        // Deploy mock pool boosters
+        poolBooster1 = address(new MockCurvePoolBoosterForBribes());
+        poolBooster2 = address(new MockCurvePoolBoosterForBribes());
 
         // Deploy CurvePoolBoosterBribesModule with initial pool boosters
         address[] memory initialPoolBoosters = new address[](2);

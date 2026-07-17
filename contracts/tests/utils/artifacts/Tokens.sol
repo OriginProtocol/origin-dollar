@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 library Tokens {
+    string internal constant BRIDGED_WOETH = "contracts/token/BridgedWOETH.sol:BridgedWOETH";
     string internal constant OETH = "contracts/token/OETH.sol:OETH";
     string internal constant OETH_BASE = "contracts/token/OETHBase.sol:OETHBase";
     string internal constant OUSD = "contracts/token/OUSD.sol:OUSD";

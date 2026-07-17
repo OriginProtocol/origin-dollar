@@ -42,7 +42,7 @@ abstract contract Fork_BeaconRoots_Shared_Test is BaseFork {
         cmd[2] = string.concat("cast block ", vm.toString(blockNumber), ' --json --rpc-url "$MAINNET_PROVIDER_URL"');
 
         string memory response = string(vm.ffi(cmd));
-        string memory timestampHex = response.readString(".timestamp");
+        string memory timestampHex = response.readString(".data.timestamp");
         return uint64(vm.parseUint(timestampHex));
     }
 
@@ -53,7 +53,7 @@ abstract contract Fork_BeaconRoots_Shared_Test is BaseFork {
         cmd[2] = 'cast block latest --json --rpc-url "$MAINNET_PROVIDER_URL"';
 
         string memory response = string(vm.ffi(cmd));
-        string memory blockNumberHex = response.readString(".number");
+        string memory blockNumberHex = response.readString(".data.number");
         return vm.parseUint(blockNumberHex);
     }
 }
