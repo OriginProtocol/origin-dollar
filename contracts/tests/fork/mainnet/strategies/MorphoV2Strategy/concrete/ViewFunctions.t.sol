@@ -2,14 +2,12 @@
 pragma solidity ^0.8.0;
 
 // --- Test base
-import { Fork_MorphoV2Strategy_Shared_Test } from "tests/fork/mainnet/strategies/MorphoV2Strategy/shared/Shared.t.sol";
+import {Fork_MorphoV2Strategy_Shared_Test} from "tests/fork/mainnet/strategies/MorphoV2Strategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import { Mainnet } from "tests/utils/Addresses.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
 
-contract Fork_Concrete_MorphoV2Strategy_ViewFunctions_Test is
-    Fork_MorphoV2Strategy_Shared_Test
-{
+contract Fork_Concrete_MorphoV2Strategy_ViewFunctions_Test is Fork_MorphoV2Strategy_Shared_Test {
     function test_maxWithdraw_afterDeposit() public {
         _depositAsVault(10_000e6);
 
