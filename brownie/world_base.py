@@ -31,6 +31,7 @@ ogn_pool = load_contract('aerodrome_ogn_pool', AERODROME_OGN_OETHB_POOL_BASE)
 oethb_weth_bribe = load_contract('aero_bribes', OETHB_WETH_BRIBE_CONTRACT)
 
 amo_strat = load_contract('aerodrome_amo_strategy', OETHB_AERODROME_AMO_STRATEGY)
+hydrex_amo_strat = load_contract('aerodrome_amo_strategy', OETHB_HYDREX_AMO_STRATEGY)
 vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', OETHB_VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHECKER)
