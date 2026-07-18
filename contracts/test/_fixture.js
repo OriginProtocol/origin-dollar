@@ -22,8 +22,6 @@ const {
   usdcUnits,
   isTest,
   isFork,
-  isHolesky,
-  isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -77,10 +75,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     simpleOETHHarvester;
 
   if (isFork) {
-    let addressContext = addresses.mainnet;
-    if (isHolesky || isHoleskyFork) {
-      addressContext = addresses.holesky;
-    }
+    const addressContext = addresses.mainnet;
 
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);

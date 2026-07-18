@@ -23,7 +23,6 @@ addresses.GPv2VaultRelayer = "0xC92E8bdf79f0507f65a392b0ab4667716BFE0110";
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};
-addresses.holesky = {};
 addresses.hoodi = {};
 addresses.plume = {};
 addresses.hyperevm = {};
@@ -659,28 +658,6 @@ addresses.sonic.childLiquidityGaugeFactory =
 
 // Sonic Merkl
 addresses.sonic.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
-
-// Holesky
-addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
-
-// SSV network
-addresses.holesky.SSV = "0xad45A78180961079BFaeEe349704F411dfF947C6";
-addresses.holesky.SSVNetwork = "0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA";
-addresses.holesky.beaconChainDepositContract =
-  "0x4242424242424242424242424242424242424242";
-
-// Native Staking Strategy
-addresses.holesky.NativeStakingSSVStrategyProxy =
-  "0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E";
-
-addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
-
-addresses.holesky.Governor = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
-// Address of the Holesky automation operator
-addresses.holesky.validatorRegistrator =
-  "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
-// Address of the Holesky automation operator
-addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
 addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";

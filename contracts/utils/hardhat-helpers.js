@@ -4,8 +4,6 @@ require("dotenv").config();
 const isFork = process.env.FORK === "true";
 const isArbitrum = process.env.NETWORK_NAME === "arbitrumOne";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
-const isHoleskyFork = process.env.FORK_NETWORK_NAME === "holesky";
-const isHolesky = process.env.NETWORK_NAME === "holesky";
 const isBase = process.env.NETWORK_NAME === "base";
 const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
 const isSonic = process.env.NETWORK_NAME === "sonic";
@@ -19,7 +17,6 @@ const isHyperEVMFork = process.env.FORK_NETWORK_NAME === "hyperevm";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
-const isHoleskyForkTest = isForkTest && isHoleskyFork;
 const isBaseForkTest = isForkTest && isBaseFork;
 const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
 const isSonicForkTest = isForkTest && isSonicFork;
@@ -36,7 +33,6 @@ const providerUrl = `${
   process.env.PROVIDER_URL
 }`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
-const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
@@ -57,10 +53,6 @@ const adjustTheForkBlockNumber = () => {
     if (isArbForkTest) {
       forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER
         ? Number(process.env.ARBITRUM_BLOCK_NUMBER)
-        : undefined;
-    } else if (isHoleskyForkTest) {
-      forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER
-        ? Number(process.env.HOLESKY_BLOCK_NUMBER)
         : undefined;
     } else if (isBaseForkTest) {
       forkBlockNumber = process.env.BASE_BLOCK_NUMBER
@@ -113,23 +105,19 @@ const adjustTheForkBlockNumber = () => {
 
     console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
-    // Mine 40 blocks so hardhat wont complain about block fork being too recent
-    // On Holesky running this causes repeated tests connecting to a local node
-    // to fail
-    if (!isHoleskyFork && !isHolesky) {
-      fetch(providerUrl, {
-        method: "post",
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "hardhat_mine",
-          params: ["0x28"], // 40
-          id: 1,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).json();
-    }
+    // Mine 40 blocks so Hardhat won't complain about the fork block being too recent.
+    fetch(providerUrl, {
+      method: "post",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "hardhat_mine",
+        params: ["0x28"], // 40
+        id: 1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).json();
   } else if (isForkTest) {
     console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
   }
@@ -142,8 +130,6 @@ const getHardhatNetworkProperties = () => {
   let chainId = 1337;
   if (isArbitrumFork && isFork) {
     chainId = 42161;
-  } else if (isHoleskyFork && isFork) {
-    chainId = 17000;
   } else if (isBaseFork && isFork) {
     chainId = 8453;
   } else if (isSonicFork && isFork) {
@@ -163,8 +149,6 @@ const getHardhatNetworkProperties = () => {
   if (!providerUrl.includes("localhost")) {
     if (isArbForkTest) {
       provider = arbitrumProviderUrl;
-    } else if (isHoleskyForkTest) {
-      provider = holeskyProviderUrl;
     } else if (isBaseForkTest) {
       provider = baseProviderUrl;
     } else if (isSonicForkTest) {
@@ -183,7 +167,6 @@ const getHardhatNetworkProperties = () => {
 
 const networkMap = {
   1: "mainnet",
-  17000: "holesky",
   42161: "arbitrumOne",
   1337: "hardhat",
   8453: "base",
@@ -224,11 +207,8 @@ module.exports = {
   isSonicFork,
   isSonicForkTest,
   isSonicUnitTest,
-  isHoleskyFork,
-  isHolesky,
   isForkTest,
   isArbForkTest,
-  isHoleskyForkTest,
   isPlume,
   isPlumeFork,
   isPlumeForkTest,
@@ -242,7 +222,6 @@ module.exports = {
   isHyperEVMUnitTest,
   providerUrl,
   arbitrumProviderUrl,
-  holeskyProviderUrl,
   baseProviderUrl,
   sonicProviderUrl,
   plumeProviderUrl,

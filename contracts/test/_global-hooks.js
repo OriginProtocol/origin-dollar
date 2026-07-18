@@ -3,7 +3,6 @@ const mocha = require("mocha");
 const {
   isMainnetForkTest,
   isArbFork,
-  isHoleskyFork,
   isBaseFork,
   isBaseUnitTest,
   isSonicFork,
@@ -48,7 +47,6 @@ mocha.before(function () {
   // For fork tests, scrape out all unit tests.
   root.suites = root.suites.filter((s) => {
     const isMainnetForkTestFile = s.file.endsWith("mainnet.fork-test.js");
-    const isHoleskyTestFile = s.file.endsWith(".holesky.fork-test.js");
     const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
     const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
     const isBaseUnitTestFile = s.file.endsWith(".base.js");
@@ -72,8 +70,6 @@ mocha.before(function () {
       return isBaseTestFile;
     } else if (isSonicFork) {
       return isSonicTestFile;
-    } else if (isHoleskyFork) {
-      return isHoleskyTestFile;
     } else if (isPlumeFork) {
       return isPlumeTestFile;
     } else if (isHyperEVMFork) {
