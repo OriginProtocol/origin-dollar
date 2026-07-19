@@ -353,7 +353,11 @@ const crossChainFixture = deployments.createFixture(async () => {
     .connect(fixture.rafael)
     .mint(fixture.rafael.address, usdcUnits("1000000"));
 
-  fixture.relayer = await impersonateAndFund(addresses.base.OZRelayerAddress);
+  // The cross-chain operator is re-pointed during the Talos signer migration
+  // (deploy 051), so read it from the strategy instead of hardcoding a relayer.
+  fixture.relayer = await impersonateAndFund(
+    await crossChainRemoteStrategy.operator()
+  );
 
   return {
     ...fixture,
