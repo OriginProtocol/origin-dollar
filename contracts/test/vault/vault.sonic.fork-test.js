@@ -223,7 +223,7 @@ describe("ForkTest: Sonic Vault", function () {
     it("Should have vault buffer set", async () => {
       const { oSonicVault } = fixture;
       expect(await oSonicVault.vaultBuffer()).to.equal(
-        parseUnits("0.005", 18) // 0.5%
+        parseUnits("1", 18) // 100%
       );
     });
   });
