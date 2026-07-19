@@ -63,7 +63,6 @@ contracts/build/
 contracts/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
-contracts/.localKeyValueStorage.holesky
 contracts/.localKeyValueStorage.base
 
 todo.txt

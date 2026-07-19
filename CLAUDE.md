@@ -9,7 +9,7 @@ Origin DeFi's OTokens monorepo containing smart contracts for:
 - **OETH** (Origin Ether) - an Ethereum liquid staking token
 - **OS** (Origin Sonic) - Sonic chain native token
 
-Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Holesky, and Hoodi. All smart contract work happens in the `contracts/` directory.
+Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM. All smart contract work happens in the `contracts/` directory.
 
 ## Setup
 
