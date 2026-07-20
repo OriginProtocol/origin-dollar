@@ -1893,9 +1893,13 @@ Internal helpers the assertions rely on (referenced from bullets below):
 
 ### `test/strategies/sonic/sonicStaking.sonic.fork-test.js` — fork test (Sonic)
 
+> **Note (2026-07-20):** this suite is now `describe.skip`ped (disabled) on the migration branch; entries kept for reference.
+
 Fixture: `defaultSonicFixture` from `_fixture-sonic.js` (loaded fresh in a `beforeEach`, `this.timeout(0)`); contracts under test: the deployed `SonicStakingStrategy` + OSonic Vault against the real Sonic SFC on a fork. Top-level describe: **"Sonic Fork Test: Sonic Staking Strategy"**. Contains no `it()` blocks of its own — it CONSUMES `shouldBehaveLikeASFCStakingStrategy(context)` (documented above), passing a context of `{...defaultSonicFixture, addresses: addresses.sonic, sfc: ISFC at addresses.sonic.SFC, testValidatorIds: [15, 16, 17, 18, 45], unsupportedValidators: [1, 2, 3]}`. All 30 behaviour-suite tests run once against this fixture.
 
 ### `test/strategies/sonic/swapx-amo.sonic.fork-test.js` — fork test (Sonic)
+
+> **Note (2026-07-20):** this suite is now `describe.skip`ped (disabled) on the migration branch; entries kept for reference.
 
 Fixture: `swapXAMOFixture` from `_fixture-sonic.js` wrapped by `createFixtureLoader` from `_fixture.js`; contracts under test: `SwapXAMOStrategy` on the SwapX (Algebra-style) wS/OS pool + gauge, OSonic Vault, SWPx reward token. Top-level describe: **"Sonic Fork Test: SwapX AMO Strategy"**. Contains no `it()` blocks of its own — it CONSUMES `shouldBehaveLikeAlgebraAmoStrategy(...)` from `test/behaviour/algebraAmoStrategy.js` (a large shared AMO suite, ~113 `it()` blocks; also consumed by `test/strategies/base/oethb-hydrex-amo.base.fork-test.js` — documented with that suite, not here). It passes:
 - `scenarioConfig`: per-scenario sizing parameters (string token amounts) for the suite's scenarios: `attackerFrontRun` (moderateAssetIn 20000, largeAssetIn 10000000, largeOTokenIn 10000000), `bootstrapPool` (small/medium/large asset bootstrap: 5000 / 20000 / 5000000), `mintValues` (extraSmall 50, extraSmallPlus 100, small 2000, medium 5000), `poolImbalance` (lotMoreOToken +1000000 OToken, littleMoreOToken +5000, lotMoreAsset +2000000 asset, littleMoreAsset +20000), `smallPoolShare` (bootstrapAssetSwapIn 500000, bigLiquidityAsset 100000, oTokenBuffer 100000, stress swap sizes 50000/100000/50000 — a code comment notes these were downsized to fit the current ~760k-per-side wS/OS pool depth, since millions-scale swaps broke the suite's `oTokenToPool > 0` setup check), `rebalanceProbe` with four sub-scenarios (`frontRun`, `lotMoreOToken`, `littleMoreOToken`, `lotMoreAsset`, `littleMoreAsset`) each parameterising deposit/withdraw/swapAssetsToPool/swapOTokensToPool amounts including failing/excessive/disallowed sizes, `insolvent` (swapOTokensToPool 10), and `harvest` (collectedBy: "harvester").
@@ -2417,6 +2421,8 @@ Top-level `beforeEach`: impersonates+funds `addresses.multichainStrategist` as `
 - `it("Should allow factory to call bribe()")` — creates and funds a booster with 10 OETH; `bribeAll(existingBoosters)` (factory is the caller of the booster's `bribe()`, exercising the "fctry" auth branch); asserts `BribeExecuted(balance)` emitted by the booster.
 
 ### `test/poolBooster/poolBooster.sonic.fork-test.js` — fork test (sonic)
+
+> **Note (2026-07-20):** this suite is now `describe.skip`ped (disabled) on the migration branch; entries kept for reference.
 
 Fixture: `createFixtureLoader(defaultSonicFixture)` from `test/_fixture-sonic.js`, plus its helpers `filterAndParseRewardAddedEvents` and `getPoolBoosterContractFromPoolAddress`. Contracts under test: `PoolBoosterFactorySwapxDouble` (`fixture.poolBoosterDoubleFactoryV1`), `PoolBoosterFactorySwapxSingle` (`fixture.poolBoosterSingleFactoryV1`), the deployed SwapX Double booster for the SwapX OS/USDC.e Ichi pool, and `PoolBoostCentralRegistry`. Top-level `beforeEach`: nick mints 1000 OS via the OSonic vault; `strategist` = impersonated+funded `addresses.multichainStrategist`.
 
