@@ -155,4 +155,17 @@ contract Unit_Concrete_WOETH_Redeem_Test is Unit_WOETH_Shared_Test {
         // Donated OETH remains stuck in the contract
         assertApproxEqAbs(oeth.balanceOf(address(woeth)), 50e18, 1);
     }
+
+    /// @dev woeth.js "should be allowed to redeem 0"
+    function test_redeem_zero() public {
+        uint256 shares = _mintAndDeposit(alice, 10e18);
+        uint256 oethBefore = oeth.balanceOf(alice);
+
+        vm.prank(alice);
+        uint256 assets = woeth.redeem(0, alice, alice);
+
+        assertEq(assets, 0);
+        assertEq(woeth.balanceOf(alice), shares);
+        assertEq(oeth.balanceOf(alice), oethBefore);
+    }
 }

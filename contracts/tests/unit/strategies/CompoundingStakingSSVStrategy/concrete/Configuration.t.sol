@@ -8,6 +8,7 @@ import {
 
 // --- Project imports
 import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -110,9 +111,56 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
     }
 
     // ----------------
+    // Initial deposit amount
+    // ----------------
+
+    /// @dev compoundingSSVStaking.js "Should initialize the first deposit amount to 1 ETH"
+    function test_initialDepositAmountWei_defaultsToOneEther() public view {
+        assertEq(_ssvStrat().initialDepositAmountWei(), 1 ether);
+    }
+
+    /// @dev compoundingSSVStaking.js "Governor should be able to change the first deposit amount"
+    function test_setInitialDepositAmount() public {
+        vm.prank(governor);
+        vm.expectEmit(false, false, false, true);
+        emit InitialDepositAmountChanged(2 ether);
+        _ssvStrat().setInitialDepositAmount(2 ether);
+
+        assertEq(_ssvStrat().initialDepositAmountWei(), 2 ether);
+    }
+
+    /// @dev compoundingSSVStaking.js "Non governor should not be able to change the first deposit amount"
+    function test_setInitialDepositAmount_RevertWhen_notGovernor() public {
+        vm.prank(strategist);
+        vm.expectRevert("Caller is not the Governor");
+        _ssvStrat().setInitialDepositAmount(2 ether);
+    }
+
+    /// @dev compoundingSSVStaking.js "Should revert when setting the first deposit amount below 1 ETH"
+    function test_setInitialDepositAmount_RevertWhen_belowMin() public {
+        vm.prank(governor);
+        vm.expectRevert("Deposit too small");
+        _ssvStrat().setInitialDepositAmount(1 ether - 1);
+    }
+
+    /// @dev compoundingSSVStaking.js "Should revert when setting the first deposit amount above 2048 ETH"
+    function test_setInitialDepositAmount_RevertWhen_aboveMax() public {
+        vm.prank(governor);
+        vm.expectRevert("Deposit too large");
+        _ssvStrat().setInitialDepositAmount(2048 ether + 1);
+    }
+
+    /// @dev ICompoundingStakingSSVStrategy does not expose the initial-deposit getter/setter,
+    ///      so cast to the concrete type for these config tests.
+    function _ssvStrat() private view returns (CompoundingStakingSSVStrategy) {
+        return CompoundingStakingSSVStrategy(payable(address(compoundingStakingSSVStrategy)));
+    }
+
+    // ----------------
     // Events
     // ----------------
 
     event RegistratorChanged(address indexed newAddress);
     event FirstDepositReset();
+    event InitialDepositAmountChanged(uint256 amountWei);
 }

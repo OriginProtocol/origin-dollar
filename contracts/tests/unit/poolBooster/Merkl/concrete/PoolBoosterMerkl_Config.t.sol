@@ -47,6 +47,12 @@ contract Unit_Concrete_PoolBoosterMerkl_Config_Test is Unit_Merkl_Shared_Test {
         boosterMerkl.setCampaignType(0);
     }
 
+    function test_setCampaignType_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Strategist or Governor");
+        boosterMerkl.setCampaignType(7);
+    }
+
     function test_setRewardToken() public {
         address newRewardToken = makeAddr("NewRewardToken");
 
@@ -63,6 +69,12 @@ contract Unit_Concrete_PoolBoosterMerkl_Config_Test is Unit_Merkl_Shared_Test {
         vm.prank(strategist);
         vm.expectRevert("Invalid rewardToken address");
         boosterMerkl.setRewardToken(address(0));
+    }
+
+    function test_setRewardToken_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Strategist or Governor");
+        boosterMerkl.setRewardToken(makeAddr("NewRewardToken"));
     }
 
     function test_setMerklDistributor() public {
@@ -84,6 +96,12 @@ contract Unit_Concrete_PoolBoosterMerkl_Config_Test is Unit_Merkl_Shared_Test {
         boosterMerkl.setMerklDistributor(address(0));
     }
 
+    function test_setMerklDistributor_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Strategist or Governor");
+        boosterMerkl.setMerklDistributor(makeAddr("NewMerklDistributor"));
+    }
+
     function test_setCampaignData() public {
         bytes memory newCampaignData = hex"123456";
 
@@ -100,6 +118,12 @@ contract Unit_Concrete_PoolBoosterMerkl_Config_Test is Unit_Merkl_Shared_Test {
         vm.prank(strategist);
         vm.expectRevert("Invalid campaign data");
         boosterMerkl.setCampaignData(hex"");
+    }
+
+    function test_setCampaignData_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Strategist or Governor");
+        boosterMerkl.setCampaignData(hex"123456");
     }
 
     function test_rescueToken() public {

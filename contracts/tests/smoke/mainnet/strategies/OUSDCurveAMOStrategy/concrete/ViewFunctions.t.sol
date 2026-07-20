@@ -71,6 +71,16 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_ViewFunctions_Test is Smoke_OUSDCur
         assertNotEq(curveAMOStrategy.governor(), address(0), "Governor should not be zero");
     }
 
+    /// @dev curve-amo-ousd.mainnet.fork-test.js "Should have correct parameters after deployment":
+    ///      independent governor assertion (not the circular fixture read).
+    function test_governor_isTimelock() public view {
+        assertEq(curveAMOStrategy.governor(), Mainnet.Timelock, "Governor should be the Timelock");
+    }
+
+    function test_rewardToken_isCRV() public view {
+        assertEq(curveAMOStrategy.rewardTokenAddresses(0), Mainnet.CRV, "Reward token 0 should be CRV");
+    }
+
     // --- Gauge Staking ---
 
     function test_lpToken_isStakedInGauge() public view {
