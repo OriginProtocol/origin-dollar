@@ -16,7 +16,7 @@ import { VaultStorage } from "../vault/VaultStorage.sol";
  *      1. Deploy this module
  *      2. Call `safe.enableModule(address(this))` to authorize it
  *
- *      An off-chain operator (e.g. Defender Action) calls
+ *      An off-chain operator calls
  *      `processWithdrawalsAndDeposits` periodically with computed strategy/amount
  *      arrays. Either array may be empty. All intelligence (APY fetching, target
  *      allocation, constraint enforcement) lives off-chain. This contract is a
@@ -87,7 +87,7 @@ contract RebalancerModule is AbstractSafeModule {
 
     /**
      * @param _safeContract Address of the Gnosis Safe (Guardian multisig).
-     * @param _operator     Address of the off-chain operator (e.g. Defender relayer).
+     * @param _operator     Address of the off-chain operator.
      * @param _vault        Address of the OUSD vault.
      */
     constructor(

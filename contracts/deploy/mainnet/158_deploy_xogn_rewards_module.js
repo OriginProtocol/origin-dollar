@@ -27,7 +27,7 @@ module.exports = deploymentWithGovernanceProposal(
         moduleName,
         [
           safeAddress,
-          // Defender Relayer
+          // Automation operator
           addresses.mainnet.validatorRegistrator,
         ],
         "CollectXOGNRewardsModule"

@@ -65,11 +65,7 @@ contracts/build/deployments-fork-*.json
 contracts/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
-contracts/.localKeyValueStorage.holesky
 contracts/.localKeyValueStorage.base
-contracts/scripts/defender-actions/dist/
-
-contracts/lib/defender-actions/dist/
 
 todo.txt
 brownie/env-brownie/
@@ -98,3 +94,6 @@ lcov.info
 # Foundry / Soldeer
 contracts/dependencies/
 contracts/out/
+
+# Possible Agent.md file
+AGENTS.md

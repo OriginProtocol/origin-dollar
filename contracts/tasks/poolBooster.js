@@ -498,7 +498,7 @@ function buildManageBribesChunks({
 module.exports = {
   // Hardhat task
   calculateMaxPricePerVoteTask,
-  // Shared function for defender action
+  // Shared function for automation actions
   calculateRewardsPerVote,
   // manage bribes action on the pool booster bribes module
   manageBribes,

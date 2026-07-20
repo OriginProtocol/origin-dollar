@@ -1,5 +1,5 @@
 const { parseEther } = require("ethers/lib/utils");
-const { getDefenderSigner, getKmsSigner } = require("./signersNoHardhat");
+const { getKmsSigner } = require("./signersNoHardhat");
 const { ethereumAddress } = require("./regex");
 const { getProvider } = require("../tasks/lib/network");
 const { getSigner: getStandaloneSigner } = require("../tasks/lib/signer");
@@ -65,6 +65,5 @@ module.exports = {
   getSigner,
   impersonateAccount,
   impersonateAndFund,
-  getDefenderSigner,
   getKmsSigner,
 };

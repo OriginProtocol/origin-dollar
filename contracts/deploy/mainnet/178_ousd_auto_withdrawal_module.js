@@ -22,7 +22,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     await deployWithConfirmation("AutoWithdrawalModule", [
       safeAddress,
-      // Defender relayer
+      // Automation operator
       addresses.mainnet.validatorRegistrator,
       cVaultProxy.address,
       cStrategyProxy.address,
