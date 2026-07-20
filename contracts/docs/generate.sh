@@ -73,9 +73,35 @@ sol2uml storage .. -c BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCu
 
 # contracts/strategies/algebra
 sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OETHSupernovaAMOStrategy -o OETHSupernovaAMOStrategyHierarchy.svg
-sol2uml .. -v -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b OETHSupernovaAMOStrategy -o OETHSupernovaAMOStrategyInteractions.svg
-sol2uml .. -s -d 0 -b OETHSupernovaAMOStrategy -i prettier-plugin-solidity -o OETHSupernovaAMOStrategySquashed.svg
+sol2uml .. -v -s -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b OETHSupernovaAMOStrategy -o OETHSupernovaAMOStrategyInteractions.svg
+sol2uml .. -v -s -d 0 -b OETHSupernovaAMOStrategy -i prettier-plugin-solidity -o OETHSupernovaAMOStrategySquashed.svg
 sol2uml storage .. -c OETHSupernovaAMOStrategy -i prettier-plugin-solidity -o OETHSupernovaAMOStrategyStorage.svg --hideExpand ______gap,_reserved
+
+# contracts/strategies/crosschainV3
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b MasterWOTokenStrategy,RemoteWOTokenStrategy -o OTokenStrategiesHierarchy.svg
+sol2uml .. -v -s -d 1 -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b MasterWOTokenStrategy -o MasterWOTokenStrategyInteractions.svg
+sol2uml .. -v -s -d 0 -b MasterWOTokenStrategy -i prettier-plugin-solidity -o MasterWOTokenStrategySquashed.svg
+sol2uml storage .. -c MasterWOTokenStrategy -i prettier-plugin-solidity -o MasterWOTokenStrategyStorage.svg --hideExpand ______gap,_reserved
+
+sol2uml .. -v -s -d 1 -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b RemoteWOTokenStrategy -o RemoteWOTokenStrategyInteractions.svg
+sol2uml .. -v -s -d 0 -b RemoteWOTokenStrategy -i prettier-plugin-solidity -o RemoteWOTokenStrategySquashed.svg
+sol2uml storage .. -c RemoteWOTokenStrategy -i prettier-plugin-solidity -o RemoteWOTokenStrategyStorage.svg --hideExpand ______gap,_reserved
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b BridgedWOETHMigrationStrategy -o BridgedWOETHMigrationStrategyHierarchy.svg
+sol2uml .. -v -s -d 1 -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b BridgedWOETHMigrationStrategy -o BridgedWOETHMigrationStrategyInteractions.svg
+sol2uml .. -v -s -d 0 -b BridgedWOETHMigrationStrategy -i prettier-plugin-solidity -o BridgedWOETHMigrationStrategySquashed.svg
+sol2uml storage .. -c BridgedWOETHMigrationStrategy -i prettier-plugin-solidity -o BridgedWOETHMigrationStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
+
+# contracts/strategies/crosschainV3/adapters
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CCIPAdapter,CCTPAdapter -o AdaptersHierarchies.svg
+
+sol2uml .. -v -s -d 1 -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b CCIPAdapter -o CCIPAdapterInteractions.svg
+sol2uml .. -v -s -d 0 -b CCIPAdapter -i prettier-plugin-solidity -o CCIPAdapterSquashed.svg
+sol2uml storage .. -c CCIPAdapter -i prettier-plugin-solidity -o CCIPAdapterStorage.svg --hideExpand ______gap,_reserved
+
+sol2uml .. -v -s -d 1 -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b CCTPAdapter -o CCTPAdapterInteractions.svg
+sol2uml .. -s -d 0 -b CCTPAdapter -i prettier-plugin-solidity -o CCTPAdapterSquashed.svg
+sol2uml storage .. -c CCTPAdapter -i prettier-plugin-solidity -o CCTPAdapterStorage.svg --hideExpand ______gap,_reserved
 
 # contracts/strategies/sonic
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStrategyHierarchy.svg

@@ -74,6 +74,13 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return IERC20(asset).balanceOf(address(this));
     }
 
+    /// @notice TEST-ONLY: simulate a loss of underlying backing so each share is worth less
+    ///         (previewRedeem drops). Moves `amount` of the underlying out of the wrapper — the
+    ///         inverse of the "airdrop OToken to inflate previewRedeem" yield-accrual mock.
+    function simulateLoss(uint256 amount) external {
+        IERC20(asset).safeTransfer(address(0xdead), amount);
+    }
+
     function convertToShares(uint256 assets)
         public
         view
