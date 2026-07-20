@@ -1,6 +1,7 @@
 const addresses = require("./addresses");
 const { ethereumAddress } = require("./regex");
-const { getNetworkName } = require("./hardhat-helpers");
+const { getNetworkName } = require("../tasks/lib/network");
+const { getContract, getContractAt } = require("../tasks/lib/contracts");
 
 const log = require("./logger")("task:assets");
 
@@ -23,10 +24,10 @@ const resolveAsset = async (symbol) => {
       );
     }
     log(`Resolved ${symbol} to ${assetAddr} on the ${networkName} network`);
-    const asset = await ethers.getContractAt("IERC20Metadata", assetAddr);
+    const asset = await getContractAt("IERC20Metadata", assetAddr);
     return asset;
   }
-  const asset = await ethers.getContract("Mock" + symbol);
+  const asset = await getContract("Mock" + symbol);
   if (!asset) {
     throw Error(`Failed to resolve symbol "${symbol}" to a mock contract`);
   }
@@ -48,14 +49,14 @@ const resolveContract = async (proxy, abiName) => {
     if (!abiName) {
       throw Error(`Must pass an ABI name if the proxy is an address`);
     }
-    const contract = await ethers.getContractAt(abiName, proxy);
+    const contract = await getContractAt(abiName, proxy);
     if (!contract) {
       throw Error(`Failed find ABI for "${abiName}"`);
     }
     return contract;
   }
 
-  const proxyContract = await ethers.getContract(proxy);
+  const proxyContract = await getContract(proxy);
   if (!proxyContract) {
     throw Error(`Failed find proxy "${proxy}" on the ${networkName} network`);
   }
@@ -64,7 +65,7 @@ const resolveContract = async (proxy, abiName) => {
   );
 
   if (abiName) {
-    const contract = await ethers.getContractAt(abiName, proxyContract.address);
+    const contract = await getContractAt(abiName, proxyContract.address);
     if (!contract) {
       throw Error(`Failed find ABI for "${abiName}"`);
     }

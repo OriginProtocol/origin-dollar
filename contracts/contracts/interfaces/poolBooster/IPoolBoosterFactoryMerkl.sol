@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IAbstractPoolBoosterFactory } from "contracts/interfaces/poolBooster/IAbstractPoolBoosterFactory.sol";
 
 interface IPoolBoosterFactoryMerkl is IAbstractPoolBoosterFactory {
-    function version() external pure returns (string memory);
+    function VERSION() external pure returns (string memory);
 
     function beacon() external view returns (address);
 

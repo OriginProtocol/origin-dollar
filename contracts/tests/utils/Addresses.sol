@@ -195,6 +195,7 @@ library Mainnet {
     // Curve Pool Booster
     address internal constant CurvePoolBoosterOETH = 0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E;
     address internal constant CurvePoolBoosterBribesModule = 0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe;
+    address internal constant MerklPoolBoosterBribesModule = 0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369;
 
     // SSV network
     address internal constant SSV = 0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54;
@@ -272,6 +273,7 @@ library Base {
     address internal constant quoterV2 = 0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0;
     address internal constant oethbBribesContract = 0x685cE0E36Ca4B81F13B7551C76143D962568f6DD;
     address internal constant OZRelayerAddress = 0xc0D6fa24D135c006dE5B8b2955935466A03D920a;
+    address internal constant MerklPoolBoosterBribesModule = 0xf6B23291bF4993832b92A05c67d5f43eF3287C6a;
 
     // Curve
     address internal constant CRV = 0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415;

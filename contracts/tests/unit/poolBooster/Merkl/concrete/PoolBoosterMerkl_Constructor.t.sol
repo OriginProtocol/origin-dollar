@@ -12,12 +12,15 @@ import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMe
 
 contract Unit_Concrete_PoolBoosterMerkl_Constructor_Test is Unit_Merkl_Shared_Test {
     function test_initialize() public view {
+        assertEq(boosterMerkl.VERSION(), "1.0.0");
         assertEq(address(boosterMerkl.merklDistributor()), mockMerklDistributor);
         assertEq(boosterMerkl.rewardToken(), address(oeth));
         assertEq(boosterMerkl.duration(), DEFAULT_CAMPAIGN_DURATION);
         assertEq(boosterMerkl.campaignType(), DEFAULT_CAMPAIGN_TYPE);
         assertEq(boosterMerkl.campaignData(), DEFAULT_CAMPAIGN_DATA);
         assertEq(boosterMerkl.MIN_BRIBE_AMOUNT(), 1e10);
+        assertEq(boosterMerkl.governor(), governor);
+        assertEq(boosterMerkl.strategistAddr(), strategist);
     }
 
     function test_initialize_RevertWhen_zeroRewardToken() public {
@@ -49,6 +52,22 @@ contract Unit_Concrete_PoolBoosterMerkl_Constructor_Test is Unit_Merkl_Shared_Te
         );
 
         vm.expectRevert("Invalid merklDistributor addr");
+        new BeaconProxy(address(beacon), initData);
+    }
+
+    function test_initialize_RevertWhen_zeroCampaignType() public {
+        bytes memory initData = abi.encodeWithSelector(
+            IPoolBoosterMerkl.initialize.selector,
+            DEFAULT_CAMPAIGN_DURATION,
+            0,
+            address(oeth),
+            mockMerklDistributor,
+            governor,
+            strategist,
+            DEFAULT_CAMPAIGN_DATA
+        );
+
+        vm.expectRevert("Invalid campaignType");
         new BeaconProxy(address(beacon), initData);
     }
 
@@ -98,5 +117,34 @@ contract Unit_Concrete_PoolBoosterMerkl_Constructor_Test is Unit_Merkl_Shared_Te
 
         IPoolBoosterMerkl booster = IPoolBoosterMerkl(address(new BeaconProxy(address(beacon), initData)));
         assertEq(booster.duration(), 3601);
+    }
+
+    function test_initialize_RevertWhen_alreadyInitialized() public {
+        vm.expectRevert("Initializable: contract is already initialized");
+        boosterMerkl.initialize(
+            DEFAULT_CAMPAIGN_DURATION,
+            DEFAULT_CAMPAIGN_TYPE,
+            address(oeth),
+            mockMerklDistributor,
+            governor,
+            strategist,
+            DEFAULT_CAMPAIGN_DATA
+        );
+    }
+
+    function test_implementation_RevertWhen_initialize() public {
+        address implementation = beacon.implementation();
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        IPoolBoosterMerkl(implementation)
+            .initialize(
+                DEFAULT_CAMPAIGN_DURATION,
+                DEFAULT_CAMPAIGN_TYPE,
+                address(oeth),
+                mockMerklDistributor,
+                governor,
+                strategist,
+                DEFAULT_CAMPAIGN_DATA
+            );
     }
 }

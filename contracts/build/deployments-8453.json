@@ -13,6 +13,10 @@
             "name": "CLAIM_BRIBES_MODULE"
         },
         {
+            "implementation": "0xf6B23291bF4993832b92A05c67d5f43eF3287C6a",
+            "name": "MERKL_POOL_BOOSTER_BRIBES_MODULE"
+        },
+        {
             "implementation": "0xD8724322f44E5c58D7A815F542036fb17DbbF839",
             "name": "BRIDGED_WOETH"
         },

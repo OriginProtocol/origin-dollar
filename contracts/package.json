@@ -72,7 +72,9 @@
     "test:coverage:hol-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=holesky ./fork-test.sh",
     "test:coverage:plume-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=plume ./fork-test.sh",
     "test:coverage:hoodi-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hoodi ./fork-test.sh",
-    "test:coverage:hyperevm-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hyperevm ./fork-test.sh"
+    "test:coverage:hyperevm-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hyperevm ./fork-test.sh",
+    "action": "tsx tasks/run.ts",
+    "dump-catalog": "tsx dump-actions-catalog.ts"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

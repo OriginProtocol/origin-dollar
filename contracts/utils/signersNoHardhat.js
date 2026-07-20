@@ -142,5 +142,7 @@ module.exports = {
   getKmsAddress,
   hasAwsKmsCredentials,
   withTaskSignerContext,
+  resolveKmsRelayerId,
   DEFAULT_KMS_RELAYER_ID,
+  AWS_KMS_REGION,
 };

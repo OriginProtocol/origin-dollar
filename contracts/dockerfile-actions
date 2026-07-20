@@ -42,20 +42,17 @@ RUN --mount=type=ssh \
 # Copy the rest of the contracts workspace.
 COPY . .
 
-# Compile contracts on amd64 (production). Skip on arm64 (Mac) where solcjs WASM crashes.
-ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "amd64" ]; then pnpm hardhat compile; else echo "Skipping compile on $TARGETARCH"; fi
+# No contract compilation needed: the Talos actions resolve addresses/ABIs from
+# the committed deployments/ artifacts and curated abi/ interfaces — hardhat and
+# artifacts/ are no longer on the action runtime path.
 
-# Dump the hardhat task catalog to /app/actions-catalog.json at build time.
-# Runs under Node (where hardhat works) — the bun parent can't load hardhat
-# itself (keccak native module crashes; bun#18546). The runner reads this
-# file at boot and passes it to runContainer's `actionsCatalog`. A dump
-# failure is non-fatal: empty catalog ⇒ admin UI shows zero editable flags
-# per action (fail-closed), the rest of the runner is unaffected.
+# Dump the action catalog to /app/actions-catalog.json at build time from the
+# in-process registry (tsx, no hardhat). The runner reads this file at boot and
+# passes it to runContainer's `actionsCatalog`. A dump failure is non-fatal:
+# empty catalog ⇒ admin UI shows zero editable flags per action (fail-closed).
 RUN cd /app \
-    && NODE_PATH=/app/node_modules/.pnpm/node_modules \
-       node dump-actions-catalog.cjs > /app/actions-catalog.json \
-    || (echo "[build] hardhat catalog dump failed; shipping empty catalog" \
+    && pnpm exec tsx dump-actions-catalog.ts > /app/actions-catalog.json \
+    || (echo "[build] action catalog dump failed; shipping empty catalog" \
         && echo "{}" > /app/actions-catalog.json)
 
 # Hand /app over to the runtime user. After this, all reads/writes by

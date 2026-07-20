@@ -3,6 +3,7 @@ const { Contract, constants } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const { logTxDetails } = require("../utils/txLogger");
+const { getProvider } = require("./lib/network");
 const log = require("../utils/logger")("task:poolBooster");
 
 // Contract addresses
@@ -357,8 +358,7 @@ async function calculateMaxPricePerVoteTask(taskArguments) {
   const skipRewardPerVote = taskArguments.skip || false;
   const output = taskArguments.output ? console.log : log;
 
-  // Use Hardhat's global ethers provider
-  const { rewardsPerVote } = await calculateRewardsPerVote(ethers.provider, {
+  const { rewardsPerVote } = await calculateRewardsPerVote(getProvider(), {
     targetEfficiency,
     skipRewardPerVote,
     log: output,

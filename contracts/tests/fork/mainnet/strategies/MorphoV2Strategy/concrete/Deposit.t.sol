@@ -14,15 +14,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 contract Fork_Concrete_MorphoV2Strategy_Deposit_Test is Fork_MorphoV2Strategy_Shared_Test {
-    function test_deposit_increasesCheckBalance() public {
+    function test_deposit_sendsAssetsToRealMorphoVault() public {
         uint256 amount = 1000e6;
 
-        uint256 balBefore = strategy.checkBalance(Mainnet.USDC);
+        uint256 sharesBefore = IERC20(Mainnet.MorphoOUSDv2Vault).balanceOf(address(strategy));
         _depositAsVault(amount);
-        uint256 balAfter = strategy.checkBalance(Mainnet.USDC);
+        uint256 sharesAfter = IERC20(Mainnet.MorphoOUSDv2Vault).balanceOf(address(strategy));
 
-        assertGt(balAfter, balBefore);
-        assertApproxEqRel(balAfter - balBefore, amount, 1e16); // 1% tolerance
+        assertEq(IERC20(Mainnet.USDC).balanceOf(address(strategy)), 0);
+        assertGt(sharesAfter, sharesBefore);
     }
 
     function test_deposit_emitsDepositEvent() public {

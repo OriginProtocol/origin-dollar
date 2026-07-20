@@ -1,33 +1,34 @@
 const { formatUnits } = require("ethers/lib/utils");
 
+const {
+  getContract,
+  getContractAt,
+} = require("./lib/contracts");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
 
 const log = require("../utils/logger")("task:autoWithdrawal");
 
-async function resolveAutoWithdrawalModule(hre, moduleAddress) {
+async function resolveAutoWithdrawalModule(moduleAddress) {
   if (moduleAddress) {
     if (!moduleAddress.match(ethereumAddress)) {
       throw new Error(`Invalid module address: ${moduleAddress}`);
     }
 
-    return await hre.ethers.getContractAt(
-      "AutoWithdrawalModule",
-      moduleAddress
-    );
+    return await getContractAt("AutoWithdrawalModule", moduleAddress);
   }
 
-  return await hre.ethers.getContract("AutoWithdrawalModule");
+  return await getContract("AutoWithdrawalModule");
 }
 
-async function fundWithdrawals({ gasLimit, module }, hre) {
+async function fundWithdrawals({ gasLimit, module }) {
   const signer = await getSigner();
   const signerAddress = await signer.getAddress();
-  const autoWithdrawalModule = await resolveAutoWithdrawalModule(hre, module);
+  const autoWithdrawalModule = await resolveAutoWithdrawalModule(module);
 
   const assetAddress = await autoWithdrawalModule.asset();
-  const asset = await hre.ethers.getContractAt("IBasicToken", assetAddress);
+  const asset = await getContractAt("IBasicToken", assetAddress);
   const assetDecimals = await asset.decimals();
   const assetSymbol = await asset.symbol();
   const strategy = await autoWithdrawalModule.strategy();

@@ -1,6 +1,6 @@
 /// <reference types="hardhat/types/runtime" />
 
-import { types } from "hardhat/config";
+import { types } from "../lib/action";
 import { action } from "../lib/action";
 
 const { autoValidatorWithdrawals } = require("../validatorCompound");

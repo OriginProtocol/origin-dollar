@@ -37,6 +37,10 @@
             "name": "CURVE_POOL_BOOSTER_BRIBES_MODULE"
         },
         {
+            "implementation": "0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369",
+            "name": "MERKL_POOL_BOOSTER_BRIBES_MODULE"
+        },
+        {
             "implementation": "0x15228dAE3B228175fBD9639d049265eFb08e60b6",
             "name": "COLLECT_XOGN_REWARDS_MODULE"
         },

@@ -1,4 +1,4 @@
-import { types } from "hardhat/config";
+import { types } from "../lib/action";
 import { action } from "../lib/action";
 import { manageMerklBribes } from "../merklPoolBooster";
 

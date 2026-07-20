@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_CurvePoolBoosterBribesModule_Shared_Test
 } from "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
+import {MockCurvePoolBoosterForBribes} from "tests/mocks/MockCurvePoolBoosterForBribes.sol";
 
 contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test is
     Unit_CurvePoolBoosterBribesModule_Shared_Test
@@ -35,6 +36,25 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test is
 
         vm.prank(operator);
         curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
+
+        MockCurvePoolBoosterForBribes booster1 = MockCurvePoolBoosterForBribes(poolBooster1);
+        MockCurvePoolBoosterForBribes booster2 = MockCurvePoolBoosterForBribes(poolBooster2);
+
+        assertEq(booster1.callCount(), 1);
+        assertEq(booster1.lastTotalRewardAmount(), totalRewardAmounts[0]);
+        assertEq(booster1.lastNumberOfPeriods(), extraDuration[0]);
+        assertEq(booster1.lastMaxRewardPerVote(), rewardsPerVote[0]);
+        assertEq(booster1.lastAdditionalGasLimit(), curvePoolBoosterBribesModule.additionalGasLimit());
+        assertEq(booster1.lastValue(), curvePoolBoosterBribesModule.bridgeFee());
+        assertEq(booster1.lastCaller(), address(mockSafe));
+
+        assertEq(booster2.callCount(), 1);
+        assertEq(booster2.lastTotalRewardAmount(), totalRewardAmounts[1]);
+        assertEq(booster2.lastNumberOfPeriods(), extraDuration[1]);
+        assertEq(booster2.lastMaxRewardPerVote(), rewardsPerVote[1]);
+        assertEq(booster2.lastAdditionalGasLimit(), curvePoolBoosterBribesModule.additionalGasLimit());
+        assertEq(booster2.lastValue(), curvePoolBoosterBribesModule.bridgeFee());
+        assertEq(booster2.lastCaller(), address(mockSafe));
     }
 
     function test_manageBribesCustom_RevertWhen_totalRewardAmountsLengthMismatch() public {

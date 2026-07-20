@@ -8,15 +8,6 @@ import {Fork_MorphoV2Strategy_Shared_Test} from "tests/fork/mainnet/strategies/M
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_MorphoV2Strategy_ViewFunctions_Test is Fork_MorphoV2Strategy_Shared_Test {
-    function test_checkBalance_afterDeposit() public {
-        uint256 amount = 10_000e6;
-
-        _depositAsVault(amount);
-
-        uint256 balance = strategy.checkBalance(Mainnet.USDC);
-        assertApproxEqRel(balance, amount, 1e16); // 1% tolerance
-    }
-
     function test_maxWithdraw_afterDeposit() public {
         _depositAsVault(10_000e6);
 

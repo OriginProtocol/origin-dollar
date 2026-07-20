@@ -13,6 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // --- Project imports
 import {ICCTPMessageTransmitterMock2} from "contracts/interfaces/cctp/ICCTPMessageTransmitterMock2.sol";
 import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+import {State} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 abstract contract Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test is BaseSmoke {
     uint32 internal constant ORIGIN_MESSAGE_VERSION = 1010;
@@ -37,10 +38,17 @@ abstract contract Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test is BaseSmok
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkHyperEVM();
-        _igniteDeployManager();
+        _hydrateResolver();
         _fetchContracts();
         _resolveActors();
         _labelContracts();
+    }
+
+    function _hydrateResolver() internal virtual {
+        vm.etch(address(resolver), vm.getDeployedCode("Resolver.sol:Resolver"));
+        resolver.setState(State.FORK_TEST);
+        resolver.addContract("CROSS_CHAIN_REMOTE_STRATEGY", HyperEVM.CrossChainRemoteStrategy);
+        vm.label(address(resolver), "Resolver");
     }
 
     function _fetchContracts() internal virtual {

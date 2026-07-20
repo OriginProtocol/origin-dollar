@@ -6,6 +6,7 @@ import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared
 
 // --- Project imports
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 
 contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Merkl_Shared_Test {
     function test_createPoolBooster() public {
@@ -49,6 +50,23 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Me
         assertEq(uint256(boosterType), uint256(IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster));
     }
 
+    function test_createPoolBooster_initializesProxy() public {
+        vm.prank(governor);
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
+
+        (address deployed,,) = factoryMerkl.poolBoosters(0);
+        IPoolBoosterMerkl booster = IPoolBoosterMerkl(deployed);
+
+        assertEq(booster.duration(), DEFAULT_CAMPAIGN_DURATION);
+        assertEq(booster.campaignType(), DEFAULT_CAMPAIGN_TYPE);
+        assertEq(booster.rewardToken(), address(oeth));
+        assertEq(booster.merklDistributor(), mockMerklDistributor);
+        assertEq(booster.campaignData(), DEFAULT_CAMPAIGN_DATA);
+        assertEq(booster.governor(), governor);
+        assertEq(booster.strategistAddr(), strategist);
+        assertEq(booster.factory(), address(factoryMerkl));
+    }
+
     function test_createPoolBooster_RevertWhen_notGovernor() public {
         vm.prank(alice);
         vm.expectRevert("Caller is not the Governor");
@@ -65,5 +83,14 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Me
         vm.prank(governor);
         vm.expectRevert("Invalid salt");
         factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 0);
+    }
+
+    function test_createPoolBooster_RevertWhen_poolAlreadyExists() public {
+        vm.startPrank(governor);
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
+
+        vm.expectRevert("Pool booster already exists");
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 2);
+        vm.stopPrank();
     }
 }
