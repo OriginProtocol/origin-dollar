@@ -191,3 +191,15 @@ const log = require("../utils/logger")("module-name");
 log("something happened");
 // Enable: export DEBUG=origin:module-name*
 ```
+
+## Foundry deploy files vs. Talos actions (MANDATORY CHECK)
+
+The Talos ops automation (`contracts/tasks/actions/**` — harvest, rebases, `doAccounting`, validator ops, cross-chain relays, etc.) resolves the contracts it operates on from the hardhat-deploy artifacts in `contracts/deployments/<network>/<Name>.json` (addresses) and pinned entries in `contracts/utils/addresses.js` / action-local `*_BY_CHAIN_ID` maps. Foundry deploys write only `contracts/build/deployments-<chainId>.json` (addresses, **no ABI**) and do **not** update `deployments/` or `addresses.js`. So redeploying a contract via Foundry can silently point a live Talos action at a stale address.
+
+**Whenever you create or modify a Foundry deploy script (`contracts/scripts/deploy/**/*.s.sol`), you MUST:**
+1. List every contract the deploy script deploys or upgrades (proxy or implementation).
+2. Grep `contracts/tasks/actions/**` and the utils they import for those contract/deployment names and any pinned addresses (`utils/addresses.js`, action-local `*_BY_CHAIN_ID` maps, `abi/*.json` call surfaces).
+3. For any overlap, update the corresponding `deployments/<network>/<Name>.json` address (and the curated `abi/<Interface>.json` if the callable interface changed) or the pinned address in the action/`addresses.js`, and call it out explicitly in the PR description.
+4. If you cannot verify whether an action is affected, say so explicitly in the PR — never assume "no impact".
+
+Talos action ABIs come from curated interface ABIs in `contracts/abi/*.json` or inline human-readable ABIs — never from `deployments/*.json` `.abi` (proxy artifacts are admin-only and concrete artifacts can be stale) and never from `artifacts/` (not shipped in the actions image). Addresses are the deployed truth (`deployments/*.json` `.address` / pinned).

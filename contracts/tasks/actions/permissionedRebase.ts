@@ -1,5 +1,6 @@
 import { ethers as ethersLib } from "ethers";
 import { action } from "../lib/action";
+import { getContract } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 // PermissionedRebase Safe module addresses, keyed by chain id. The contract
@@ -29,9 +30,7 @@ action({
     }
 
     if (chainId === 1) {
-      const dripperProxy = await hre.ethers.getContract(
-        MAINNET_OETH_DRIPPER_DEPLOYMENT
-      );
+      const dripperProxy = await getContract(MAINNET_OETH_DRIPPER_DEPLOYMENT);
       log.info(
         `Calling collect on ${networkName} fixed-rate dripper ${MAINNET_OETH_DRIPPER_DEPLOYMENT} at ${dripperProxy.address}`
       );

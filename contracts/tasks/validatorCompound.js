@@ -13,7 +13,9 @@ const {
   getBeaconBlock,
   hashPubKey,
 } = require("../utils/beacon");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
+const { getContractAt } = require("./lib/contracts");
+const { getProvider } = require("./lib/network");
 const { getSigner } = require("../utils/signers");
 const { verifyDepositSignatureAndMessageRoot } = require("../utils/beacon");
 const { resolveContract } = require("../utils/resolvers");
@@ -174,7 +176,7 @@ async function registerValidator({
   );
 
   // Cluster details
-  const { chainId } = await ethers.provider.getNetwork();
+  const { chainId } = await getProvider().getNetwork();
   const { cluster } = await getClusterInfo({
     chainId,
     operatorids,
@@ -331,7 +333,7 @@ async function autoValidatorDeposits({
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const { strategy } = await resolveCompoundingStakingContract(ssv);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
@@ -570,9 +572,9 @@ async function autoValidatorWithdrawals({
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const vaultAddress = addresses[networkName].OETHVaultProxy;
-  const vault = await ethers.getContractAt("IVault", vaultAddress);
+  const vault = await getContractAt("IVault", vaultAddress);
   const { strategy } = await resolveCompoundingStakingContract(ssv);
 
   // 1. Calculate the WETH available in the vault = WETH balance - withdrawals queued + withdrawals claimed
@@ -723,7 +725,7 @@ async function snapStakingStrategy({
   // Don't use the latest block as the slot probably won't be available yet
   if (!block) blockTag -= 1;
 
-  const { timestamp } = await ethers.provider.getBlock(blockTag);
+  const { timestamp } = await getProvider().getBlock(blockTag);
   const networkName = await getNetworkName();
   const slot = calcSlot(timestamp, networkName);
   log(`Snapping block ${blockTag} at slot ${slot}`);
@@ -731,9 +733,9 @@ async function snapStakingStrategy({
   const { stateView } = await getBeaconBlock(slot, networkName);
 
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const ssvToken = addresses[networkName].SSV
-    ? await ethers.getContractAt("IERC20", addresses[networkName].SSV)
+    ? await getContractAt("IERC20", addresses[networkName].SSV)
     : undefined;
   const { strategy } = await resolveCompoundingStakingContract(ssv);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
@@ -797,7 +799,7 @@ async function snapStakingStrategy({
   );
 
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
-  const stratEthBalance = await ethers.provider.getBalance(
+  const stratEthBalance = await getProvider().getBalance(
     strategy.address,
     blockTag
   );

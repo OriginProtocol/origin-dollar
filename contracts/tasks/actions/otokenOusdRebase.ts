@@ -1,4 +1,5 @@
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const GAS_MULTIPLIER = 1.1;
@@ -8,9 +9,8 @@ action({
   description: "Rebase OUSD on mainnet",
   chains: [1],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const vaultProxy = await ethers.getContract("VaultProxy");
-    const ousdVault = await ethers.getContractAt("IVault", vaultProxy.address);
+    const vaultProxy = await getContract("VaultProxy");
+    const ousdVault = await getContractAt("IVault", vaultProxy.address);
     const ousdVaultWithSigner = ousdVault.connect(signer);
 
     // OUSD rebase with gas estimation + 10% buffer
