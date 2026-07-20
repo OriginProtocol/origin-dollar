@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { types } from "hardhat/config";
 import addresses from "../../utils/addresses";
-import { keyValueStoreLocalClient } from "../../utils/defender";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { registerValidators } from "../../utils/validator";
 import { action } from "../lib/action";
 
@@ -70,14 +70,14 @@ action({
     const p2p_api_key =
       chainId === 1
         ? process.env.P2P_MAINNET_API_KEY
-        : process.env.P2P_HOLESKY_API_KEY;
+        : process.env.P2P_HOODI_API_KEY;
     if (!p2p_api_key) {
       throw new Error(
-        "Secret with P2P API key not set. Add P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
+        "Secret with P2P API key not set. Add P2P_MAINNET_API_KEY or P2P_HOODI_API_KEY"
       );
     }
     const p2p_base_url =
-      chainId === 1 ? "api.p2p.org" : "api-test-holesky.p2p.org";
+      chainId === 1 ? "api.p2p.org" : "api-test.p2p.org";
 
     const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
     const awsS3SecretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;

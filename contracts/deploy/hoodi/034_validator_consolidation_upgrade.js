@@ -1,11 +1,10 @@
 const { upgradeNativeStakingSSVStrategy } = require("../deployActions");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { getDefenderSigner, getSigner } = require("../../utils/signers");
-const { isFork } = require("../../test/helpers.js");
+const { getSigner } = require("../../utils/signers");
 const { resolveContract } = require("../../utils/resolvers");
 
 const mainExport = async () => {
-  const sDeployer = isFork ? await getSigner() : await getDefenderSigner();
+  const sDeployer = await getSigner();
   const deployerAddress = await sDeployer.getAddress();
 
   const nativeStakingStrategy = await resolveContract(

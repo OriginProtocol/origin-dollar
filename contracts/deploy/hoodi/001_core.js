@@ -70,7 +70,7 @@ const mainExport = async () => {
   await withConfirmation(
     nativeStakingSSVStrategy
       .connect(sDeployer)
-      .setRegistrator(addresses.hoodi.defenderRelayer)
+      .setRegistrator(addresses.hoodi.validatorRegistrator)
   );
   await withConfirmation(
     nativeStakingSSVStrategy
@@ -86,7 +86,7 @@ const mainExport = async () => {
   await withConfirmation(
     compoundingSsvStrategy
       .connect(sDeployer)
-      .setRegistrator(addresses.hoodi.defenderRelayer)
+      .setRegistrator(addresses.hoodi.validatorRegistrator)
   );
 
   console.log("001_core deploy done.");

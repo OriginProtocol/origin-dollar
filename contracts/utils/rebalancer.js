@@ -30,7 +30,7 @@ const USDC_BY_CHAIN = {
   999: addresses.hyperevm.USDC,
 };
 
-// Action constants shared with Defender Actions and tests
+// Action constants shared with automation tasks and tests
 const ACTION_DEPOSIT = "deposit";
 const ACTION_WITHDRAW = "withdraw";
 const ACTION_NONE = "none";

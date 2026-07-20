@@ -19,10 +19,7 @@ const {
   isArbitrum,
   isArbitrumFork,
   isArbForkTest,
-  isHoleskyFork,
-  isHolesky,
   isForkTest,
-  isHoleskyForkTest,
   isBase,
   isBaseFork,
   isBaseForkTest,
@@ -45,7 +42,6 @@ const {
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
-  holeskyProviderUrl,
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
@@ -62,7 +58,6 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
 
 require("./tasks/tasks");
 
@@ -95,7 +90,6 @@ const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 // 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
-const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
 // 5/8 multi-sig that controls the Timelock. Aka "Admin".
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
@@ -144,10 +138,7 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 let forkBlockNumber = adjustTheForkBlockNumber();
 
 const paths = {};
-if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
-  // holesky deployment files are in contracts/deploy/holesky
-  paths.deploy = "deploy/holesky";
-} else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
+if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
 } else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
   paths.deploy = "deploy/sonic";
@@ -165,7 +156,7 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
 ) {
   paths.deploy = "deploy/hyperevm";
 } else {
-  // holesky deployment files are in contracts/deploy/mainnet
+  // Mainnet deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
 }
 if (process.env.HARDHAT_CACHE_DIR) {
@@ -197,9 +188,7 @@ const getDeployTags = () => {
 /// Config for Fork and unit test environments
 const localEnvDeployer =
   process.env.FORK === "true"
-    ? isHoleskyFork
-      ? HOLESKY_DEPLOYER
-      : isBaseFork
+    ? isBaseFork
       ? BASE_DEPLOYER
       : isSonicFork
       ? SONIC_DEPLOYER
@@ -214,9 +203,7 @@ const localEnvDeployer =
 
 const localEnvGovernor =
   process.env.FORK === "true"
-    ? isHoleskyFork
-      ? HOLESKY_DEPLOYER
-      : isBaseFork
+    ? isBaseFork
       ? BASE_GOVERNOR
       : isSonicFork
       ? SONIC_ADMIN
@@ -245,9 +232,7 @@ const localEnvTimelock =
 
 const localEnvStrategist =
   process.env.FORK === "true"
-    ? isHoleskyFork
-      ? HOLESKY_DEPLOYER
-      : isSonicFork
+    ? isSonicFork
       ? SONIC_STRATEGIST
       : // Base, Plume, HyperEVM and Eth use Multichain Strategist
       isHoodiFork
@@ -323,12 +308,6 @@ module.exports = {
       url: `${process.env.MAINNET_PROVIDER_URL || process.env.PROVIDER_URL}`,
       accounts: defaultAccounts,
     },
-    holesky: {
-      url: holeskyProviderUrl,
-      accounts: defaultAccounts,
-      chainId: 17000,
-      live: true,
-    },
     arbitrumOne: {
       url: arbitrumProviderUrl,
       accounts: defaultAccounts,
@@ -392,7 +371,6 @@ module.exports = {
       hardhat: localEnvDeployer,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
-      holesky: HOLESKY_DEPLOYER,
       base: BASE_DEPLOYER,
       sonic: SONIC_DEPLOYER,
       plume: MAINNET_DEPLOYER,
@@ -405,7 +383,6 @@ module.exports = {
       localhost: localEnvGovernor,
       hardhat: localEnvGovernor,
       mainnet: MAINNET_GOVERNOR,
-      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_ADMIN,
@@ -481,7 +458,6 @@ module.exports = {
       localhost: localEnvStrategist,
       hardhat: localEnvStrategist,
       mainnet: MULTICHAIN_STRATEGIST,
-      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       plume: PLUME_STRATEGIST,
@@ -506,7 +482,6 @@ module.exports = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ETHERSCAN_API_KEY,
-      holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.ETHERSCAN_API_KEY,
       sonic: process.env.ETHERSCAN_API_KEY,
       hoodi: process.env.ETHERSCAN_API_KEY,
@@ -520,14 +495,6 @@ module.exports = {
         urls: {
           apiURL: "https://api.etherscan.io/v2/api?chainId=1",
           browserURL: "https://etherscan.io",
-        },
-      },
-      {
-        network: "holesky",
-        chainId: 17000,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=17000",
-          browserURL: "https://holesky.etherscan.io",
         },
       },
       {

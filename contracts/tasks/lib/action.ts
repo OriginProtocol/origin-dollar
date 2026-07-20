@@ -36,7 +36,6 @@ const CHAIN_NAMES: Record<number, string> = {
   146: "sonic",
   560048: "hoodi",
   999: "hyperevm",
-  17000: "holesky",
   42161: "arbitrum",
   98866: "plume",
 };

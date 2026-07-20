@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { types } from "hardhat/config";
 import { configuration } from "../../utils/cctp";
-import { keyValueStoreLocalClient } from "../../utils/defender";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { getNetworkName } from "../../utils/hardhat-helpers";
 import { processCctpBridgeTransactions } from "../crossChain";
 import { action } from "../lib/action";
