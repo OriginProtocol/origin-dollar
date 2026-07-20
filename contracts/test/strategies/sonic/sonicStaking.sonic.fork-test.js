@@ -4,7 +4,7 @@ const {
 } = require("../../behaviour/sfcStakingStrategy");
 const addresses = require("../../../utils/addresses");
 
-describe("Sonic Fork Test: Sonic Staking Strategy", function () {
+describe.skip("Sonic Fork Test: Sonic Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;

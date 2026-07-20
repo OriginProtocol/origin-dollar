@@ -88,15 +88,6 @@ const getKnownWithdrawalStrategies = (networkName) => {
     ];
   }
 
-  if (networkName === "holesky") {
-    return [
-      {
-        label: "NativeStakingSSVStrategyProxy",
-        address: addresses.holesky.NativeStakingSSVStrategyProxy,
-      },
-    ];
-  }
-
   return [];
 };
 

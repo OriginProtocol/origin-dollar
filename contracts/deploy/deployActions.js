@@ -23,7 +23,6 @@ const {
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
-const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { sleep } = require("../utils/time");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
@@ -199,7 +198,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
 
   const networkName = await getNetworkName();
   if (networkName == "hoodi") {
-    const sGovernor = isFork ? await getSigner() : await getDefenderSigner();
+    const sGovernor = await getSigner();
     await withConfirmation(
       strategyProxy.connect(sGovernor).upgradeTo(dStrategyImpl.address)
     );
@@ -232,7 +231,7 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     ]
   );
 
-  const sDeployer = isFork ? await getSigner() : await getDefenderSigner();
+  const sDeployer = await getSigner();
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
   );
@@ -390,7 +389,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const cBeaconProofs = await ethers.getContract("BeaconProofs");
 
   let governorAddress;
-  // Deploy the proxy on Hoodi fork not as defender relayer since we will not
+  // Deploy the proxy on a Hoodi fork with the local signer since we will not
   // test SSV token claiming on that testnet
   if ((isTest && !isFork) || networkName == "hoodi") {
     // For unit tests and Hoodi, use the Governor contract
@@ -425,7 +424,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
     );
   } else {
     // For fork tests, mainnet and Hoodi deployments.
-    // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
+    // Should already be deployed by the production signer because SSV rewards are sent to the deployer.
     // Use the deployStakingProxy Hardhat task to deploy
     cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
       "CompoundingStakingSSVStrategyProxy"
@@ -447,7 +446,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
       cCompoundingStakingSSVStrategyProxy.connect(sDeployer).claimGovernance()
     );
   } else {
-    /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+    /* Before kicking off the deploy script make sure the production signer transfers governance
      * of the proxy to the deployer account that shall be deploying this script so it will be able
      * to initialize the proxy contract
      *

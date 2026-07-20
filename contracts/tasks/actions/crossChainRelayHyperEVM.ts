@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { configuration } from "../../utils/cctp";
-import { keyValueStoreLocalClient } from "../../utils/defender";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { processCctpBridgeTransactions } from "../crossChain";
 import { action, types } from "../lib/action";
 import { CHAIN_NAMES } from "../lib/network";

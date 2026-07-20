@@ -71,8 +71,8 @@ async function manageMerklBribes({
  * Hardhat task wrapper for manageMerklBribes
  */
 async function manageMerklBribesTask(taskArguments) {
-  const { getDefenderSigner } = require("../utils/signers");
-  const signer = await getDefenderSigner();
+  const { getSigner } = require("../utils/signers");
+  const signer = await getSigner();
 
   const exclusionList = taskArguments.exclusionList
     ? taskArguments.exclusionList
