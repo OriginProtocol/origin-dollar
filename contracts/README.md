@@ -24,7 +24,7 @@ pnpm prettier
 ```
 
 ## Linter
- 
+
 [solhit](https://protofire.github.io/solhint/) is used to lint Solidity code. The configuration for solhint is in [.solhint.json](./.solhint.json). [.solhintignore](./.solhintignore) is used to ignore Solidity files from being linted.
 
 [eslint](https://eslint.org/) is used to lint JavaScript code. The configuration for eslint is in [.eslintrc.js](./.eslintrc.js).
@@ -296,7 +296,7 @@ unset IMPERSONATE
 
 ### Automated Actions (Talos)
 
-The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@talos/client`](https://github.com/oplabs/talos):
+The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@oplabs/talos-client`](https://github.com/oplabs/talos):
 
 - **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
 - **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.

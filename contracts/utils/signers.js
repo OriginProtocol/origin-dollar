@@ -5,7 +5,7 @@ const {
   wrapSignerWithNonceQueueV5,
   createDb,
   createPool,
-} = require("@talos/client");
+} = require("@oplabs/talos-client");
 const {
   getKmsAddress,
   getKmsSigner,

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type ActionsCatalog, createPool, runContainer } from "@talos/client";
+import { type ActionsCatalog, createPool, runContainer } from "@oplabs/talos-client";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {

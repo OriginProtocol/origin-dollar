@@ -7,7 +7,7 @@ name: AWS — build runner image
 #
 # Triggers on `master`.
 #
-# Requires the TALOS_DEPLOY_KEY repo secret for the @talos/client
+# Requires the TALOS_DEPLOY_KEY repo secret for the @oplabs/talos-client
 # git-install (SSH deploy key against oplabs/talos).
 #
 # Build context is `contracts/` because the dockerfile and runner code
@@ -36,7 +36,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up SSH agent for @talos/client deploy key
+      - name: Set up SSH agent for @oplabs/talos-client deploy key
         uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
         with:
           ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}

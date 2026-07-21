@@ -9,8 +9,8 @@
  * stays in Node-land here; the bundled JSON is shipped into the image
  * and read by `runner.ts` at boot.
  *
- * Output shape matches `ActionParam[]` from `@talos/client/actions-catalog`.
- * Self-contained on purpose — no @talos/client import (the bundle is ESM
+ * Output shape matches `ActionParam[]` from `@oplabs/talos-client/actions-catalog`.
+ * Self-contained on purpose — no @oplabs/talos-client import (the bundle is ESM
  * and this script runs under Node CJS).
  */
 
