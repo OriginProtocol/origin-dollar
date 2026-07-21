@@ -146,7 +146,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         mockSsvNetwork = new MockSSVNetwork();
         mockSsv = new MockSSV();
         mockDepositContract = new MockDepositContract();
-        mockBeaconProofs = new MockBeaconProofs();
+        address beaconProofsAddress = _deployBeaconProofs();
 
         // Deploy and etch MockBeaconRoots at EIP-4788 address
         mockBeaconRootsContract = new MockBeaconRoots();
@@ -192,20 +192,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         vm.stopPrank();
 
         // Deploy CompoundingStakingSSVStrategy
-        compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(
-            vm.deployCode(
-                Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
-                abi.encode(
-                    address(0), // platformAddress
-                    address(oethVault), // vaultAddress
-                    address(mockWeth),
-                    address(mockSsvNetwork),
-                    address(mockDepositContract),
-                    address(mockBeaconProofs),
-                    BEACON_GENESIS_TIMESTAMP
-                )
-            )
-        );
+        compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(_deployStrategy(beaconProofsAddress));
 
         // Set governor via storage slot (constructor sets it to address(0))
         vm.store(address(compoundingStakingSSVStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
@@ -233,6 +220,26 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         vm.deal(josh, 10_000 ether);
         vm.prank(josh);
         mockWeth.deposit{value: 10_000 ether}();
+    }
+
+    function _deployBeaconProofs() internal virtual returns (address beaconProofsAddress) {
+        mockBeaconProofs = new MockBeaconProofs();
+        beaconProofsAddress = address(mockBeaconProofs);
+    }
+
+    function _deployStrategy(address beaconProofsAddress) internal virtual returns (address strategyAddress) {
+        strategyAddress = vm.deployCode(
+            Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
+            abi.encode(
+                address(0), // platformAddress
+                address(oethVault), // vaultAddress
+                address(mockWeth),
+                address(mockSsvNetwork),
+                address(mockDepositContract),
+                beaconProofsAddress,
+                BEACON_GENESIS_TIMESTAMP
+            )
+        );
     }
 
     function _labelContracts() internal {

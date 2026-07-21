@@ -50,7 +50,7 @@ unit suite green, no regressions):
 ## A. Open questions — need a decision before implementing
 
 Fill in the **Answer** column (or reply in the PR/thread). Skips recorded (#1, #2, #5, #6, #7, #8,
-#10, #11, #13); #9 implemented in Batch 2; open: #3, #4, #12.
+#10, #11, #13); #9 implemented in Batch 2; open: #3, #4.
 
 | # | Item | Area(s) | ~Gaps | Blocker | Decision needed | Answer |
 |---|------|---------|-------|---------|-----------------|--------|
@@ -65,7 +65,7 @@ Fill in the **Answer** column (or reply in the PR/thread). Skips recorded (#1, #
 | 9 | Base/HyperEVM Timelock governance | zapper-gov-hacks | 2 | `GovHelper` implements only the mainnet GovernorSix flow | Extend `GovHelper` for `TimelockController` (Base + HyperEVM), or defer? | **Implemented in Batch 2** — chain-specific scheduling, execution, calldata output and fork coverage for both chains. |
 | 10 | Legacy OUSD migration-state tests (altCPT ≠ 1e18) | token-ousd | ~4 | Require `vm.store`-forging legacy account state | Implement with state-forging, or defer? | **Skip** — very old legacy behavior; not worth keeping tests for. |
 | 11 | Whale `withdrawAllFromStrategies` on real strategies | vault-oeth, vault-general | 3 | Heavy fork test that unwinds real deployed mainnet strategies via the timelock | Implement the heavy end-to-end fork test, or defer? | **Skip**. |
-| 12 | 21-validator real-proof SSV scenarios | strat-compounding-ssv | ~8 | Need multi-validator beacon-proof fixtures | Port the heavy proof-fixture tests, or defer (unit config already covered in Batch 1)? | |
+| 12 | 21-validator real-proof SSV scenarios | strat-compounding-ssv | ~8 | Need multi-validator beacon-proof fixtures | Port the heavy proof-fixture tests, or defer (unit config already covered in Batch 1)? | **Implemented** — all three scenarios use the captured Beacon proofs from `compoundingSSVStaking-validatorsData.json`, including the 21 validator vectors and historical pending-deposit proofs. |
 | 13 | WOETH-upgrade / EigenLayer / EIP-7702 live-state | token-wrapped | ~4 | Block-pinning + niche live states; some were already `it.skip` | Implement (pin blocks), or defer? | **Skip**. |
 
 ## B. Deferred from Batch 1 — follow-up status
