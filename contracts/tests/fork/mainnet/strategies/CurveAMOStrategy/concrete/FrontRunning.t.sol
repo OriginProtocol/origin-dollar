@@ -22,24 +22,30 @@ contract Fork_Concrete_CurveAMOStrategy_FrontRunning_Test is Fork_CurveAMOStrate
 
         if (attackerAddsWeth) {
             deal(address(weth), alice, attackerLiquidity);
-            vm.startPrank(alice);
-            weth.approve(address(curvePool), attackerLiquidity);
-            amounts[0] = attackerLiquidity;
-            curvePool.add_liquidity(amounts, 0);
-            vm.stopPrank();
         } else {
             vm.prank(address(oethVault));
             oeth.mint(alice, attackerLiquidity);
+        }
+
+        uint256 totalValueBefore = oethVault.totalValue();
+        uint256 totalSupplyBefore = oeth.totalSupply();
+
+        if (attackerAddsWeth) {
+            vm.startPrank(alice);
+            weth.approve(address(curvePool), attackerLiquidity);
+            amounts[curveAMOStrategy.hardAssetCoinIndex()] = attackerLiquidity;
+            curvePool.add_liquidity(amounts, 0);
+            vm.stopPrank();
+        } else {
             vm.startPrank(alice);
             oeth.approve(address(curvePool), attackerLiquidity);
-            amounts[1] = attackerLiquidity;
+            amounts[curveAMOStrategy.otokenCoinIndex()] = attackerLiquidity;
             curvePool.add_liquidity(amounts, 0);
             vm.stopPrank();
         }
 
         uint256 attackerLpTokens = curvePool.balanceOf(alice);
         uint256 strategyBalanceBefore = curveAMOStrategy.checkBalance(address(weth));
-        uint256 totalSupplyBefore = oeth.totalSupply();
 
         _depositAsVault(depositAmount);
 
@@ -50,15 +56,27 @@ contract Fork_Concrete_CurveAMOStrategy_FrontRunning_Test is Fork_CurveAMOStrate
         vm.prank(alice);
         curvePool.remove_liquidity(attackerLpTokens, minAmounts);
 
-        assertGe(oethVault.totalValue(), oeth.totalSupply());
+        assertGt(_protocolProfit(totalValueBefore, totalSupplyBefore), 0);
 
-        vm.prank(address(oethVault));
-        curveAMOStrategy.withdrawAll();
+        vm.prank(strategist);
+        oethVault.rebase();
+
+        uint256 totalValueAfterRebase = oethVault.totalValue();
+        uint256 totalSupplyAfterRebase = oeth.totalSupply();
+
+        vm.prank(governor);
+        oethVault.withdrawAllFromStrategy(address(curveAMOStrategy));
 
         assertEq(curveGauge.balanceOf(address(curveAMOStrategy)), 0);
         assertEq(curvePool.balanceOf(address(curveAMOStrategy)), 0);
         assertEq(weth.balanceOf(address(curveAMOStrategy)), 0);
         assertEq(oeth.balanceOf(address(curveAMOStrategy)), 0);
-        assertGe(oethVault.totalValue(), oeth.totalSupply());
+        assertGe(_protocolProfit(totalValueAfterRebase, totalSupplyAfterRebase), 0);
+    }
+
+    function _protocolProfit(uint256 totalValueBefore, uint256 totalSupplyBefore) internal view returns (int256) {
+        int256 totalValueDelta = int256(oethVault.totalValue()) - int256(totalValueBefore);
+        int256 totalSupplyDelta = int256(oeth.totalSupply()) - int256(totalSupplyBefore);
+        return totalValueDelta - totalSupplyDelta;
     }
 }
