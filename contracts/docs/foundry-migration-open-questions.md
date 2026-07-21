@@ -49,8 +49,8 @@ unit suite green, no regressions):
 
 ## A. Open questions — need a decision before implementing
 
-Fill in the **Answer** column (or reply in the PR/thread). Skips were recorded on 2026-07-20
-(#1, #2, #6, #8), and #9 was implemented in Batch 2; unanswered rows remain open.
+Fill in the **Answer** column (or reply in the PR/thread). Skips recorded (#1, #2, #5, #6, #7, #8,
+#10, #11, #13); #9 implemented in Batch 2; open: #3, #4, #12.
 
 | # | Item | Area(s) | ~Gaps | Blocker | Decision needed | Answer |
 |---|------|---------|-------|---------|-----------------|--------|
@@ -58,15 +58,15 @@ Fill in the **Answer** column (or reply in the PR/thread). Skips were recorded o
 | 2 | Sonic (OSVault auth, wOS config, SwapX yield) | vault-general, token-wrapped | ~7 | No `sonic` endpoint in `foundry.toml` | Add `sonic = "${SONIC_PROVIDER_URL}"` so these can be ported, or skip? | **Skip** — Sonic is winding down; all funds sit in the vault buffer and the strategies no longer hold any assets, so there is nothing to smoke-test. |
 | 3 | OUSD Rebalancer suite | rebalancer | 109 | Off-chain JS + GraphQL (`utils/rebalancer.js`) — not Solidity, can't run in forge | Re-home as a standalone JS runner (mocha/vitest), or accept loss once Hardhat CI is gone? | |
 | 4 | decode-origin-nonce | crosschain | ~5 | Off-chain JS decoder (`tasks/crossChain.js`) | Same as #3 — JS runner or drop? | |
-| 5 | Algebra / Hydrex AMO (`StableSwapAMMStrategy`) | strat-algebra-amo | 69 | Contract exists but **not deployed anywhere**; Hydrex was withdrawn; the Sonic SwapX variant is already covered | Deprecated (skip), or coming to Base (unit tests now, fork later)? | |
+| 5 | Algebra / Hydrex AMO (`StableSwapAMMStrategy`) | strat-algebra-amo | 69 | Contract exists but **not deployed anywhere**; Hydrex was withdrawn; the Sonic SwapX variant is already covered | Deprecated (skip), or coming to Base (unit tests now, fork later)? | **Skip** — no longer used. |
 | 6 | Legacy `NativeStakingSSVStrategy` | strat-native-ssv | 42 | Legacy strategy, superseded by `CompoundingStakingSSVStrategy` (already unit-tested) | Port the legacy suite, or retire it (skip / minimal smoke only)? | **Skip** — legacy strategy retired, superseded by CompoundingStakingSSVStrategy. |
-| 7 | `RebalancerModule` full unit suite | safe-modules | 46 | Contract exists, **not yet deployed**; unit-testable now (like `AutoWithdrawalModule`) | Implement the full unit suite now? (No hard blocker — confirm priority given it's not deployed.) | |
+| 7 | `RebalancerModule` full unit suite | safe-modules | 46 | Contract exists, **not yet deployed**; unit-testable now (like `AutoWithdrawalModule`) | Implement the full unit suite now? (No hard blocker — confirm priority given it's not deployed.) | **Skip** — never deployed, not used, and not planned. |
 | 8 | Base `SuperOETHHarvester` | vault-multichain | ~7 (+8 retired `it.skip`) | No Foundry harvester test infra; the `harvestAndSwap` cases are retired | Build harvester infra (whitelist / dripper / `harvestAndTransfer`)? Confirm the retired `harvestAndSwap` `it.skip` cases are dropped. | **Skip** — retired `harvestAndSwap` `it.skip` cases dropped. |
 | 9 | Base/HyperEVM Timelock governance | zapper-gov-hacks | 2 | `GovHelper` implements only the mainnet GovernorSix flow | Extend `GovHelper` for `TimelockController` (Base + HyperEVM), or defer? | **Implemented in Batch 2** — chain-specific scheduling, execution, calldata output and fork coverage for both chains. |
-| 10 | Legacy OUSD migration-state tests (altCPT ≠ 1e18) | token-ousd | ~4 | Require `vm.store`-forging legacy account state | Implement with state-forging, or defer? | |
-| 11 | Whale `withdrawAllFromStrategies` on real strategies | vault-oeth, vault-general | 3 | Heavy fork test that unwinds real deployed mainnet strategies via the timelock | Implement the heavy end-to-end fork test, or defer? | |
+| 10 | Legacy OUSD migration-state tests (altCPT ≠ 1e18) | token-ousd | ~4 | Require `vm.store`-forging legacy account state | Implement with state-forging, or defer? | **Skip** — very old legacy behavior; not worth keeping tests for. |
+| 11 | Whale `withdrawAllFromStrategies` on real strategies | vault-oeth, vault-general | 3 | Heavy fork test that unwinds real deployed mainnet strategies via the timelock | Implement the heavy end-to-end fork test, or defer? | **Skip**. |
 | 12 | 21-validator real-proof SSV scenarios | strat-compounding-ssv | ~8 | Need multi-validator beacon-proof fixtures | Port the heavy proof-fixture tests, or defer (unit config already covered in Batch 1)? | |
-| 13 | WOETH-upgrade / EigenLayer / EIP-7702 live-state | token-wrapped | ~4 | Block-pinning + niche live states; some were already `it.skip` | Implement (pin blocks), or defer? | |
+| 13 | WOETH-upgrade / EigenLayer / EIP-7702 live-state | token-wrapped | ~4 | Block-pinning + niche live states; some were already `it.skip` | Implement (pin blocks), or defer? | **Skip**. |
 
 ## B. Deferred from Batch 1 — follow-up status
 
