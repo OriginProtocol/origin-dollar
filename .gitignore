@@ -63,6 +63,7 @@ contracts/build/*
 !contracts/build/deployments-*.json
 contracts/build/deployments-fork-*.json
 contracts/dist/
+contracts/scripts/defender-actions/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.base
