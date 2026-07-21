@@ -273,7 +273,7 @@ abstract contract AbstractDeployScript is Base {
 
     function buildGovernanceProposal() external virtual returns (uint256) {
         _buildGovernanceProposal();
-        return GovHelper.id(govProposal);
+        return GovHelper.governanceId(govProposal);
     }
 
     // ==================== External View Functions ==================== //
@@ -289,7 +289,13 @@ abstract contract AbstractDeployScript is Base {
     /// @dev Called by DeployManager when script is in history but governance is pending.
     ///      Override to implement proposal resubmission or status checking logic.
     function handleGovernanceProposal() external virtual {
+        state = resolver.getState();
+        log = state != State.FORK_TEST || forcedLog;
         _buildGovernanceProposal();
-        log.simulate(govProposal);
+        if (state == State.REAL_DEPLOYING) {
+            GovHelper.logProposalData(log, govProposal);
+        } else {
+            log.simulate(govProposal);
+        }
     }
 }

@@ -163,6 +163,30 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
         _testTrusteeFee(0, 1000, 0);
     }
 
+    /// @dev rebase.js "should collect on rebase a 0.000000001 fee from 0.000001 yield at 10bp".
+    ///      Strengthens test_trustee_collectsFeeOnRebase_10bp_0_000001yield, whose shared-helper
+    ///      1e12 tolerance is 1000x the 1e9 expected fee (so 0 would pass). The trustee is a
+    ///      non-rebasing account, so its balance is exact — assert the fee to the wei.
+    function test_trustee_collectsExactTinyFeeOnRebase_10bp() public {
+        vm.startPrank(governor);
+        ousdVault.setTrusteeAddress(address(mockNonRebasing));
+        ousdVault.setTrusteeFeeBps(10); // 10 bps
+        vm.stopPrank();
+
+        assertEq(ousd.balanceOf(address(mockNonRebasing)), 0, "Trustee should start with 0");
+
+        // 0.000001 OUSD of yield == 1 raw USDC unit (6 decimals)
+        _dealUSDC(matt, 1);
+        vm.prank(matt);
+        usdc.transfer(address(ousdVault), 1);
+
+        vm.prank(governor);
+        ousdVault.rebase();
+
+        // Fee = 0.000001e18 * 10 / 10000 = 1e9, minted exactly to the non-rebasing trustee
+        assertEq(ousd.balanceOf(address(mockNonRebasing)), 1e9, "Trustee should collect exactly 1e9");
+    }
+
     function _testTrusteeFee(uint256 yieldUSDC, uint256 basisPoints, uint256 expectedFee) internal {
         // Use MockNonRebasing as trustee (non-rebasing so balance stays fixed)
         vm.startPrank(governor);

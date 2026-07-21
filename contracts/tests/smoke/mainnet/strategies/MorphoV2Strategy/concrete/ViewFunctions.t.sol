@@ -44,6 +44,16 @@ contract Smoke_Concrete_MorphoV2Strategy_ViewFunctions_Test is Smoke_MorphoV2Str
         assertEq(morphoV2Strategy.vaultAddress(), address(ousdVault), "Vault address mismatch");
     }
 
+    /// @dev ousd-v2-morpho.mainnet.fork-test.js "Should have constants and immutables set":
+    ///      governor + harvester assertions on the deployed strategy.
+    function test_governor_isTimelock() public view {
+        assertEq(morphoV2Strategy.governor(), Mainnet.Timelock, "Governor should be the Timelock");
+    }
+
+    function test_harvesterAddress_isSet() public view {
+        assertNotEq(morphoV2Strategy.harvesterAddress(), address(0), "Harvester should be set");
+    }
+
     // --- maxWithdraw ---
 
     function test_maxWithdraw_isNonZero() public view {

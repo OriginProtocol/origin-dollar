@@ -105,4 +105,18 @@ contract Unit_Concrete_WOETH_Withdraw_Test is Unit_WOETH_Shared_Test {
 
         assertApproxEqAbs(oeth.balanceOf(alice), 30e18, 1);
     }
+
+    /// @dev woeth.js "should be allowed to withdraw 0"
+    function test_withdraw_zero() public {
+        _mintAndDeposit(alice, 10e18);
+        uint256 sharesBefore = woeth.balanceOf(alice);
+        uint256 oethBefore = oeth.balanceOf(alice);
+
+        vm.prank(alice);
+        uint256 shares = woeth.withdraw(0, alice, alice);
+
+        assertEq(shares, 0);
+        assertEq(woeth.balanceOf(alice), sharesBefore);
+        assertEq(oeth.balanceOf(alice), oethBefore);
+    }
 }

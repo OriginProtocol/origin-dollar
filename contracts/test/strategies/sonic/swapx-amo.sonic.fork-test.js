@@ -13,7 +13,7 @@ describe.skip("Sonic Fork Test: SwapX AMO Strategy", function () {
         largeOTokenIn: "10000000",
       },
       bootstrapPool: {
-        smallAssetBootstrapIn: "500 0",
+        smallAssetBootstrapIn: "5000",
         mediumAssetBootstrapIn: "20000",
         largeAssetBootstrapIn: "5000000",
       },

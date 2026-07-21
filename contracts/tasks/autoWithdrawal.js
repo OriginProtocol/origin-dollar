@@ -1,9 +1,6 @@
 const { formatUnits } = require("ethers/lib/utils");
 
-const {
-  getContract,
-  getContractAt,
-} = require("./lib/contracts");
+const { getContract, getContractAt } = require("./lib/contracts");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");

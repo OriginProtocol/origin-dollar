@@ -308,9 +308,9 @@ function _buildGovernanceProposal() internal override {
 - `fullsig` — function signature (e.g., `"upgradeTo(address)"`)
 - `data` — ABI-encoded parameters (without selector)
 
-### Proposal ID Computation
+### Governance ID Computation
 
-`GovHelper.id()` computes the proposal ID identically to the on-chain OpenZeppelin Governor contract:
+On Mainnet, `GovHelper.id()` computes the proposal ID identically to the on-chain OpenZeppelin Governor contract:
 
 ```solidity
 proposalId = uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
@@ -318,11 +318,13 @@ proposalId = uint256(keccak256(abi.encode(targets, values, calldatas, descriptio
 
 Where `calldatas[i] = abi.encodePacked(bytes4(keccak256(bytes(signature))), data)`.
 
-This deterministic computation is critical — it allows `UpdateGovernanceMetadata` to compute the proposal ID off-chain and match it against on-chain events.
+On Base and HyperEVM, `GovHelper.operationId()` computes the TimelockController batch hash using the encoded actions, a zero predecessor, and `keccak256(description)` as the deterministic salt. `buildGovernanceProposal()` returns the chain-appropriate identifier as a `uint256`.
+
+These deterministic computations let deployment reruns recognize governance that was already submitted or executed.
 
 ### Fork Simulation
 
-In `FORK_TEST` and `FORK_DEPLOYING` modes, `GovHelper.simulate()` executes the full Governor lifecycle:
+In `FORK_TEST` and `FORK_DEPLOYING` modes, `GovHelper.simulate()` dispatches by chain. Mainnet executes the full Governor lifecycle:
 
 | Stage | Action | Time Manipulation |
 |-------|--------|-------------------|
@@ -334,11 +336,22 @@ In `FORK_TEST` and `FORK_DEPLOYING` modes, `GovHelper.simulate()` executes the f
 
 If any stage fails, the script reverts — catching governance proposal bugs before they reach mainnet.
 
+Base and HyperEVM use the chain-local TimelockController and governance Safe:
+
+| Existing operation state | Fork behavior |
+|--------------------------|---------------|
+| Absent | Schedule with `getMinDelay()`, advance to the operation timestamp, then execute |
+| Scheduled but not ready | Advance to the operation timestamp, then execute |
+| Ready | Execute immediately |
+| Done | Return without replaying the actions |
+
+The TimelockController predecessor is zero and the description-derived salt must remain unchanged between submission and reruns.
+
 ### Real Deployment Output
 
 In `REAL_DEPLOYING` mode, `GovHelper.logProposalData()`:
-1. Verifies the proposal doesn't already exist on-chain
-2. Outputs the `propose()` calldata for manual submission to the Governor contract
+1. On Mainnet, verifies the proposal doesn't already exist and outputs `propose()` calldata.
+2. On Base and HyperEVM, outputs both `scheduleBatch()` and `executeBatch()` for a new operation, only `executeBatch()` for an existing scheduled operation, and nothing for a completed operation.
 
 ### The Governance State Machine
 

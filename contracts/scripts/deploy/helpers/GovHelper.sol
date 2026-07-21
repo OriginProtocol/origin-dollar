@@ -9,7 +9,8 @@ import {Logger} from "scripts/deploy/helpers/Logger.sol";
 import {GovAction, GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Utils
-import {Mainnet} from "tests/utils/Addresses.sol";
+import {ITimelockController} from "contracts/interfaces/ITimelockController.sol";
+import {Base, HyperEVM, Mainnet} from "tests/utils/Addresses.sol";
 
 /// @title GovHelper
 /// @notice Library for building, encoding, and simulating governance proposals.
@@ -33,6 +34,11 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 library GovHelper {
     using Logger for bool;
 
+    uint256 internal constant MAINNET_CHAIN_ID = 1;
+    uint256 internal constant BASE_CHAIN_ID = 8453;
+    uint256 internal constant HYPEREVM_CHAIN_ID = 999;
+    bytes32 internal constant NO_PREDECESSOR = bytes32(0);
+
     // ==================== Constants ==================== //
 
     /// @notice Foundry's VM cheat code contract instance.
@@ -55,6 +61,22 @@ library GovHelper {
 
         // Compute the proposal ID matching on-chain calculation
         proposalId = uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
+    }
+
+    /// @notice Computes the TimelockController operation ID for a proposal.
+    function operationId(GovProposal memory prop) internal pure returns (bytes32) {
+        (address[] memory targets, uint256[] memory values,,, bytes[] memory calldatas) = getParams(prop);
+        return keccak256(abi.encode(targets, values, calldatas, NO_PREDECESSOR, _salt(prop)));
+    }
+
+    /// @notice Computes the chain-specific governance identifier.
+    /// @dev Mainnet uses a Governor proposal ID while Base and HyperEVM use a timelock operation ID.
+    function governanceId(GovProposal memory prop) internal view returns (uint256) {
+        if (block.chainid == MAINNET_CHAIN_ID) return id(prop);
+        if (block.chainid == BASE_CHAIN_ID || block.chainid == HYPEREVM_CHAIN_ID) {
+            return uint256(operationId(prop));
+        }
+        revert("Unsupported governance chain");
     }
 
     // ==================== Parameter Extraction ==================== //
@@ -161,6 +183,25 @@ library GovHelper {
         );
     }
 
+    /// @notice Generates calldata for scheduling a TimelockController batch.
+    function getScheduleCalldata(GovProposal memory prop, uint256 delay)
+        internal
+        pure
+        returns (bytes memory scheduleCalldata)
+    {
+        (address[] memory targets, uint256[] memory values,,, bytes[] memory calldatas) = getParams(prop);
+        scheduleCalldata = abi.encodeCall(
+            ITimelockController.scheduleBatch, (targets, values, calldatas, NO_PREDECESSOR, _salt(prop), delay)
+        );
+    }
+
+    /// @notice Generates calldata for executing a TimelockController batch.
+    function getExecuteCalldata(GovProposal memory prop) internal pure returns (bytes memory executeCalldata) {
+        (address[] memory targets, uint256[] memory values,,, bytes[] memory calldatas) = getParams(prop);
+        executeCalldata =
+            abi.encodeCall(ITimelockController.executeBatch, (targets, values, calldatas, NO_PREDECESSOR, _salt(prop)));
+    }
+
     // ==================== Real Deployment Output ==================== //
 
     /// @notice Logs proposal data for manual submission during real deployments.
@@ -169,6 +210,12 @@ library GovHelper {
     /// @param log Whether logging is enabled
     /// @param prop The proposal to log calldata for
     function logProposalData(bool log, GovProposal memory prop) internal view {
+        if (block.chainid == BASE_CHAIN_ID || block.chainid == HYPEREVM_CHAIN_ID) {
+            _logTimelockData(log, prop);
+            return;
+        }
+        require(block.chainid == MAINNET_CHAIN_ID, "Unsupported governance chain");
+
         IGovernance governance = IGovernance(Mainnet.GovernorSix);
 
         // Ensure proposal doesn't already exist
@@ -196,6 +243,12 @@ library GovHelper {
     /// @param log Whether logging is enabled
     /// @param prop The proposal to simulate
     function simulate(bool log, GovProposal memory prop) internal {
+        if (block.chainid == BASE_CHAIN_ID || block.chainid == HYPEREVM_CHAIN_ID) {
+            _simulateTimelock(log, prop);
+            return;
+        }
+        require(block.chainid == MAINNET_CHAIN_ID, "Unsupported governance chain");
+
         // ===== Setup: Label addresses for trace readability =====
         address govMultisig = Mainnet.Timelock;
         vm.label(govMultisig, "Gov Multisig");
@@ -294,6 +347,76 @@ library GovHelper {
             log.error("Unexpected proposal state");
             revert("Unexpected proposal state");
         }
+    }
+
+    // ==================== TimelockController ==================== //
+
+    function _salt(GovProposal memory prop) private pure returns (bytes32) {
+        return keccak256(bytes(prop.description));
+    }
+
+    function _timelockConfig() private view returns (ITimelockController timelock, address proposer) {
+        if (block.chainid == BASE_CHAIN_ID) {
+            return (ITimelockController(Base.timelock), Base.governor);
+        }
+        if (block.chainid == HYPEREVM_CHAIN_ID) {
+            return (ITimelockController(HyperEVM.timelock), HyperEVM.admin);
+        }
+        revert("Unsupported timelock chain");
+    }
+
+    function _logTimelockData(bool log, GovProposal memory prop) private view {
+        (ITimelockController timelock,) = _timelockConfig();
+        bytes32 opId = operationId(prop);
+
+        if (timelock.isOperationDone(opId)) {
+            log.success("Timelock operation already executed");
+            return;
+        }
+
+        log.logGovProposalHeader();
+        if (!timelock.isOperation(opId)) {
+            log.logCalldata(address(timelock), getScheduleCalldata(prop, timelock.getMinDelay()));
+        }
+        log.logCalldata(address(timelock), getExecuteCalldata(prop));
+    }
+
+    function _simulateTimelock(bool log, GovProposal memory prop) private {
+        (ITimelockController timelock, address proposer) = _timelockConfig();
+        bytes32 opId = operationId(prop);
+
+        vm.label(address(timelock), "TimelockController");
+        vm.label(proposer, "Governance Proposer");
+
+        if (timelock.isOperationDone(opId)) {
+            log.success("Timelock operation already executed");
+            return;
+        }
+
+        if (!timelock.isOperation(opId)) {
+            uint256 delay = timelock.getMinDelay();
+            bytes memory scheduleData = getScheduleCalldata(prop, delay);
+
+            log.logGovProposalHeader();
+            log.logCalldata(address(timelock), scheduleData);
+            log.info("Scheduling timelock operation on fork...");
+            vm.prank(proposer);
+            (bool scheduleSuccess,) = address(timelock).call(scheduleData);
+            require(scheduleSuccess, "Fail to schedule timelock operation");
+            log.success("Timelock operation scheduled");
+        }
+
+        if (!timelock.isOperationReady(opId)) {
+            vm.warp(timelock.getTimestamp(opId) + 1);
+            vm.roll(block.number + 2);
+        }
+
+        log.info("Executing timelock operation on fork...");
+        vm.prank(proposer);
+        (bool success,) = address(timelock).call(getExecuteCalldata(prop));
+        require(success, "Fail to execute timelock operation");
+        require(timelock.isOperationDone(opId), "Timelock operation not executed");
+        log.success("Timelock operation executed");
     }
 }
 
