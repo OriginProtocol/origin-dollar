@@ -67,6 +67,8 @@ All three identifiers **must match exactly** — if they drift, the script will 
 
 Place the file in the correct network folder:
 - Ethereum Mainnet → `script/deploy/mainnet/`
+- Base → `script/deploy/base/`
+- HyperEVM → `script/deploy/hyperevm/`
 - Sonic → `script/deploy/sonic/`
 
 ### Minimal template
@@ -130,7 +132,7 @@ See [`mainnet/000_Example.s.sol`](./mainnet/000_Example.s.sol) for a fully-comme
 make test-smoke
 ```
 
-This forks the network, replays **all** deployment scripts (including yours) through `DeployManager`, and simulates any governance proposals end-to-end. If your script has a bug — wrong address, broken governance action, naming mismatch — it will revert here.
+This forks the network, replays **all** deployment scripts (including yours) through `DeployManager`, and simulates any governance proposals end-to-end. Mainnet proposals use GovernorSix; Base and HyperEVM operations use their chain-local `TimelockController`. If your script has a bug — wrong address, broken governance action, naming mismatch — it will revert here.
 
 What to look for:
 - **Green output** — all scripts replayed successfully.
@@ -168,8 +170,9 @@ make deploy-sonic
 This broadcasts real transactions and verifies contracts on Etherscan (mainnet) or the block explorer (Sonic).
 
 **If your script includes governance actions:**
-- The deploy command will print the `propose()` calldata.
-- Submit this calldata to the Governor contract manually (e.g., via Gnosis Safe or Etherscan).
+- Mainnet prints the `propose()` calldata for GovernorSix.
+- Base and HyperEVM print `scheduleBatch()` and `executeBatch()` calldata for their TimelockController. A rerun omits scheduling if the operation is already queued and emits nothing after execution.
+- Submit the printed transactions through the chain's governance Safe.
 
 ---
 
