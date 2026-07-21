@@ -8,7 +8,7 @@
 The gap analysis lists ~430 Hardhat test/assertions with no (or partial) Foundry equivalent. Most are
 blocked on a decision (a chain not configured in `foundry.toml`, off-chain JS suites that cannot run in
 `forge`, or deprecated/undeployed contracts) or need non-trivial fixture work. A focused, unambiguous
-set has been implemented directly (Batch 1).
+set has been implemented directly (Batches 1 and 2).
 
 Only `mainnet`, `base`, `arbitrum`, `hyperevm` have fork endpoints in `foundry.toml` — **`sonic` and
 `plume` are not configured**, so anything needing those forks is blocked.
@@ -30,10 +30,27 @@ unit suite green, no regressions):
   Curve reward-token `== CRV`, MorphoV2 `harvesterAddress` set —
   `tests/smoke/mainnet/strategies/{OUSDCurveAMOStrategy,OETHCurveAMOStrategy,MorphoV2Strategy}/concrete/ViewFunctions.t.sol`
 
+## Batch 2 — implemented (2026-07-21)
+
+20 focused tests added, with the exact Beacon SSZ vectors intentionally left for a later batch:
+
+- **Curve AMO front-running** — exact protocol-profit accounting (`Δ totalValue − Δ totalSupply`) for
+  OETH/WETH, plus equivalent OUSD/USDC scenarios with explicit 6-to-18-decimal scaling —
+  `tests/fork/mainnet/strategies/{CurveAMOStrategy,CurveAMOStrategyOUSD}/concrete/FrontRunning.t.sol`
+- **OUSD account types** — 4 fuzz properties for transfers and mints involving
+  `YieldDelegationSource` / `YieldDelegationTarget`, including supply invariants —
+  `tests/unit/token/OUSD/fuzz/YieldDelegation.fuzz.t.sol`
+- **Shared strategy configuration** — 9 representative tests for `setHarvesterAddress` and
+  `setRewardTokenAddresses`, covering authorization, events, state changes and invalid reward tokens —
+  `tests/unit/strategies/CurveAMOStrategy/concrete/Configuration.t.sol`
+- **Base / HyperEVM governance** — `GovHelper` support for idempotent `TimelockController`
+  schedule/execute flows, covered against both live timelocks on forks —
+  `tests/fork/{base,hyperevm}/governance/TimelockController/concrete/Governance.t.sol`
+
 ## A. Open questions — need a decision before implementing
 
-Fill in the **Answer** column (or reply in the PR/thread). Skips recorded 2026-07-20 (#1, #2, #6, #8);
-all other rows remain open.
+Fill in the **Answer** column (or reply in the PR/thread). Skips were recorded on 2026-07-20
+(#1, #2, #6, #8), and #9 was implemented in Batch 2; unanswered rows remain open.
 
 | # | Item | Area(s) | ~Gaps | Blocker | Decision needed | Answer |
 |---|------|---------|-------|---------|-----------------|--------|
@@ -45,24 +62,24 @@ all other rows remain open.
 | 6 | Legacy `NativeStakingSSVStrategy` | strat-native-ssv | 42 | Legacy strategy, superseded by `CompoundingStakingSSVStrategy` (already unit-tested) | Port the legacy suite, or retire it (skip / minimal smoke only)? | **Skip** — legacy strategy retired, superseded by CompoundingStakingSSVStrategy. |
 | 7 | `RebalancerModule` full unit suite | safe-modules | 46 | Contract exists, **not yet deployed**; unit-testable now (like `AutoWithdrawalModule`) | Implement the full unit suite now? (No hard blocker — confirm priority given it's not deployed.) | |
 | 8 | Base `SuperOETHHarvester` | vault-multichain | ~7 (+8 retired `it.skip`) | No Foundry harvester test infra; the `harvestAndSwap` cases are retired | Build harvester infra (whitelist / dripper / `harvestAndTransfer`)? Confirm the retired `harvestAndSwap` `it.skip` cases are dropped. | **Skip** — retired `harvestAndSwap` `it.skip` cases dropped. |
-| 9 | Base/HyperEVM Timelock governance | zapper-gov-hacks | 2 | `GovHelper` implements only the mainnet GovernorSix flow | Extend `GovHelper` for `TimelockController` (Base + HyperEVM), or defer? | |
+| 9 | Base/HyperEVM Timelock governance | zapper-gov-hacks | 2 | `GovHelper` implements only the mainnet GovernorSix flow | Extend `GovHelper` for `TimelockController` (Base + HyperEVM), or defer? | **Implemented in Batch 2** — chain-specific scheduling, execution, calldata output and fork coverage for both chains. |
 | 10 | Legacy OUSD migration-state tests (altCPT ≠ 1e18) | token-ousd | ~4 | Require `vm.store`-forging legacy account state | Implement with state-forging, or defer? | |
 | 11 | Whale `withdrawAllFromStrategies` on real strategies | vault-oeth, vault-general | 3 | Heavy fork test that unwinds real deployed mainnet strategies via the timelock | Implement the heavy end-to-end fork test, or defer? | |
 | 12 | 21-validator real-proof SSV scenarios | strat-compounding-ssv | ~8 | Need multi-validator beacon-proof fixtures | Port the heavy proof-fixture tests, or defer (unit config already covered in Batch 1)? | |
 | 13 | WOETH-upgrade / EigenLayer / EIP-7702 live-state | token-wrapped | ~4 | Block-pinning + niche live states; some were already `it.skip` | Implement (pin blocks), or defer? | |
 
-## B. Deferred from Batch 1 — need fixture work (no external decision, just effort)
+## B. Deferred from Batch 1 — follow-up status
 
 These were originally scoped for Batch 1 but turned out to need real fixtures / deeper work rather than
-being mechanical. No decision needed — they'll be picked up in a follow-up unless deprioritized.
+being mechanical. Batch 2 implemented the focused items that were still worth carrying forward.
 
-| Item | Area | Why deferred |
-|------|------|--------------|
-| Beacon exact SSZ roots + `0x01` validator vector | beacon | Need byte-exact input vectors / a real valid proof from the Hardhat fixtures to reproduce the known constants (`0x5b449f…`, `0xc27ca5…`); the current tests only assert `!= bytes32(0)` |
-| Curve AMO front-running strengthen | strat-curve-amo-mainnet | Needs deep reading of the existing fork test + exact protocol-profit accounting (`Δ totalValue − Δ totalSupply`), plus the OUSD/USDC 6-decimal variant |
-| Base AMO exact params (`allowedWethShareInterval`, harvester) | strat-base-amo | Exact values are governance-tunable — need on-chain confirmation before asserting |
-| token-ousd account-type transfers/mints | token-ousd | Need a multi-account-type fixture (rebasing / non-rebasing / delegation-target) |
-| strat-behaviour `setHarvester` / `setRewardTokens` | strat-behaviour-misc | Hardhat runs these across *all* strategies — needs a call: one representative test vs. a shared Foundry behaviour harness |
+| Item | Area | Status |
+|------|------|--------|
+| Beacon exact SSZ roots + `0x01` validator vector | beacon | **Deferred** — byte-exact proof fixtures are substantially more complex and will be handled separately. |
+| Curve AMO front-running strengthen | strat-curve-amo-mainnet | **Implemented in Batch 2** — exact profit accounting for OETH/WETH and OUSD/USDC. |
+| Base AMO exact params (`allowedWethShareInterval`, harvester) | strat-base-amo | **Skipped** — governance-tunable live values are not stable test invariants. |
+| token-ousd account-type transfers/mints | token-ousd | **Implemented in Batch 2** — focused fuzz coverage replaces the full Cartesian fixture matrix. |
+| strat-behaviour `setHarvester` / `setRewardTokens` | strat-behaviour-misc | **Implemented in Batch 2** — tested once against the shared implementation through an active representative strategy. |
 
 > Also intentionally skipped in Batch 1: exact `maxSlippage` / coin-index assertions on the Curve AMOs
 > (governance-tunable), keeping only the stable `governor` / reward-token assertions.
