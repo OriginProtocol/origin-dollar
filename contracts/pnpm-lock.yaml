@@ -37,9 +37,6 @@ importers:
       '@lodestar/utils':
         specifier: ^1.41.0
         version: 1.41.0
-      '@talos/client':
-        specifier: github:oplabs/talos#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client
-        version: git+https://git@github.com:oplabs/talos.git#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -1928,10 +1925,6 @@ packages:
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
-
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client':
-    resolution: {commit: 8f15dbbdc96a4d3cabf932d41e016779c0946266, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
-    version: 0.0.25
 
   '@trufflesuite/bigint-buffer@1.1.9':
     resolution: {integrity: sha512-bdM5cEGCOhDSwminryHJbRmXc1x7dPKg6Pqns3qyTwFlxsqUgxE29lsERS3PlIW1HTjoIGMUqsk1zQQwST1Yxw==}
@@ -9037,51 +9030,6 @@ snapshots:
   '@szmarczak/http-timer@4.0.6':
     dependencies:
       defer-to-connect: 2.0.1
-
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
-    dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.14)
-      croner: 10.0.1
-      drizzle-orm: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
-      ethers-v5: ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      ethers-v6: ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      hono: 4.12.14
-      pg: 8.20.0
-      viem: 2.43.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - typescript
-      - utf-8-validate
-      - zod
 
   '@trufflesuite/bigint-buffer@1.1.9':
     dependencies:

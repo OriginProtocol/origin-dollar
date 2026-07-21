@@ -313,6 +313,10 @@ pnpm hardhat healthcheck --network mainnet
 
 **No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.
 
+Building the runner image installs the optional `@oplabs/talos-client` peer
+dependency from GitHub Packages. Set `TALOS_PACKAGE_TOKEN` to a PAT with
+`read:packages` access before running `docker compose build`.
+
 Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` /
 `GOVERNOR_PK` fallbacks, and `IMPERSONATE`) stays exactly as described in the
 sections above. The library only handles the nonce wrap; it does not construct

@@ -40,18 +40,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -90,18 +80,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -140,18 +120,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -192,18 +162,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -263,18 +223,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -325,18 +275,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -387,18 +327,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -449,18 +379,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -511,18 +431,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -573,18 +483,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
@@ -671,18 +571,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Set up SSH agent for @oplabs/talos-client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
-      - name: Configure Git auth for git dependencies
-        run: |
-          # Public git deps (e.g. prompts) clone over HTTPS.
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          # Keep the private @oplabs/talos-client (oplabs/talos) on SSH so the deploy key
-          # authenticates it — the longer prefix takes precedence over the rule above.
-          git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      - name: Configure Git for public dependencies
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install deps
         working-directory: ./contracts
