@@ -1,6 +1,8 @@
+autoInstallPeers: false
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
 - "origin-morpho-utils"
+- "@oplabs/talos-client"
 
 ignoredBuiltDependencies:
   - "@arbitrum/nitro-contracts"
