@@ -145,7 +145,7 @@
     "pg": "^8.20.0"
   },
   "peerDependencies": {
-    "@oplabs/talos-client": "0.0.1"
+    "@oplabs/talos-client": "0.0.28"
   },
   "peerDependenciesMeta": {
     "@oplabs/talos-client": {

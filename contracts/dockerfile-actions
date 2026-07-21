@@ -40,7 +40,7 @@ RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true
     && git config --global url."https://github.com/".insteadOf "git@github.com:" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc pnpm install --frozen-lockfile \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc \
-      pnpm install @oplabs/talos-client@0.0.1 --no-lockfile --config.save=false \
+      pnpm install @oplabs/talos-client@0.0.28 --no-lockfile --config.save=false \
     && rm /tmp/talos.npmrc
 
 # Copy the rest of the contracts workspace.
