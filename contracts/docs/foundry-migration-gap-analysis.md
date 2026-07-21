@@ -13,7 +13,7 @@
 | vault-multichain | 71 | 46 | 25 | 0 |
 | token-ousd | 208 | 119 | 11 | 0 |
 | token-wrapped | 72 | 56 | 16 | 0 |
-| strat-compounding-ssv | 103 | 75 | 26 | 2 |
+| strat-compounding-ssv | 103 | 78 | 23 | 2 |
 | strat-native-ssv | 104 | 0 | 46 | 0 |
 | strat-curve-amo-mainnet | 74 | 68 | 6 | 0 |
 | strat-algebra-amo | 75 | 0 | 75 | 0 |
@@ -26,7 +26,7 @@
 | pool-booster | 115 | 106 | 8 | 1 |
 | safe-modules | 85 | 39 | 46 | 0 |
 | zapper-gov-hacks | 22 | 16 | 6 | 0 |
-| **Total** | **1650** | **1071** | **434** | **9** |
+| **Total** | **1650** | **1074** | **431** | **9** |
 
 ## Confirmed gaps by area
 
@@ -212,12 +212,12 @@
   Verified: no foundry test calls registerSsvValidator on a REMOVED (state 7) validator. Near-coverage exists (test_registerSsvValidator_RevertWhen_duplicate covers the same state!=NON_REGISTERED require for a REGISTERED validator; test_removeSsvValidator_fromRegistered asserts state==7 after removal), but the behavioral guarantee that a REMOVED validator cannot be re-registered (e.g., a regression adding a REMOVED carve-out to the require at CompoundingStakingSSVStrategy.sol:72) is never directly asserted.
 - **`test/strategies/compoundingSSVStaking.js`** — `consensus rewards are earned by the validators`
   Verified: no passing verifyBalances with >=2 validator balance proofs exists anywhere (2-leaf/2-proof calls appear only in the four Invalid-balance-leaves/proofs revert tests), so the multi-validator summation loop is never asserted on a success path; no test asserts totalValidatorBalance/totalBalance increases by an exact reward delta across two verify cycles. README lists it as a fork-test candidate; tests/fork/mainnet/beacon contains only BeaconProofs library-primitive tests, no strategy fork tests.
-- **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with some WETH, ETH and no deposits (21 active validators)`
-  Verified: the maximum validators in any passing foundry verifyBalances is 1 (2 only in revert tests); no multi-validator (21) verification with real balance proofs; README explicitly lists as unported fork-test candidate and no strategy fork test exists.
-- **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with one validator exited with two pending deposits (21 validators)`
-  Verified: not ported. StrategyBalances.t.sol::test_verifyBalances_twoDepositsToExitingValidator asserts the opposite branch (validator kept in verifiedValidators and deposits stay pending because of pending deposits), not the 21-validator real-proof scenario handling the exited validator's deposits; README acknowledges.
-- **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with one validator exited with two pending deposits and three deposits to non-exiting validators (21 validators)`
-  Verified: no foundry test mixes exited and active validators with multiple pending deposits; requires real proofs/hackDepositList per README, which acknowledges it as unported.
+- ✅ **CLOSED (2026-07-21)** — **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with some WETH, ETH and no deposits (21 active validators)`
+  Resolved by `tests/unit/strategies/CompoundingStakingSSVStrategy/concrete/TwentyOneValidators.t.sol::test_verifyBalances_21ValidatorsNoPendingDeposits` — real 21-validator Beacon proofs from `compoundingSSVStaking-validatorsData.json` (16 verified validators, real summed balances).
+- ✅ **CLOSED (2026-07-21)** — **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with one validator exited with two pending deposits (21 validators)`
+  Resolved by `tests/unit/strategies/CompoundingStakingSSVStrategy/concrete/TwentyOneValidators.t.sol::test_verifyBalances_zeroBalanceValidatorWithTwoPendingDeposits` — real 21-validator Beacon proofs (2 pending deposits, 17 verified validators).
+- ✅ **CLOSED (2026-07-21)** — **`test/strategies/compoundingSSVStaking.js`** — `Should verify balances with one validator exited with two pending deposits and three deposits to non-exiting validators (21 validators)`
+  Resolved by `tests/unit/strategies/CompoundingStakingSSVStrategy/concrete/TwentyOneValidators.t.sol::test_verifyBalances_mixedPendingDeposits` — real 21-validator Beacon proofs (5 pending deposits across exited + active validators).
 - **`test/strategies/compoundingStaking.js`** — `allows the first deposit to a vanilla validator without SSV registration`
   Verified: only the CompoundingStakingSSVStrategy artifact is deployed in contracts/tests/** (tests/utils/artifacts/Strategies.sol has no vanilla artifact; the smoke test only resolves the proxy address). The vanilla _admitStake accepts NON_REGISTERED first deposits (CompoundingStakingStrategy.sol:458-473) while the SSV override rejects them, so this path is genuinely distinct and untested; ETHStaked is also never asserted anywhere.
 - **`test/strategies/compoundingStaking.js`** — `allows the first deposit to be less than the initial deposit amount`
