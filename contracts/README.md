@@ -316,6 +316,11 @@ pnpm hardhat healthcheck --network mainnet
 
 Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` / `GOVERNOR_PK` fallbacks, `IMPERSONATE`, Defender) stays exactly as described in the sections above. The library only handles the nonce wrap; it does not construct signers here.
 
+Actions that propose transactions through the Safe Transaction Service require
+`SAFE_API_KEY`. The active Talos signer must be registered separately on each
+chain as a delegate for the target Safe. A delegate can submit a proposal but
+does not provide an owner confirmation or reduce the Safe threshold.
+
 ### Defender Relayer
 
 Open Zeppelin's [Defender](https://defender.openzeppelin.com/) product has a [Relayer](https://docs.openzeppelin.com/defender/v2/manage/relayers) service that is a managed wallet. It handles the nonce, gas, signing and sending of transactions.

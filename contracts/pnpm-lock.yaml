@@ -37,6 +37,15 @@ importers:
       '@lodestar/utils':
         specifier: ^1.41.0
         version: 1.41.0
+      '@safe-global/api-kit':
+        specifier: ^5.0.1
+        version: 5.0.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@safe-global/protocol-kit':
+        specifier: ^8.0.3
+        version: 8.0.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@safe-global/types-kit':
+        specifier: ^4.0.1
+        version: 4.0.1(typescript@5.9.3)(zod@3.25.76)
       '@talos/client':
         specifier: github:oplabs/talos#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client
         version: git+https://git@github.com:oplabs/talos.git#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
@@ -1485,6 +1494,12 @@ packages:
     resolution: {integrity: sha512-m6iorjyhPK9ow5/trNs7qsBC/SOzJCO51pvvAF2W9nOiZ1t0RtCd+rlRmRmlWTv4M33V0wzIUeamJ2BPbzgUXA==}
     hasBin: true
 
+  '@peculiar/asn1-schema@2.8.0':
+    resolution: {integrity: sha512-7YT0U/ze0tF2QOBbE15gKZwy5tvgGyLRiRHLzhlbOpf7BT032oBSd0haZqXn5W6l26WLlu3dyxzjM+2638/z2Q==}
+
+  '@peculiar/utils@2.0.3':
+    resolution: {integrity: sha512-+oL3HPFRIZ1St2K50lWCXiioIgSoxzz7R1J3uF6neO2yl1sgmpgY6XXJH4BdpoDkMWznQTeYF6oWNDZLCdQ4eQ==}
+
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -1660,6 +1675,22 @@ packages:
     resolution: {integrity: sha512-hYT5d3YNdSh3mbCU1gwQyPgQd3T2ne0A3KG8KSBdav5TiBg6eInVmV+TeR5uHufiIgSFg0XsOWGW5/RhNcSvPg==}
     cpu: [x64]
     os: [win32]
+
+  '@safe-global/api-kit@5.0.1':
+    resolution: {integrity: sha512-nbkSjrRTZh+LlD7e0A4fujKgLZnU5262e1iYTWsGx4ft6oo5kTAxc5pY0icls5PjmZI0UkMhYIv5izeBP7bcWg==}
+
+  '@safe-global/protocol-kit@8.0.3':
+    resolution: {integrity: sha512-XKtpfalQQXzfcLq3BNcbCfqJt6ScdL6AZNsefxVSEujrPSY19K+GWmX3yHskbPE8Z9pI07OtJOOpypfLhsFr8Q==}
+
+  '@safe-global/safe-deployments@1.37.59':
+    resolution: {integrity: sha512-y1eAviyDJARMqwXctqXylsBGqNkeFIq/q2XJlmkVZ9vSwfQBP31a33sUZkbmwwJuomv0/Yrl04YNDQ2C8CaGWw==}
+    engines: {node: '>=22.0.0', pnpm: '>=10.16.0'}
+
+  '@safe-global/safe-modules-deployments@3.0.7':
+    resolution: {integrity: sha512-XTloEuDvKBQJCKoySg1Y+NMdVFJWxwhH2fSaziT8R4vIbuEyQYWW9vj4z92+hHPXCBBh0cyi/MBXW+HYjYroew==}
+
+  '@safe-global/types-kit@4.0.1':
+    resolution: {integrity: sha512-zmIYyAH9mcBcqHszPgcfNjOJYuPSvWCcc/f8zeznh7N1HSA7jEoFErO06O4QDfwAAS4aEyoyjhPyfHbVYRheZg==}
 
   '@scure/base@1.1.9':
     resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
@@ -2702,6 +2733,10 @@ packages:
 
   asn1@0.2.6:
     resolution: {integrity: sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ==}
+
+  asn1js@3.0.10:
+    resolution: {integrity: sha512-S2s3aOytiKdFRdulw2qPE51MzjzVOisppcVv7jVFR+Kw0kxwvFrDcYA0h7Ndqbmj0HkMIXYWaoj7fli8kgx1eg==}
+    engines: {node: '>=12.0.0'}
 
   assert-plus@1.0.0:
     resolution: {integrity: sha512-NfJ4UzBCcQGLDlQq7nHxH+tv3kyZ0hHQqF5BO6J7tNJeP5do1llPr8dZ8zHonfhAu0PHAdMkSo+8o0wxg9lZWw==}
@@ -5118,6 +5153,14 @@ packages:
       typescript:
         optional: true
 
+  ox@0.14.30:
+    resolution: {integrity: sha512-LI11uu+8iiM1B3CLckgd++YF1a0A2k5wDoM9ZeQMiL21BOzQs6L//BLS6hb1HSEKCyycdDIQLsVQx9MjpcC0hA==}
+    peerDependencies:
+      typescript: '>=5.4.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   p-cancelable@1.1.0:
     resolution: {integrity: sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==}
     engines: {node: '>=6'}
@@ -5406,6 +5449,13 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  pvtsutils@1.3.6:
+    resolution: {integrity: sha512-PLgQXQ6H2FWCaeRak8vvk1GW462lMxB5s3Jm673N82zI4vqtVUPuZdffdZbPDFRoU8kAhItWFtPCWiPpp4/EDg==}
+
+  pvutils@1.1.5:
+    resolution: {integrity: sha512-KTqnxsgGiQ6ZAzZCVlJH5eOjSnvlyEgx1m8bkRJfOhmGRqfo5KLvmAlACQkrjEtOQ4B7wF9TdSLIs9O90MX9xA==}
+    engines: {node: '>=16.0.0'}
+
   qs@6.14.0:
     resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
     engines: {node: '>=0.6'}
@@ -5661,6 +5711,11 @@ packages:
 
   semver@7.7.3:
     resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.8.5:
+    resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -6291,6 +6346,14 @@ packages:
       typescript:
         optional: true
 
+  viem@2.55.1:
+    resolution: {integrity: sha512-sajvEmONS3dEDFh0jKXGugTU8ImyGoIV3sEHSWNRhgkH484v/+6DjZAplRhcdeqNV/VBxOs/l3raOG4NaXvX9A==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   web3-bzz@1.10.4:
     resolution: {integrity: sha512-ZZ/X4sJ0Uh2teU9lAGNS8EjveEppoHNQiKlOXAjedsrdWuaMErBPdLQjXfcrYvN6WM6Su9PMsAxf3FXXZ+HwQw==}
     engines: {node: '>=8.0.0'}
@@ -6588,6 +6651,18 @@ packages:
 
   ws@8.18.3:
     resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -9326,6 +9401,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@peculiar/asn1-schema@2.8.0':
+    dependencies:
+      '@peculiar/utils': 2.0.3
+      asn1js: 3.0.10
+      tslib: 2.8.1
+    optional: true
+
+  '@peculiar/utils@2.0.3':
+    dependencies:
+      tslib: 2.8.1
+    optional: true
+
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
@@ -9469,6 +9556,49 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.54.0':
     optional: true
+
+  '@safe-global/api-kit@5.0.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+    dependencies:
+      '@safe-global/protocol-kit': 8.0.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@safe-global/types-kit': 4.0.1(typescript@5.9.3)(zod@3.25.76)
+      node-fetch: 2.7.0
+      viem: 2.55.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@safe-global/protocol-kit@8.0.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+    dependencies:
+      '@safe-global/safe-deployments': 1.37.59
+      '@safe-global/safe-modules-deployments': 3.0.7
+      '@safe-global/types-kit': 4.0.1(typescript@5.9.3)(zod@3.25.76)
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
+      semver: 7.8.5
+      viem: 2.55.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+    optionalDependencies:
+      '@noble/curves': 1.9.1
+      '@peculiar/asn1-schema': 2.8.0
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@safe-global/safe-deployments@1.37.59':
+    dependencies:
+      semver: 7.8.5
+
+  '@safe-global/safe-modules-deployments@3.0.7': {}
+
+  '@safe-global/types-kit@4.0.1(typescript@5.9.3)(zod@3.25.76)':
+    dependencies:
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
+    transitivePeerDependencies:
+      - typescript
+      - zod
 
   '@scure/base@1.1.9': {}
 
@@ -10940,6 +11070,13 @@ snapshots:
   asn1@0.2.6:
     dependencies:
       safer-buffer: 2.1.2
+
+  asn1js@3.0.10:
+    dependencies:
+      pvtsutils: 1.3.6
+      pvutils: 1.1.5
+      tslib: 2.8.1
+    optional: true
 
   assert-plus@1.0.0: {}
 
@@ -13061,6 +13198,10 @@ snapshots:
     dependencies:
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
+  isows@1.0.7(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
+    dependencies:
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+
   isstream@0.1.2: {}
 
   jackspeak@3.4.3:
@@ -13674,6 +13815,21 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
+  ox@0.14.30(typescript@5.9.3)(zod@3.25.76):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - zod
+
   p-cancelable@1.1.0: {}
 
   p-cancelable@2.1.1: {}
@@ -13929,6 +14085,14 @@ snapshots:
   punycode@2.1.0: {}
 
   punycode@2.3.1: {}
+
+  pvtsutils@1.3.6:
+    dependencies:
+      tslib: 2.8.1
+    optional: true
+
+  pvutils@1.1.5:
+    optional: true
 
   qs@6.14.0:
     dependencies:
@@ -14218,6 +14382,8 @@ snapshots:
   semver@6.3.1: {}
 
   semver@7.7.3: {}
+
+  semver@7.8.5: {}
 
   send@0.19.2:
     dependencies:
@@ -15012,6 +15178,23 @@ snapshots:
       - utf-8-validate
       - zod
 
+  viem@2.55.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
+      isows: 1.0.7(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      ox: 0.14.30(typescript@5.9.3)(zod@3.25.76)
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
   web3-bzz@1.10.4(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:
       '@types/node': 12.20.55
@@ -15520,6 +15703,11 @@ snapshots:
       utf-8-validate: 5.0.10
 
   ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    optionalDependencies:
+      bufferutil: 4.1.0
+      utf-8-validate: 5.0.10
+
+  ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     optionalDependencies:
       bufferutil: 4.1.0
       utf-8-validate: 5.0.10

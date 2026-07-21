@@ -100,5 +100,55 @@ each run (see notes in `seed_schedules.sql`).
 | `stakeValidator`             | Convert WETH to ETH and deposit to a validator from the Compounding Staking Strategy |
 | `removeValidator`            | Remove a registered or exited compounding validator from the SSV cluster             |
 | `ousdRebalancer`             | Plan and execute OUSD strategy rebalancing via the RebalancerModule                  |
+| `proposeVaultStrategyMoves`  | Simulate and propose ordered OUSD/OETH strategy movements to the Strategist 2/8 Safe |
 | `queueGovernorSixProposal`   | Queue a GovernorSix proposal (`--propid`)                                            |
 | `executeGovernorSixProposal` | Execute a GovernorSix proposal (`--propid`)                                          |
+
+## Manual / on-demand — Base
+
+| Action                      | Description                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `proposeVaultStrategyMoves` | Simulate and propose ordered SuperOETH strategy movements to the Strategist 2/8 Safe |
+
+### Vault strategy proposal parameters
+
+Talos locks the Hardhat `--network` option, so there are two disabled manual
+schedules: `propose_vault_strategy_moves_mainnet` for Ethereum and
+`propose_vault_strategy_moves_base` for Base. Before selecting "Run now", edit
+`--vault` and `--moves` on the Ethereum schedule, or `--moves` on the Base
+schedule. The underlying Hardhat action remains shared across both chains.
+
+`proposeVaultStrategyMoves` accepts ordered, semicolon-separated movements. A
+strategy can be a deployment name or address:
+
+```sh
+pnpm hardhat proposeVaultStrategyMoves \
+  --network mainnet \
+  --vault OUSD \
+  --moves "withdraw:OUSDMorphoV2StrategyProxy:500000;deposit:OUSDCurveAMOProxy:250000"
+```
+
+Supported operations are `deposit:<strategy>:<amount>`,
+`withdraw:<strategy>:<amount>`, and `withdrawAll:<strategy>`. Amounts are human
+units of the Vault's backing asset. Operations execute in the supplied order.
+
+By default the action starts a temporary Hardhat fork, executes
+`rebase -> snapshot -> movements`, derives `expectedProfit` and
+`expectedVaultChange`, validates `checkDelta`, and then estimates the completed
+Safe MultiSend before proposing it. The atomic proposal is always
+`rebase -> snapshot -> movements -> checkDelta`.
+
+- `--skip-fork` skips the local fork and requires both `--expected-profit` and
+  `--expected-vault-change`.
+- `--skip-estimation` skips only the final Safe estimation.
+- `--dryrun` runs all enabled checks without signing or proposing.
+- `--nonce <n>` targets an unexecuted Safe nonce so a pending proposal can be
+  replaced. Without it, the next available Safe nonce is used.
+- `--profit-variance` and `--vault-change-variance` override the defaults:
+  OUSD `100/100`, OETH `1/1`, and SuperOETH `1/10`.
+
+The runner requires `SAFE_API_KEY`. Its active KMS or Defender signer must also
+be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
+to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
+Delegation only permits proposal submission; it does not count toward the
+Safe's 2/8 owner confirmations. A Safe module is not used.
