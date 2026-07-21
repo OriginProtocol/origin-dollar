@@ -6,10 +6,11 @@ import {Unit_BeaconProofsLib_Shared_Test} from "tests/unit/beacon/BeaconProofsLi
 
 contract Unit_Concrete_BeaconProofsLib_MerkleizeSignature_Test is Unit_BeaconProofsLib_Shared_Test {
     function test_merkleizeSignature_knownValue() public view {
-        bytes memory sig = _makeSignature();
+        bytes memory sig =
+            hex"ab2de5db0c4e6d61b29a48e4269251bff4565063126fcd5f77a113df22c684db709ba7c95c1eab08620090dac7267f5a07ce7e6a873ce6ec4c609c50419923b7cffdf9384d4157f19deb56f64e9072b464aa4ec0466918ca93ab4e581fab8187";
         bytes32 result = beaconProofs.merkleizeSignature(sig);
-        // Verify it's non-zero and deterministic
-        assertTrue(result != bytes32(0));
+
+        assertEq(result, 0x5b449fedb4e3fc86a00c8b9c6de4a537c73e342bb1a83c1141d954e7912de501);
     }
 
     function test_merkleizeSignature_allZeros() public view {
