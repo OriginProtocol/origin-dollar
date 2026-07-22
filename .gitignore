@@ -95,6 +95,7 @@ lcov.info
 # Foundry / Soldeer
 contracts/dependencies/
 contracts/out/
+contracts/broadcast/
 
 # Possible Agent.md file
 AGENTS.md

@@ -250,7 +250,9 @@ library GovHelper {
         require(block.chainid == MAINNET_CHAIN_ID, "Unsupported governance chain");
 
         // ===== Setup: Label addresses for trace readability =====
-        address govMultisig = Mainnet.Timelock;
+        // The Timelock owns governed contracts but has no delegated xOGN voting power.
+        // The Guardian multisig proposes and votes, matching the established mainnet deployment flow.
+        address govMultisig = Mainnet.Guardian;
         vm.label(govMultisig, "Gov Multisig");
 
         IGovernance governance = IGovernance(Mainnet.GovernorSix);
@@ -294,7 +296,7 @@ library GovHelper {
         if (state == IGovernance.ProposalState.Pending) {
             log.info("Waiting for voting period...");
             // Fast-forward past the voting delay
-            vm.roll(block.number + governance.votingDelay() + 1);
+            _rollWithoutBlockhashBackfill(block.number + governance.votingDelay() + 1);
             vm.warp(block.timestamp + 1 minutes);
 
             state = governance.state(proposalId);
@@ -308,7 +310,7 @@ library GovHelper {
             governance.castVote(proposalId, 1);
 
             // Fast-forward past the voting period end
-            vm.roll(governance.proposalDeadline(proposalId) + 20);
+            _rollWithoutBlockhashBackfill(governance.proposalDeadline(proposalId) + 20);
             vm.warp(block.timestamp + 2 days);
             log.success("Vote cast");
 
@@ -331,7 +333,7 @@ library GovHelper {
             log.info("Executing proposal...");
             // Fast-forward past the timelock delay
             uint256 propEta = governance.proposalEta(proposalId);
-            vm.roll(block.number + 10);
+            _rollWithoutBlockhashBackfill(block.number + 10);
             vm.warp(propEta + 20);
 
             // Execute the proposal actions
@@ -347,6 +349,16 @@ library GovHelper {
             log.error("Unexpected proposal state");
             revert("Unexpected proposal state");
         }
+    }
+
+    /// @dev Foundry backfills the EIP-2935 history contract on every forward roll under Prague,
+    ///      causing one block hash and storage lookup per skipped block on forks. Temporarily use
+    ///      Cancun execution semantics for the cheatcode itself, then restore the active version.
+    function _rollWithoutBlockhashBackfill(uint256 blockNumber) private {
+        string memory evmVersion = vm.getEvmVersion();
+        vm.setEvmVersion("cancun");
+        vm.roll(blockNumber);
+        vm.setEvmVersion(evmVersion);
     }
 
     // ==================== TimelockController ==================== //

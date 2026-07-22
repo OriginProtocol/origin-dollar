@@ -8,7 +8,7 @@ MAKEFLAGS += --no-print-directory
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 DEPLOY_SCRIPT   := scripts/deploy/DeployManager.s.sol
-DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow
+DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow --no-isolate
 DEPLOY_BUILD    := contracts/ scripts/deploy/
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
