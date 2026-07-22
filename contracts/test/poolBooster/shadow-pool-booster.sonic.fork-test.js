@@ -16,9 +16,9 @@ describe("ForkTest: Shadow Pool Booster (for S/WETH pool)", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await sonicFixture();
-    const { oSonicVault, nick } = fixture;
-    // mint some OS
-    await oSonicVault.connect(nick).mint(oethUnits("1000"));
+    const { nick, mintOSForUser } = fixture;
+    // Mint some OS through the permissioned Vault flow
+    await mintOSForUser(nick, oethUnits("1000"));
   });
 
   it("Should create a pool booster for Shadow and bribe", async () => {
