@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.10
 FROM oven/bun:1
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -41,7 +41,7 @@ RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc pnpm install --frozen-lockfile \
     && TALOS_CLIENT_VERSION="$(node -p 'require("./package.json").peerDependencies["@oplabs/talos-client"]')" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc \
-      pnpm install "@oplabs/talos-client@${TALOS_CLIENT_VERSION}" --no-lockfile --config.save=false \
+      pnpm add --save-prod "@oplabs/talos-client@${TALOS_CLIENT_VERSION}" \
     && rm /tmp/talos.npmrc
 
 # Copy the rest of the contracts workspace.
