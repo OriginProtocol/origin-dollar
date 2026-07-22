@@ -1,10 +1,44 @@
 const { parseEther } = require("ethers/lib/utils");
-const { getKmsSigner } = require("./signersNoHardhat");
-const { ethereumAddress } = require("./regex");
-const { getProvider } = require("../tasks/lib/network");
-const { getSigner: getStandaloneSigner } = require("../tasks/lib/signer");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+const {
+  getKmsAddress,
+  getKmsSigner,
+  hasAwsKmsCredentials,
+} = require("./signersNoHardhat");
+const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
+
+// @oplabs/talos-client ships only in the Talos runner image, not in a plain
+// contracts checkout (it's an optional dependency). Load it lazily so hardhat —
+// which pulls this module in through tasks/tasks.js — boots without it. The
+// require only fires once DATABASE_URL opts into the nonce queue.
+let talosClient = null;
+function talosClientLib() {
+  if (!talosClient) talosClient = require("@oplabs/talos-client");
+  return talosClient;
+}
+
+let dbInstance = null;
+function getNonceDb() {
+  if (!process.env.DATABASE_URL) return null;
+  if (!dbInstance) {
+    const { createPool, createDb } = talosClientLib();
+    const pool = createPool({ connectionString: process.env.DATABASE_URL });
+    dbInstance = createDb(pool);
+  }
+  return dbInstance;
+}
+
+// Wrap a raw signer with the nonce-queue Proxy when DATABASE_URL is set.
+// Returning the raw signer unchanged in dev / fork flows preserves the
+// DATABASE_URL gate invariant: no queue engagement without explicit opt-in.
+function maybeWrap(rawSigner) {
+  const db = getNonceDb();
+  if (!db) return rawSigner;
+  const { wrapSignerWithNonceQueueV5 } = talosClientLib();
+  return wrapSignerWithNonceQueueV5(rawSigner, { db });
+}
 
 /**
  * Signer factory for the standalone (hardhat-free) action runtime.

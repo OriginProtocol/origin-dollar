@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.10
 FROM oven/bun:1
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -12,7 +12,6 @@ RUN apt-get update \
   ca-certificates \
   curl \
   git \
-  openssh-client \
   build-essential \
   python3 \
   bsdutils \
@@ -25,19 +24,25 @@ RUN apt-get update \
 # chown /app and switch USER just before CMD.
 RUN groupadd -r runner && useradd -r -g runner -m -d /home/runner runner
 
-# Preload GitHub host key for SSH-based dependencies.
-RUN mkdir -p /root/.ssh \
-  && ssh-keyscan -t ed25519,rsa github.com >> /root/.ssh/known_hosts
-
 WORKDIR /app
 
-# Install dependencies first for better caching. Requires BuildKit SSH
-# forwarding (e.g. Railway deploy key) to resolve @automaton/client.
+# Install dependencies first for better caching. The Talos client is an
+# optional peer dependency, so install it explicitly for the runner image.
+# talos_package_token must be a PAT with read:packages access to oplabs packages.
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-RUN --mount=type=ssh \
+RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true \
     --mount=type=cache,id=origin-dollar-contracts-pnpm-store,target=/root/.local/share/pnpm/store \
     npm install -g pnpm@10.33.4 \
-    && pnpm install --frozen-lockfile
+    && printf '%s\n' \
+      '@oplabs:registry=https://npm.pkg.github.com' \
+      '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' \
+      > /tmp/talos.npmrc \
+    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
+    && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc pnpm install --frozen-lockfile \
+    && TALOS_CLIENT_VERSION="$(node -p 'require("./package.json").peerDependencies["@oplabs/talos-client"]')" \
+    && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc \
+      pnpm add --save-prod "@oplabs/talos-client@${TALOS_CLIENT_VERSION}" \
+    && rm /tmp/talos.npmrc
 
 # Copy the rest of the contracts workspace.
 COPY . .
@@ -67,7 +72,7 @@ ENV MAINNET_PROVIDER_URL="" \
   HARDHAT_NETWORK=""
 
 # Git commit this image was built from. CI passes
-# --build-arg GIT_COMMIT_SHA=<github.sha>; empty for local builds. @talos/client's
+# --build-arg GIT_COMMIT_SHA=<github.sha>; empty for local builds. @oplabs/talos-client's
 # runContainer reports it as the runner's `version`, letting the admin announce
 # redeploys to Discord.
 ARG GIT_COMMIT_SHA=""

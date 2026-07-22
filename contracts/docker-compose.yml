@@ -17,6 +17,8 @@ services:
     build:
       context: .
       dockerfile: dockerfile-actions
+      secrets:
+        - talos_package_token
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,3 +57,7 @@ services:
 
 volumes:
   pgdata:
+
+secrets:
+  talos_package_token:
+    environment: TALOS_PACKAGE_TOKEN

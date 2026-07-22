@@ -7,8 +7,8 @@ name: AWS — build runner image
 #
 # Triggers on `master`.
 #
-# Requires the TALOS_DEPLOY_KEY repo secret for the @talos/client
-# git-install (SSH deploy key against oplabs/talos).
+# Requires the TALOS_PACKAGE_TOKEN repo secret: a PAT with read:packages
+# access to the private @oplabs/talos-client GitHub package.
 #
 # Build context is `contracts/` because the dockerfile and runner code
 # live there.
@@ -32,23 +32,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Set up SSH agent for @talos/client deploy key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
-
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df  # v4.2.1
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@4625ce35226a7557230889aae2f52eb50ec3dcda  # v2.0.1
+        uses: aws-actions/amazon-ecr-login@4625ce35226a7557230889aae2f52eb50ec3dcda # v2.0.1
 
       - name: Check if image tag already exists (ECR is IMMUTABLE)
         id: tag_exists
@@ -66,16 +61,17 @@ jobs:
 
       - name: Set up Docker Buildx
         if: steps.tag_exists.outputs.exists == 'false'
-        uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca  # v3.9.0
+        uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
 
       - name: Build and push runner image
         if: steps.tag_exists.outputs.exists == 'false'
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25  # v5.4.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: ./contracts
           file: ./contracts/dockerfile-actions
           push: true
-          ssh: default
+          secrets: |
+            talos_package_token=${{ secrets.TALOS_PACKAGE_TOKEN }}
           build-args: |
             GIT_COMMIT_SHA=${{ github.sha }}
           tags: |
@@ -98,4 +94,3 @@ jobs:
           echo "    --container runner \\"
           echo "    --image \"${IMAGE_REF}\" \\"
           echo "    --version <semver>"
-

@@ -1,11 +1,6 @@
 name: "Foundry Setup"
 description: "Install Foundry, cache dependencies, and run install-deps.sh"
 
-inputs:
-  talos-deploy-key:
-    description: "SSH deploy key for the private @talos/client git dependency (oplabs/talos)"
-    required: true
-
 runs:
   using: "composite"
   steps:
@@ -36,19 +31,9 @@ runs:
       working-directory: contracts
       run: bash install-deps.sh
 
-    - name: Set up SSH agent for @talos/client deploy key
-      uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
-      with:
-        ssh-private-key: ${{ inputs.talos-deploy-key }}
-
-    - name: Configure Git auth for git dependencies
+    - name: Configure Git for public dependencies
       shell: bash
-      run: |
-        # Public git deps (e.g. prompts) clone over HTTPS.
-        git config --global url."https://github.com/".insteadOf "git@github.com:"
-        # Keep the private @talos/client (oplabs/talos) on SSH so the deploy key
-        # authenticates it — the longer prefix takes precedence over the rule above.
-        git config --global url."git@github.com:oplabs/talos".insteadOf "git@github.com:oplabs/talos"
+      run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
     - name: Install npm dependencies
       shell: bash
