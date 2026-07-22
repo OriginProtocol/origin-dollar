@@ -21,10 +21,6 @@ onlyBuiltDependencies:
   - keccak
 
 packageExtensions:
-  "@lodestar/spec-test-util@*":
-    peerDependenciesMeta:
-      vitest:
-        optional: true
   origin-morpho-utils:
     peerDependenciesMeta:
       vitest:
