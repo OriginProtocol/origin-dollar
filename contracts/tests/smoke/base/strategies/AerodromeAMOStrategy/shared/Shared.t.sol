@@ -89,15 +89,15 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
             ISwapRouter(BaseAddresses.swapRouter)
                 .exactInputSingle(
                     ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(weth),
-                        tokenOut: address(oethBase),
-                        tickSpacing: int24(1),
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        amountIn: amount,
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: targetPrice
-                    })
+                    tokenIn: address(weth),
+                    tokenOut: address(oethBase),
+                    tickSpacing: int24(1),
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: amount,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: targetPrice
+                })
                 );
         } else if (currentPrice < lowerPrice) {
             // Price is below range → swap OETHb in to push price up
@@ -110,15 +110,15 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
             ISwapRouter(BaseAddresses.swapRouter)
                 .exactInputSingle(
                     ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(oethBase),
-                        tokenOut: address(weth),
-                        tickSpacing: int24(1),
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        amountIn: amount,
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: targetPrice
-                    })
+                    tokenIn: address(oethBase),
+                    tokenOut: address(weth),
+                    tickSpacing: int24(1),
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: amount,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: targetPrice
+                })
                 );
         }
         // If already in range, do nothing
