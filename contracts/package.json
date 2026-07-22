@@ -134,16 +134,23 @@
   "dependencies": {
     "@chainlink/contracts-ccip": "1.2.1",
     "@chainsafe/bls": "^8.2.0",
-    "@lodestar/api": "^1.41.0",
-    "@lodestar/config": "^1.41.0",
-    "@lodestar/params": "^1.41.0",
-    "@lodestar/state-transition": "^1.41.0",
-    "@lodestar/types": "^1.41.0",
-    "@lodestar/utils": "^1.41.0",
-    "@talos/client": "github:oplabs/talos#8f15dbbdc96a4d3cabf932d41e016779c0946266&path:packages/client",
+    "@lodestar/api": "^1.44.0",
+    "@lodestar/config": "^1.44.0",
+    "@lodestar/params": "^1.44.0",
+    "@lodestar/state-transition": "^1.44.0",
+    "@lodestar/types": "^1.44.0",
+    "@lodestar/utils": "^1.44.0",
     "@types/pg": "^8.20.0",
     "origin-morpho-utils": "^0.1.1",
     "pg": "^8.20.0"
+  },
+  "peerDependencies": {
+    "@oplabs/talos-client": "0.0.28"
+  },
+  "peerDependenciesMeta": {
+    "@oplabs/talos-client": {
+      "optional": true
+    }
   },
   "resolutions": {
     "@openzeppelin/contracts": "4.4.2"

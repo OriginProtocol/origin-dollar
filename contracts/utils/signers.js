@@ -2,11 +2,6 @@ const { Wallet } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const {
-  wrapSignerWithNonceQueueV5,
-  createDb,
-  createPool,
-} = require("@talos/client");
-const {
   getKmsAddress,
   getKmsSigner,
   hasAwsKmsCredentials,
@@ -15,10 +10,21 @@ const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
 
+// @oplabs/talos-client ships only in the Talos runner image, not in a plain
+// contracts checkout (it's an optional dependency). Load it lazily so hardhat —
+// which pulls this module in through tasks/tasks.js — boots without it. The
+// require only fires once DATABASE_URL opts into the nonce queue.
+let talosClient = null;
+function talosClientLib() {
+  if (!talosClient) talosClient = require("@oplabs/talos-client");
+  return talosClient;
+}
+
 let dbInstance = null;
 function getNonceDb() {
   if (!process.env.DATABASE_URL) return null;
   if (!dbInstance) {
+    const { createPool, createDb } = talosClientLib();
     const pool = createPool({ connectionString: process.env.DATABASE_URL });
     dbInstance = createDb(pool);
   }
@@ -31,6 +37,7 @@ function getNonceDb() {
 function maybeWrap(rawSigner) {
   const db = getNonceDb();
   if (!db) return rawSigner;
+  const { wrapSignerWithNonceQueueV5 } = talosClientLib();
   return wrapSignerWithNonceQueueV5(rawSigner, { db });
 }
 

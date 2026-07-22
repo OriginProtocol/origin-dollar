@@ -1,6 +1,8 @@
+autoInstallPeers: false
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
 - "origin-morpho-utils"
+- "@oplabs/talos-client"
 
 ignoredBuiltDependencies:
   - "@arbitrum/nitro-contracts"
@@ -19,10 +21,6 @@ onlyBuiltDependencies:
   - keccak
 
 packageExtensions:
-  "@lodestar/spec-test-util@*":
-    peerDependenciesMeta:
-      vitest:
-        optional: true
   origin-morpho-utils:
     peerDependenciesMeta:
       vitest:
