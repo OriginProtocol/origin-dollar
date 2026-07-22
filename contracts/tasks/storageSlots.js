@@ -8,6 +8,9 @@ const {
   getUnlinkedBytecode,
   isCurrentValidationData,
   assertStorageUpgradeSafe,
+  concatRunData,
+  solcInputOutputDecoder,
+  validate,
 } = require("@openzeppelin/upgrades-core");
 
 const log = require("../utils/logger")("task:storage");
@@ -368,12 +371,50 @@ const readValidations = async (hre) => {
     }
     return data;
   } catch (e) {
-    if (e.code === "ENOENT") {
-      throw new ValidationsCacheNotFound();
+    if (e.code === "ENOENT" || e instanceof ValidationsCacheOutdated) {
+      return rebuildValidations(hre, cachePath);
     } else {
       throw e;
     }
   }
+};
+
+const rebuildValidations = async (hre, cachePath) => {
+  const buildInfoDir = path.join(hre.config.paths.artifacts, "build-info");
+  let buildInfoFiles;
+  try {
+    buildInfoFiles = (await promises.readdir(buildInfoDir)).filter((file) =>
+      file.endsWith(".json")
+    );
+  } catch (e) {
+    if (e.code === "ENOENT") {
+      throw new ValidationsCacheNotFound();
+    }
+    throw e;
+  }
+
+  if (buildInfoFiles.length === 0) {
+    throw new ValidationsCacheNotFound();
+  }
+
+  let validations;
+  for (const file of buildInfoFiles) {
+    const buildInfo = JSON.parse(
+      await promises.readFile(path.join(buildInfoDir, file), "utf8")
+    );
+    const decodeSrc = solcInputOutputDecoder(buildInfo.input, buildInfo.output);
+    const runData = validate(
+      buildInfo.output,
+      decodeSrc,
+      buildInfo.solcVersion,
+      buildInfo.input
+    );
+    validations = concatRunData(runData, validations);
+  }
+
+  await promises.mkdir(path.dirname(cachePath), { recursive: true });
+  await promises.writeFile(cachePath, JSON.stringify(validations));
+  return validations;
 };
 
 module.exports = {
