@@ -1,8 +1,13 @@
 import type { ethers } from "ethers";
-import { task } from "hardhat/config";
-import type { ConfigurableTaskDefinition } from "hardhat/types";
 
-import { getSigner as defaultGetSigner } from "../../utils/signers";
+/**
+ * Standalone (hardhat-free) action framework. Same authoring API as before —
+ * action({ name, description, chains, params, run }) with an ethers `signer` in
+ * the run context — but actions self-register into an in-process registry
+ * instead of hardhat tasks, and the `params:(t)=>{...}` builder is served by a
+ * lightweight shim so existing action bodies need no change. Dispatched by
+ * tasks/run.ts; catalogued by dump-actions-catalog.ts.
+ */
 
 export interface Logger {
   info(msg: unknown, ...rest: unknown[]): void;
@@ -18,102 +23,114 @@ export interface ActionContext {
   args: Record<string, any>;
 }
 
+export type ParamType = "string" | "int" | "float" | "boolean";
+
+export interface ParamSpec {
+  name: string;
+  description: string;
+  type: ParamType;
+  isOptional: boolean;
+  isFlag: boolean;
+  hasDefault: boolean;
+  defaultValue: string | number | boolean | null;
+}
+
+// hardhat-compatible `types` markers — only `.name` is ever read. Lets action
+// files do `import { types } from "../lib/action"` instead of "hardhat/config".
+export const types = {
+  string: { name: "string" as const },
+  int: { name: "int" as const },
+  float: { name: "float" as const },
+  boolean: { name: "boolean" as const },
+  // Aliases hardhat exposes that some actions may reference.
+  json: { name: "string" as const },
+  bigint: { name: "string" as const },
+};
+
+type TypeMarker = { name: string };
+
+/**
+ * Mirrors the subset of hardhat's ConfigurableTaskDefinition param builder that
+ * action files use, so `params:(t)=>{ t.addParam(...) }` blocks are unchanged.
+ */
+export class ParamBuilder {
+  readonly params: ParamSpec[] = [];
+
+  private add(
+    name: string,
+    description: string | undefined,
+    defaultValue: unknown,
+    type: TypeMarker | undefined,
+    isOptional: boolean,
+    isFlag: boolean
+  ): this {
+    if (this.params.some((p) => p.name === name)) return this;
+    const t = (type?.name ?? "string") as ParamType;
+    this.params.push({
+      name,
+      description: description ?? "",
+      type: t === "int" || t === "float" || t === "boolean" ? t : "string",
+      isOptional,
+      isFlag,
+      hasDefault: defaultValue !== undefined,
+      defaultValue:
+        defaultValue === undefined
+          ? null
+          : (defaultValue as ParamSpec["defaultValue"]),
+    });
+    return this;
+  }
+
+  addParam(
+    name: string,
+    description?: string,
+    defaultValue?: unknown,
+    type?: TypeMarker
+  ): this {
+    return this.add(
+      name,
+      description,
+      defaultValue,
+      type,
+      defaultValue !== undefined,
+      false
+    );
+  }
+
+  addOptionalParam(
+    name: string,
+    description?: string,
+    defaultValue?: unknown,
+    type?: TypeMarker
+  ): this {
+    return this.add(name, description, defaultValue, type, true, false);
+  }
+
+  addFlag(name: string, description?: string): this {
+    return this.add(name, description, false, types.boolean, true, true);
+  }
+}
+
 export interface ActionConfig {
   name: string;
   description: string;
   chains?: number[];
-  params?: (t: ConfigurableTaskDefinition) => void;
+  params?: (t: ParamBuilder) => void;
   run: (ctx: ActionContext) => Promise<void>;
 }
 
-export interface ActionDeps {
-  getSigner?: () => Promise<ethers.Signer>;
+export interface RegisteredAction {
+  config: ActionConfig;
+  params: ParamSpec[];
 }
 
-const CHAIN_NAMES: Record<number, string> = {
-  1: "mainnet",
-  8453: "base",
-  146: "sonic",
-  560048: "hoodi",
-  999: "hyperevm",
-  42161: "arbitrum",
-  98866: "plume",
-};
+export const registry = new Map<string, RegisteredAction>();
 
-function makeLog(name: string): Logger {
-  const prefix = `[${name}]`;
-  return {
-    info: (msg, ...rest) => console.log(prefix, msg, ...rest),
-    warn: (msg, ...rest) => console.warn(prefix, msg, ...rest),
-    error: (msg, ...rest) => console.error(prefix, msg, ...rest),
-  };
-}
-
-export function createActionHandler(
-  config: ActionConfig,
-  deps: ActionDeps = {}
-) {
-  const { name, chains, run } = config;
-  const getSigner = deps.getSigner ?? defaultGetSigner;
-
-  return async (taskArgs: Record<string, any>) => {
-    const log = makeLog(name);
-    const startTime = Date.now();
-    let chainId: number | undefined;
-    let networkName: string | undefined;
-
-    try {
-      // Signer already wraps sendTransaction with the nonce queue when
-      // DATABASE_URL is set — see utils/signers.js. Helper modules that
-      // call getSigner() directly get the same wrapped signer.
-      const signer = await getSigner();
-      const network = await signer.provider!.getNetwork();
-      chainId = Number(network.chainId);
-      networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
-
-      log.info(`Running on ${networkName} (${chainId})`);
-
-      if (chains && !chains.includes(chainId)) {
-        const valid = chains
-          .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
-          .join(", ");
-        throw new Error(
-          `${name} only supports ${valid}, not ${networkName} (${chainId})`
-        );
-      }
-
-      await run({ signer, chainId, networkName, log, args: taskArgs });
-      log.info(`Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
-    } catch (err: any) {
-      log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`);
-      if (err?.stack) log.error(err.stack);
-      throw err;
-    }
-  };
-}
-
-export function action(config: ActionConfig) {
-  const handler = createActionHandler(config);
-
-  const definition = task(config.name, config.description);
-  const skipDuplicateParams = (
-    method: "addParam" | "addOptionalParam" | "addFlag"
-  ) => {
-    const original = definition[method].bind(definition);
-    (definition as any)[method] = (name: string, ...args: unknown[]) => {
-      if (definition.paramDefinitions?.[name] !== undefined) {
-        return definition;
-      }
-      return original(name, ...args);
-    };
-  };
-
-  skipDuplicateParams("addParam");
-  skipDuplicateParams("addOptionalParam");
-  skipDuplicateParams("addFlag");
-
-  if (config.params) {
-    config.params(definition);
+export function action(config: ActionConfig): void {
+  if (registry.has(config.name)) {
+    throw new Error(`Duplicate Talos action name: ${config.name}`);
   }
-  definition.setAction(handler);
+  const builder = new ParamBuilder();
+  if (config.params) config.params(builder);
+  registry.set(config.name, { config, params: builder.params });
 }

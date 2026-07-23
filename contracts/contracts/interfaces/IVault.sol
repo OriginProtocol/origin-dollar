@@ -27,6 +27,7 @@ interface IVault {
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
+    event OperatorUpdated(address newOperator);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -47,6 +48,8 @@ interface IVault {
     function claimGovernance() external;
 
     function governor() external view returns (address);
+
+    function isGovernor() external view returns (bool);
 
     // VaultAdmin.sol
     function setVaultBuffer(uint256 _vaultBuffer) external;

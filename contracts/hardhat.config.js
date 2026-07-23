@@ -61,17 +61,9 @@ require("solidity-coverage");
 
 require("./tasks/tasks");
 
-// Auto-load TypeScript action files — each self-registers as a hardhat task
-const fs = require("fs");
-const path = require("path");
-const actionsDir = path.join(__dirname, "tasks", "actions");
-if (fs.existsSync(actionsDir)) {
-  for (const file of fs.readdirSync(actionsDir).sort()) {
-    if (file.endsWith(".ts")) {
-      require(path.join(actionsDir, file));
-    }
-  }
-}
+// Talos action files (tasks/actions/*.ts) are no longer hardhat tasks — they
+// run standalone via `tsx tasks/run.ts <action> --network <net>` (see
+// migrations/seed_schedules.sql). They are intentionally not auto-loaded here.
 
 const { accounts } = require("./tasks/account");
 

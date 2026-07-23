@@ -1,0 +1,122 @@
+{
+    "contracts": [
+        {
+            "implementation": "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86",
+            "name": "OUSD_PROXY"
+        },
+        {
+            "implementation": "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70",
+            "name": "OUSD_VAULT_PROXY"
+        },
+        {
+            "implementation": "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3",
+            "name": "OETH_PROXY"
+        },
+        {
+            "implementation": "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab",
+            "name": "OETH_VAULT_PROXY"
+        },
+        {
+            "implementation": "0xDcEe70654261AF21C44c093C300eD3Bb97b78192",
+            "name": "WOETH_PROXY"
+        },
+        {
+            "implementation": "0xD2af830E8CBdFed6CC11Bab697bB25496ed6FA62",
+            "name": "WRAPPED_OUSD_PROXY"
+        },
+        {
+            "implementation": "0x90d588fc0eC3DB9c4b417dB4537fE08e063D2ae5",
+            "name": "AUTO_WITHDRAWAL_MODULE"
+        },
+        {
+            "implementation": "0x630C1763D38AbE76301F58909fa174E7B84A7ECD",
+            "name": "ETHEREUM_BRIDGE_HELPER_MODULE"
+        },
+        {
+            "implementation": "0x6320Db7a3c1B95fD5684DC725C2cda9B82Fa20Fa",
+            "name": "CURVE_POOL_BOOSTER_BRIBES_MODULE"
+        },
+        {
+            "implementation": "0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369",
+            "name": "MERKL_POOL_BOOSTER_BRIBES_MODULE"
+        },
+        {
+            "implementation": "0x15228dAE3B228175fBD9639d049265eFb08e60b6",
+            "name": "COLLECT_XOGN_REWARDS_MODULE"
+        },
+        {
+            "implementation": "0x1b84E64279D63f48DdD88B9B2A7871e817152A44",
+            "name": "CLAIM_STRATEGY_REWARDS_MODULE"
+        },
+        {
+            "implementation": "0xB6073788e5302122F4DfB6C5aD53a1EAC9cb0289",
+            "name": "CURVE_POOL_BOOSTER_FACTORY"
+        },
+        {
+            "implementation": "0x1A43D2F1bb24aC262D1d7ac05D16823E526FcA32",
+            "name": "CURVE_POOL_BOOSTER_PLAIN_ARM_OETH"
+        },
+        {
+            "implementation": "0xAA8af8Db4B6a827B51786334d26349eb03569731",
+            "name": "POOL_BOOST_CENTRAL_REGISTRY"
+        },
+        {
+            "implementation": "0x0FC66355B681503eFeE7741BD848080d809FD6db",
+            "name": "POOL_BOOSTER_FACTORY_MERKL"
+        },
+        {
+            "implementation": "0x266CDd690Ab3133C3FE532aaB3f48cE0FA5E19F5",
+            "name": "POOL_BOOSTER_MERKL_OETH_OGN"
+        },
+        {
+            "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
+            "name": "CROSS_CHAIN_MASTER_STRATEGY"
+        },
+        {
+            "implementation": "0xba0e352AB5c13861C26e4E773e7a833C3A223FE6",
+            "name": "OETH_CURVE_AMO_STRATEGY"
+        },
+        {
+            "implementation": "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11",
+            "name": "OUSD_CURVE_AMO_STRATEGY"
+        },
+        {
+            "implementation": "0x4685dB8bF2Df743c861d71E6cFb5347222992076",
+            "name": "NATIVE_STAKING_SSV_STRATEGY_2_PROXY"
+        },
+        {
+            "implementation": "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63",
+            "name": "NATIVE_STAKING_SSV_STRATEGY_3_PROXY"
+        },
+        {
+            "implementation": "0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d",
+            "name": "COMPOUNDING_STAKING_SSV_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0x25e1d468B14005716111d5e8464573e5135275f4",
+            "name": "COMPOUNDING_STAKING_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0x7e57a2AF9F41aF41D6bCf53cc3C299fB7e7A51B4",
+            "name": "CONSOLIDATION_CONTROLLER"
+        },
+        {
+            "implementation": "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e",
+            "name": "MORPHO_OUSD_V2_STRATEGY_PROXY"
+        }
+    ],
+    "executions": [
+        {
+            "name": "001_CoreMainnet",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        },
+        {
+            "name": "002_OETHMainnet",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        }
+    ]
+}

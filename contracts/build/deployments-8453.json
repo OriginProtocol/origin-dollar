@@ -1,0 +1,64 @@
+{
+    "contracts": [
+        {
+            "implementation": "0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3",
+            "name": "OETHBASE_PROXY"
+        },
+        {
+            "implementation": "0xe3B3b4Fc77505EcfAACf6dD21619a8Cc12fcc501",
+            "name": "BASE_BRIDGE_HELPER_MODULE"
+        },
+        {
+            "implementation": "0x5bd73897E92Ecf3E6295FFe5C1104E99000d2c98",
+            "name": "CLAIM_BRIBES_MODULE"
+        },
+        {
+            "implementation": "0xf6B23291bF4993832b92A05c67d5f43eF3287C6a",
+            "name": "MERKL_POOL_BOOSTER_BRIBES_MODULE"
+        },
+        {
+            "implementation": "0xD8724322f44E5c58D7A815F542036fb17DbbF839",
+            "name": "BRIDGED_WOETH"
+        },
+        {
+            "implementation": "0x80c864704DD06C3693ed5179190786EE38ACf835",
+            "name": "BRIDGED_WOETH_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93",
+            "name": "OETHBASE_VAULT_PROXY"
+        },
+        {
+            "implementation": "0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6",
+            "name": "WOETHBASE_PROXY"
+        },
+        {
+            "implementation": "0x1ADB902Ece465cA681C66187627a622a631a0a63",
+            "name": "POOL_BOOSTER_FACTORY_MERKL"
+        },
+        {
+            "implementation": "0x191F3aF419F0a131BfaC2781e2F37e80a8932B0c",
+            "name": "POOL_BOOSTER_MERKL_OETHB_USDC"
+        },
+        {
+            "implementation": "0xF611cC500eEE7E4e4763A05FE623E2363c86d2Af",
+            "name": "AERODROME_AMO_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
+            "name": "CROSS_CHAIN_REMOTE_STRATEGY"
+        },
+        {
+            "implementation": "0x9cfcAF81600155e01c63e4D2993A8A81A8205829",
+            "name": "OETHBASE_CURVE_AMO_STRATEGY"
+        }
+    ],
+    "executions": [
+        {
+            "name": "001_CoreBase",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        }
+    ]
+}

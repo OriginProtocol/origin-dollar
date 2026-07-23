@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { types } from "hardhat/config";
+import { types } from "../lib/action";
 import addresses from "../../utils/addresses";
 import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { registerValidators } from "../../utils/validator";

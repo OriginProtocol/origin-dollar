@@ -59,8 +59,11 @@ contracts/deployments/fork_*
 contracts/deployments/hardhat*
 contracts/coverage/
 contracts/coverage.json
-contracts/build/
+contracts/build/*
+!contracts/build/deployments-*.json
+contracts/build/deployments-fork-*.json
 contracts/dist/
+contracts/scripts/defender-actions/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.base
@@ -82,11 +85,17 @@ coverage
 coverage.json
 fork-coverage
 unit-coverage
+lcov.info
 
 .VSCodeCounter
 
 # Certora #
 .certora_internal
+
+# Foundry / Soldeer
+contracts/dependencies/
+contracts/out/
+contracts/broadcast/
 
 # Possible Agent.md file
 AGENTS.md

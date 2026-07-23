@@ -1,0 +1,113 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// --- Test base
+import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
+
+// --- Project imports
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {MockImplementation} from "tests/mocks/MockImplementation.sol";
+
+contract Unit_Concrete_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {
+    // --- Success cases ---
+
+    function test_initialize_setsImplementation() public {
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, bytes(""));
+
+        assertEq(proxy.implementation(), address(impl));
+    }
+
+    function test_initialize_setsGovernor() public {
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, bytes(""));
+
+        assertEq(proxy.governor(), governor);
+    }
+
+    function test_initialize_withData_delegatecalls() public {
+        bytes memory data = abi.encodeWithSelector(MockImplementation.initialize.selector);
+
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, data);
+
+        assertEq(MockImplementation(payable(address(proxy))).getValue(), 0);
+    }
+
+    function test_initialize_emptyData_skipsDelegatecall() public {
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, bytes(""));
+
+        assertEq(proxy.implementation(), address(impl));
+        assertEq(proxy.governor(), governor);
+    }
+
+    function test_initialize_emitsGovernorshipTransferred() public {
+        vm.expectEmit(true, true, true, true);
+        emit IProxy.GovernorshipTransferred(deployer, governor);
+
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, bytes(""));
+    }
+
+    // Works on proxy2 (InitializeGovernedUpgradeabilityProxy2)
+    function test_initialize_proxy2() public {
+        vm.prank(governor);
+        proxy2.initialize(address(impl), governor, bytes(""));
+
+        assertEq(proxy2.implementation(), address(impl));
+        assertEq(proxy2.governor(), governor);
+    }
+
+    // Works on crossChainProxy
+    function test_initialize_crossChainProxy() public {
+        vm.prank(governor);
+        crossChainProxy.initialize(address(impl), governor, bytes(""));
+
+        assertEq(crossChainProxy.implementation(), address(impl));
+        assertEq(crossChainProxy.governor(), governor);
+    }
+
+    // --- Revert cases ---
+
+    function test_initialize_RevertWhen_notGovernor() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Governor");
+        proxy.initialize(address(impl), governor, bytes(""));
+    }
+
+    function test_initialize_RevertWhen_alreadyInitialized() public {
+        vm.prank(deployer);
+        proxy.initialize(address(impl), governor, bytes(""));
+
+        vm.prank(governor);
+        vm.expectRevert(); // _implementation() != address(0)
+        proxy.initialize(address(implV2), governor, bytes(""));
+    }
+
+    function test_initialize_RevertWhen_logicIsZero() public {
+        vm.prank(deployer);
+        vm.expectRevert("Implementation not set");
+        proxy.initialize(address(0), governor, bytes(""));
+    }
+
+    function test_initialize_RevertWhen_logicNotContract() public {
+        vm.prank(deployer);
+        vm.expectRevert("Cannot set a proxy implementation to a non-contract address");
+        proxy.initialize(alice, governor, bytes(""));
+    }
+
+    function test_initialize_RevertWhen_delegatecallFails() public {
+        bytes memory data = abi.encodeWithSelector(MockImplementation.revertingFunction.selector);
+
+        vm.prank(deployer);
+        vm.expectRevert();
+        proxy.initialize(address(impl), governor, data);
+    }
+
+    function test_initialize_RevertWhen_initGovernorIsZero() public {
+        vm.prank(deployer);
+        vm.expectRevert("New Governor is address(0)");
+        proxy.initialize(address(impl), address(0), bytes(""));
+    }
+}

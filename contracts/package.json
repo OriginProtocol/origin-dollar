@@ -5,6 +5,7 @@
   "main": "index.js",
   "packageManager": "pnpm@10.18.3",
   "scripts": {
+    "check:storage": "node scripts/check-storage-layout.js",
     "deploy": "rm -rf deployments/hardhat && npx hardhat deploy",
     "deploy:mainnet": "VERIFY_CONTRACTS=true npx hardhat deploy --network mainnet --verbose",
     "deploy:arbitrum": "FORK_NETWORK_NAME=arbitrumOne npx hardhat deploy --network arbitrumOne --tags arbitrumOne --verbose",
@@ -67,7 +68,9 @@
     "test:coverage:sonic-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=sonic ./fork-test.sh",
     "test:coverage:plume-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=plume ./fork-test.sh",
     "test:coverage:hoodi-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hoodi ./fork-test.sh",
-    "test:coverage:hyperevm-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hyperevm ./fork-test.sh"
+    "test:coverage:hyperevm-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=hyperevm ./fork-test.sh",
+    "action": "tsx tasks/run.ts",
+    "dump-catalog": "tsx dump-actions-catalog.ts"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

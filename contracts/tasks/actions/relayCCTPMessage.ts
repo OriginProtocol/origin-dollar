@@ -1,12 +1,9 @@
-/// <reference types="hardhat/types/runtime" />
-
 import path from "path";
 import { ethers } from "ethers";
-import { types } from "hardhat/config";
 import { configuration } from "../../utils/cctp";
 import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { processCctpBridgeTransactions } from "../crossChain";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
 
 action({
   name: "relayCCTPMessage",

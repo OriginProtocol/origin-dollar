@@ -1,4 +1,5 @@
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const GAS_MULTIPLIER = 1.1;
@@ -8,19 +9,13 @@ action({
   description: "Collect OETH dripper and rebase OETH on mainnet",
   chains: [1],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const oethDripperProxy = await ethers.getContract(
-      "OETHFixedRateDripperProxy"
-    );
-    const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const oethDripper = await ethers.getContractAt(
+    const oethDripperProxy = await getContract("OETHFixedRateDripperProxy");
+    const oethVaultProxy = await getContract("OETHVaultProxy");
+    const oethDripper = await getContractAt(
       "IDripper",
       oethDripperProxy.address
     );
-    const oethVault = await ethers.getContractAt(
-      "IVault",
-      oethVaultProxy.address
-    );
+    const oethVault = await getContractAt("IVault", oethVaultProxy.address);
 
     const oethDripperWithSigner = oethDripper.connect(signer);
     const oethVaultWithSigner = oethVault.connect(signer);
