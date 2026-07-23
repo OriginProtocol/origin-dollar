@@ -1,5 +1,6 @@
 {
   "028_permissioned_rebase_module": 1778096823,
   "029_vault_permissioned_rebase": 1778496677,
-  "030_migrate_sonic_operators_to_talos": 1780953761
+  "030_migrate_sonic_operators_to_talos": 1780953761,
+  "031_disable_mints": 1784685907
 }

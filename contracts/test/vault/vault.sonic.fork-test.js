@@ -99,7 +99,7 @@ describe("ForkTest: Sonic Vault", function () {
       expect(await oSonicVault.capitalPaused()).to.be.false;
     });
 
-    it("Should allow to mint w/ Wrapped S (wS)", async () => {
+    it.skip("Should allow to mint w/ Wrapped S (wS)", async () => {
       const { oSonic, oSonicVault, nick } = fixture;
       const balancePreMint = await oSonic
         .connect(nick)
@@ -133,10 +133,11 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it("should withdraw from staking strategy", async () => {
-      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const { oSonicVault, nick, wS, sonicStakingStrategy, mintOSForUser } =
+        fixture;
 
       const depositAmount = parseUnits("2000");
-      await oSonicVault.connect(nick).mint(depositAmount);
+      await mintOSForUser(nick, depositAmount);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
@@ -161,10 +162,11 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it("should call withdraw all from staking strategy even if all delegated", async () => {
-      const { oSonicVault, nick, sonicStakingStrategy } = fixture;
+      const { oSonicVault, nick, sonicStakingStrategy, mintOSForUser } =
+        fixture;
 
       const depositAmount = parseUnits("2000");
-      await oSonicVault.connect(nick).mint(depositAmount);
+      await mintOSForUser(nick, depositAmount);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
@@ -177,9 +179,10 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it("should call withdraw all from staking strategy with wrapped S in it", async () => {
-      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const { oSonicVault, nick, wS, sonicStakingStrategy, mintOSForUser } =
+        fixture;
       const depositAmount = parseUnits("2000");
-      await oSonicVault.connect(nick).mint(depositAmount);
+      await mintOSForUser(nick, depositAmount);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
@@ -200,9 +203,10 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it("should call withdraw all from staking strategy with native S in it", async () => {
-      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const { oSonicVault, nick, wS, sonicStakingStrategy, mintOSForUser } =
+        fixture;
       const depositAmount = parseUnits("2000");
-      await oSonicVault.connect(nick).mint(depositAmount);
+      await mintOSForUser(nick, depositAmount);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
