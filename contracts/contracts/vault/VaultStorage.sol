@@ -49,10 +49,17 @@ abstract contract VaultStorage is Initializable, Governable {
         uint256 _amount,
         uint256 _queued
     );
+    /// @param _amount Nominal size of the settled request as recorded at request
+    ///     time, in OToken units (18 decimals).
+    /// @param _paidAmount Asset actually transferred out after the loss-socialisation
+    ///     haircut, in ASSET decimals (eg 6 for USDC, 18 for WETH). Equals `_amount`
+    ///     scaled to asset decimals while the vault is fully backed, and is strictly
+    ///     less once a loss has been socialised.
     event WithdrawalClaimed(
         address indexed _withdrawer,
         uint256 indexed _requestId,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _paidAmount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
