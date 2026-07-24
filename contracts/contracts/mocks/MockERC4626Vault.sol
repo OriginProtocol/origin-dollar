@@ -71,7 +71,7 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return assets;
     }
 
-    function totalAssets() public view override returns (uint256) {
+    function totalAssets() public view virtual override returns (uint256) {
         return IERC20(asset).balanceOf(address(this));
     }
 
@@ -111,11 +111,23 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return type(uint256).max;
     }
 
-    function maxWithdraw(address owner) public view override returns (uint256) {
+    function maxWithdraw(address owner)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return convertToAssets(balanceOf(owner));
     }
 
-    function maxRedeem(address owner) public view override returns (uint256) {
+    function maxRedeem(address owner)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return balanceOf(owner);
     }
 
