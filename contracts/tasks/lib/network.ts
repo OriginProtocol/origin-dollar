@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { resolveChain, getRpcEnvVar } from "@talos/client";
+import { resolveChain, getRpcEnvVar } from "@oplabs/talos-client";
 
 /**
  * Ambient network context for the standalone (hardhat-free) action runtime.
