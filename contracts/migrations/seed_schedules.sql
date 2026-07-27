@@ -57,4 +57,4 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'ousd_rebalancer',                          'cd /app && pnpm exec tsx tasks/run.ts ousdRebalancer --network mainnet',               '0 0 1 1 *',             'UTC', false, 'Manual: Run now to rebalance OUSD Morpho strategies'),
 ('origin-dollar', 'queue_proposal',                           'cd /app && pnpm exec tsx tasks/run.ts queueGovernorSixProposal --network mainnet',     '0 0 1 1 *',             'UTC', false, 'Manual: add --propid then Run now'),
 ('origin-dollar', 'execute_proposal',                         'cd /app && pnpm exec tsx tasks/run.ts executeGovernorSixProposal --network mainnet',   '0 0 1 1 *',             'UTC', false, 'Manual: add --propid then Run now')
-ON CONFLICT (product, name) DO UPDATE SET command = EXCLUDED.command;
+ON CONFLICT (product, name) DO NOTHING;
