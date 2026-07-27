@@ -4,7 +4,7 @@ import {
   createPool,
   wrapSignerWithNonceQueueV5,
   type Db,
-} from "@talos/client";
+} from "@oplabs/talos-client";
 import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
 import { getProvider } from "./network";
 // CJS util.

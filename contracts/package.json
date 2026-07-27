@@ -145,7 +145,8 @@
     "@lodestar/utils": "^1.44.0",
     "@types/pg": "^8.20.0",
     "origin-morpho-utils": "^0.1.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "tsx": "^4.23.1"
   },
   "peerDependencies": {
     "@oplabs/talos-client": "0.0.28"
