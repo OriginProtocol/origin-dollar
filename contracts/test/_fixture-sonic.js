@@ -191,6 +191,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).approve(oSonicVault.address, oethUnits("100000000"));
   }
 
+  const mintOSForUser = async (user, amount) => {
+    await wS.connect(user).transfer(strategist.address, amount);
+    await wS.connect(strategist).approve(oSonicVault.address, amount);
+    await oSonicVault.connect(strategist).mint(amount);
+    await oSonic.connect(strategist).transfer(user.address, amount);
+  };
+
   return {
     // Origin S
     oSonic,
@@ -227,6 +234,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     nodeDriver,
     sfc,
+
+    mintOSForUser,
   };
 });
 
@@ -315,7 +324,7 @@ async function swapXAMOFixture(
       }
       // Mint OS with wS
       // This will sit in the vault, not the strategy
-      await oSonicVault.connect(nick).mint(mintAmount);
+      await fixture.mintOSForUser(nick, mintAmount);
 
       // revert the auto allocate setting
       if (disableAutoAllocate) {
@@ -375,7 +384,7 @@ async function swapXAMOFixture(
     const osAmount = parseUnits(config.poolAddOSAmount.toString(), 18);
 
     // Mint OS with wS
-    await oSonicVault.connect(rafael).mint(osAmount);
+    await fixture.mintOSForUser(rafael, osAmount);
 
     // transfer OS to the pool
     await oSonic.connect(rafael).transfer(swapXPool.address, osAmount);

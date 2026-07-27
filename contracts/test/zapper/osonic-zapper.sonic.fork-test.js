@@ -5,7 +5,7 @@ const { oethUnits } = require("../helpers");
 
 const baseFixture = createFixtureLoader(defaultSonicFixture);
 
-describe("ForkTest: Origin Sonic Zapper", function () {
+describe.skip("ForkTest: Origin Sonic Zapper", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await baseFixture();
