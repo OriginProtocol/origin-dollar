@@ -1,0 +1,73 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// --- Test base
+import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
+import {IEthereumBridgeHelperModule} from "contracts/interfaces/automation/IEthereumBridgeHelperModule.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWETH9} from "contracts/interfaces/IWETH9.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+
+abstract contract Smoke_EthereumBridgeHelperModule_Shared_Test is BaseSmoke {
+    //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+
+    IEthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+    IWOToken internal woeth;
+    IVault internal vault;
+
+    //////////////////////////////////////////////////////
+    /// --- ADDRESSES
+    //////////////////////////////////////////////////////
+
+    address internal safe;
+    address internal mainnetGovernor;
+
+    //////////////////////////////////////////////////////
+    /// --- SETUP
+    //////////////////////////////////////////////////////
+
+    function setUp() public virtual override {
+        super.setUp();
+        _createAndSelectForkMainnet();
+        _igniteDeployManager();
+
+        require(address(resolver).code.length > 0, "Resolver not initialized on fork");
+        ethereumBridgeHelperModule =
+            IEthereumBridgeHelperModule(payable(resolver.resolve("ETHEREUM_BRIDGE_HELPER_MODULE")));
+        vm.label(address(ethereumBridgeHelperModule), "EthereumBridgeHelperModule");
+
+        vault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
+        woeth = IWOToken(ethereumBridgeHelperModule.woeth());
+        weth = IERC20(Mainnet.WETH);
+        safe = address(ethereumBridgeHelperModule.safeContract());
+        operator = ethereumBridgeHelperModule.getRoleMember(ethereumBridgeHelperModule.OPERATOR_ROLE(), 0);
+        mainnetGovernor = vault.governor();
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- HELPERS
+    //////////////////////////////////////////////////////
+
+    /// @dev Fund an address with WETH by wrapping ETH
+    function _fundWithWETH(address to, uint256 amount) internal {
+        vm.deal(to, to.balance + amount);
+        vm.prank(to);
+        IWETH9(Mainnet.WETH).deposit{value: amount}();
+    }
+
+    /// @dev Fund vault with extra WETH so the withdrawal queue can be satisfied
+    function _fundVaultWithWETH(uint256 amount) internal {
+        uint256 vaultWethBalance = IERC20(Mainnet.WETH).balanceOf(address(vault));
+        deal(Mainnet.WETH, address(vault), vaultWethBalance + amount);
+    }
+}

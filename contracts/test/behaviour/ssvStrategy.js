@@ -18,13 +18,13 @@ const { setERC20TokenBalance } = require("../_fund");
  * @example
     shouldBehaveLikeAnSsvStrategy(() => ({
         ...fixture,
-        addresses: [addresses.holesky|addresses.mainnet],
+        addresses: addresses.mainnet,
         validatorRegistrator: await impersonateAndFund(
-          addresses.holesky.validatorRegistrator
+          addresses.mainnet.validatorRegistrator
         ),
         ssvNetwork: await ethers.getContractAt(
           "ISSVNetwork",
-          addresses.holesky.SSVNetwork
+          addresses.mainnet.SSVNetwork
         ),
         nativeStakingFeeAccumulator: await ethers.getContractAt(
           "FeeAccumulator",

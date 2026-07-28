@@ -4,12 +4,11 @@ const {
 } = require("../../utils/deploy");
 const { getAssetAddresses } = require("../../test/helpers.js");
 const { resolveContract } = require("../../utils/resolvers");
-const { getDefenderSigner } = require("../../utils/signersNoHardhat.js");
+const { getSigner } = require("../../utils/signers.js");
 
 const mainExport = async () => {
   console.log("Running 005_upgrade_vault deployment on Hoodi...");
-  // Governor is the Defender Relayer
-  const sDeployer = await getDefenderSigner();
+  const sDeployer = await getSigner();
   const assetAddresses = await getAssetAddresses();
 
   const cVaultProxy = await resolveContract("OETHVaultProxy");

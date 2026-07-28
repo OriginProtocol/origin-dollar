@@ -17,7 +17,7 @@ module.exports = deploymentWithGovernanceProposal(
       moduleName,
       [
         safeAddress,
-        // Defender Relayer
+        // Automation operator
         addresses.mainnet.validatorRegistrator,
         [
           "0xFc87E0ABe3592945Ad7587F99161dBb340faa767",

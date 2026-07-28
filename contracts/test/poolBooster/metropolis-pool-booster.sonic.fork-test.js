@@ -8,22 +8,16 @@ const { impersonateAndFund } = require("../../utils/signers.js");
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
 describe("ForkTest: Metropolis Pool Booster", function () {
-  let fixture,
-    poolBoosterFactoryMetropolis,
-    nick,
-    oSonicVault,
-    oSonic,
-    strategist;
+  let fixture, poolBoosterFactoryMetropolis, nick, oSonic, strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();
     nick = fixture.nick;
-    oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterFactoryMetropolis = fixture.poolBoosterFactoryMetropolis;
     strategist = await impersonateAndFund(addresses.multichainStrategist);
 
-    // mint some OS to Nick
-    await oSonicVault.connect(nick).mint(oethUnits("1000000"));
+    // Mint some OS to Nick through the permissioned Vault flow
+    await fixture.mintOSForUser(nick, oethUnits("1000000"));
   });
 
   it("Should deploy a Pool Booster for a Metropolis pool", async () => {

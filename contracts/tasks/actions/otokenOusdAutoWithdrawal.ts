@@ -1,8 +1,4 @@
-/// <reference types="hardhat/types/runtime" />
-
-import { types } from "hardhat/config";
-
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fundWithdrawals } = require("../autoWithdrawal");
@@ -26,6 +22,6 @@ action({
     );
   },
   run: async ({ args }) => {
-    await fundWithdrawals(args, hre);
+    await fundWithdrawals(args);
   },
 });

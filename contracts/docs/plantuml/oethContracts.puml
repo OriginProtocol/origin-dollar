@@ -114,13 +114,6 @@ object "BeaconProofs" as proofs <<Origin>> #$originColor {
 ' }
 
 
-' ' Oracle
-' object "OETHOracleRouter" as oracle <<Origin>> #$originColor {
-' pairs:
-'     CRV/ETH
-'     CVX/ETH 
-' }
-
 ' ' SushiSwap
 ' object "UniswapV2Router02" as sushi <<SushiSwap>> {
 '     pairs: CRV/ETH, CVX/ETH
@@ -190,8 +183,6 @@ drip <.. harv
 
 woeth ..> oeth
 oeth <.> oethv
-' oethv ..> oracle
-' oracle ...> chain
 
 ' Curve AMO Strategy
 harv <..> amoStrat

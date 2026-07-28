@@ -1,6 +1,6 @@
 # Talos scheduled actions
 
-Hardhat tasks the Talos runner (`contracts/runner.ts` → `@talos/client`) runs on
+Hardhat tasks the Talos runner (`contracts/runner.ts` → `@oplabs/talos-client`) runs on
 a cron schedule, or on demand via the "Run now" button in the Talos admin UI.
 Each action is defined in [`tasks/actions/<name>.ts`](../tasks/actions); the
 canonical schedule — cron, enabled state, and per-row operational notes — lives

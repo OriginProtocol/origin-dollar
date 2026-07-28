@@ -76,6 +76,15 @@ describe("Origin S Vault", function () {
     );
   };
 
+  const mintAsUser = async (user, amount) => {
+    const { governor, oSonicVault, strategist, wS } = fixture;
+    await oSonicVault.connect(governor).setStrategistAddr(user.address);
+    await wS.connect(user).approve(oSonicVault.address, amount);
+    const tx = await oSonicVault.connect(user).mint(amount);
+    await oSonicVault.connect(governor).setStrategistAddr(strategist.address);
+    return tx;
+  };
+
   describe("Sonic tokens", () => {
     it("Should read Origin Sonic metadata", async () => {
       const { oSonic } = fixture;
@@ -128,17 +137,15 @@ describe("Origin S Vault", function () {
   });
 
   describe("Vault operations", () => {
-    it("Should mint with wS", async () => {
-      const { oSonicVault, wS, nick } = fixture;
+    it("Should allow the Strategist to mint with wS", async () => {
+      const { oSonicVault, nick } = fixture;
 
       const fixtureWithUser = { ...fixture, user: nick };
       const dataBefore = await snapData(fixtureWithUser);
 
       const mintAmount = parseUnits("1", 18);
 
-      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-
-      const tx = await oSonicVault.connect(nick).mint(mintAmount);
+      const tx = await mintAsUser(nick, mintAmount);
 
       await expect(tx)
         .to.emit(oSonicVault, "Mint")
@@ -162,13 +169,31 @@ describe("Origin S Vault", function () {
       );
     });
 
-    it("Should request withdraw from Vault", async () => {
+    it("Should not allow public mints", async () => {
       const { oSonicVault, wS, nick } = fixture;
+      const mintAmount = parseUnits("1", 18);
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+
+      await expect(
+        oSonicVault.connect(nick).mint(mintAmount)
+      ).to.be.revertedWith("Caller is not the Strategist or Governor");
+      const vaultWithLegacyMint = await ethers.getContractAt(
+        "OSVault",
+        oSonicVault.address
+      );
+      const legacyMint =
+        vaultWithLegacyMint.connect(nick)["mint(address,uint256,uint256)"];
+      await expect(
+        legacyMint(wS.address, mintAmount, mintAmount)
+      ).to.be.revertedWith("Caller is not the Strategist or Governor");
+    });
+
+    it("Should request withdraw from Vault", async () => {
+      const { oSonicVault, nick } = fixture;
 
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
-      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(mintAmount);
+      await mintAsUser(nick, mintAmount);
 
       const fixtureWithUser = { ...fixture, user: nick };
       const dataBefore = await snapData(fixtureWithUser);
@@ -202,12 +227,11 @@ describe("Origin S Vault", function () {
     });
 
     it("Should claim withdraw from Vault", async () => {
-      const { oSonicVault, wS, nick } = fixture;
+      const { oSonicVault, nick } = fixture;
 
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
-      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(mintAmount);
+      await mintAsUser(nick, mintAmount);
       const withdrawAmount = parseUnits("90", 18);
       await oSonicVault.connect(nick).requestWithdrawal(withdrawAmount);
 
@@ -242,12 +266,11 @@ describe("Origin S Vault", function () {
     });
 
     it("Should claim multiple withdrawal from Vault", async () => {
-      const { oSonicVault, wS, nick } = fixture;
+      const { oSonicVault, nick } = fixture;
 
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
-      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(mintAmount);
+      await mintAsUser(nick, mintAmount);
       const withdrawAmount1 = parseUnits("10", 18);
       const withdrawAmount2 = parseUnits("20", 18);
       const withdrawAmount = withdrawAmount1.add(withdrawAmount2);

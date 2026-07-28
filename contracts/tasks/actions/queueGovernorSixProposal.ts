@@ -1,7 +1,6 @@
-/// <reference types="hardhat/types/runtime" />
-
-import { types } from "hardhat/config";
+import { types } from "../lib/action";
 import { action } from "../lib/action";
+import { getContractAt } from "../lib/contracts";
 import addresses from "../../utils/addresses";
 import { logTxDetails } from "../../utils/txLogger";
 
@@ -24,10 +23,7 @@ action({
   },
   run: async ({ signer, log, args }) => {
     const governorSixAddress = (addresses as any).mainnet.GovernorSix;
-    const governorSix = await hre.ethers.getContractAt(
-      governorSixAbi,
-      governorSixAddress
-    );
+    const governorSix = await getContractAt(governorSixAbi, governorSixAddress);
 
     const proposalId = args.propid;
     if (!/^[0-9]+$/.test(proposalId)) {

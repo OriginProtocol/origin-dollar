@@ -1,6 +1,5 @@
-import { types } from "hardhat/config";
 import { undelegateValidator } from "../../utils/sonicActions";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
 
 action({
   name: "sonicUndelegate",

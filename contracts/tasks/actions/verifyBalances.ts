@@ -1,7 +1,4 @@
-/// <reference types="hardhat/types/runtime" />
-
-import { types } from "hardhat/config";
-import { action } from "../lib/action";
+import { types, action } from "../lib/action";
 
 const { verifyBalances } = require("../beacon");
 const { cleanStateCache } = require("../../utils/beacon");

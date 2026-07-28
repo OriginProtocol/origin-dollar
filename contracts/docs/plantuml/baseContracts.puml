@@ -46,16 +46,6 @@ object "OETHBaseVault" as oethv <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-' Oracle
-object "OETHBaseOracleRouter" as oracle <<Origin>> #$originColor {
-pairs:
-    wOETH/ETH
-}
-
-object "External\nAccess\nControlled\nAggregator" as chain <<Chainlink>> {
-pair: wOETH/ETH
-}
-
 object "BridgedWOETHStrategy" as bridgeStrat <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
@@ -91,8 +81,6 @@ zap ..> oethv
 woeth ..> oeth
 oeth <.> oethv
 ' oethv <.> drip
-bridgeStrat .> oracle
-oracle ..> chain
 oethv <..> bridgeStrat
 oethv <..> aeroStrat
 bridgeStrat ..> bridged

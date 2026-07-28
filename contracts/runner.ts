@@ -2,7 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type ActionsCatalog, createPool, runContainer } from "@talos/client";
+import {
+  type ActionsCatalog,
+  createPool,
+  runContainer,
+} from "@oplabs/talos-client";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -35,11 +39,13 @@ if (existsSync(CATALOG_PATH)) {
   try {
     actionsCatalog = JSON.parse(readFileSync(CATALOG_PATH, "utf8"));
     console.log(
-      `[runner] loaded actions catalog: ${Object.keys(actionsCatalog).length} tasks`,
+      `[runner] loaded actions catalog: ${
+        Object.keys(actionsCatalog).length
+      } tasks`
     );
   } catch (err) {
     console.warn(
-      `[runner] failed to parse ${CATALOG_PATH}: ${(err as Error).message}`,
+      `[runner] failed to parse ${CATALOG_PATH}: ${(err as Error).message}`
     );
   }
 }

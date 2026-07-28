@@ -1,8 +1,7 @@
-/// <reference types="hardhat/types/runtime" />
-
 import addresses from "../../utils/addresses";
 import { logTxDetails } from "../../utils/txLogger";
 import { action } from "../lib/action";
+import { getContractAt } from "../lib/contracts";
 
 const EXPECTED_CROSS_CHAIN_CONTROLLER =
   "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
@@ -28,7 +27,7 @@ action({
       );
     }
 
-    const strategy = await hre.ethers.getContractAt(
+    const strategy = await getContractAt(
       "CrossChainRemoteStrategy",
       strategyAddress
     );

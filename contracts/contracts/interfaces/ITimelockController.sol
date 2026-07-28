@@ -46,6 +46,8 @@ interface ITimelockController {
 
     function getMinDelay() external view returns (uint256);
 
+    function getTimestamp(bytes32 opHash) external view returns (uint256);
+
     function updateDelay(uint256 newDelay) external;
 
     function CANCELLER_ROLE() external view returns (bytes32);

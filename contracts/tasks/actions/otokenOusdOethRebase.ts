@@ -1,4 +1,5 @@
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const GAS_MULTIPLIER = 1.1;
@@ -8,21 +9,15 @@ action({
   description: "Collect OETH and rebase OUSD on mainnet",
   chains: [1],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const oethDripperProxy = await ethers.getContract(
-      "OETHFixedRateDripperProxy"
-    );
-    const vaultProxy = await ethers.getContract("VaultProxy");
-    const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const oethDripper = await ethers.getContractAt(
+    const oethDripperProxy = await getContract("OETHFixedRateDripperProxy");
+    const vaultProxy = await getContract("VaultProxy");
+    const oethVaultProxy = await getContract("OETHVaultProxy");
+    const oethDripper = await getContractAt(
       "IDripper",
       oethDripperProxy.address
     );
-    const ousdVault = await ethers.getContractAt("IVault", vaultProxy.address);
-    const oethVault = await ethers.getContractAt(
-      "IVault",
-      oethVaultProxy.address
-    );
+    const ousdVault = await getContractAt("IVault", vaultProxy.address);
+    const oethVault = await getContractAt("IVault", oethVaultProxy.address);
 
     const oethDripperWithSigner = oethDripper.connect(signer);
     const ousdVaultWithSigner = ousdVault.connect(signer);

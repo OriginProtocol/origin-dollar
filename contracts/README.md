@@ -24,7 +24,7 @@ pnpm prettier
 ```
 
 ## Linter
- 
+
 [solhit](https://protofire.github.io/solhint/) is used to lint Solidity code. The configuration for solhint is in [.solhint.json](./.solhint.json). [.solhintignore](./.solhintignore) is used to ignore Solidity files from being linted.
 
 [eslint](https://eslint.org/) is used to lint JavaScript code. The configuration for eslint is in [.eslintrc.js](./.eslintrc.js).
@@ -248,7 +248,6 @@ When using Hardhat tasks, there are a few options for specifying the wallet to s
 1. Primary key
 2. AWS KMS signer
 3. Impersonate
-4. Defender Relayer
 
 ### Primary Key
 
@@ -297,7 +296,7 @@ unset IMPERSONATE
 
 ### Automated Actions (Talos)
 
-The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@talos/client`](https://github.com/oplabs/talos):
+The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@oplabs/talos-client`](https://github.com/oplabs/talos):
 
 - **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
 - **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
@@ -314,7 +313,9 @@ pnpm hardhat healthcheck --network mainnet
 
 **No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.
 
-Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` / `GOVERNOR_PK` fallbacks, `IMPERSONATE`, Defender) stays exactly as described in the sections above. The library only handles the nonce wrap; it does not construct signers here.
+Building the runner image installs the optional `@oplabs/talos-client` peer
+dependency from GitHub Packages. Set `TALOS_PACKAGE_TOKEN` to a PAT with
+`read:packages` access before running `docker compose build`.
 
 Actions that propose transactions through the Safe Transaction Service require
 `SAFE_API_KEY`. The active Talos signer must be registered separately on each
@@ -457,6 +458,10 @@ store:
   `999 -> 19`)
 
 `rollup` can be installed globally to avoid the `npx` prefix.
+Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` /
+`GOVERNOR_PK` fallbacks, and `IMPERSONATE`) stays exactly as described in the
+sections above. The library only handles the nonce wrap; it does not construct
+signers here.
 
 ### Encrypting / decrypting validator private keys
 
@@ -475,7 +480,11 @@ The process is as follows:
 
 #### Storing encrypted validator private keys
 
-Defender Action that operates the validators will by default request a validator with encrypted private keys and store those encrypted keys in the `validator-keys` S3 bucket. Each validator private key is one S3 object and the name of the object is the pubkey (schema: [pubkey].json) of the validator. The S3 bucket has versioning enabled so we can always retrieve possibly overwritten / deleted objects.
+The validator automation requests validators with encrypted private keys and
+stores those encrypted keys in the `validator-keys` S3 bucket. Each validator
+private key is one S3 object and the name of the object is the pubkey (schema:
+`[pubkey].json`). The S3 bucket has versioning enabled so overwritten or deleted
+objects can be recovered.
 
 #### Storing the master private key
 
