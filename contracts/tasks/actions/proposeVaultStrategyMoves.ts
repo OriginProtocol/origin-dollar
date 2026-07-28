@@ -1,11 +1,9 @@
-/// <reference types="hardhat/types/runtime" />
-
 import { Contract } from "ethers";
 import { formatUnits, getAddress } from "ethers/lib/utils";
-import { types } from "hardhat/config";
 
 import addresses from "../../utils/addresses";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
+import { getContract } from "../lib/contracts";
 import {
   assertNonceStillAvailable,
   assertRegisteredDelegate,
@@ -26,8 +24,18 @@ import {
   parseMoves,
   resolveCheckerValues,
   resolveMoves,
-  runLocalForkSimulation,
+  runSimulation,
 } from "../lib/vaultStrategyMoves";
+
+/// `getContract` throws on a missing deployment, but both callers here need to distinguish
+/// "not deployed on this chain" from a hard failure, so the miss is folded back to undefined.
+const deploymentAddress = async (name: string): Promise<string | undefined> => {
+  try {
+    return (await getContract(name)).address;
+  } catch {
+    return undefined;
+  }
+};
 
 action({
   name: "proposeVaultStrategyMoves",
@@ -74,7 +82,7 @@ action({
     );
     t.addFlag(
       "skipFork",
-      "Skip the local fork; expectedProfit and expectedVaultChange become required"
+      "Skip simulation; expectedProfit and expectedVaultChange become required"
     );
     t.addFlag("skipEstimation", "Skip final Safe transaction estimation");
     t.addFlag("dryrun", "Validate and simulate without proposing");
@@ -86,10 +94,9 @@ action({
     const apiKey = process.env.SAFE_API_KEY;
     if (!apiKey) throw new Error("SAFE_API_KEY is required");
 
-    const deploymentRegistry = (hre as any).deployments;
     const [vaultDeployment, checkerDeployment] = await Promise.all([
-      deploymentRegistry.getOrNull(config.vaultDeployment),
-      deploymentRegistry.getOrNull(config.checkerDeployment),
+      deploymentAddress(config.vaultDeployment),
+      deploymentAddress(config.checkerDeployment),
     ]);
     if (!vaultDeployment) {
       throw new Error(
@@ -101,8 +108,8 @@ action({
         `Missing ${config.checkerDeployment} deployment on the selected network`
       );
     }
-    const vaultAddress = getAddress(vaultDeployment.address);
-    const checkerAddress = getAddress(checkerDeployment.address);
+    const vaultAddress = getAddress(vaultDeployment);
+    const checkerAddress = getAddress(checkerDeployment);
     const vault = new Contract(vaultAddress, VAULT_ABI, provider);
     const [assetRaw, oTokenRaw, strategistRaw, activeStrategies] =
       await Promise.all([
@@ -129,10 +136,7 @@ action({
       assetDecimals,
       activeStrategies,
       provider,
-      resolveDeployment: async (name) =>
-        (
-          await deploymentRegistry.getOrNull(name)
-        )?.address,
+      resolveDeployment: deploymentAddress,
       log,
     });
 
@@ -180,11 +184,13 @@ action({
         vaultChangeVariance: args.vaultChangeVariance,
         skipFork: true,
       });
-      log.warn("Skipping local fork simulation");
+      log.warn("Skipping simulation");
     } else {
+      // Pinned once so both simulation passes see identical state.
       const blockNumber = await provider.getBlockNumber();
-      ({ checkerValues } = await runLocalForkSimulation({
+      ({ checkerValues } = await runSimulation({
         config,
+        provider,
         blockNumber,
         safeAddress,
         vaultAddress,

@@ -1,11 +1,8 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { createServer } from "node:net";
-import { resolve } from "node:path";
-
 import { BigNumber, Contract, ethers } from "ethers";
 import {
   formatUnits,
   getAddress,
+  hexValue,
   isAddress,
   parseEther,
   parseUnits,
@@ -23,7 +20,6 @@ export interface VaultConfig {
   checkerDeployment: string;
   profitVariance: string;
   vaultChangeVariance: string;
-  providerEnv: "PROVIDER_URL" | "BASE_PROVIDER_URL";
 }
 
 export interface ParsedMove {
@@ -92,7 +88,6 @@ const VAULT_CONFIGS: Record<VaultName, VaultConfig> = {
     checkerDeployment: "VaultValueChecker",
     profitVariance: "100",
     vaultChangeVariance: "100",
-    providerEnv: "PROVIDER_URL",
   },
   OETH: {
     name: "OETH",
@@ -101,7 +96,6 @@ const VAULT_CONFIGS: Record<VaultName, VaultConfig> = {
     checkerDeployment: "OETHVaultValueChecker",
     profitVariance: "1",
     vaultChangeVariance: "1",
-    providerEnv: "PROVIDER_URL",
   },
   SuperOETH: {
     name: "SuperOETH",
@@ -110,13 +104,16 @@ const VAULT_CONFIGS: Record<VaultName, VaultConfig> = {
     checkerDeployment: "OETHVaultValueChecker",
     profitVariance: "1",
     vaultChangeVariance: "10",
-    providerEnv: "BASE_PROVIDER_URL",
   },
 };
 
 const DECIMAL_VALUE = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
 const SIGNED_DECIMAL_VALUE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
-const FORK_TRANSACTION_OVERRIDES = { gasLimit: 100_000_000 };
+
+const SIMULATE_METHOD = "eth_simulateV1";
+/// Covers gas for the spoofed `from: safe` calls only; never moves real value.
+const SIMULATED_SAFE_BALANCE = parseEther("10").toHexString();
+const ERROR_STRING_SELECTOR = "0x08c379a0";
 
 export function getVaultConfig(vault: string, chainId: number): VaultConfig {
   const normalized = vault.trim().toLowerCase();
@@ -340,6 +337,40 @@ export async function resolveMoves({
   return resolved;
 }
 
+/// Shared by the proposed batch and the simulation's derive pass so a move is only ever encoded
+/// one way.
+function buildMoveCalls(
+  vaultAddress: string,
+  asset: string,
+  moves: ResolvedMove[]
+): BatchCall[] {
+  const vault = new ethers.utils.Interface(VAULT_ABI);
+  return moves.map((move) => {
+    if (move.kind === "withdrawAll") {
+      return {
+        to: vaultAddress,
+        value: "0",
+        data: vault.encodeFunctionData("withdrawAllFromStrategy", [
+          move.strategy,
+        ]),
+        description: `withdrawAll:${move.strategyIdentifier}`,
+      };
+    }
+    const method =
+      move.kind === "deposit" ? "depositToStrategy" : "withdrawFromStrategy";
+    return {
+      to: vaultAddress,
+      value: "0",
+      data: vault.encodeFunctionData(method, [
+        move.strategy,
+        [asset],
+        [move.amountUnits!],
+      ]),
+      description: `${move.kind}:${move.strategyIdentifier}:${move.amount}`,
+    };
+  });
+}
+
 export function buildBatchCalls({
   vaultAddress,
   checkerAddress,
@@ -368,33 +399,8 @@ export function buildBatchCalls({
       data: checker.encodeFunctionData("takeSnapshot"),
       description: "valueChecker.takeSnapshot()",
     },
+    ...buildMoveCalls(vaultAddress, asset, moves),
   ];
-
-  for (const move of moves) {
-    if (move.kind === "withdrawAll") {
-      calls.push({
-        to: vaultAddress,
-        value: "0",
-        data: vault.encodeFunctionData("withdrawAllFromStrategy", [
-          move.strategy,
-        ]),
-        description: `withdrawAll:${move.strategyIdentifier}`,
-      });
-    } else {
-      const method =
-        move.kind === "deposit" ? "depositToStrategy" : "withdrawFromStrategy";
-      calls.push({
-        to: vaultAddress,
-        value: "0",
-        data: vault.encodeFunctionData(method, [
-          move.strategy,
-          [asset],
-          [move.amountUnits!],
-        ]),
-        description: `${move.kind}:${move.strategyIdentifier}:${move.amount}`,
-      });
-    }
-  }
 
   calls.push({
     to: checkerAddress,
@@ -410,61 +416,143 @@ export function buildBatchCalls({
   return calls;
 }
 
-async function getFreePort(): Promise<number> {
-  return new Promise((resolvePort, reject) => {
-    const server = createServer();
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      if (!address || typeof address === "string") {
-        server.close();
-        reject(new Error("Could not allocate a local fork port"));
-        return;
-      }
-      const port = address.port;
-      server.close((error) => (error ? reject(error) : resolvePort(port)));
-    });
+interface SimulatedCall {
+  status: string;
+  returnData: string;
+  gasUsed: string;
+  error?: { code?: number; message?: string; data?: string };
+}
+
+/// A provider that cannot simulate is a hard stop, not a reason to propose an unchecked batch, so
+/// this spells out the one supported way forward instead of letting a raw -32601 surface.
+function simulationRpcError(error: any): Error {
+  const code = error?.error?.code ?? error?.code;
+  const message: string =
+    error?.error?.message ?? error?.message ?? String(error);
+  if (code === -32601 || /method not (found|supported)/i.test(message)) {
+    return new Error(
+      `The configured RPC does not support ${SIMULATE_METHOD} (${message}). ` +
+        `Point the network at a provider that implements it, or re-run with --skip-fork plus ` +
+        `explicit --expected-profit and --expected-vault-change.`
+    );
+  }
+  return new Error(`${SIMULATE_METHOD} failed: ${message}`);
+}
+
+function decodeRevert(call: SimulatedCall): string {
+  const data = call.error?.data ?? call.returnData;
+  if (data && data.startsWith(ERROR_STRING_SELECTOR)) {
+    try {
+      return ethers.utils.defaultAbiCoder.decode(
+        ["string"],
+        `0x${data.slice(10)}`
+      )[0];
+    } catch {
+      // Not a well-formed Error(string); fall through to the raw payload.
+    }
+  }
+  return call.error?.message ?? `reverted with ${data || "no return data"}`;
+}
+
+function assertCallsSucceeded(simulated: SimulatedCall[], calls: BatchCall[]) {
+  simulated.forEach((call, index) => {
+    if (call.status === "0x1") return;
+    throw new Error(
+      `Simulation failed at step ${index + 1} of ${simulated.length} (${
+        calls[index].description
+      }): ${decodeRevert(call)}`
+    );
   });
 }
 
-async function waitForFork(
-  provider: ethers.providers.JsonRpcProvider,
-  child: ChildProcess,
-  timeoutMs: number
-) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null) {
-      throw new Error(`Local Hardhat fork exited with code ${child.exitCode}`);
-    }
-    try {
-      await provider.send("web3_clientVersion", []);
-      return;
-    } catch {
-      await new Promise((resolveWait) => setTimeout(resolveWait, 250));
-    }
+/// Runs `calls` in order inside a single simulated block built on `blockTag`, as if the Safe had
+/// sent each one. Nothing is broadcast and nothing persists past the response.
+async function simulateCalls({
+  provider,
+  safeAddress,
+  blockTag,
+  calls,
+}: {
+  provider: ethers.providers.Provider;
+  safeAddress: string;
+  blockTag: string;
+  calls: BatchCall[];
+}): Promise<SimulatedCall[]> {
+  let response: any;
+  try {
+    response = await (provider as ethers.providers.JsonRpcProvider).send(
+      SIMULATE_METHOD,
+      [
+        {
+          blockStateCalls: [
+            {
+              calls: calls.map((call) => ({
+                from: safeAddress,
+                to: call.to,
+                value: hexValue(BigNumber.from(call.value)),
+                data: call.data,
+              })),
+              stateOverrides: {
+                [safeAddress]: { balance: SIMULATED_SAFE_BALANCE },
+              },
+            },
+          ],
+          validation: false,
+          traceTransfers: false,
+        },
+        blockTag,
+      ]
+    );
+  } catch (error: any) {
+    throw simulationRpcError(error);
   }
-  throw new Error(
-    `Timed out waiting ${timeoutMs}ms for the local Hardhat fork`
-  );
+
+  const simulated: SimulatedCall[] | undefined = response?.[0]?.calls;
+  if (!Array.isArray(simulated) || simulated.length !== calls.length) {
+    throw new Error(
+      `${SIMULATE_METHOD} returned ${simulated?.length ?? "no"} results for ${
+        calls.length
+      } calls`
+    );
+  }
+  return simulated;
 }
 
-async function stopFork(child: ChildProcess) {
-  if (child.exitCode !== null) return;
-  child.kill("SIGTERM");
-  await Promise.race([
-    new Promise<void>((resolveExit) => child.once("exit", () => resolveExit())),
-    new Promise<void>((resolveTimeout) =>
-      setTimeout(() => {
-        if (child.exitCode === null) child.kill("SIGKILL");
-        resolveTimeout();
-      }, 5_000)
-    ),
-  ]);
-}
-
-export async function runLocalForkSimulation({
+/**
+ * Derive the Vault Value Checker bounds by simulating the proposal with `eth_simulateV1`, then
+ * replay the assembled batch to prove it passes `checkDelta`.
+ *
+ * One request behaves like a single throwaway fork: calls inside a block run in order and their
+ * writes stack, and a later block in the same request still sees them. Nothing survives the
+ * response, so the validation pass replays the whole batch from the top rather than continuing
+ * from the derive pass — and both passes are pinned to one block, because at `latest` the chain
+ * could advance between the two round-trips and validate against different state than we derived
+ * from.
+ *
+ * Failure modes worth knowing about:
+ *
+ * - `eth_simulateV1` is a hard dependency. A provider without it answers -32601, and this throws
+ *   with instructions rather than proposing an unsimulated batch. `--skip-fork` with explicit
+ *   expected values is the deliberate, visible escape hatch.
+ * - `validation: false` is load-bearing. Every call is spoofed `from` the Safe with no signature,
+ *   nonce or balance check, and the balance override exists only to pay gas. Turning validation on
+ *   rejects the whole approach.
+ * - Providers cap calls per block, blocks per request, and total simulated gas. A three-call batch
+ *   measures ~1.3M gas, so a long `--moves` list is the realistic way to hit a cap. Caps surface as
+ *   a request-level error rather than a per-call revert, so they land in `simulationRpcError` and
+ *   never in `assertCallsSucceeded`.
+ * - The batch executes hours later, once two Safe owners have confirmed. For AMO strategies
+ *   `expectedVaultChange` tracks pool state, so the tight per-vault defaults (100 OUSD, 1 OETH) can
+ *   make `checkDelta` revert on execution if the pool has moved since. That fails safe, but it
+ *   burns a Safe nonce and gas — pass `--vault-change-variance` for AMO moves.
+ * - This simulates the calls, not the Safe wrapper. Each one runs directly as the Safe, so a Safe
+ *   Guard, `safeTxGas` exhaustion or a MultiSend-level failure is not exercised. Simulating the
+ *   real `execTransaction` is possible — override the Safe's threshold slot to 1 and pass an
+ *   approved-hash signature from an owner — but is deliberately out of scope here.
+ */
+export async function runSimulation({
   config,
+  provider,
   blockNumber,
   safeAddress,
   vaultAddress,
@@ -479,6 +567,7 @@ export async function runLocalForkSimulation({
   log,
 }: {
   config: VaultConfig;
+  provider: ethers.providers.Provider;
   blockNumber: number;
   safeAddress: string;
   vaultAddress: string;
@@ -492,164 +581,131 @@ export async function runLocalForkSimulation({
   vaultChangeVariance?: string;
   log: Logger;
 }): Promise<{ derived: DerivedValues; checkerValues: CheckerValues }> {
-  const upstreamUrl =
-    process.env[config.providerEnv] ||
-    (config.chainId === 1 ? process.env.MAINNET_PROVIDER_URL : undefined);
-  if (!upstreamUrl) {
-    throw new Error(
-      `${config.providerEnv} is required for local fork simulation`
-    );
-  }
+  const vault = new ethers.utils.Interface(VAULT_ABI);
+  const checker = new ethers.utils.Interface(CHECKER_ABI);
+  const token = new ethers.utils.Interface(TOKEN_ABI);
+  const blockTag = hexValue(blockNumber);
 
-  const port = await getFreePort();
-  const contractsDir = resolve(__dirname, "../..");
-  const hardhatBin = resolve(contractsDir, "node_modules/.bin/hardhat");
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    FORK: "true",
-    IS_TEST: "true",
-    FORK_NETWORK_NAME: config.chainId === 8453 ? "base" : "mainnet",
-  };
-  delete env.HARDHAT_NETWORK;
-  delete env.NETWORK_NAME;
-  delete env.LOCAL_PROVIDER_URL;
-  if (config.chainId === 8453) env.BASE_BLOCK_NUMBER = String(blockNumber);
-  else env.BLOCK_NUMBER = String(blockNumber);
+  // Rebase and snapshot exactly as the batch will, run the moves, then read the two values
+  // `checkDelta` compares. The snapshot is read back from the checker rather than recomputed, so
+  // the deltas are measured against the same storage the on-chain check will read.
+  const derivePlan: BatchCall[] = [
+    {
+      to: vaultAddress,
+      value: "0",
+      data: vault.encodeFunctionData("rebase"),
+      description: "vault.rebase()",
+    },
+    {
+      to: checkerAddress,
+      value: "0",
+      data: checker.encodeFunctionData("takeSnapshot"),
+      description: "valueChecker.takeSnapshot()",
+    },
+    {
+      to: checkerAddress,
+      value: "0",
+      data: checker.encodeFunctionData("snapshots", [safeAddress]),
+      description: "valueChecker.snapshots(safe)",
+    },
+    ...buildMoveCalls(vaultAddress, asset, moves),
+    {
+      to: vaultAddress,
+      value: "0",
+      data: vault.encodeFunctionData("totalValue"),
+      description: "vault.totalValue()",
+    },
+    {
+      to: oToken,
+      value: "0",
+      data: token.encodeFunctionData("totalSupply"),
+      description: "oToken.totalSupply()",
+    },
+  ];
 
-  const child = spawn(
-    hardhatBin,
-    ["node", "--hostname", "127.0.0.1", "--port", String(port), "--no-deploy"],
-    { cwd: contractsDir, env, stdio: ["ignore", "pipe", "pipe"] }
+  log.info(
+    `Simulating ${config.name} strategy moves at block ${blockNumber} with ${SIMULATE_METHOD}`
   );
-  let childOutput = "";
-  const captureOutput = (chunk: Buffer) => {
-    childOutput = `${childOutput}${chunk.toString()}`.slice(-64 * 1024);
-  };
-  child.stdout?.on("data", captureOutput);
-  child.stderr?.on("data", captureOutput);
+  const derivePass = await simulateCalls({
+    provider,
+    safeAddress,
+    blockTag,
+    calls: derivePlan,
+  });
+  assertCallsSucceeded(derivePass, derivePlan);
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    `http://127.0.0.1:${port}`,
-    config.chainId
+  const snapshot = checker.decodeFunctionResult(
+    "snapshots",
+    derivePass[2].returnData
   );
-  const forwardSignal = (signal: NodeJS.Signals) => {
-    child.kill(signal);
-    process.off("SIGINT", onSigint);
-    process.off("SIGTERM", onSigterm);
-    process.kill(process.pid, signal);
-  };
-  const onSigint = () => forwardSignal("SIGINT");
-  const onSigterm = () => forwardSignal("SIGTERM");
-  process.once("SIGINT", onSigint);
-  process.once("SIGTERM", onSigterm);
+  const postVaultValue: BigNumber = vault.decodeFunctionResult(
+    "totalValue",
+    derivePass[derivePass.length - 2].returnData
+  )[0];
+  const postTotalSupply: BigNumber = token.decodeFunctionResult(
+    "totalSupply",
+    derivePass[derivePass.length - 1].returnData
+  )[0];
 
-  try {
-    log.info(`Starting ${config.name} fork simulation at block ${blockNumber}`);
-    await waitForFork(provider, child, 45_000);
-    await provider.send("hardhat_impersonateAccount", [safeAddress]);
-    await provider.send("hardhat_setBalance", [
-      safeAddress,
-      parseEther("10").toHexString(),
-    ]);
+  const derived = calculateDerivedValues(
+    snapshot.vaultValue,
+    snapshot.totalSupply,
+    postVaultValue,
+    postTotalSupply
+  );
+  const checkerValues = resolveCheckerValues({
+    config,
+    derived,
+    expectedProfit,
+    profitVariance,
+    expectedVaultChange,
+    vaultChangeVariance,
+    skipFork: false,
+  });
 
-    const safeSigner = provider.getSigner(safeAddress);
-    const vault = new Contract(vaultAddress, VAULT_ABI, safeSigner);
-    const checker = new Contract(checkerAddress, CHECKER_ABI, safeSigner);
-    const token = new Contract(oToken, TOKEN_ABI, provider);
-
-    await (await vault.rebase(FORK_TRANSACTION_OVERRIDES)).wait();
-    await (await checker.takeSnapshot(FORK_TRANSACTION_OVERRIDES)).wait();
-
-    for (const move of moves) {
-      if (move.kind === "deposit") {
-        await (
-          await vault.depositToStrategy(
-            move.strategy,
-            [asset],
-            [move.amountUnits],
-            FORK_TRANSACTION_OVERRIDES
-          )
-        ).wait();
-      } else if (move.kind === "withdraw") {
-        await (
-          await vault.withdrawFromStrategy(
-            move.strategy,
-            [asset],
-            [move.amountUnits],
-            FORK_TRANSACTION_OVERRIDES
-          )
-        ).wait();
-      } else {
-        await (
-          await vault.withdrawAllFromStrategy(
-            move.strategy,
-            FORK_TRANSACTION_OVERRIDES
-          )
-        ).wait();
-      }
-    }
-
-    const snapshot = await checker.snapshots(safeAddress);
-    const postVaultValue = await vault.totalValue();
-    const postTotalSupply = await token.totalSupply();
-    const derived = calculateDerivedValues(
+  log.info(
+    `Simulated vault value: ${formatUnits(
       snapshot.vaultValue,
+      18
+    )} -> ${formatUnits(postVaultValue, 18)}; change ${formatUnits(
+      derived.vaultChange,
+      18
+    )}`
+  );
+  log.info(
+    `Simulated token supply: ${formatUnits(
       snapshot.totalSupply,
-      postVaultValue,
-      postTotalSupply
-    );
-    const checkerValues = resolveCheckerValues({
-      config,
-      derived,
-      expectedProfit,
-      profitVariance,
-      expectedVaultChange,
-      vaultChangeVariance,
-      skipFork: false,
-    });
+      18
+    )} -> ${formatUnits(postTotalSupply, 18)}; change ${formatUnits(
+      derived.supplyChange,
+      18
+    )}`
+  );
+  log.info(`Simulation-derived profit: ${formatUnits(derived.profit, 18)}`);
 
-    log.info(
-      `Fork vault value: ${formatUnits(
-        snapshot.vaultValue,
-        18
-      )} -> ${formatUnits(postVaultValue, 18)}; change ${formatUnits(
-        derived.vaultChange,
-        18
-      )}`
-    );
-    log.info(
-      `Fork token supply: ${formatUnits(
-        snapshot.totalSupply,
-        18
-      )} -> ${formatUnits(postTotalSupply, 18)}; change ${formatUnits(
-        derived.supplyChange,
-        18
-      )}`
-    );
-    log.info(`Fork-derived profit: ${formatUnits(derived.profit, 18)}`);
+  // Replay the batch that will actually be proposed, from the same block. A second request starts
+  // from unmodified state, so this re-runs rebase and takeSnapshot instead of continuing above.
+  const batch = buildBatchCalls({
+    vaultAddress,
+    checkerAddress,
+    asset,
+    moves,
+    checkerValues,
+  });
+  const validationPass = await simulateCalls({
+    provider,
+    safeAddress,
+    blockTag,
+    calls: batch,
+  });
+  assertCallsSucceeded(validationPass, batch);
+  const gasUsed = validationPass.reduce(
+    (total, call) => total.add(BigNumber.from(call.gasUsed)),
+    BigNumber.from(0)
+  );
+  log.info(
+    `Value Checker validation succeeded; batch simulated in ${gasUsed.toString()} gas`
+  );
 
-    await (
-      await checker.checkDelta(
-        checkerValues.expectedProfit,
-        checkerValues.profitVariance,
-        checkerValues.expectedVaultChange,
-        checkerValues.vaultChangeVariance,
-        FORK_TRANSACTION_OVERRIDES
-      )
-    ).wait();
-    log.info("Fork Value Checker validation succeeded");
-    return { derived, checkerValues };
-  } catch (error: any) {
-    const sanitized = childOutput
-      .replaceAll(upstreamUrl, "[redacted provider URL]")
-      .split("\n")
-      .slice(-12)
-      .join("\n");
-    if (sanitized.trim()) log.warn(`Local fork output:\n${sanitized}`);
-    throw error;
-  } finally {
-    process.off("SIGINT", onSigint);
-    process.off("SIGTERM", onSigterm);
-    await stopFork(child);
-  }
+  return { derived, checkerValues };
 }

@@ -9,6 +9,7 @@ const {
   getVaultConfig,
   parseMoves,
   resolveCheckerValues,
+  runSimulation,
 } = require("../../tasks/lib/vaultStrategyMoves");
 const {
   findIdenticalProposal,
@@ -21,6 +22,68 @@ const strategyB = "0x0000000000000000000000000000000000000022";
 const vaultAddress = "0x0000000000000000000000000000000000000033";
 const checkerAddress = "0x0000000000000000000000000000000000000044";
 const asset = "0x0000000000000000000000000000000000000055";
+const oToken = "0x0000000000000000000000000000000000000066";
+const safeAddress = "0x0000000000000000000000000000000000000077";
+
+const silentLog = { info: () => {}, warn: () => {}, error: () => {} };
+const { defaultAbiCoder } = ethers.utils;
+
+const ok = (returnData = "0x") => ({
+  status: "0x1",
+  returnData,
+  gasUsed: "0x5208",
+});
+const reverted = (reason) => ({
+  status: "0x0",
+  gasUsed: "0x5208",
+  returnData: `0x08c379a0${defaultAbiCoder
+    .encode(["string"], [reason])
+    .slice(2)}`,
+});
+const uint = (value) => defaultAbiCoder.encode(["uint256"], [value]);
+const snapshotOf = (vaultValue, totalSupply) =>
+  defaultAbiCoder.encode(
+    ["uint256", "uint256", "uint256"],
+    [vaultValue, totalSupply, 1]
+  );
+
+// Each entry is one eth_simulateV1 response: either the array of per-call
+// results, or a function that throws to model an RPC-level failure.
+const stubProvider = (responses) => {
+  const requests = [];
+  return {
+    requests,
+    send: async (method, params) => {
+      requests.push({ method, params });
+      const next = responses.shift();
+      if (typeof next === "function") return next();
+      return [{ calls: next }];
+    },
+  };
+};
+
+const oneMove = [
+  {
+    kind: "withdraw",
+    strategyIdentifier: "StrategyA",
+    strategy: strategyA,
+    amount: "3",
+    amountUnits: ethers.utils.parseUnits("3", 6),
+  },
+];
+
+const simulationArgs = (provider) => ({
+  config: getVaultConfig("OUSD", 1),
+  provider,
+  blockNumber: 123,
+  safeAddress,
+  vaultAddress,
+  checkerAddress,
+  asset,
+  oToken,
+  moves: oneMove,
+  log: silentLog,
+});
 
 describe("Talos vault strategy moves", () => {
   it("parses mixed movements without changing their order", () => {
@@ -286,6 +349,95 @@ describe("Talos vault strategy moves", () => {
         log,
       })
     ).to.throw("already executed in 0xonchain");
+  });
+
+  it("derives checker values from the simulation and pins both passes to one block", async () => {
+    const provider = stubProvider([
+      // derive pass: rebase, takeSnapshot, snapshots, move, totalValue, totalSupply
+      [
+        ok(),
+        ok(),
+        ok(
+          snapshotOf(
+            ethers.utils.parseUnits("1000", 18),
+            ethers.utils.parseUnits("990", 18)
+          )
+        ),
+        ok(),
+        ok(uint(ethers.utils.parseUnits("1002", 18))),
+        ok(uint(ethers.utils.parseUnits("990", 18))),
+      ],
+      // validation pass: rebase, takeSnapshot, move, checkDelta
+      [ok(), ok(), ok(), ok()],
+    ]);
+
+    const { derived, checkerValues } = await runSimulation(
+      simulationArgs(provider)
+    );
+
+    expect(ethers.utils.formatUnits(derived.vaultChange, 18)).to.equal("2.0");
+    expect(derived.supplyChange.isZero()).to.equal(true);
+    expect(ethers.utils.formatUnits(derived.profit, 18)).to.equal("2.0");
+    expect(ethers.utils.formatUnits(checkerValues.expectedProfit, 18)).to.equal(
+      "2.0"
+    );
+
+    expect(provider.requests).to.have.length(2);
+    provider.requests.forEach((request) => {
+      expect(request.method).to.equal("eth_simulateV1");
+      expect(request.params[1]).to.equal("0x7b");
+      expect(request.params[0].validation).to.equal(false);
+      expect(
+        request.params[0].blockStateCalls[0].calls.every(
+          (call) => call.from === safeAddress
+        )
+      ).to.equal(true);
+    });
+  });
+
+  it("attributes a reverted simulation step to its batch description", async () => {
+    const provider = stubProvider([
+      [
+        ok(),
+        ok(),
+        ok(snapshotOf(1, 1)),
+        reverted("Not enough assets available"),
+        ok(uint(1)),
+        ok(uint(1)),
+      ],
+    ]);
+
+    let error;
+    try {
+      await runSimulation(simulationArgs(provider));
+    } catch (err) {
+      error = err;
+    }
+    expect(error, "expected the simulation to throw").to.not.equal(undefined);
+    expect(error.message).to.contain("step 4 of 6");
+    expect(error.message).to.contain("withdraw:StrategyA:3");
+    expect(error.message).to.contain("Not enough assets available");
+  });
+
+  it("explains how to proceed when the RPC cannot simulate", async () => {
+    const provider = stubProvider([
+      () => {
+        const err = new Error("the method eth_simulateV1 does not exist");
+        err.error = { code: -32601, message: "Method not found" };
+        throw err;
+      },
+    ]);
+
+    let error;
+    try {
+      await runSimulation(simulationArgs(provider));
+    } catch (err) {
+      error = err;
+    }
+    expect(error, "expected the simulation to throw").to.not.equal(undefined);
+    expect(error.message).to.contain("does not support eth_simulateV1");
+    expect(error.message).to.contain("--skip-fork");
+    expect(error.message).to.contain("--expected-profit");
   });
 
   it("normalizes an ethers signMessage signature for Safe eth_sign", async () => {
