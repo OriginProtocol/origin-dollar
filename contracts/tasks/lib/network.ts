@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import { resolveChain, getRpcEnvVar } from "@oplabs/talos-client";
 
 /**
  * Ambient network context for the standalone (hardhat-free) action runtime.
@@ -31,6 +30,10 @@ export function rpcUrlFor(nameOrId: string | number): {
   networkName: string;
   url: string;
 } {
+  // Talos is an optional peer dependency and is only installed in the action
+  // runner image. Load it lazily so Hardhat can import shared utilities without
+  // requiring the private package.
+  const { resolveChain, getRpcEnvVar } = require("@oplabs/talos-client");
   const chain = resolveChain(nameOrId);
   let url: string | undefined;
   if (process.env.FORK === "true" && process.env.LOCAL_PROVIDER_URL) {
