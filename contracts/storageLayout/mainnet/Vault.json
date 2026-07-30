@@ -14,7 +14,7 @@
     },
     {
       "contract": "Initializable",
-      "label": "______gap",
+      "label": "__gap",
       "type": "t_array(t_uint256)50_storage",
       "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
     },

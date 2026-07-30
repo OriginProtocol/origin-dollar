@@ -18,7 +18,7 @@
       "src": "contracts/utils/Initializable.sol:17"
     },
     {
-      "label": "______gap",
+      "label": "__gap",
       "offset": 0,
       "slot": "1",
       "type": "t_array(t_uint256)50_storage",
@@ -58,7 +58,7 @@
       "src": "contracts/harvest/OETHHarvesterSimple.sol:29"
     },
     {
-      "label": "___gap",
+      "label": "__gap",
       "offset": 0,
       "slot": "104",
       "type": "t_array(t_uint256)48_storage",

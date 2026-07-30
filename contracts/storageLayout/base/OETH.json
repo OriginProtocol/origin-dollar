@@ -18,7 +18,7 @@
       "src": "contracts/utils/Initializable.sol:17"
     },
     {
-      "label": "______gap",
+      "label": "__gap",
       "offset": 0,
       "slot": "1",
       "type": "t_array(t_uint256)50_storage",
@@ -26,7 +26,7 @@
       "src": "contracts/utils/Initializable.sol:41"
     },
     {
-      "label": "_____gap",
+      "label": "__gap",
       "offset": 0,
       "slot": "51",
       "type": "t_array(t_uint256)100_storage",

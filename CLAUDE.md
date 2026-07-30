@@ -160,6 +160,17 @@ Located in `deploy/` and numbered sequentially (e.g., `001_ousd.js`, `002_vault.
 
 When adding a new deployment script, increment the number and follow existing patterns in `utils/deploy.js` (especially `deployWithConfirmation` and `withConfirmation`).
 
+## Storage Layout Checks
+
+Name storage gaps `__gap`. `scripts/check-storage-layout.js` (`pnpm check:storage`)
+identifies gaps by name — it matches `/^_*gap$/` — so that it can recognise the
+"carve slots out of the gap" pattern when comparing two layouts. A gap under any other
+name is treated as an ordinary variable, and the check reports a false slot conflict.
+(`OUSD.sol` has a legacy `_gap` that predates the convention; use `__gap` for anything new.)
+
+Storage-slot checks only need to cover Ethereum mainnet, Base and HyperEVM.
+ArbitrumOne, Sonic and Plume can be ignored.
+
 ## Roles & Access Control
 
 Four key roles used across all contracts:
