@@ -13,9 +13,13 @@ async function getContracts(hre, symbol, assetSymbol) {
   const networkName = await getNetworkName();
 
   // If no symbol is provided, set to OSonic if Sonic network, else default to OETH
-  symbol = symbol ? symbol : networkName === "sonic" ? "OSonic" : "OETH";
+  symbol = symbol
+    ? symbol.toUpperCase()
+    : networkName === "sonic"
+    ? "OSonic"
+    : "OETH";
   // Convert OS to OSonic
-  symbol = symbol === "OS" ? "OSonic" : symbol;
+  symbol = symbol === "OS" || symbol === "OSONIC" ? "OSonic" : symbol;
   const contractPrefix = symbol === "OUSD" ? "" : symbol;
 
   const networkPrefix = networkName === "base" ? "Base" : "";

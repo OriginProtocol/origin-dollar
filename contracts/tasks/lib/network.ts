@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import { resolveChain, getRpcEnvVar } from "@oplabs/talos-client";
 
 /**
  * Ambient network context for the standalone (hardhat-free) action runtime.
@@ -19,36 +18,71 @@ export const CHAIN_NAMES: Record<number, string> = {
   98866: "plume",
 };
 
+const CHAIN_IDS: Record<string, number> = Object.fromEntries(
+  Object.entries(CHAIN_NAMES).map(([id, name]) => [name, Number(id)])
+);
+
+const RPC_ENV_VARS: Record<number, string> = {
+  1: "MAINNET_PROVIDER_URL",
+  8453: "BASE_PROVIDER_URL",
+  146: "SONIC_PROVIDER_URL",
+  560048: "HOODI_PROVIDER_URL",
+  999: "HYPEREVM_PROVIDER_URL",
+  17000: "HOLESKY_PROVIDER_URL",
+  42161: "ARBITRUM_PROVIDER_URL",
+  98866: "PLUME_PROVIDER_URL",
+};
+
 let _chainId: number | undefined;
 let _networkName: string | undefined;
 let _provider: ethers.providers.JsonRpcProvider | undefined;
 let _signer: ethers.Signer | undefined;
 
+type HardhatGlobal = {
+  hre?: {
+    ethers?: { provider?: ethers.providers.JsonRpcProvider };
+    network?: { name?: string; config?: { chainId?: number } };
+  };
+};
+
+function hardhatRuntime() {
+  return (globalThis as typeof globalThis & HardhatGlobal).hre;
+}
+
 /** Resolve the RPC URL for a chain: LOCAL_PROVIDER_URL on a fork, else the
- *  `*_PROVIDER_URL` env var (via Talos getRpcEnvVar, matching the repo's names). */
+ *  matching `*_PROVIDER_URL` env var. */
 export function rpcUrlFor(nameOrId: string | number): {
   chainId: number;
   networkName: string;
   url: string;
 } {
-  const chain = resolveChain(nameOrId);
+  const chainId =
+    typeof nameOrId === "number"
+      ? nameOrId
+      : /^\d+$/.test(nameOrId)
+      ? Number(nameOrId)
+      : CHAIN_IDS[nameOrId.toLowerCase()];
+  const networkName = CHAIN_NAMES[chainId];
+  if (!networkName) {
+    throw new Error(`Unsupported chain: ${nameOrId}`);
+  }
   let url: string | undefined;
   if (process.env.FORK === "true" && process.env.LOCAL_PROVIDER_URL) {
     url = process.env.LOCAL_PROVIDER_URL;
   } else {
-    const envVar = getRpcEnvVar(chain);
+    const envVar = RPC_ENV_VARS[chainId];
     url = process.env[envVar];
     // Back-compat: mainnet historically used the bare PROVIDER_URL.
-    if (!url && chain.id === 1) url = process.env.PROVIDER_URL;
+    if (!url && chainId === 1) url = process.env.PROVIDER_URL;
     if (!url) {
       throw new Error(
-        `Missing RPC URL env var ${envVar} for chain ${chain.name} (${chain.id})`
+        `Missing RPC URL env var ${envVar} for chain ${networkName} (${chainId})`
       );
     }
   }
   return {
-    chainId: chain.id,
-    networkName: CHAIN_NAMES[chain.id] ?? chain.name,
+    chainId,
+    networkName,
     url,
   };
 }
@@ -69,19 +103,28 @@ export function initNetwork(nameOrId: string | number): {
 }
 
 export function getProvider(): ethers.providers.JsonRpcProvider {
-  if (!_provider)
+  const provider = _provider ?? hardhatRuntime()?.ethers?.provider;
+  if (!provider)
     throw new Error("Network not initialized — call initNetwork() first");
-  return _provider;
+  return provider;
 }
 
 export function getChainId(): number {
-  if (_chainId == null) throw new Error("Network not initialized");
-  return _chainId;
+  const hardhatNetwork = hardhatRuntime()?.network;
+  const chainId =
+    _chainId ??
+    hardhatNetwork?.config?.chainId ??
+    (hardhatNetwork?.name
+      ? CHAIN_IDS[hardhatNetwork.name.toLowerCase()]
+      : undefined);
+  if (chainId == null) throw new Error("Network not initialized");
+  return chainId;
 }
 
 export function getNetworkName(): string {
-  if (!_networkName) throw new Error("Network not initialized");
-  return _networkName;
+  const networkName = _networkName ?? hardhatRuntime()?.network?.name;
+  if (!networkName) throw new Error("Network not initialized");
+  return networkName;
 }
 
 export function setSigner(signer: ethers.Signer): void {
