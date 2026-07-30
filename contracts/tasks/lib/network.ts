@@ -1,5 +1,32 @@
 import { ethers } from "ethers";
-import { resolveChain, getRpcEnvVar } from "@oplabs/talos-client";
+
+/**
+ * `@oplabs/talos-client` is an *optional* peer dependency: present in the Talos
+ * runner image and on dev machines (scripts/install-talos-client.sh), absent in
+ * CI and fresh checkouts. Importing it at module scope made every consumer of
+ * this module require it — which reaches all the way up to hardhat.config.js
+ * (tasks/tasks.js -> utils/morpho.js -> utils/resolvers.js) and broke
+ * `hardhat deploy` in the ABI publish workflow. It is only needed to map a chain
+ * name/id onto an RPC env var, so load it at the point of use instead.
+ */
+type TalosChain = { id: number; name: string };
+
+interface TalosChainHelpers {
+  resolveChain: (nameOrId: string | number) => TalosChain;
+  getRpcEnvVar: (chain: TalosChain) => string;
+}
+
+function talos(): TalosChainHelpers {
+  try {
+    return require("@oplabs/talos-client") as TalosChainHelpers;
+  } catch {
+    throw new Error(
+      "@oplabs/talos-client is required to resolve an RPC URL but is not " +
+        "installed. Run `bash scripts/install-talos-client.sh` from contracts/ " +
+        "(see the Setup section of CLAUDE.md)."
+    );
+  }
+}
 
 /**
  * Ambient network context for the standalone (hardhat-free) action runtime.
@@ -31,6 +58,7 @@ export function rpcUrlFor(nameOrId: string | number): {
   networkName: string;
   url: string;
 } {
+  const { resolveChain, getRpcEnvVar } = talos();
   const chain = resolveChain(nameOrId);
   let url: string | undefined;
   if (process.env.FORK === "true" && process.env.LOCAL_PROVIDER_URL) {

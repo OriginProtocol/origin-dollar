@@ -21,6 +21,51 @@ pnpm i
 
 Key `.env` variables: `PROVIDER_URL`, `SONIC_PROVIDER_URL`, `BASE_PROVIDER_URL`, `BLOCK_NUMBER`, `ACCOUNTS_TO_FUND`.
 
+### `@oplabs/talos-client` (private, optional)
+
+`pnpm i` deliberately does **not** install `@oplabs/talos-client`. It is declared
+as an *optional peer dependency* so that CI and external contributors can install
+this repo without GitHub Packages credentials.
+
+You need it to **run** anything that talks to a chain — `tsx tasks/run.ts`
+(`tasks/lib/network.ts` resolves the RPC env var through it) and
+`tasks/lib/signer.ts` (KMS signer + Postgres nonce queue).
+
+You do **not** need it merely to load code. `tasks/lib/network.ts` requires it
+lazily, inside `rpcUrlFor()`, precisely so that importers further up the chain —
+`utils/resolvers.js` → `utils/morpho.js` → `tasks/tasks.js` →
+`hardhat.config.js` — keep working without it. Do not hoist that back to a
+top-level import: it breaks `hardhat deploy` in the ABI publish workflow, which
+installs without GitHub Packages auth.
+
+```bash
+pnpm install:talos
+```
+
+The script sources a token from the `gh` CLI (or an explicit `NODE_AUTH_TOKEN`),
+verifies it can actually read the package, installs it via a throwaway npm config,
+and then **restores `package.json` and `pnpm-lock.yaml`**. That restore is
+deliberate: committing the package as a normal dependency breaks CI, which has no
+GitHub Packages auth.
+
+Do not put the auth token in `contracts/.npmrc`. pnpm prints a
+`Failed to replace env in config` warning on *every* command when an `.npmrc`
+references an unset variable, so that noise would hit CI and every engineer
+without a token.
+
+Two things to know:
+
+- `gh auth login` does **not** request the `read:packages` scope. If the script
+  reports a scope error, run `gh auth refresh -s read:packages` once.
+- Because the install is not persisted, any later `pnpm install` prunes it.
+  Re-run the script afterwards.
+
+Neither CI nor the Talos runner image uses this script. CI installs without the
+package (`pnpm install --frozen-lockfile`, no GitHub Packages auth) and never
+needs it; `dockerfile-actions` installs it explicitly with the
+`talos_package_token` build secret, reading the same pinned version from
+`peerDependencies`.
+
 ## Commands (run from `contracts/`)
 
 ### Build
