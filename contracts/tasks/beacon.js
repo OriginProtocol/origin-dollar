@@ -28,7 +28,7 @@ const {
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
 const { ZERO_BYTES32 } = require("../utils/constants");
 const {
   address: mainnetCompoundingStakingSSVStrategyProxy,
@@ -84,15 +84,6 @@ const getKnownWithdrawalStrategies = (networkName) => {
       {
         label: "CompoundingStakingSSVStrategyProxy",
         address: hoodiCompoundingStakingSSVStrategyProxy,
-      },
-    ];
-  }
-
-  if (networkName === "holesky") {
-    return [
-      {
-        label: "NativeStakingSSVStrategyProxy",
-        address: addresses.holesky.NativeStakingSSVStrategyProxy,
       },
     ];
   }

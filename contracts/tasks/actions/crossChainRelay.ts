@@ -1,15 +1,23 @@
 import { ethers } from "ethers";
 import { configuration } from "../../utils/cctp";
-import { keyValueStoreLocalClient } from "../../utils/defender";
-import { getNetworkName } from "../../utils/hardhat-helpers";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { processCctpBridgeTransactions } from "../crossChain";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
+import { CHAIN_NAMES } from "../lib/network";
 
 action({
   name: "crossChainRelay",
   description: "Relay CCTP bridge transactions between mainnet and Base",
   chains: [1, 8453],
-  run: async ({ signer, chainId, log }) => {
+  params: (t) => {
+    t.addOptionalParam(
+      "txHash",
+      "Source-chain tx hash to relay. When set, skips the recent-events scan and relays only this transaction's message(s). Must be run on the destination chain.",
+      undefined,
+      types.string
+    );
+  },
+  run: async ({ signer, chainId, log, args }) => {
     let sourceProvider: ethers.providers.JsonRpcProvider;
 
     if (chainId === 1) {
@@ -28,7 +36,8 @@ action({
       );
     }
 
-    const networkName = await getNetworkName(sourceProvider);
+    const { chainId: sourceChainId } = await sourceProvider.getNetwork();
+    const networkName = CHAIN_NAMES[sourceChainId];
 
     let config: any;
     if (networkName === "mainnet") {
@@ -45,6 +54,7 @@ action({
     });
 
     await processCctpBridgeTransactions({
+      txHash: args.txHash,
       destinationChainSigner: signer,
       sourceChainProvider: sourceProvider,
       store,

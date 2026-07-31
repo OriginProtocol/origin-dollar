@@ -158,7 +158,7 @@ const getClusterNonce = async ({
   chainId,
   ssvNetwork,
 }) => {
-  const ssvNetworkName = chainId === 1 ? "MAINNET" : "HOLESKY";
+  const ssvNetworkName = chainId === 1 ? "MAINNET" : "HOODI";
   const providerUrl = process.env.PROVIDER_URL;
 
   const params = {

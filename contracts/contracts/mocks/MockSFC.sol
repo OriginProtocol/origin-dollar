@@ -7,6 +7,7 @@ contract MockSFC {
     error ZeroAmount();
     error TransferFailed();
     error StakeIsFullySlashed();
+    error NotEnoughTimePassed();
 
     // Mapping of delegator address to validator ID to amount delegated
     mapping(address => mapping(uint256 => uint256)) public delegations;
@@ -15,6 +16,10 @@ contract MockSFC {
         public withdraws;
     // validator ID -> slashing refund ratio (allows to withdraw slashed stake)
     mapping(uint256 => uint256) public slashingRefundRatio;
+    // Mapping of delegator address to validator ID to pending reward amount
+    mapping(address => mapping(uint256 => uint256)) public rewards;
+    // Flag to force withdraw to revert with a non-StakeIsFullySlashed error
+    bool public forceWithdrawRevert;
 
     function getStake(address delegator, uint256 validatorID)
         external
@@ -49,8 +54,13 @@ contract MockSFC {
         withdraws[msg.sender][validatorID][wrID] = amount;
     }
 
+    function setForceWithdrawRevert(bool _force) external {
+        forceWithdrawRevert = _force;
+    }
+
     function withdraw(uint256 validatorID, uint256 wrID) external {
         require(withdraws[msg.sender][validatorID][wrID] > 0, "no withdrawal");
+        if (forceWithdrawRevert) revert NotEnoughTimePassed();
 
         uint256 withdrawAmount = withdraws[msg.sender][validatorID][wrID];
         uint256 penalty = (withdrawAmount *
@@ -70,11 +80,34 @@ contract MockSFC {
         external
         view
         returns (uint256)
-    {}
+    {
+        return rewards[delegator][validatorID];
+    }
 
-    function claimRewards(uint256 validatorID) external {}
+    function claimRewards(uint256 validatorID) external {
+        uint256 reward = rewards[msg.sender][validatorID];
+        require(reward > 0, "no rewards");
+        rewards[msg.sender][validatorID] = 0;
+        (bool sent, ) = msg.sender.call{ value: reward }("");
+        if (!sent) {
+            revert TransferFailed();
+        }
+    }
 
-    function restakeRewards(uint256 validatorID) external {}
+    function restakeRewards(uint256 validatorID) external {
+        uint256 reward = rewards[msg.sender][validatorID];
+        require(reward > 0, "no rewards");
+        rewards[msg.sender][validatorID] = 0;
+        delegations[msg.sender][validatorID] += reward;
+    }
+
+    function setRewards(
+        address delegator,
+        uint256 validatorID,
+        uint256 amount
+    ) external {
+        rewards[delegator][validatorID] = amount;
+    }
 
     /// @param refundRatio the percentage of the staked amount that can be refunded. 0.1e18 = 10%, 1e18 = 100%
     function slashValidator(uint256 validatorID, uint256 refundRatio) external {

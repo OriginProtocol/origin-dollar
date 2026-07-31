@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// --- Test base
+import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
+
+contract Unit_Concrete_CurvePoolBooster_Receive_Test is Unit_Curve_Shared_Test {
+    function test_receive() public {
+        uint256 balanceBefore = address(curvePoolBoosterPlain).balance;
+
+        vm.deal(alice, 1 ether);
+        vm.prank(alice);
+        (bool success,) = address(curvePoolBoosterPlain).call{value: 1 ether}("");
+        assertTrue(success);
+
+        assertEq(address(curvePoolBoosterPlain).balance, balanceBefore + 1 ether);
+    }
+}

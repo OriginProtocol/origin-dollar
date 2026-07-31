@@ -16,7 +16,7 @@ import { IStrategy } from "../interfaces/IStrategy.sol";
  *      1. Deploy this module
  *      2. Call `safe.enableModule(address(this))` to authorize it
  *
- *      An off-chain operator (e.g. Defender Relayer) calls `fundWithdrawals()`
+ *      An off-chain operator calls `fundWithdrawals()`
  *      periodically. The module:
  *        - First tries to satisfy the queue from idle vault funds
  *        - If there's still a shortfall, withdraws the exact shortfall amount
@@ -66,7 +66,7 @@ contract AutoWithdrawalModule is AbstractSafeModule {
 
     /**
      * @param _safeContract Address of the Gnosis Safe (Guardian multisig).
-     * @param _operator     Address of the off-chain operator (e.g. Defender relayer).
+     * @param _operator     Address of the off-chain operator.
      * @param _vault        Address of the OUSD/OETH vault.
      * @param _strategy     Initial strategy to pull liquidity from.
      */
@@ -91,7 +91,7 @@ contract AutoWithdrawalModule is AbstractSafeModule {
 
     /**
      * @notice Fund the vault's withdrawal queue from the configured strategy.
-     *         Called periodically by an off-chain operator (Defender Actions).
+     *         Called periodically by an off-chain operator.
      *
      * Steps:
      *   1. Ask the vault to absorb any idle asset it already holds.
@@ -100,7 +100,7 @@ contract AutoWithdrawalModule is AbstractSafeModule {
      *
      * This function never reverts on "soft" failures (strategy underfunded,
      * Safe exec failure). It emits a descriptive event instead so off-chain
-     * monitoring can alert the team without breaking the Defender action.
+     * monitoring can alert the team without breaking the automation action.
      */
     function fundWithdrawals() external onlyOperator {
         // Step 1: Let the vault absorb any asset it already holds idle.

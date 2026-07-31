@@ -1,0 +1,19 @@
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "4.4.2"
+git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git"
+rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1"
+
+[[dependencies]]
+name = "forge-std"
+version = "1.15.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_15_0_27-02-2026_08:26:17_forge-std-1.15.zip"
+checksum = "40d9b3b3d786eec4cd05fb9d818616015cbe7b8866643a9f0854495c938588c4"
+integrity = "92accf4f7850eb9f5832f0ea77d633d36ebe993efc6d6c9f32369d31befc8a75"
+
+[[dependencies]]
+name = "solmate"
+version = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+url = "https://soldeer-revisions.s3.amazonaws.com/solmate/89365b880c4f3c786bdd453d4b8e8fe410344a69_25-08-2025_15:48:50_solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69.zip"
+checksum = "76a5ec8e8a119288a318d6220331f985ba7a3278edf558402232782736066dd0"
+integrity = "a70931c29b02514a8a2a29f58f689c3ed0448b8f58dc8ba0ad34fa2037531c3d"

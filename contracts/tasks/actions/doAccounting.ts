@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { types } from "hardhat/config";
+import { types } from "../lib/action";
 import type { Logger } from "../lib/action";
 import { address as hoodiConsolidationControllerAddress } from "../../deployments/hoodi/ConsolidationController.json";
 import {

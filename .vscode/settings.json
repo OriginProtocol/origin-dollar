@@ -1,8 +1,18 @@
 {
-  "solidity.packageDefaultDependenciesContractsDirectory": "contracts/contracts",
-  "solidity.packageDefaultDependenciesDirectory": "contracts/node_modules",
   "solidity.compileUsingRemoteVersion": "v0.8.28+commit.7893614a",
+  "solidity.defaultCompiler": "remote",
   "solidity.monoRepoSupport": false,
+  "solidity.packageDefaultDependenciesDirectory": "contracts/dependencies",
+  "solidity.packageDefaultDependenciesContractsDirectory": "",
+  "solidity.remappings": [
+    "scripts/=contracts/scripts/",
+    "contracts/=contracts/contracts/",
+    "tests/=contracts/tests/",
+    "forge-std/=contracts/dependencies/forge-std-1.15.0/src/",
+    "@openzeppelin/contracts/=contracts/dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+    "@solmate/=contracts/dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/",
+    "@chainlink/contracts-ccip/=contracts/dependencies/@chainlink-contracts-ccip-1.2.1/package/"
+  ],
   "prettier.configPath": "./contracts/.prettierrc",
   "plantuml.exportOutDir": "contracts/docs/plantuml",
   "plantuml.exportFormat": "png",

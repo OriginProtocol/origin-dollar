@@ -1,12 +1,9 @@
-/// <reference types="hardhat/types/runtime" />
-
 import path from "path";
 import { ethers } from "ethers";
-import { types } from "hardhat/config";
 import { configuration } from "../../utils/cctp";
-import { keyValueStoreLocalClient } from "../../utils/defender";
+import { keyValueStoreLocalClient } from "../../utils/localKeyValueStore";
 import { processCctpBridgeTransactions } from "../crossChain";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
 
 action({
   name: "relayCCTPMessage",
@@ -14,6 +11,12 @@ action({
     "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract",
   chains: [1, 8453],
   params: (t) => {
+    t.addOptionalParam(
+      "txHash",
+      "Source-chain tx hash to relay. When set, skips the recent-events scan and relays only this transaction's message(s). Must be run on the destination chain.",
+      undefined,
+      types.string
+    );
     t.addOptionalParam(
       "block",
       "Override the block number at which the message emission transaction happened",
@@ -28,11 +31,8 @@ action({
     );
   },
   run: async ({ signer, chainId, args }) => {
-    // The Defender Relayer signer is always on the destination chain. The
-    // source chain is the other side of the pair; build its provider from
-    // env vars rather than trusting `--network` / `hre.ethers.provider`,
-    // which can diverge from the signer (see HyperEVM relay for the same
-    // pattern).
+    // The signer is on the destination chain. The source chain is the other
+    // side of the pair, so build its provider from env vars.
     let config;
     let sourceChainProvider: ethers.providers.JsonRpcProvider;
     let sourceNetworkName: "mainnet" | "base";
