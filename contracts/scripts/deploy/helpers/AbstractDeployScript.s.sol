@@ -158,26 +158,98 @@ abstract contract AbstractDeployScript is Base {
 
     // ==================== Contract Recording ==================== //
 
-    /// @notice Records a newly deployed contract for later persistence.
-    /// @dev Call this in _execute() after deploying each contract.
-    ///      The contract will be:
-    ///      1. Added to the local contracts array
-    ///      2. Logged for visibility
-    ///      3. Persisted to Resolver in _storeDeployedContract()
+    /// @notice Records a newly deployed contract, gating it on storage-layout safety.
+    /// @dev Call this in _execute() after deploying each contract. It:
+    ///      1. Checks the new layout against what is deployed today, aborting the
+    ///         whole run if it is not upgrade-safe;
+    ///      2. Adds the contract to the local array;
+    ///      3. Logs it;
+    ///      4. Persists it to the Resolver in _storeContracts().
     ///
-    ///      Example usage in _execute():
+    ///      Pass `type(X).name` rather than a string literal, so renaming the
+    ///      contract cannot silently point the gate at the wrong baseline:
     ///      ```
-    ///      MyContract impl = new MyContract();
-    ///      _recordDeployment("MY_CONTRACT_IMPL", address(impl));
+    ///      OUSDVault impl = new OUSDVault(USDC);
+    ///      _recordDeployment("OUSD_VAULT_IMPL", address(impl), type(OUSDVault).name);
     ///      ```
-    /// @param contractName Identifier for the contract (e.g., "LIDO_ARM", "ETHENA_ARM_IMPL")
+    /// @param deployKey Identifier for the deployment (e.g. "OUSD_VAULT_IMPL")
     /// @param implementation The deployed contract address
-    function _recordDeployment(string memory contractName, address implementation) internal virtual {
-        // Add to local array for batch persistence later
-        contracts.push(Contract({implementation: implementation, name: contractName}));
+    /// @param contractName Solidity contract name, i.e. `type(X).name`
+    function _recordDeployment(string memory deployKey, address implementation, string memory contractName)
+        internal
+        virtual
+    {
+        _checkStorage(contractName, "");
+        _record(deployKey, implementation);
+    }
 
-        // Log the deployment for visibility
-        log.logContractDeployed(contractName, implementation);
+    /// @notice Records a deployment whose storage layout deliberately breaks compatibility.
+    /// @dev Only for changes where existing data is knowingly abandoned — e.g. retiring a
+    ///      slot behind a `uint256` placeholder. The reason is required, is printed in the
+    ///      deploy log, and sits next to the deployment in the PR diff so it gets reviewed
+    ///      rather than buried in a config file.
+    /// @param deployKey Identifier for the deployment
+    /// @param implementation The deployed contract address
+    /// @param contractName Solidity contract name, i.e. `type(X).name`
+    /// @param storageBreakReason Why breaking compatibility is correct here
+    function _recordDeployment(
+        string memory deployKey,
+        address implementation,
+        string memory contractName,
+        string memory storageBreakReason
+    ) internal virtual {
+        require(bytes(storageBreakReason).length > 0, "storage break needs a reason");
+        _checkStorage(contractName, storageBreakReason);
+        _record(deployKey, implementation);
+    }
+
+    /// @notice Records an address this script did NOT deploy, skipping the storage gate.
+    /// @dev Use only for pre-existing contracts being registered under a name. Anything
+    ///      this script deploys must go through _recordDeployment so it is gated.
+    /// @param deployKey Identifier for the deployment
+    /// @param implementation The existing contract address
+    function _recordDeploymentUnchecked(string memory deployKey, address implementation) internal virtual {
+        _record(deployKey, implementation);
+    }
+
+    function _record(string memory deployKey, address implementation) private {
+        contracts.push(Contract({implementation: implementation, name: deployKey}));
+        log.logContractDeployed(deployKey, implementation);
+    }
+
+    /// @dev Runs the storage-layout gate for `contractName`, then records.
+    ///      Called from every _recordDeployment overload so the gate cannot be
+    ///      skipped by forgetting a separate line.
+    ///
+    ///      Placement matters: this runs AFTER `new X()` but still inside the
+    ///      script, which forge executes against the fork in full before
+    ///      submitting anything. A revert here therefore aborts the run with
+    ///      nothing broadcast and no block mined — verified.
+    ///
+    ///      Skipped under FORK_TEST so the unit and fork suites never shell out.
+    function _checkStorage(string memory contractName, string memory allowBreak) private {
+        if (state == State.FORK_TEST) return;
+
+        bool overriding = bytes(allowBreak).length > 0;
+        string[] memory cmd = new string[](overriding ? 8 : 6);
+        cmd[0] = "node";
+        cmd[1] = "scripts/check-storage-upgrade.js";
+        cmd[2] = "--contract";
+        cmd[3] = contractName;
+        cmd[4] = "--chain-id";
+        cmd[5] = vm.toString(block.chainid);
+        if (overriding) {
+            cmd[6] = "--allow-break";
+            cmd[7] = allowBreak;
+        }
+
+        // vm.ffi already reverts on a non-zero exit; the sentinel additionally
+        // guards against the checker exiting 0 without having actually passed.
+        bytes memory result = vm.ffi(cmd);
+        require(
+            keccak256(result) == keccak256(bytes("OK")),
+            string.concat("storage layout not upgrade-safe: ", contractName)
+        );
     }
 
     /// @notice Persists all recorded contracts to the Resolver (without recording execution).

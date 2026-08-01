@@ -207,14 +207,52 @@ When adding a new deployment script, increment the number and follow existing pa
 
 ## Storage Layout Checks
 
-Name storage gaps `__gap`. `scripts/check-storage-layout.js` (`pnpm check:storage`)
-identifies gaps by name — it matches `/^_*gap$/` — so that it can recognise the
-"carve slots out of the gap" pattern when comparing two layouts. A gap under any other
-name is treated as an ordinary variable, and the check reports a false slot conflict.
-(`OUSD.sol` has a legacy `_gap` that predates the convention; use `__gap` for anything new.)
+**The baseline is the descriptor.** `deployments/<network>/<Name>.json` holds
+`{address, abi, storageLayout}` — the layout is what is deployed at that address
+right now, written by `scripts/create-hardhat-format-descriptors.js` in the same
+step that records the address, so the write side cannot silently stop.
 
-Storage-slot checks only need to cover Ethereum mainnet, Base and HyperEVM.
-ArbitrumOne, Sonic and Plume can be ignored.
+**The gate runs per deployed contract, before broadcast.** Call
+`_assertStorageSafe(type(X).name)` in a deploy script before `new X()`. It shells
+out to `scripts/check-storage-upgrade.js` over `vm.ffi`; a non-zero exit aborts
+the whole forge script, so nothing is broadcast and the ledger is untouched.
+Checking the deployed contract is sufficient — its layout is the flattened layout
+of every source file it inherits (e.g. `OUSDVault` = `VaultStorage` 37 slots +
+`Initializable` 3).
+
+For a deliberate break — retiring a slot behind a `uint256` placeholder and
+abandoning the data — use `_allowStorageBreak(type(X).name, "<reason>")`. The
+reason is required and lands in the PR diff next to the deployment.
+
+Comparison is `@openzeppelin/upgrades-core`, which supplies the `__gap` shrink
+arithmetic. Two policies are ours: a rename is ignored only when the new label is
+derived from the old (`assets` -> `_deprecated_assets`); an unrelated rename is
+not, because two same-typed variables trading labels also reports as two renames.
+Enum member data is absent from solc layouts and is ignored — an enum is one byte
+regardless of variant count, so no slot moves; what is given up is noticing that a
+stored value now decodes to a different variant.
+
+Prefer `__gap` for new gaps, but any number of leading underscores works — labels
+matching `/^_+[a-z]*gap$/i` are normalised to `__gap` **in memory** at comparison
+time, because OZ's `isGap()` matches only `__gap`/`__gap_*` while contracts
+deployed before the rename still carry `______gap` on chain. Stored layouts stay
+faithful to their source, so a bug in that normalisation never costs a re-fetch.
+
+Storage-slot checks cover **Ethereum mainnet and Base** only. ArbitrumOne, Sonic,
+Plume, Hoodi and HyperEVM are out of scope; the gate is a no-op there.
+
+**Re-supporting a chain means re-fetching every layout.** The legacy
+`storageLayout/` tree has been deleted; baselines now live only in descriptors.
+To bring a chain back, run
+`scripts/fetch-onchain-storage-layouts.js --network <net>` (reads each deployed
+implementation's layout from its verified source) then
+`scripts/seed-descriptor-storage-layouts.js --network <net>`, and add the chain to
+`NETWORK_BY_CHAIN` in both that script and `check-storage-upgrade.js`.
+
+`scripts/check-storage-layout.js` remains for ad-hoc "what did this PR change"
+investigation between two git refs. It is **not** the gate: it compares type
+identifier strings, which embed AST node ids that shift between compilations, so
+it false-positives on any contract with an enum or struct in storage.
 
 ## Roles & Access Control
 

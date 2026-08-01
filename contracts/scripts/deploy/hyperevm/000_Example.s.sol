@@ -40,7 +40,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
             InitializableAbstractStrategy.BaseStrategyConfig(address(0), address(0)),
             AbstractCCTPIntegrator.CCTPIntegrationConfig(address(0), address(0), 0, address(0), address(0), address(0))
         );
-        _recordDeployment("CROSS_CHAIN_REMOTE_STRATEGY_IMPL", address(newImpl));
+        _recordDeployment("CROSS_CHAIN_REMOTE_STRATEGY_IMPL", address(newImpl), type(CrossChainRemoteStrategy).name);
     }
 
     // ==================== Governance Proposal ==================== //

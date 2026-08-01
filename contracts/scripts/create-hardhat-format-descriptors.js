@@ -31,7 +31,7 @@
  * that just happened. Invoking this script by hand outside that recipe forfeits
  * the guarantee — check what run-latest.json holds first.
  *
- * Per deployed contract it writes exactly `{address, abi}` and drops every other
+ * Per deployed contract it writes `{address, abi, storageLayout}` and drops every other
  * key the Hardhat artifact used to carry (receipt, args, solcInputHash, metadata,
  * bytecode, deployedBytecode, devdoc, userdoc, gasEstimates, linkReferences).
  * Keeping them would pair a fresh address with bytecode and metadata from the
@@ -115,6 +115,26 @@ function indexArtifacts(outDir) {
     }
   }
   return index;
+}
+
+/**
+ * The storage layout for the baseline. Absent for contracts that declare no
+ * storage (proxies, libraries) — those need no baseline and the gate skips them.
+ * Requires `extra_output = ["storageLayout"]` in foundry.toml.
+ */
+function readStorageLayout(index, contractName) {
+  const matches = index.get(contractName);
+  if (!matches || matches.length !== 1) return null;
+  const artifact = JSON.parse(fs.readFileSync(matches[0], "utf8"));
+  const layout = artifact.storageLayout;
+  if (
+    !layout ||
+    !Array.isArray(layout.storage) ||
+    layout.storage.length === 0
+  ) {
+    return null;
+  }
+  return { storage: layout.storage, types: layout.types || {} };
 }
 
 function readAbi(index, contractName) {
@@ -243,6 +263,7 @@ function main() {
     name: tx.contractName,
     address: ethers.utils.getAddress(tx.contractAddress),
     abi: readAbi(artifacts, tx.contractName),
+    storageLayout: readStorageLayout(artifacts, tx.contractName),
     file: path.join(deployDir, `${tx.contractName}.json`),
   }));
 
@@ -256,11 +277,17 @@ function main() {
     );
   }
 
-  for (const { name, address, abi, file } of planned) {
+  for (const { name, address, abi, storageLayout, file } of planned) {
     const existed = fs.existsSync(file);
     // Matches hardhat-deploy's on-disk shape: address first, 2-space indent,
-    // no trailing newline.
-    const body = JSON.stringify({ address, abi }, null, 2);
+    // no trailing newline. storageLayout is the upgrade-safety baseline for the
+    // NEXT deploy of this contract (scripts/check-storage-upgrade.js), recorded
+    // here so the write side can never silently stop.
+    const body = JSON.stringify(
+      storageLayout ? { address, abi, storageLayout } : { address, abi },
+      null,
+      2
+    );
     if (!dryRun) fs.writeFileSync(file, body);
     console.log(
       `[descriptors] ${dryRun ? "would " : ""}${
