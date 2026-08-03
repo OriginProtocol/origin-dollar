@@ -1534,8 +1534,7 @@ subtask(
     types.int
   )
   .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await snapStaking({ ...taskArgs, signer });
+    await snapStaking(taskArgs);
   });
 task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
