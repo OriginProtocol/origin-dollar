@@ -450,7 +450,9 @@ sol2uml diff [0x_address_of_the_deployed_contract] .,node_modules
 
 ## Continuous Integration
 
-[GitHub Actions](https://github.com/features/actions) are used for the build. The configuration for GitHub Actions is in [.github/workflows/defi.yml](../.github/workflows/defi.yml). The action workflows can be found at https://github.com/OriginProtocol/origin-dollar/actions.
+[GitHub Actions](https://github.com/features/actions) are used for the build.
+Workflow definitions are in [`.github/workflows/`](../.github/workflows/). The
+action workflows can be found at https://github.com/OriginProtocol/origin-dollar/actions.
 
 There are separate actions for:
 
