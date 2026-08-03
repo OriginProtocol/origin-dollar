@@ -234,6 +234,30 @@ investigation between two git refs. It is **not** the gate: it compares type
 identifier strings, which embed AST node ids that shift between compilations, so
 it false-positives on any contract with an enum or struct in storage.
 
+### Tests
+
+Two suites, both `node --test` (`scripts/test/`), because this is JSON handling
+rather than on-chain behaviour:
+
+- `pnpm test:scripts` — the gate's policy. Runs in its own CI job with **no**
+  Foundry setup: `forge` is faked by a shim on `PATH`, so if these ever come to
+  need a real toolchain the job breaks loudly instead of absorbing a build.
+- `pnpm test:layouts` — pins the layouts of `OUSDVault`, `OUSD`, `WOETH` and
+  `CompoundingStakingSSVStrategy`. Appended to the `unit-tests` job, which has
+  just rebuilt `contracts/`. **A diff in `layout-pinned.test.js` means storage
+  moved; say why in the PR.** It pins the working tree, so it is a tripwire, not
+  a compatibility check — the deploy-time gate remains the authority on what is
+  safe against what is deployed. Regenerate a block with the one-liner in that
+  file's header.
+
+Two traps worth knowing before editing either suite. The gate's whole agreement
+with Solidity is *two bytes on stdout*, and upgrades-core prints advisory notes
+that currently go to stderr — one test exists solely to catch a library bump
+that reroutes them. And OZ classifies two variables swapping labels as a
+`rename` pair **only** when another variable sits between them; adjacent
+same-typed ones come back as delete/insert, so a fixture of the wrong shape
+tests nothing.
+
 ## Roles & Access Control
 
 Four key roles used across all contracts:
