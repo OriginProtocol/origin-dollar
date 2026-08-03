@@ -1,6 +1,15 @@
 # Deployment Framework
 
-A Foundry-based deployment framework that orchestrates smart contract deployments across Ethereum Mainnet and Sonic. It tracks deployment history in JSON, resolves cross-script contract addresses via an in-memory registry, builds and simulates governance proposals end-to-end on forks, and produces ready-to-submit calldata for real deployments — all driven by numbered scripts that are automatically discovered, ordered, and replayed.
+A Foundry-based deployment framework that orchestrates smart contract deployments
+across Ethereum Mainnet, Sonic, Base, and HyperEVM. It tracks deployment history
+in JSON, resolves cross-script contract addresses via an in-memory registry,
+builds and simulates governance actions on forks, and produces ready-to-submit
+calldata for real deployments.
+
+> [README.md](./README.md) is the canonical operator quick-start. This document
+> explains framework internals. Where a command or supported-chain statement
+> conflicts with the Makefile, `foundry.toml`, or implementation, the source file
+> is authoritative.
 
 ## Table of Contents
 
@@ -21,10 +30,7 @@ A Foundry-based deployment framework that orchestrates smart contract deployment
   - [Fork Simulation](#fork-simulation)
   - [Real Deployment Output](#real-deployment-output)
   - [The Governance State Machine](#the-governance-state-machine)
-- [Automated Governance Tracking](#automated-governance-tracking)
-  - [UpdateGovernanceMetadata.s.sol](#updategovernancemetadatassol)
-  - [find_gov_prop_execution_timestamp.sh](#find_gov_prop_execution_timestampsh)
-  - [CI Workflow](#ci-workflow-update-deployments)
+- [Governance Metadata Maintenance](#governance-metadata-maintenance)
 - [Deployment History (JSON Format)](#deployment-history-json-format)
 - [Creating a New Deployment Script](#creating-a-new-deployment-script)
   - [Naming Convention](#naming-convention)
@@ -44,7 +50,7 @@ A Foundry-based deployment framework that orchestrates smart contract deployment
 ## Architecture Overview
 
 ```
-script/deploy/
+scripts/deploy/
 ├── DeployManager.s.sol                  # Orchestrator — discovers, filters, and runs scripts
 ├── Base.s.sol                           # Shared infrastructure (VM, Resolver, chain config)
 ├── helpers/
@@ -55,7 +61,9 @@ script/deploy/
 │   ├── Resolver.sol                     # Contract address registry (vm.etched singleton)
 ├── mainnet/                             # Ethereum Mainnet scripts (001_, 002_, ...)
 │   └── 000_Example.s.sol               # Reference template (skip = true)
-└── sonic/                               # Sonic chain scripts
+├── sonic/                               # Sonic chain scripts
+├── base/                                # Base scripts
+└── hyperevm/                            # HyperEVM scripts
 ```
 
 **High-level flow:**
@@ -104,8 +112,8 @@ The `Resolver` (`helpers/Resolver.sol`) is the central in-memory registry that a
 
 | Domain | Purpose | Access Pattern |
 |--------|---------|----------------|
-| **Contracts** | Maps names → addresses (e.g., `"LIDO_ARM"` → `0x85B7...`) | `resolver.resolve("LIDO_ARM")` |
-| **Executions** | Tracks which scripts ran and their governance metadata | `resolver.executionExists("005_RegisterLido...")` |
+| **Contracts** | Maps names → addresses (e.g., `"OUSD_PROXY"` → `0x85B7...`) | `resolver.resolve("OUSD_PROXY")` |
+| **Executions** | Tracks which scripts ran and their governance metadata | `resolver.executionExists("003_UpgradeVault")` |
 | **State** | Current deployment mode (fork test, simulation, real) | `resolver.getState()` |
 
 **How it works:**
@@ -213,8 +221,10 @@ This filtering enables **historical fork replay**: set `FORK_BLOCK_NUMBER_MAINNE
 #### 2. Script Discovery
 
 Determines the script folder based on chain ID:
-- Chain `1` → `script/deploy/mainnet/`
-- Chain `146` → `script/deploy/sonic/`
+- Chain `1` → `scripts/deploy/mainnet/`
+- Chain `146` → `scripts/deploy/sonic/`
+- Chain `8453` → `scripts/deploy/base/`
+- Chain `999` → `scripts/deploy/hyperevm/`
 
 Reads all files via `vm.readDir()`, which returns entries in alphabetical order. This is why scripts use numeric prefixes (`001_`, `002_`, ...) — it guarantees execution order.
 
@@ -292,12 +302,12 @@ Deployment scripts define governance actions by overriding `_buildGovernanceProp
 
 ```solidity
 function _buildGovernanceProposal() internal override {
-    govProposal.setDescription("Upgrade LidoARM to v2");
+    govProposal.setDescription("Upgrade OUSD implementation");
 
     govProposal.action(
-        resolver.resolve("LIDO_ARM"),
+        resolver.resolve("OUSD_PROXY"),
         "upgradeTo(address)",
-        abi.encode(resolver.resolve("LIDO_ARM_IMPL"))
+        abi.encode(resolver.resolve("OUSD_IMPL"))
     );
 }
 ```
@@ -366,48 +376,13 @@ For each execution in the deployment history, the combination of `proposalId` an
 
 ---
 
-## Automated Governance Tracking
+## Governance Metadata Maintenance
 
-After a deployment, the JSON file initially has `proposalId = 0` and `tsGovernance = 0` for scripts with governance. Three components work together to fill these in automatically:
-
-### UpdateGovernanceMetadata.s.sol
-
-`script/automation/UpdateGovernanceMetadata.s.sol` is a standalone Forge script (not part of `DeployManager`) that updates `build/deployments-1.json`:
-
-**Case A — `proposalId == 0` (pending):**
-1. Deploys the original script via `vm.deployCode()`
-2. Calls `buildGovernanceProposal()` → computes `GovHelper.id(govProposal)`
-3. Checks if the proposal exists on-chain via `governance.proposalSnapshot(id) > 0`
-4. If it exists, writes the `proposalId` and also checks for the execution timestamp
-
-**Case B — `proposalId > 1` && `tsGovernance == 0` (submitted but not executed):**
-1. Calls `find_gov_prop_execution_timestamp.sh` via FFI
-2. If the proposal was executed, records the execution timestamp
-
-**Manual JSON serialization:** This script builds JSON strings manually instead of using `vm.serializeUint` because Foundry quotes `uint256` values exceeding 2^53 as strings (a JavaScript number precision issue), which would break the expected all-numeric format for proposal IDs and timestamps.
-
-### find_gov_prop_execution_timestamp.sh
-
-`script/automation/find_gov_prop_execution_timestamp.sh` is called via FFI (Foundry's `vm.ffi()`) to query on-chain events:
-
-1. Takes `proposalId`, `rpc_url`, `governor_address`, and `tsDeployment` as arguments
-2. Converts the deployment timestamp to a block number via `cast find-block`
-3. Queries `ProposalExecuted(uint256)` events from the Governor starting at that block
-4. Matches the event data against the proposal ID
-5. Returns the execution block's timestamp (ABI-encoded), or `0` if not yet executed
-
-### CI Workflow (update-deployments)
-
-`.github/workflows/update-deployments.yml` runs the metadata update automatically:
-
-- **Schedule:** Every hour (`0 */1 * * *`)
-- **Trigger:** Also available via `workflow_dispatch`
-- **Steps:**
-  1. Setup environment (Foundry + Soldeer)
-  2. `forge build && forge script script/automation/UpdateGovernanceMetadata.s.sol --fork-url $MAINNET_URL -vvvv`
-  3. If `build/deployments-*.json` changed, auto-commit and push
-
-This creates a hands-off workflow: deploy contracts → submit governance proposal manually → CI detects the proposal ID and eventual execution timestamp automatically.
+The metadata updater is not currently active. The Makefile contains only a
+commented placeholder for `update-deployments`, and there is no
+`update-deployments.yml` workflow. Proposal IDs and governance execution
+timestamps therefore require explicit maintenance in the reviewed deployment
+process.
 
 ---
 
@@ -419,6 +394,8 @@ Deployment history is stored in chain-specific JSON files:
 |------|-------|
 | `build/deployments-1.json` | Ethereum Mainnet |
 | `build/deployments-146.json` | Sonic |
+| `build/deployments-8453.json` | Base |
+| `build/deployments-999.json` | HyperEVM |
 | `build/deployments-fork-{timestamp}.json` | Temporary fork files (ignored by git) |
 
 ### Schema
@@ -428,11 +405,11 @@ Deployment history is stored in chain-specific JSON files:
   "contracts": [
     {
       "implementation": "0x85B78AcA6Deae198fBF201c82DAF6Ca21942acc6",
-      "name": "LIDO_ARM"
+      "name": "OUSD_PROXY"
     },
     {
       "implementation": "0xC0297a0E39031F09406F0987C9D9D41c5dfbc3df",
-      "name": "LIDO_ARM_IMPL"
+      "name": "OUSD_IMPL"
     }
   ],
   "executions": [
@@ -455,7 +432,7 @@ Deployment history is stored in chain-specific JSON files:
 ### Field Reference
 
 **Contracts:**
-- `name` — Unique identifier in `UPPER_SNAKE_CASE` (e.g., `"LIDO_ARM"`, `"ETHENA_ARM_IMPL"`)
+- `name` — Unique identifier in `UPPER_SNAKE_CASE` (e.g., `"OUSD_PROXY"`, `"OUSD_IMPL"`)
 - `implementation` — Deployed address. For proxies, this is the proxy address. Implementation addresses use a `_IMPL` suffix.
 
 **Executions:**
@@ -474,9 +451,9 @@ All three identifiers **must match exactly** — if they drift, the script will 
 
 | Component | Format | Example |
 |-----------|--------|---------|
-| **File** | `NNN_DescriptiveName.s.sol` | `017_UpgradeLidoARM.s.sol` |
-| **Contract** | `$NNN_DescriptiveName` (prefixed with `$`) | `$017_UpgradeLidoARM` |
-| **Constructor arg** | `"NNN_DescriptiveName"` (no `$`, no `.s.sol`) | `"017_UpgradeLidoARM"` |
+| **File** | `NNN_DescriptiveName.s.sol` | `017_UpgradeVault.s.sol` |
+| **Contract** | `$NNN_DescriptiveName` (prefixed with `$`) | `$017_UpgradeVault` |
+| **Constructor arg** | `"NNN_DescriptiveName"` (no `$`, no `.s.sol`) | `"017_UpgradeVault"` |
 
 **Why they must match:** DeployManager constructs the artifact path as `out/{name}.s.sol/${name}.json` from the filename. If the contract name inside the file differs, `vm.deployCode()` fails. The constructor argument becomes the script's `name` property, used for execution history lookups — if it differs from the filename, the skip logic breaks.
 
@@ -486,10 +463,11 @@ All three identifiers **must match exactly** — if they drift, the script will 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {AbstractDeployScript} from "script/deploy/helpers/AbstractDeployScript.s.sol";
-import {GovHelper, GovProposal} from "script/deploy/helpers/GovHelper.sol";
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
+import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
-contract $017_UpgradeLidoARM is AbstractDeployScript("017_UpgradeLidoARM") {
+contract $017_UpgradeVault is AbstractDeployScript("017_UpgradeVault") {
     using GovHelper for GovProposal;
 
     // Set to true to skip this script
@@ -497,20 +475,20 @@ contract $017_UpgradeLidoARM is AbstractDeployScript("017_UpgradeLidoARM") {
 
     function _execute() internal override {
         // 1. Get previously deployed contracts
-        address proxy = resolver.resolve("LIDO_ARM");
+        address proxy = resolver.resolve("OUSD_VAULT_PROXY");
 
         // 2. Deploy new contracts
         MyImpl impl = new MyImpl();
 
         // 3. Register deployments
-        _recordDeployment("LIDO_ARM_IMPL", address(impl));
+        _recordDeployment("OUSD_VAULT_IMPL", address(impl));
     }
 
     function _buildGovernanceProposal() internal override {
-        govProposal.setDescription("Upgrade LidoARM");
+        govProposal.setDescription("Upgrade OUSD Vault");
 
-        address proxy = resolver.resolve("LIDO_ARM");
-        address impl = resolver.resolve("LIDO_ARM_IMPL");
+        address proxy = resolver.resolve("OUSD_VAULT_PROXY");
+        address impl = resolver.resolve("OUSD_VAULT_IMPL");
 
         govProposal.action(proxy, "upgradeTo(address)", abi.encode(impl));
     }
@@ -536,13 +514,13 @@ See `mainnet/000_Example.s.sol` for a comprehensive, fully-commented template.
 
 ```solidity
 // Look up a previously deployed contract (reverts if not found)
-address proxy = resolver.resolve("LIDO_ARM");
+address proxy = resolver.resolve("OUSD_PROXY");
 
 // Register a newly deployed contract
 _recordDeployment("MY_CONTRACT", address(myContract));
 
 // Check if a script was previously executed
-bool ran = resolver.executionExists("005_RegisterLido...");
+bool ran = resolver.executionExists("003_UpgradeVault");
 
 // Contracts registered with _recordDeployment become available
 // to subsequent scripts via resolver.resolve()
@@ -554,33 +532,34 @@ bool ran = resolver.executionExists("005_RegisterLido...");
 
 ### Smoke Tests
 
-Smoke tests use the deployment framework directly. `AbstractSmokeTest.setUp()` bootstraps the full deployment pipeline:
+Smoke tests use the deployment framework through `BaseSmoke`. A chain-specific
+shared test creates and selects its fork, then calls `_igniteDeployManager()`:
 
 ```solidity
-abstract contract AbstractSmokeTest is Test {
-    Resolver internal resolver = Resolver(address(uint160(uint256(keccak256("Resolver")))));
-    DeployManager internal deployManager;
-
-    function setUp() public virtual {
-        // Create fork (optionally pinned to FORK_BLOCK_NUMBER_MAINNET)
-        vm.createSelectFork(vm.envString("MAINNET_URL"));
-
-        deployManager = new DeployManager();
-        deployManager.setUp();  // → FORK_TEST state, etch Resolver
-        deployManager.run();    // → replay all scripts, simulate governance
-    }
+function setUp() public virtual override {
+    super.setUp();
+    _createAndSelectForkMainnet();
+    _igniteDeployManager();
+    _fetchContracts();
 }
 ```
 
-After setup, smoke test contracts access deployed addresses via `resolver.resolve("LIDO_ARM")`. This ensures every smoke test runs against the full deployment state — including any pending scripts that haven't been deployed to mainnet yet.
+After setup, smoke test contracts access deployed addresses via the Resolver.
+This ensures every smoke test runs against the full deployment state — including
+pending scripts that have not yet been deployed to the target chain.
 
 ### Fork Tests
 
-Fork tests (`test/fork/`) are **independent** of the deployment framework. They deploy contracts from scratch against a forked chain, testing behavior in isolation. They do NOT use DeployManager or the Resolver.
+Fork tests (`tests/fork/`) are independent of DeployManager and Resolver. Most
+deploy Origin contracts fresh against real external protocols; tests whose
+purpose depends on deployed configuration may bind to live Origin addresses.
 
 ### Pinned-Block Testing
 
-Set `FORK_BLOCK_NUMBER_MAINNET` (or `FORK_BLOCK_NUMBER_SONIC`) to pin smoke tests to a specific block. The framework's timestamp filtering in `_preDeployment()` automatically excludes deployments and governance executions that happened after that block, producing a historically accurate state.
+Set the applicable `FORK_BLOCK_NUMBER_MAINNET`, `FORK_BLOCK_NUMBER_BASE`,
+`FORK_BLOCK_NUMBER_ARBITRUM`, or `FORK_BLOCK_NUMBER_HYPEREVM` variable to pin a
+fork. Timestamp filtering in `_preDeployment()` excludes later deployments and
+governance executions.
 
 ---
 
@@ -592,8 +571,9 @@ Set `FORK_BLOCK_NUMBER_MAINNET` (or `FORK_BLOCK_NUMBER_SONIC`) to pin smoke test
 # Mainnet simulation (FORK_DEPLOYING state)
 make simulate
 
-# Sonic simulation
-make simulate NETWORK=sonic
+# Base or HyperEVM simulation
+make simulate NETWORK=base
+make simulate NETWORK=hyperevm
 ```
 
 Simulation runs the full pipeline with `vm.prank` instead of `vm.broadcast`. Governance proposals are simulated end-to-end. Writes go to a temporary fork file.
@@ -601,33 +581,25 @@ Simulation runs the full pipeline with `vm.prank` instead of `vm.broadcast`. Gov
 ### Deploy
 
 ```bash
-# Ethereum Mainnet (requires deployerKey wallet, DEPLOYER_ADDRESS, MAINNET_URL, ETHERSCAN_API_KEY)
+# Ethereum Mainnet
 make deploy-mainnet
 
-# Sonic (requires deployerKey wallet, DEPLOYER_ADDRESS, SONIC_URL)
-make deploy-sonic
+# Base and HyperEVM
+make deploy-base
+make deploy-hyperevm
 
 # Local Anvil node
 make deploy-local
 
-# Tenderly testnet (uses --unlocked, no key needed)
-make deploy-testnet
 ```
 
 Private keys are managed via Foundry's encrypted keystore: `cast wallet import deployerKey --interactive`.
-
-### Update Governance Metadata
-
-```bash
-# Run the metadata updater manually (requires MAINNET_URL)
-make update-deployments
-```
 
 ### Makefile Variables
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `DEPLOY_SCRIPT` | `script/deploy/DeployManager.s.sol` | Entry point script |
+| `DEPLOY_SCRIPT` | `scripts/deploy/DeployManager.s.sol` | Entry point script |
 | `DEPLOY_BASE` | `--account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow` | Common deployment flags |
 | `NETWORK` | `mainnet` | Target network for `make simulate` |
 
@@ -635,17 +607,20 @@ make update-deployments
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in the required values.
+Copy `dev.env` to `.env` and fill in the required values.
 
 | Variable | Required For | Purpose |
 |----------|-------------|---------|
-| `MAINNET_URL` | Fork tests, smoke tests, mainnet deploy, simulate | Ethereum RPC endpoint |
-| `SONIC_URL` | Sonic fork tests, Sonic deploy | Sonic RPC endpoint |
+| `MAINNET_PROVIDER_URL` | Mainnet fork tests, smoke tests, deploy, simulate | Ethereum RPC endpoint |
+| `BASE_PROVIDER_URL` | Base fork tests, smoke tests, deploy, simulate | Base RPC endpoint |
+| `ARBITRUM_PROVIDER_URL` | Arbitrum fork tests | Arbitrum RPC endpoint |
+| `HYPEREVM_PROVIDER_URL` | HyperEVM fork tests, smoke tests, deploy, simulate | HyperEVM RPC endpoint |
 | `DEPLOYER_ADDRESS` | All real deployments | Must match the `deployerKey` wallet |
 | `ETHERSCAN_API_KEY` | Mainnet deploy (`--verify`) | Contract verification on Etherscan |
 | `FORK_BLOCK_NUMBER_MAINNET` | Optional | Pin fork to specific block for deterministic testing |
-| `FORK_BLOCK_NUMBER_SONIC` | Optional | Pin Sonic fork to specific block |
-| `TESTNET_URL` | Tenderly testnet deploy | Tenderly RPC endpoint |
+| `FORK_BLOCK_NUMBER_BASE` | Optional | Pin Base fork to a specific block |
+| `FORK_BLOCK_NUMBER_ARBITRUM` | Optional | Pin Arbitrum fork to a specific block |
+| `FORK_BLOCK_NUMBER_HYPEREVM` | Optional | Pin HyperEVM fork to a specific block |
 | `LOCAL_URL` | Local Anvil deploy | Local node endpoint |
 
 ---
@@ -654,28 +629,22 @@ Copy `.env.example` to `.env` and fill in the required values.
 
 ### Composite Setup Action
 
-`.github/actions/setup/action.yml` provides a reusable environment setup:
-1. Checkout with submodules
-2. Install Foundry (stable, with cache)
-3. Install Soldeer dependencies (with cache)
-4. Optionally install Yarn dependencies (with cache)
+`.github/actions/foundry-setup/action.yml` provides a reusable environment setup:
+1. Install Foundry.
+2. Cache and install Soldeer dependencies.
+3. Set up pnpm and Node.js, then install the contract workspace dependencies.
+4. Cache Forge build artifacts and build the contracts.
 
-### CI Jobs (`.github/workflows/main.yml`)
+### CI Jobs (`.github/workflows/foundry.yml`)
 
 | Job | Trigger | Uses Deployment Framework? |
 |-----|---------|--------------------------|
-| **lint** | PRs, pushes (not schedule) | No |
+| **fmt** | PRs, pushes (not schedule) | No |
 | **build** | PRs, pushes (not schedule) | No |
 | **unit-tests** | PRs, pushes (not schedule) | No |
-| **fork-tests** | All triggers | No (deploys from scratch) |
-| **smoke-tests** | All triggers | Yes (bootstraps DeployManager) |
-| **invariant-tests-ARM** | All triggers | No (deploys from scratch) |
-
-### Invariant Profile Selection
-
-Invariant test intensity is controlled by the `FOUNDRY_PROFILE` environment variable:
-- **`lite`** — Used on PRs and feature branch pushes (faster, fewer runs)
-- **`ci`** — Used on `main` pushes, scheduled runs, and `workflow_dispatch` (full runs, includes Medusa fuzzing for EthenaARM)
+| **fork-tests-mainnet/base/hyperevm** | All workflow triggers | No (mostly deploy from scratch) |
+| **smoke-tests-mainnet/base/hyperevm** | All workflow triggers | Yes (bootstraps DeployManager) |
+| **slither**, **snyk** | PRs, pushes (not schedule) | No |
 
 ---
 
@@ -699,8 +668,8 @@ Invariant test intensity is controlled by the `FOUNDRY_PROFILE` environment vari
 
 9. **Historical fork replay** — Set `FORK_BLOCK_NUMBER_MAINNET` to a historical block and the framework will only replay deployments that existed at that point, skipping future ones.
 
-10. **Adding a new chain** — Add the chain ID → name mapping in `Base.s.sol`'s constructor, create a new directory under `script/deploy/`, and add the chain ID routing in `DeployManager.run()`.
+10. **Adding a new chain** — Add the chain ID → name mapping in `Base.s.sol`, create a directory under `scripts/deploy/`, add routing in `DeployManager.run()`, then add the RPC alias, Makefile targets, and CI coverage as appropriate.
 
-11. **Use descriptive contract names** — Names like `LIDO_ARM_IMPL` are clearer than `IMPL_V2`.
+11. **Use descriptive contract names** — Names like `OUSD_IMPL` are clearer than `IMPL_V2`.
 
 12. **Reference the example** — See `mainnet/000_Example.s.sol` for a comprehensive, fully-commented template.
