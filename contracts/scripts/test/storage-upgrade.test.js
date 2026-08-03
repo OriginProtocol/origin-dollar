@@ -183,6 +183,33 @@ describe("rename policy", () => {
     assert.equal(passes(separated, swapped), false);
   });
 
+  test("a swap between names in a containment relationship is rejected", () => {
+    // The one containment alone cannot catch: `token` and `tokenB` each contain
+    // the other, so both renames look derived. Only the batch-level check that
+    // no rename claims another's old label rejects this. Code reading `token`
+    // would otherwise read what used to be `tokenB`.
+    const l = layout([
+      "token:t_address",
+      "n:t_uint256",
+      "tokenB:t_address",
+      gap(50),
+    ]);
+    const swapped = swapLabels(l, "token", "tokenB");
+    assert.deepEqual(
+      check(l, swapped).blocking.map((e) => e.kind),
+      ["rename", "rename"],
+      "fixture must produce renames, or it is not testing the filter"
+    );
+    assert.equal(passes(l, swapped), false);
+  });
+
+  test("a lone derived rename is still accepted", () => {
+    // The batch check must not over-reach: nothing else claims `owner`, so this
+    // moves no storage and stays allowed.
+    const l = layout(["owner:t_address", "n:t_uint256", gap(50)]);
+    assert.ok(passes(l, rename(l, "owner", "ownerAddress")));
+  });
+
   test("a swap of adjacent same-typed variables is also rejected", () => {
     // Same hazard, different OZ classification (delete/insert). Worth pinning
     // both so a change to OZ's diffing cannot quietly open one of them.

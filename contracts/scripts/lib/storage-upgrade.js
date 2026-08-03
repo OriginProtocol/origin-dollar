@@ -142,7 +142,28 @@ function evaluate({ contract, network, candidate, descriptor, allowBreak }) {
     { unsafeAllowCustomTypes: true }
   );
 
-  const blocking = errors.filter((e) => !isDerivedRename(e));
+  // A rename is only safe when BOTH hold:
+  //
+  //   1. the new label is derived from the old one (isDerivedRename) — this is
+  //      about intent: `assets` -> `_deprecated_assets` is the same concept,
+  //      `owner` -> `treasury` repurposes a slot whose deployed value still
+  //      means the old thing;
+  //   2. no other renamed variable is taking over the old label. Two variables
+  //      trading names leaves every slot in place but makes code that reads X
+  //      read what used to be Y. Containment alone does not catch this: in a
+  //      `token` <-> `tokenB` swap each name contains the other, so both look
+  //      derived.
+  const renamedFromLabels = new Set(
+    errors
+      .filter((e) => e.kind === "rename" && e.original)
+      .map((e) => e.original.label)
+  );
+  const claimsAnotherOldLabel = (e) =>
+    e.kind === "rename" && e.updated && renamedFromLabels.has(e.updated.label);
+
+  const blocking = errors.filter(
+    (e) => !isDerivedRename(e) || claimsAnotherOldLabel(e)
+  );
   const renamed = errors.length - blocking.length;
   if (renamed > 0) {
     messages.push(
