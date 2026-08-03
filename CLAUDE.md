@@ -27,16 +27,17 @@ Key `.env` variables: `PROVIDER_URL`, `SONIC_PROVIDER_URL`, `BASE_PROVIDER_URL`,
 as an *optional peer dependency* so that CI and external contributors can install
 this repo without GitHub Packages credentials.
 
-You need it to **run** anything that talks to a chain — `tsx tasks/run.ts`
-(`tasks/lib/network.ts` resolves the RPC env var through it) and
-`tasks/lib/signer.ts` (KMS signer + Postgres nonce queue).
+Only two modules import it: `tasks/lib/signer.ts` (KMS signer + Postgres nonce
+queue) and `runner.ts` (container entrypoint). You need it to **run** anything
+that signs a transaction; you do not need it to resolve an RPC URL or to load
+code.
 
-You do **not** need it merely to load code. `tasks/lib/network.ts` requires it
-lazily, inside `rpcUrlFor()`, precisely so that importers further up the chain —
-`utils/resolvers.js` → `utils/morpho.js` → `tasks/tasks.js` →
-`hardhat.config.js` — keep working without it. Do not hoist that back to a
-top-level import: it breaks `hardhat deploy` in the ABI publish workflow, which
-installs without GitHub Packages auth.
+`tasks/lib/network.ts` used to import it for chain/RPC-env-var lookup, which
+dragged the requirement all the way up through `utils/resolvers.js` →
+`utils/morpho.js` → `tasks/tasks.js` → `hardhat.config.js` and broke
+`hardhat deploy` in the ABI publish workflow, which installs without GitHub
+Packages auth. #2954 replaced that with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
+Do not reintroduce the import there.
 
 ```bash
 pnpm install:talos
