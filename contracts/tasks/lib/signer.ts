@@ -1,10 +1,4 @@
 import { ethers } from "ethers";
-import {
-  createDb,
-  createPool,
-  wrapSignerWithNonceQueueV5,
-  type Db,
-} from "@oplabs/talos-client";
 import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
 import { getProvider } from "./network";
 // CJS util.
@@ -23,10 +17,15 @@ import {
  * instead of hre.ethers.provider.
  */
 
-let dbInstance: Db | null = null;
-function getNonceDb(): Db | null {
+// `@oplabs/talos-client` is an optional peer dependency, only present in the
+// runner image. Require it lazily so that loading this module — and therefore
+// `tasks/run.ts` — works locally without it. Only the Postgres nonce queue
+// needs it, and that is gated on DATABASE_URL, which local runs do not set.
+let dbInstance: unknown = null;
+function getNonceDb(): unknown {
   if (!process.env.DATABASE_URL) return null;
   if (!dbInstance) {
+    const { createDb, createPool } = require("@oplabs/talos-client");
     dbInstance = createDb(
       createPool({ connectionString: process.env.DATABASE_URL })
     );
@@ -36,9 +35,9 @@ function getNonceDb(): Db | null {
 
 function maybeWrap(signer: ethers.Signer): ethers.Signer {
   const db = getNonceDb();
-  return db
-    ? (wrapSignerWithNonceQueueV5(signer, { db }) as unknown as ethers.Signer)
-    : signer;
+  if (!db) return signer;
+  const { wrapSignerWithNonceQueueV5 } = require("@oplabs/talos-client");
+  return wrapSignerWithNonceQueueV5(signer, { db }) as ethers.Signer;
 }
 
 export async function getSigner(): Promise<ethers.Signer> {

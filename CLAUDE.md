@@ -27,45 +27,24 @@ Key `.env` variables: `PROVIDER_URL`, `SONIC_PROVIDER_URL`, `BASE_PROVIDER_URL`,
 as an *optional peer dependency* so that CI and external contributors can install
 this repo without GitHub Packages credentials.
 
-Only two modules import it: `tasks/lib/signer.ts` (KMS signer + Postgres nonce
-queue) and `runner.ts` (container entrypoint). You need it to **run** anything
-that signs a transaction; you do not need it to resolve an RPC URL or to load
-code.
-
-`tasks/lib/network.ts` used to import it for chain/RPC-env-var lookup, which
-dragged the requirement all the way up through `utils/resolvers.js` →
-`utils/morpho.js` → `tasks/tasks.js` → `hardhat.config.js` and broke
-`hardhat deploy` in the ABI publish workflow, which installs without GitHub
-Packages auth. #2954 replaced that with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
-Do not reintroduce the import there.
-
-```bash
-pnpm install:talos
-```
-
-The script sources a token from the `gh` CLI (or an explicit `NODE_AUTH_TOKEN`),
-verifies it can actually read the package, installs it via a throwaway npm config,
-and then **restores `package.json` and `pnpm-lock.yaml`**. That restore is
-deliberate: committing the package as a normal dependency breaks CI, which has no
-GitHub Packages auth.
-
-Do not put the auth token in `contracts/.npmrc`. pnpm prints a
-`Failed to replace env in config` warning on *every* command when an `.npmrc`
-references an unset variable, so that noise would hit CI and every engineer
-without a token.
-
-Two things to know:
-
-- `gh auth login` does **not** request the `read:packages` scope. If the script
-  reports a scope error, run `gh auth refresh -s read:packages` once.
-- Because the install is not persisted, any later `pnpm install` prunes it.
-  Re-run the script afterwards.
-
-Neither CI nor the Talos runner image uses this script. CI installs without the
-package (`pnpm install --frozen-lockfile`, no GitHub Packages auth) and never
-needs it; `dockerfile-actions` installs it explicitly with the
-`talos_package_token` build secret, reading the same pinned version from
+**Nothing local needs it.** `hardhat`, `tsx tasks/run.ts <action>` and the tests
+all load and run without it. Only the runner image does: `runner.ts` (container
+entrypoint) imports it statically, and `tasks/lib/signer.ts` `require()`s it
+lazily for the Postgres nonce queue, which is gated on `DATABASE_URL` — unset
+locally, so the require never fires. `dockerfile-actions` installs it with the
+`talos_package_token` build secret, reading the pinned version from
 `peerDependencies`.
+
+Keep it that way. Two regressions to avoid:
+
+- Do not make the `signer.ts` require a static import. `tasks/run.ts` imports
+  `getSigner` at the top level, so a static import makes every local action run
+  fail with `Cannot find module '@oplabs/talos-client'`.
+- Do not import it from `tasks/lib/network.ts`. That used to drag the
+  requirement up through `utils/resolvers.js` → `utils/morpho.js` →
+  `tasks/tasks.js` → `hardhat.config.js` and broke `hardhat deploy` in the ABI
+  publish workflow, which installs without GitHub Packages auth. #2954 replaced
+  it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
 
 ## Commands (run from `contracts/`)
 
