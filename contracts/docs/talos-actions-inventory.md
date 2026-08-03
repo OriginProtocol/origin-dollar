@@ -31,7 +31,6 @@
 | `utils/signersNoHardhat` | 8 | eth, sonic, hyper, base, holesky, arb, plume, hoodi |
 | `utils/addresses` | 7 | eth, sonic, hyper, base, holesky, arb, hoodi |
 | `utils/txLogger` | 6 | eth, sonic, hyper, base, plume, hoodi |
-| `utils/defender` | 5 | eth, hyper, base, holesky, hoodi |
 | `abi/IWETH9.json` | 3 | eth, holesky, hoodi |
 | `abi/native_staking_SSV_strategy.json` | 3 | eth, holesky, hoodi |
 | `utils/cctp` | 3 | eth, hyper, base |

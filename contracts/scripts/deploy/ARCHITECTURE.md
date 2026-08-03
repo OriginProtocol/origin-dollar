@@ -647,8 +647,6 @@ Copy `.env.example` to `.env` and fill in the required values.
 | `FORK_BLOCK_NUMBER_SONIC` | Optional | Pin Sonic fork to specific block |
 | `TESTNET_URL` | Tenderly testnet deploy | Tenderly RPC endpoint |
 | `LOCAL_URL` | Local Anvil deploy | Local node endpoint |
-| `DEFENDER_TEAM_KEY` | Defender Action management | OpenZeppelin Defender team API key |
-| `DEFENDER_TEAM_SECRET` | Defender Action management | OpenZeppelin Defender team API secret |
 
 ---
 
