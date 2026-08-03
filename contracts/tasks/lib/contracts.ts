@@ -58,7 +58,10 @@ function readDeployment(
 // Resolve an ABI by contract/interface name: curated abi/<name>.json first
 // (interfaces like IVault), then the deployment artifact's abi.
 function readAbiByName(chainId: number, name: string): unknown[] {
-  const curated = join(CONTRACTS_ROOT, "abi", `${name}.json`);
+  // IERC20Metadata is a strict superset of IERC20 and is the curated ERC-20
+  // interface shipped with the standalone actions image.
+  const curatedName = name === "IERC20" ? "IERC20Metadata" : name;
+  const curated = join(CONTRACTS_ROOT, "abi", `${curatedName}.json`);
   if (existsSync(curated)) return JSON.parse(readFileSync(curated, "utf8"));
   const dep = join(
     CONTRACTS_ROOT,

@@ -133,15 +133,6 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
-  // Mainnet fixed-slot proof generation currently decodes against Electra-era beacon data.
-  const BeaconBlock =
-    networkName === "mainnet"
-      ? ssz.electra.BeaconBlock
-      : ssz.electra.BeaconBlock;
-  const BeaconState =
-    networkName === "mainnet"
-      ? ssz.electra.BeaconState
-      : ssz.electra.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
@@ -153,6 +144,9 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     );
   }
 
+  const fork = blockRes.meta().version;
+  const BeaconBlock = ssz[fork].BeaconBlock;
+  const BeaconState = ssz[fork].BeaconState;
   const blockView = BeaconBlock.toView(blockRes.value().message);
 
   const stateFilename = `./cache/state_${blockView.slot}.ssz`;

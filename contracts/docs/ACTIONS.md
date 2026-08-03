@@ -112,17 +112,17 @@ each run (see notes in `seed_schedules.sql`).
 
 ### Vault strategy proposal parameters
 
-Talos locks the Hardhat `--network` option, so there are two disabled manual
-schedules: `propose_vault_strategy_moves_mainnet` for Ethereum and
+Talos locks the `--network` option, so there are two disabled manual schedules:
+`propose_vault_strategy_moves_mainnet` for Ethereum and
 `propose_vault_strategy_moves_base` for Base. Before selecting "Run now", edit
 `--vault` and `--moves` on the Ethereum schedule, or `--moves` on the Base
-schedule. The underlying Hardhat action remains shared across both chains.
+schedule. The underlying action remains shared across both chains.
 
 `proposeVaultStrategyMoves` accepts ordered, semicolon-separated movements. A
 strategy can be a deployment name or address:
 
 ```sh
-pnpm hardhat proposeVaultStrategyMoves \
+pnpm exec tsx tasks/run.ts proposeVaultStrategyMoves \
   --network mainnet \
   --vault OUSD \
   --moves "withdraw:OUSDMorphoV2StrategyProxy:500000;deposit:OUSDCurveAMOProxy:250000"
@@ -132,14 +132,27 @@ Supported operations are `deposit:<strategy>:<amount>`,
 `withdraw:<strategy>:<amount>`, and `withdrawAll:<strategy>`. Amounts are human
 units of the Vault's backing asset. Operations execute in the supplied order.
 
-By default the action starts a temporary Hardhat fork, executes
-`rebase -> snapshot -> movements`, derives `expectedProfit` and
-`expectedVaultChange`, validates `checkDelta`, and then estimates the completed
-Safe MultiSend before proposing it. The atomic proposal is always
+By default the action simulates the proposal against the network's own RPC with
+`eth_simulateV1`, pinned to a single block. A first pass runs
+`rebase -> snapshot -> movements` and derives `expectedProfit` and
+`expectedVaultChange`; a second pass replays the assembled batch to confirm it
+passes `checkDelta`. It then estimates the completed Safe MultiSend before
+proposing it. The atomic proposal is always
 `rebase -> snapshot -> movements -> checkDelta`.
 
-- `--skip-fork` skips the local fork and requires both `--expected-profit` and
-  `--expected-vault-change`.
+The RPC must implement `eth_simulateV1`. If it does not, the action fails with
+instructions rather than proposing an unsimulated batch — use `--skip-fork` with
+explicit expected values as the deliberate fallback.
+
+For AMO strategies (for example `OUSDCurveAMOProxy`) a movement burns or mints
+OTokens, so `expectedVaultChange` tracks pool state at execution time rather
+than at proposal time. The default variances are tight enough that a proposal
+waiting on its second confirmation can revert on `checkDelta` if the pool moves.
+That fails safe, but it consumes a Safe nonce and gas — pass an explicit
+`--vault-change-variance` for AMO movements.
+
+- `--skip-fork` skips simulation entirely and requires both `--expected-profit`
+  and `--expected-vault-change`.
 - `--skip-estimation` skips only the final Safe estimation.
 - `--dryrun` runs all enabled checks without signing or proposing.
 - `--nonce <n>` targets an unexecuted Safe nonce so a pending proposal can be
