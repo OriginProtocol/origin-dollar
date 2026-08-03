@@ -16,8 +16,8 @@ import {
 
 /**
  * Standalone (hardhat-free) signer factory. Same precedence as the old
- * utils/signers.js minus the Defender relay path, and reusing the exact same
- * production-proven building blocks: the purrikey AWS KMS ethers signer and the
+ * utils/signers.js, reusing the exact same production-proven building blocks:
+ * the purrikey AWS KMS ethers signer and the
  * Talos ethers-v5 nonce queue (wrapSignerWithNonceQueueV5). The only change vs.
  * hardhat is the provider — a standalone JsonRpcProvider from the RPC env
  * instead of hre.ethers.provider.
@@ -43,14 +43,6 @@ function maybeWrap(signer: ethers.Signer): ethers.Signer {
 
 export async function getSigner(): Promise<ethers.Signer> {
   const provider = getProvider();
-
-  if (process.env.USE_DEFENDER_SIGNER === "1") {
-    throw new Error(
-      "USE_DEFENDER_SIGNER=1 was requested, but the Defender relay signer path " +
-        "was removed in the hardhat->standalone migration. Uncheck 'Use Defender " +
-        "Relayer' on this action, or run with AWS KMS / a private key."
-    );
-  }
 
   // 1. AWS KMS (production) — reuse the existing purrikey ethers signer.
   if (hasAwsKmsCredentials()) {

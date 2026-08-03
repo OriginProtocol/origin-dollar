@@ -424,7 +424,6 @@ library Hoodi {
     address internal constant SSV = 0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e;
     address internal constant SSVNetwork = 0x58410Bef803ECd7E63B23664C586A6DB72DAf59c;
     address internal constant beaconChainDepositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
-    address internal constant defenderRelayer = 0x419B6BdAE482f41b8B194515749F3A2Da26d583b;
     address internal constant mockBeaconRoots = 0xdCfcAE4A084AA843eE446f400B23aA7B6340484b;
 }
 
