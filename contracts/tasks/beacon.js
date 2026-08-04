@@ -175,7 +175,7 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({ slot, index, dryrun, cred, signer }) {
+async function verifyValidator({ slot, index, dryrun, cred, ssv, signer }) {
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
 
@@ -186,10 +186,15 @@ async function verifyValidator({ slot, index, dryrun, cred, signer }) {
     networkName
   );
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const strategy = ssv
+    ? await resolveContract(
+        "CompoundingStakingSSVStrategyProxy",
+        "CompoundingStakingSSVStrategy"
+      )
+    : await resolveContract(
+        "CompoundingStakingStrategyProxy",
+        "CompoundingStakingStrategy"
+      );
 
   if (cred) {
     log(`Overriding withdrawal credentials to ${cred}`);
