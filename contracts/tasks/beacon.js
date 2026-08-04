@@ -175,15 +175,7 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({
-  slot,
-  index,
-  ids,
-  dryrun,
-  cred,
-  ssv,
-  signer,
-}) {
+async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
   if (index === undefined && ids === undefined) {
     throw new Error("Pass either --index or --ids");
   }
@@ -213,15 +205,10 @@ async function verifyValidator({
     networkName
   );
 
-  const strategy = ssv
-    ? await resolveContract(
-        "CompoundingStakingSSVStrategyProxy",
-        "CompoundingStakingSSVStrategy"
-      )
-    : await resolveContract(
-        "CompoundingStakingStrategyProxy",
-        "CompoundingStakingStrategy"
-      );
+  const strategy = await resolveContract(
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
+  );
 
   if (cred) {
     log(`Overriding withdrawal credentials to ${cred}`);
@@ -367,8 +354,8 @@ async function getProcessedDeposits(pendingDeposits) {
 
 async function verifyDeposits({ dryrun, signer, consol = false }) {
   const stakingStrategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
   );
   const contract = consol
     ? await resolveContract("ConsolidationController")
@@ -422,8 +409,8 @@ async function verifyDeposit({
   signer,
 }) {
   const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
   );
 
   let strategyDepositSlot = 0;
@@ -625,8 +612,8 @@ async function verifyBalances({
   const strategy = test
     ? undefined
     : await resolveContract(
-        "CompoundingStakingSSVStrategyProxy",
-        "CompoundingStakingSSVStrategy"
+        "CompoundingStakingStrategyProxy",
+        "CompoundingStakingStrategy"
       );
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
 

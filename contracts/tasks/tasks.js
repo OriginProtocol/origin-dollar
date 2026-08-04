@@ -1981,12 +1981,6 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     undefined,
     types.string
   )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyValidator({ ...taskArgs, signer });
