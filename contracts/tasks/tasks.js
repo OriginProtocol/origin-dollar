@@ -1951,11 +1951,17 @@ task("getValidators").setAction(async (_, __, runSuper) => {
 });
 
 subtask("verifyValidator", "Verify a validator on the Beacon chain")
-  .addParam(
+  .addOptionalParam(
     "index",
     "Index of the validator on the Beacon chain",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "ids",
+    "Comma-separated validator indexes to verify using one beacon state",
+    undefined,
+    types.string
   )
   .addOptionalParam(
     "slot",
