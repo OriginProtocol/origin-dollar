@@ -22,7 +22,10 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    await verifyDeposits({ ...args, signer });
-    cleanStateCache();
+    try {
+      await verifyDeposits({ ...args, signer });
+    } finally {
+      cleanStateCache();
+    }
   },
 });
