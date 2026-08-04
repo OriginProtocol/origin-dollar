@@ -29,7 +29,7 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     mapping(address => bool) public supportedStrategies;
 
     /// @notice Gap for upgrade safety
-    uint256[48] private ___gap;
+    uint256[48] private __gap;
 
     ////////////////////////////////////////////////////
     /// --- EVENTS

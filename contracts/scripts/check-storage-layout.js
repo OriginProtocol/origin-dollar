@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { execSync } = require("child_process");
+const { existsSync } = require("fs");
 const path = require("path");
 const os = require("os");
 
@@ -54,7 +55,9 @@ function createWorktree(ref) {
     os.tmpdir(),
     `storage-check-${ref.replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`
   );
-  execSync(`git worktree add "${dir}" "${ref}"`, {
+  // --detach: without it, `git worktree add` refuses any branch that is already
+  // checked out somewhere — which includes the default base ref, `master`.
+  execSync(`git worktree add --detach "${dir}" "${ref}"`, {
     stdio: "pipe",
     cwd: path.resolve(__dirname, "../.."),
   });
@@ -85,10 +88,18 @@ function installDeps(contractsDir) {
   } catch {
     console.warn("  Warning: dependency install had issues, continuing...");
   }
-  execSync("forge clean", {
-    cwd: contractsDir,
-    stdio: "pipe",
-  });
+}
+
+// The working tree is used as-is for the head side, so its forge dependencies
+// have to already be there. Fail with something actionable instead of letting
+// `forge inspect` report a missing import.
+function assertDepsInstalled(contractsDir) {
+  if (existsSync(path.join(contractsDir, "dependencies"))) return;
+  console.error(
+    `Error: forge dependencies are missing in ${contractsDir}.\n` +
+      `Run: bash install-deps.sh`
+  );
+  process.exit(1);
 }
 
 function forgeInspect(contractsDir, contractName) {
@@ -128,7 +139,10 @@ function getTypeSize(layout, typeName) {
 }
 
 function isGapVariable(entry) {
-  return /^_{0,2}gap$/.test(entry.label);
+  // Any number of leading underscores. Sources are unified on `__gap` (plus a
+  // legacy `_gap` in OUSD), but stay permissive so a reintroduced `___gap`
+  // is still recognised as a gap rather than a removed variable.
+  return /^_*gap$/.test(entry.label);
 }
 
 function gapSlotCount(layout, entry) {
@@ -138,7 +152,7 @@ function gapSlotCount(layout, entry) {
   return parseInt(t.numberOfBytes, 10) / 32;
 }
 
-function compareLayouts(oldLayout, newLayout, contractName) {
+function compareLayouts(oldLayout, newLayout) {
   const errors = [];
   const infos = [];
 
@@ -227,45 +241,37 @@ function compareLayouts(oldLayout, newLayout, contractName) {
       continue;
     }
 
-    // Name changed — just informational
+    // Name changed. A same-typed variable shifting into this slot looks exactly
+    // like a rename, so only accept it when the new name retires the slot —
+    // anything else is treated as a shift.
     if (oldEntry.label !== newEntry.label) {
-      infos.push(
-        `Variable renamed at slot ${oldEntry.slot}: "${oldEntry.label}" → "${newEntry.label}"`
-      );
-    }
-  }
-
-  // Check for new entries that don't exist in old layout
-  const oldBySlotOffset = new Map();
-  for (const entry of oldStorage) {
-    oldBySlotOffset.set(`${entry.slot}:${entry.offset}`, entry);
-  }
-
-  // Find the highest slot used in the old layout
-  let maxOldSlot = -1;
-  for (const entry of oldStorage) {
-    const slot = parseInt(entry.slot, 10);
-    const size = getTypeSize(oldLayout, entry.type) || 32;
-    const endSlot = slot + Math.ceil(size / 32) - 1;
-    if (endSlot > maxOldSlot) maxOldSlot = endSlot;
-  }
-
-  for (const newEntry of newStorage) {
-    const key = `${newEntry.slot}:${newEntry.offset}`;
-    if (!oldBySlotOffset.has(key) && !isGapVariable(newEntry)) {
-      const slot = parseInt(newEntry.slot, 10);
-      if (slot <= maxOldSlot) {
-        // New variable inserted within old range — could be filling a gap slot
-        // which is fine. But if it's not a gap area, flag it.
+      if (/deprecated/i.test(newEntry.label)) {
         infos.push(
-          `New variable "${newEntry.label}" (${newEntry.contract}) at slot ${newEntry.slot} offset ${newEntry.offset}`
+          `Slot ${oldEntry.slot} deprecated: "${oldEntry.label}" → "${newEntry.label}"`
         );
       } else {
-        infos.push(
-          `New variable "${newEntry.label}" (${newEntry.contract}) appended at slot ${newEntry.slot}`
+        errors.push(
+          `Variable renamed at slot ${oldEntry.slot} offset ${oldEntry.offset}: ` +
+            `"${oldEntry.label}" → "${newEntry.label}". Either this is a storage ` +
+            `shift, or the slot is being retired and the new name must contain ` +
+            `"deprecated".`
         );
       }
     }
+  }
+
+  // Variables occupying a slot the old layout never used. Whether they were
+  // carved out of a gap or appended past the end, they displace nothing — any
+  // placement that does displace something already errored above.
+  const oldSlotOffsets = new Set(
+    oldStorage.map((e) => `${e.slot}:${e.offset}`)
+  );
+  for (const newEntry of newStorage) {
+    if (isGapVariable(newEntry)) continue;
+    if (oldSlotOffsets.has(`${newEntry.slot}:${newEntry.offset}`)) continue;
+    infos.push(
+      `New variable "${newEntry.label}" (${newEntry.contract}) at slot ${newEntry.slot} offset ${newEntry.offset}`
+    );
   }
 
   return { errors, infos };
@@ -297,6 +303,7 @@ async function main() {
     installDeps(headContractsDir);
   } else {
     headContractsDir = currentContractsDir;
+    assertDepsInstalled(headContractsDir);
   }
 
   // ── Set up base (old version) in a worktree ──
@@ -336,11 +343,7 @@ async function main() {
     console.log(`  Old: ${oldLayout.storage.length} storage entries`);
     console.log(`  New: ${newLayout.storage.length} storage entries`);
 
-    const { errors, infos } = compareLayouts(
-      oldLayout,
-      newLayout,
-      contractName
-    );
+    const { errors, infos } = compareLayouts(oldLayout, newLayout);
 
     if (infos.length > 0) {
       console.log();
