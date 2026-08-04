@@ -19,6 +19,7 @@ const fetchImpl =
         import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const SLOTS_PER_EPOCH = 32;
+const BEACON_STATE_FETCH_TIMEOUT_MS = 15 * 60 * 1000;
 const BEACON_STATE_CACHE_DIR = path.join(
   os.tmpdir(),
   "origin-dollar-beacon-states"
@@ -181,27 +182,39 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    const timeout = setTimeout(() => {
+      log(
+        `Aborting state fetch for slot ${blockView.slot} after ${
+          BEACON_STATE_FETCH_TIMEOUT_MS / 60000
+        } minutes`
+      );
+      controller.abort();
+    }, BEACON_STATE_FETCH_TIMEOUT_MS);
 
-    let response;
+    let stateSszBytes;
     try {
-      response = await fetchImpl(parsedUrl.toString(), {
+      const response = await fetchImpl(parsedUrl.toString(), {
         method: "GET",
         headers,
         signal: controller.signal,
       });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      log(
+        `Received response headers for state at slot ${blockView.slot}, downloading body`
+      );
+      stateSszBytes = new Uint8Array(await response.arrayBuffer());
+      log(
+        `Downloaded ${stateSszBytes.byteLength} bytes for state at slot ${blockView.slot}`
+      );
     } finally {
       clearTimeout(timeout);
     }
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    // Read as ArrayBuffer to get raw binary SSZ bytes without text decoding.
-    const stateSszBytes = new Uint8Array(await response.arrayBuffer());
 
     log(`Writing state to file ${stateFilename}`);
     fs.writeFileSync(stateFilename, stateSszBytes);
