@@ -1,10 +1,4 @@
 import { ethers } from "ethers";
-import {
-  createDb,
-  createPool,
-  wrapSignerWithNonceQueueV5,
-  type Db,
-} from "@oplabs/talos-client";
 import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
 import { getProvider } from "./network";
 // CJS util.
@@ -23,12 +17,28 @@ import {
  * instead of hre.ethers.provider.
  */
 
+type Db = unknown;
+type TalosClient = {
+  createDb(pool: unknown): Db;
+  createPool(options: { connectionString: string }): unknown;
+  wrapSignerWithNonceQueueV5(
+    signer: ethers.Signer,
+    options: { db: Db }
+  ): unknown;
+};
+
+let talosClient: TalosClient | null = null;
 let dbInstance: Db | null = null;
 function getNonceDb(): Db | null {
   if (!process.env.DATABASE_URL) return null;
+  if (!talosClient) {
+    // Talos is an optional peer dependency so non-Talos Hardhat commands do not
+    // require credentials for the private package registry.
+    talosClient = require("@oplabs/talos-client") as TalosClient;
+  }
   if (!dbInstance) {
-    dbInstance = createDb(
-      createPool({ connectionString: process.env.DATABASE_URL })
+    dbInstance = talosClient.createDb(
+      talosClient.createPool({ connectionString: process.env.DATABASE_URL })
     );
   }
   return dbInstance;
@@ -37,7 +47,9 @@ function getNonceDb(): Db | null {
 function maybeWrap(signer: ethers.Signer): ethers.Signer {
   const db = getNonceDb();
   return db
-    ? (wrapSignerWithNonceQueueV5(signer, { db }) as unknown as ethers.Signer)
+    ? (talosClient!.wrapSignerWithNonceQueueV5(signer, {
+        db,
+      }) as unknown as ethers.Signer)
     : signer;
 }
 
