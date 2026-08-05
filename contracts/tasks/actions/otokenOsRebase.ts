@@ -1,4 +1,5 @@
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const GAS_MULTIPLIER = 1.1;
@@ -8,17 +9,10 @@ action({
   description: "Collect OS dripper and rebase OS on Sonic",
   chains: [146],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const osDripperProxy = await ethers.getContract("OSonicDripperProxy");
-    const oSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
-    const osDripper = await ethers.getContractAt(
-      "IDripper",
-      osDripperProxy.address
-    );
-    const oSonicVault = await ethers.getContractAt(
-      "IVault",
-      oSonicVaultProxy.address
-    );
+    const osDripperProxy = await getContract("OSonicDripperProxy");
+    const oSonicVaultProxy = await getContract("OSonicVaultProxy");
+    const osDripper = await getContractAt("IDripper", osDripperProxy.address);
+    const oSonicVault = await getContractAt("IVault", oSonicVaultProxy.address);
 
     const osDripperWithSigner = osDripper.connect(signer);
     const oSonicVaultWithSigner = oSonicVault.connect(signer);

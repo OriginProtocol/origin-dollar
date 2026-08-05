@@ -1,4 +1,6 @@
 const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
 const { parseUnits } = require("ethers/lib/utils");
@@ -10,7 +12,46 @@ const {
 
 const log = require("./logger")("utils:beacon");
 
+const fetchImpl =
+  typeof globalThis.fetch === "function"
+    ? globalThis.fetch.bind(globalThis)
+    : (...args) =>
+        import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 const SLOTS_PER_EPOCH = 32;
+const BEACON_STATE_FETCH_TIMEOUT_MS = 15 * 60 * 1000;
+const BEACON_STATE_CACHE_DIR = path.join(
+  os.tmpdir(),
+  "origin-dollar-beacon-states"
+);
+
+// Beacon state SSZ files are large and only needed for the duration of an
+// action, so delete them after the action completes.
+const cleanStateCache = () => {
+  if (!fs.existsSync(BEACON_STATE_CACHE_DIR)) {
+    return;
+  }
+
+  for (const entry of fs.readdirSync(BEACON_STATE_CACHE_DIR, {
+    withFileTypes: true,
+  })) {
+    if (
+      !entry.isFile() ||
+      !entry.name.startsWith("state_") ||
+      !entry.name.endsWith(".ssz")
+    ) {
+      continue;
+    }
+
+    const file = path.join(BEACON_STATE_CACHE_DIR, entry.name);
+    try {
+      fs.rmSync(file, { force: true });
+      log(`Removed cached beacon state ${file}`);
+    } catch {
+      // Best-effort cleanup; a missing file is fine.
+    }
+  }
+};
 
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
   index: Number(index),
@@ -90,11 +131,6 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
-  // Hoodie and Mainnet currently use the same types but this could change in the future
-  const BeaconBlock =
-    networkName === "mainnet" ? ssz.fulu.BeaconBlock : ssz.fulu.BeaconBlock;
-  const BeaconState =
-    networkName === "mainnet" ? ssz.fulu.BeaconState : ssz.fulu.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
@@ -106,33 +142,108 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     );
   }
 
+  const fork = blockRes.meta().version;
+  const BeaconBlock = ssz[fork].BeaconBlock;
+  const BeaconState = ssz[fork].BeaconState;
   const blockView = BeaconBlock.toView(blockRes.value().message);
+
+  fs.mkdirSync(BEACON_STATE_CACHE_DIR, { recursive: true });
+  const stateFilename = path.join(
+    BEACON_STATE_CACHE_DIR,
+    `state_${blockView.slot}.ssz`
+  );
+  const fetchStateSsz = async () => {
+    log(`Fetching state for slot ${blockView.slot} from the beacon node`);
+
+    // [Claude] Bypass the Lodestar API client and fetch beacon state SSZ directly.
+    //
+    // Why: The Lodestar client (v1.38.0) sends an Accept header that allows
+    // both SSZ and JSON (`application/octet-stream;q=1,application/json;q=0.9`).
+    // When the beacon node returns a JSON content-type but the body contains
+    // binary SSZ data, the client calls Response.json() which invokes
+    // TextDecoder.decode() on the binary payload, throwing
+    // ERR_ENCODING_INVALID_DATA. By requesting SSZ-only via a direct fetch
+    // and reading the response as an ArrayBuffer, we avoid any text decoding.
+    let base = process.env.BEACON_PROVIDER_URL;
+    if (!base.endsWith("/")) base += "/";
+    // Concatenate rather than using `new URL(path, base)` to preserve any
+    // path segments in the provider URL (e.g. QuickNode API key in path).
+    const stateUrl = `${base}eth/v2/debug/beacon/states/${blockView.slot}`;
+    const parsedUrl = new URL(stateUrl);
+    const headers = { Accept: "application/octet-stream" };
+    // Preserve Basic auth credentials embedded in the provider URL
+    if (parsedUrl.username || parsedUrl.password) {
+      const creds = `${decodeURIComponent(
+        parsedUrl.username
+      )}:${decodeURIComponent(parsedUrl.password)}`;
+      headers.Authorization = `Basic ${Buffer.from(creds).toString("base64")}`;
+      parsedUrl.username = "";
+      parsedUrl.password = "";
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      log(
+        `Aborting state fetch for slot ${blockView.slot} after ${
+          BEACON_STATE_FETCH_TIMEOUT_MS / 60000
+        } minutes`
+      );
+      controller.abort();
+    }, BEACON_STATE_FETCH_TIMEOUT_MS);
+
+    let stateSszBytes;
+    try {
+      const response = await fetchImpl(parsedUrl.toString(), {
+        method: "GET",
+        headers,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      log(
+        `Received response headers for state at slot ${blockView.slot}, downloading body`
+      );
+      stateSszBytes = new Uint8Array(await response.arrayBuffer());
+      log(
+        `Downloaded ${stateSszBytes.byteLength} bytes for state at slot ${blockView.slot}`
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    log(`Writing state to file ${stateFilename}`);
+    fs.writeFileSync(stateFilename, stateSszBytes);
+    return stateSszBytes;
+  };
 
   // Read the state from a local file or fetch it from the beacon node.
   let stateSsz;
-  const stateFilename = `./cache/state_${blockView.slot}.ssz`;
   if (fs.existsSync(stateFilename)) {
     log(`Loading state from file ${stateFilename}`);
     stateSsz = fs.readFileSync(stateFilename);
   } else {
-    log(`Fetching state for slot ${blockView.slot} from the beacon node`);
-    const stateRes = await client.debug.getStateV2(
-      { stateId: blockView.slot },
-      "ssz"
-    );
-    if (!stateRes.ok) {
-      console.error(stateRes);
-      throw new Error(
-        `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${stateRes.status} ${stateRes.statusText}`
-      );
-    }
-
-    log(`Writing state to file ${stateFilename}`);
-    fs.writeFileSync(stateFilename, stateRes.ssz());
-    stateSsz = stateRes.ssz();
+    stateSsz = await fetchStateSsz();
   }
 
-  const stateView = BeaconState.deserializeToView(stateSsz);
+  let stateView;
+  try {
+    stateView = BeaconState.deserializeToView(stateSsz);
+  } catch (err) {
+    if (!fs.existsSync(stateFilename)) {
+      throw err;
+    }
+
+    log(
+      `Failed to deserialize cached state ${stateFilename}, refetching fresh state`
+    );
+    stateSsz = await fetchStateSsz();
+    stateView = BeaconState.deserializeToView(stateSsz);
+  }
 
   const blockTree = blockView.tree.clone();
   const stateRootGIndex = blockView.type.getPropertyGindex("stateRoot");
@@ -456,6 +567,7 @@ const verifyDepositSignatureAndMessageRoot = async ({
 };
 
 module.exports = {
+  cleanStateCache,
   concatProof,
   getBeaconBlock,
   getSlot,

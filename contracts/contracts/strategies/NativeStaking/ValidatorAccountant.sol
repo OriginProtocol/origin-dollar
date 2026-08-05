@@ -91,7 +91,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// the accounting function will treat that as a validator slashing.
     /// @notice Perform the accounting attributing beacon chain ETH to either full or partial withdrawals. Returns true when
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown.
-    /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
+    /// @dev This function could in theory be permission-less but only the automation registrator can call it
     /// for now.
     /// @return accountingValid true if accounting was successful, false if fuse is blown
     /* solhint-enable max-line-length */

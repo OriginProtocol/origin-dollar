@@ -19,7 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     await deployWithConfirmation("RebalancerModule", [
       safeAddress,
-      // Defender relayer
+      // Automation operator
       addresses.mainnet.validatorRegistrator,
       cVaultProxy.address,
     ]);

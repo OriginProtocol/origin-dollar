@@ -447,7 +447,10 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     });
 
     it("Should deposit when pool is heavily unbalanced with WETH", async () => {
-      await unbalancePool({ wethbAmount: defaultDeposit.mul(10) });
+      await unbalancePool({
+        balancedBefore: true,
+        wethbAmount: defaultDeposit.mul(10),
+      });
 
       const checkBalanceBefore = await curveAMOStrategy.checkBalance(
         weth.address

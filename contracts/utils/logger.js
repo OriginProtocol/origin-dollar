@@ -3,7 +3,7 @@ const util = require("node:util");
 
 // https://www.npmjs.com/package/debug#output-streams
 // set all output to go via console.log instead of stderr
-// This is needed for Defender Actions to capture the logs
+// Keep output on stdout so automation runners capture the logs.
 debug.log = console.log.bind(console);
 
 const LOG_MODE_ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);

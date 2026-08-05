@@ -1,4 +1,6 @@
 const addresses = require("../utils/addresses");
+const { readFileSync } = require("fs");
+const path = require("path");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
@@ -11,9 +13,12 @@ const {
   calcSlot,
   getValidatorBalance,
   getBeaconBlock,
+  getValidators: getValidatorsBeacon,
   hashPubKey,
 } = require("../utils/beacon");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
+const { getContractAt } = require("./lib/contracts");
+const { getProvider } = require("./lib/network");
 const { getSigner } = require("../utils/signers");
 const { verifyDepositSignatureAndMessageRoot } = require("../utils/beacon");
 const { resolveContract } = require("../utils/resolvers");
@@ -38,22 +43,25 @@ const VALIDATOR_STATE_NON_REGISTERED = 0;
 const VALIDATOR_STATE_REGISTERED = 1;
 
 const resolveCompoundingStakingContract = async (ssv = false) => {
+  const proxyName = ssv
+    ? "CompoundingStakingSSVStrategyProxy"
+    : "CompoundingStakingStrategyProxy";
+  const implementationName = ssv
+    ? "CompoundingStakingSSVStrategy"
+    : "CompoundingStakingStrategy";
+
   if (ssv) {
     return {
       creatingDepositState: VALIDATOR_STATE_REGISTERED,
-      strategy: await resolveContract(
-        "CompoundingStakingSSVStrategyProxy",
-        "CompoundingStakingSSVStrategy"
-      ),
+      proxyName,
+      strategy: await resolveContract(proxyName, implementationName),
     };
   }
 
   return {
     creatingDepositState: VALIDATOR_STATE_NON_REGISTERED,
-    strategy: await resolveContract(
-      "CompoundingStakingStrategyProxy",
-      "CompoundingStakingStrategy"
-    ),
+    proxyName,
+    strategy: await resolveContract(proxyName, implementationName),
   };
 };
 
@@ -174,7 +182,7 @@ async function registerValidator({
   );
 
   // Cluster details
-  const { chainId } = await ethers.provider.getNetwork();
+  const { chainId } = await getProvider().getNetwork();
   const { cluster } = await getClusterInfo({
     chainId,
     operatorids,
@@ -331,7 +339,7 @@ async function autoValidatorDeposits({
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const { strategy } = await resolveCompoundingStakingContract(ssv);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
@@ -570,9 +578,9 @@ async function autoValidatorWithdrawals({
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const vaultAddress = addresses[networkName].OETHVaultProxy;
-  const vault = await ethers.getContractAt("IVault", vaultAddress);
+  const vault = await getContractAt("IVault", vaultAddress);
   const { strategy } = await resolveCompoundingStakingContract(ssv);
 
   // 1. Calculate the WETH available in the vault = WETH balance - withdrawals queued + withdrawals claimed
@@ -723,7 +731,7 @@ async function snapStakingStrategy({
   // Don't use the latest block as the slot probably won't be available yet
   if (!block) blockTag -= 1;
 
-  const { timestamp } = await ethers.provider.getBlock(blockTag);
+  const { timestamp } = await getProvider().getBlock(blockTag);
   const networkName = await getNetworkName();
   const slot = calcSlot(timestamp, networkName);
   log(`Snapping block ${blockTag} at slot ${slot}`);
@@ -731,15 +739,21 @@ async function snapStakingStrategy({
   const { stateView } = await getBeaconBlock(slot, networkName);
 
   const wethAddress = addresses[networkName].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const weth = await getContractAt("IERC20", wethAddress);
   const ssvToken = addresses[networkName].SSV
-    ? await ethers.getContractAt("IERC20", addresses[networkName].SSV)
+    ? await getContractAt("IERC20", addresses[networkName].SSV)
     : undefined;
-  const { strategy } = await resolveCompoundingStakingContract(ssv);
+  const { proxyName, strategy } = await resolveCompoundingStakingContract(ssv);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
   // Pending deposits
-  const totalDeposits = await logDeposits(strategy, blockTag, stateView);
+  const totalDeposits = await logDeposits(
+    strategy,
+    proxyName,
+    networkName,
+    blockTag,
+    stateView
+  );
 
   if (stateView.pendingDeposits.length === 0) {
     console.log("No pending beacon chain deposits");
@@ -797,7 +811,7 @@ async function snapStakingStrategy({
   );
 
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
-  const stratEthBalance = await ethers.provider.getBalance(
+  const stratEthBalance = await getProvider().getBalance(
     strategy.address,
     blockTag
   );
@@ -873,13 +887,34 @@ async function snapStakingStrategy({
   );
 }
 
-async function logDeposits(strategy, blockTag = "latest", stateView) {
+async function logDeposits(
+  strategy,
+  proxyName,
+  networkName,
+  blockTag = "latest",
+  stateView
+) {
   const deposits = await getPendingDeposits(strategy, blockTag);
+  const depositsMissingPubKeys = deposits.filter(
+    ({ pendingDepositRoot }) =>
+      !findDepositInQueue(pendingDepositRoot, stateView).pendingDeposit
+  );
+  const eventPubKeys = await getDepositPubKeysFromEvents(
+    strategy,
+    proxyName,
+    networkName,
+    depositsMissingPubKeys,
+    blockTag
+  );
+  const validatorIndexes = await getValidatorIndexes(
+    [...eventPubKeys.values()],
+    stateView.slot
+  );
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
     console.log(
-      `  Pending deposit root                                               amount (ETH)   slot    Q pos public key`
+      `  Pending deposit root                                               amount (ETH)   slot     Q pos V index public key`
     );
   }
   for (const deposit of deposits) {
@@ -889,19 +924,87 @@ async function logDeposits(strategy, blockTag = "latest", stateView) {
     );
     const pubKey = pendingDeposit
       ? toHex(pendingDeposit.pubkey)
-      : deposit.pubKeyHash;
+      : eventPubKeys.get(deposit.pendingDepositRoot) || deposit.pubKeyHash;
+    const validatorIndex = pendingDeposit
+      ? "-"
+      : validatorIndexes.get(pubKey.toLowerCase()) ?? "-";
     console.log(
       `  ${deposit.pendingDepositRoot} ${formatUnits(
         deposit.amountGwei,
         9
       ).padEnd(14)} ${deposit.slot} ${position
         .toString()
-        .padStart(5)} ${pubKey}`
+        .padStart(5)} ${validatorIndex.toString().padStart(7)} ${pubKey}`
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }
 
   return totalDeposits;
+}
+
+async function getDepositPubKeysFromEvents(
+  strategy,
+  proxyName,
+  networkName,
+  deposits,
+  blockTag
+) {
+  const pubKeys = new Map();
+  if (deposits.length === 0) return pubKeys;
+
+  try {
+    const deploymentPath = path.join(
+      __dirname,
+      "..",
+      "deployments",
+      networkName,
+      `${proxyName}.json`
+    );
+    const deployment = JSON.parse(readFileSync(deploymentPath, "utf8"));
+    const fromBlock = deployment.receipt.blockNumber;
+    const eventTopic = strategy.interface.getEventTopic("ETHStaked");
+    const pubKeyHashes = deposits.map(({ pubKeyHash }) => pubKeyHash);
+    const blockBatchSize = 10000;
+
+    for (let startBlock = fromBlock; startBlock <= blockTag; ) {
+      const endBlock = Math.min(startBlock + blockBatchSize - 1, blockTag);
+      const logs = await strategy.provider.getLogs({
+        address: strategy.address,
+        topics: [eventTopic, pubKeyHashes],
+        fromBlock: startBlock,
+        toBlock: endBlock,
+      });
+      for (const rawLog of logs) {
+        const event = strategy.interface.parseLog(rawLog);
+        pubKeys.set(event.args.pendingDepositRoot, event.args.pubKey);
+      }
+      if (pubKeys.size === deposits.length) break;
+      startBlock = endBlock + 1;
+    }
+  } catch (err) {
+    log(
+      `Failed to load full validator public keys from ETHStaked events: ${err}`
+    );
+  }
+
+  return pubKeys;
+}
+
+async function getValidatorIndexes(pubKeys, stateId) {
+  const indexes = new Map();
+  if (pubKeys.length === 0) return indexes;
+
+  try {
+    const validators = await getValidatorsBeacon(pubKeys, stateId);
+    const validatorList = Array.isArray(validators) ? validators : [validators];
+    for (const validator of validatorList) {
+      indexes.set(validator.pubkey.toLowerCase(), validator.index);
+    }
+  } catch (err) {
+    log(`Failed to load processed validator indexes: ${err}`);
+  }
+
+  return indexes;
 }
 
 function findDepositInQueue(pendingDepositRoot, stateView) {

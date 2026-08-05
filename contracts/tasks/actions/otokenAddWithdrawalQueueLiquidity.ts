@@ -1,6 +1,5 @@
-/// <reference types="hardhat/types/runtime" />
-
 import { action } from "../lib/action";
+import { getContract, getContractAt } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 // Vault proxy deployment name(s) per chain id. addWithdrawalQueueLiquidity is
@@ -20,12 +19,11 @@ action({
     "Call addWithdrawalQueueLiquidity on every OToken vault on the current network",
   chains: Object.keys(VAULT_DEPLOYMENTS_BY_CHAIN_ID).map(Number),
   run: async ({ signer, chainId, networkName, log }) => {
-    const ethers = hre.ethers;
     const deploymentNames = VAULT_DEPLOYMENTS_BY_CHAIN_ID[chainId];
 
     for (const deploymentName of deploymentNames) {
-      const vaultProxy = await ethers.getContract(deploymentName);
-      const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+      const vaultProxy = await getContract(deploymentName);
+      const vault = await getContractAt("IVault", vaultProxy.address);
 
       log.info(
         `Calling addWithdrawalQueueLiquidity on ${deploymentName} at ${vault.address} (${networkName})`

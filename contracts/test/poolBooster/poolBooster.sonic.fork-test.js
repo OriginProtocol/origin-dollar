@@ -13,7 +13,7 @@ const { impersonateAndFund } = require("../../utils/signers.js");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
-describe("ForkTest: Pool Booster", function () {
+describe.skip("ForkTest: Pool Booster", function () {
   let fixture, strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();

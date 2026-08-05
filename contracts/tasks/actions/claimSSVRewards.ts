@@ -1,5 +1,3 @@
-/// <reference types="hardhat/types/runtime" />
-
 import { action } from "../lib/action";
 
 const { claimSSVRewards } = require("../ssvRewards");

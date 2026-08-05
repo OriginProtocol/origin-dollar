@@ -1,5 +1,4 @@
-import { types } from "hardhat/config";
-import { action } from "../lib/action";
+import { action, types } from "../lib/action";
 import { manageBribes } from "../poolBooster";
 
 action({

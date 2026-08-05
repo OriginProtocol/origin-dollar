@@ -20,19 +20,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -b Governor -o GovernorHierarchy.svg
 sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
 sol2uml storage .. -c Governor -o GovernorStorage.svg
 
-# contracts/oracles
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
-sol2uml .. -s -d 0 -b OETHOracleRouter -o OETHOracleRouterSquashed.svg
-sol2uml storage .. -c OETHOracleRouter -o OETHOracleRouterStorage.svg
-
-sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
-sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
-sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
-
-sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
-sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
-sol2uml storage .. -c MixOracle -o MixOracleStorage.svg
-
 # contracts/proxies
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSDProxy -o OUSDProxyHierarchy.svg
 sol2uml .. -s -d 0 -b OUSDProxy -o OUSDProxySquashed.svg

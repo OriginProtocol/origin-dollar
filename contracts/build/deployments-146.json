@@ -1,0 +1,64 @@
+{
+    "contracts": [
+        {
+            "implementation": "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794",
+            "name": "OSONIC_PROXY"
+        },
+        {
+            "implementation": "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186",
+            "name": "OSONIC_VAULT_PROXY"
+        },
+        {
+            "implementation": "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1",
+            "name": "WOSONIC_PROXY"
+        },
+        {
+            "implementation": "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A",
+            "name": "POOL_BOOST_CENTRAL_REGISTRY"
+        },
+        {
+            "implementation": "0x2d7C5a0a60a874A48bd538322f758EF43fa32953",
+            "name": "POOL_BOOSTER_FACTORY_SWAPX_SINGLE"
+        },
+        {
+            "implementation": "0x840081c97256d553A8F234D469D797B9535a3B49",
+            "name": "POOL_BOOSTER_FACTORY_SWAPX_DOUBLE"
+        },
+        {
+            "implementation": "0x406C9317a58B5827A64176d06AeB68ed0B5B5B1e",
+            "name": "POOL_BOOSTER_FACTORY_METROPOLIS"
+        },
+        {
+            "implementation": "0xDbe1c1a3dE56bEA848B4FFd8486dD539E9d490B7",
+            "name": "POOL_BOOSTER_FACTORY_MERKL"
+        },
+        {
+            "implementation": "0xC388d2F77f9D8f87Dbc826522379771F140913c5",
+            "name": "POOL_BOOSTER_SWAPX_SINGLE_WS_OS"
+        },
+        {
+            "implementation": "0xB6CDEd0Faa79E412eE8444e9D3cE0efa1759b90f",
+            "name": "POOL_BOOSTER_SWAPX_DOUBLE_SILO_OS"
+        },
+        {
+            "implementation": "0x493eea7fb8cc6010055f937f8c85aa4d70ed5d94",
+            "name": "POOL_BOOSTER_METROPOLIS_WS_OS"
+        },
+        {
+            "implementation": "0x596B0401479f6DfE1cAF8c12838311FeE742B95c",
+            "name": "SONIC_STAKING_STRATEGY"
+        },
+        {
+            "implementation": "0xbE19cC5654e30dAF04AD3B5E06213D70F4e882eE",
+            "name": "SONIC_SWAPX_AMO_STRATEGY_PROXY"
+        }
+    ],
+    "executions": [
+        {
+            "name": "001_CoreSonic",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        }
+    ]
+}

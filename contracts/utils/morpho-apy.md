@@ -32,7 +32,7 @@ https://origin.squids.live/origin-squid:prod/api/graphql
 ```
 
 In the OUSD rebalancer, the URL is read from the `ORIGIN_SUBSQUID_SERVER` environment
-variable (with the above URL as the default fallback). In OpenZeppelin Defender, set
+variable (with the above URL as the default fallback). In Talos, set
 this as a secret named `ORIGIN_SUBSQUID_SERVER`.
 
 ### 1.2 `morphoVaultApy` — Current Vault APY

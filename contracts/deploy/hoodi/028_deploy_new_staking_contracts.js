@@ -1,14 +1,14 @@
 const { resolveContract } = require("../../utils/resolvers");
 const { deployCompoundingStakingSSVStrategy } = require("../deployActions");
 const { withConfirmation } = require("../../utils/deploy");
-const { getDefenderSigner } = require("../../utils/signersNoHardhat");
+const { getSigner } = require("../../utils/signers");
 const addresses = require("../../utils/addresses.js");
 
 const log = require("../../utils/logger")("deploy:hoodi");
 
 const mainExport = async () => {
   console.log("Deploy new compounding staking strategy");
-  const sGovernor = await getDefenderSigner();
+  const sGovernor = await getSigner();
 
   const compoundingSsvStrategy = await deployCompoundingStakingSSVStrategy();
 
@@ -20,12 +20,12 @@ const mainExport = async () => {
   );
 
   log(
-    `Setting Registrator on Compounding Strategy to ${addresses.hoodi.defenderRelayer}`
+    `Setting Registrator on Compounding Strategy to ${addresses.hoodi.validatorRegistrator}`
   );
   await withConfirmation(
     compoundingSsvStrategy
       .connect(sGovernor)
-      .setRegistrator(addresses.hoodi.defenderRelayer)
+      .setRegistrator(addresses.hoodi.validatorRegistrator)
   );
 
   console.log("Running 028 deployment done");

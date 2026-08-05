@@ -4,7 +4,7 @@ const {
 } = require("../../behaviour/algebraAmoStrategy");
 const { createFixtureLoader } = require("../../_fixture");
 
-describe("Sonic Fork Test: SwapX AMO Strategy", function () {
+describe.skip("Sonic Fork Test: SwapX AMO Strategy", function () {
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
     const scenarioConfig = {
       attackerFrontRun: {

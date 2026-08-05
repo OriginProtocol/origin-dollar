@@ -1,6 +1,5 @@
-/// <reference types="hardhat/types/runtime" />
-
 import { action } from "../lib/action";
+import { getContract } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 const MODULE_DEPLOYMENTS = [
@@ -17,10 +16,8 @@ action({
   description: "Claim and forward OGN rewards from all modules",
   chains: [1],
   run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-
     for (const deploymentName of MODULE_DEPLOYMENTS) {
-      const module = await ethers.getContract(deploymentName);
+      const module = await getContract(deploymentName);
       log.info(
         `Calling collectRewards on ${deploymentName} at ${module.address}`
       );

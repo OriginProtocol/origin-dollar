@@ -295,8 +295,7 @@ async function humanBalance(user, contract) {
 const isFork = process.env.FORK === "true";
 const isLocalhost = !isFork && hre.network.name === "localhost";
 const isMainnet = hre.network.name === "mainnet";
-const isHolesky = hre.network.name == "holesky";
-const isExternalNet = isMainnet || isHolesky;
+const isExternalNet = isMainnet;
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork =
@@ -305,10 +304,7 @@ const isForkTest = isFork && isTest;
 const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
-const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
-const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
-const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
 const isBase = hre.network.name == "base";
@@ -371,13 +367,6 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.mainnet.SSV,
       SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
-    };
-  } else if (isHoleskyOrFork) {
-    return {
-      WETH: addresses.holesky.WETH,
-      SSV: addresses.holesky.SSV,
-      SSVNetwork: addresses.holesky.SSVNetwork,
-      beaconChainDepositContract: addresses.holesky.beaconChainDepositContract,
     };
   } else if (isHoodiOrFork) {
     return {
@@ -644,10 +633,6 @@ module.exports = {
   isForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
-  isHolesky,
-  isHoleskyFork,
-  isHoleskyOrFork,
-  isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,
   isCI,

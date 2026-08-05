@@ -1,0 +1,70 @@
+[profile.default]
+src = "contracts"
+test = "tests"
+script = "scripts"
+out = "out"
+libs = ["dependencies", "lib"]
+auto_detect_remappings = false
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+# The 21-validator SSV fixture parses and verifies a large captured Beacon snapshot.
+gas_limit = "18446744073709551615"
+extra_output_files = ["storageLayout"]
+ignored_error_codes = [
+  "license",
+  "code-size",
+  "init-code-size",
+  "transient-storage",
+  "missing-receive-ether",
+  "func-mutability",
+  "unused-param",
+  "unused-var"
+]
+ignored_warnings_from = ["contracts/mocks", "tests/mocks"]
+ffi = true
+fs_permissions = [
+  { access = "read-write", path = "./build" },
+  { access = "read-write", path = "./out" },
+  { access = "read-write", path = "./scripts" },
+  { access = "read", path = "test/strategies" },
+  { access = "read", path = "tests/fork/mainnet/beacon/BeaconProofs/fixtures" }
+]
+
+remappings = [
+  "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+  "@chainlink/contracts-ccip/=dependencies/@chainlink-contracts-ccip-1.2.1/package/",
+  "forge-std/=dependencies/forge-std-1.15.0/src/",
+  "tests/=tests/",
+  "@solmate/=dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/"
+]
+
+[rpc_endpoints]
+mainnet = "${MAINNET_PROVIDER_URL}"
+base = "${BASE_PROVIDER_URL}"
+arbitrum = "${ARBITRUM_PROVIDER_URL}"
+hyperevm = "${HYPEREVM_PROVIDER_URL}"
+
+[fuzz]
+runs = 1024
+max_test_rejects = 65536
+seed = "0x1"
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+[lint]
+lint_on_build = false
+
+[dependencies]
+forge-std = "1.15.0"
+solmate = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+"@openzeppelin-contracts" = { version = "4.4.2", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1" }
+# The following npm packages are installed via install-deps.sh (Soldeer does not support tgz).
+# "@chainlink-contracts-ccip" v1.2.1
+
+[soldeer]
+recursive_deps = false
+remappings_generate = false
+remappings_regenerate = false
+remappings_location = "config"

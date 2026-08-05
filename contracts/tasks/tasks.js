@@ -4,7 +4,6 @@ const {
   types,
 } = require("hardhat/config");
 const { env } = require("./env");
-const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
@@ -1205,25 +1204,19 @@ task("ssvRewards").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-/**
- * The compounding staking proxy needs to be deployed via the defender relayer because the SSV network
- * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
- * the recipient
- */
-subtask(
-  "deployStakingProxy",
-  "Deploy the compounding staking proxy via the Defender Relayer"
-).setAction(async () => {
-  const signer = await getSigner();
+subtask("deployStakingProxy", "Deploy the compounding staking proxy").setAction(
+  async () => {
+    const signer = await getSigner();
 
-  log(`Deploy CompoundingStakingSSVStrategyProxy`);
-  const stakingProxyFactory = await ethers.getContractFactory(
-    `CompoundingStakingSSVStrategyProxy`
-  );
-  const contract = await stakingProxyFactory.connect(signer).deploy();
-  await contract.deployed();
-  log(`Address of deployed staking contract is: ${contract.address}`);
-});
+    log(`Deploy CompoundingStakingSSVStrategyProxy`);
+    const stakingProxyFactory = await ethers.getContractFactory(
+      `CompoundingStakingSSVStrategyProxy`
+    );
+    const contract = await stakingProxyFactory.connect(signer).deploy();
+    await contract.deployed();
+    log(`Address of deployed staking contract is: ${contract.address}`);
+  }
+);
 task("deployStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1541,8 +1534,7 @@ subtask(
     types.int
   )
   .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await snapStaking({ ...taskArgs, signer });
+    await snapStaking(taskArgs);
   });
 task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1754,31 +1746,6 @@ task("signMessage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-// Defender
-subtask(
-  "setActionVars",
-  "Set environment variables on a Defender Actions along with DEBUG=origin* and DEBUG_HIDE_DATE=1"
-)
-  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
-  .addOptionalParam(
-    "name",
-    "Name of the environment variable to set. eg HOODI_BEACON_PROVIDER_URL",
-    undefined,
-    types.string
-  )
-  .setAction(setActionVars);
-task("setActionVars").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("updateAction", "Upload a Defender Actions")
-  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
-  .addParam("file", "Path to the file to upload", undefined, types.string)
-  .setAction(updateAction);
-task("updateAction").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 // Simulations
 subtask(
   "deployForceEtherSender",
@@ -1984,11 +1951,17 @@ task("getValidators").setAction(async (_, __, runSuper) => {
 });
 
 subtask("verifyValidator", "Verify a validator on the Beacon chain")
-  .addParam(
+  .addOptionalParam(
     "index",
     "Index of the validator on the Beacon chain",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "ids",
+    "Comma-separated validator indexes to verify using one beacon state",
+    undefined,
+    types.string
   )
   .addOptionalParam(
     "slot",
