@@ -57,7 +57,6 @@ contract $004_CurvePoolBoosterRemoteManager is AbstractDeployScript("004_CurvePo
 
         // A governance proposal needs a fixed target list, so cross-check it against the live
         // module to catch boosters added or removed between writing and executing the proposal.
-        // Resolved rather than read from Mainnet.CurvePoolBoosterBribesModule, which is stale.
         ICurvePoolBoosterBribesModule bribesModule =
             ICurvePoolBoosterBribesModule(payable(resolver.resolve("CURVE_POOL_BOOSTER_BRIBES_MODULE")));
         address[] memory livePoolBoosters = bribesModule.getPoolBoosters();

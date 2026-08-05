@@ -194,7 +194,7 @@ library Mainnet {
 
     // Curve Pool Booster
     address internal constant CurvePoolBoosterOETH = 0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E;
-    address internal constant CurvePoolBoosterBribesModule = 0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe;
+    address internal constant CurvePoolBoosterBribesModule = 0x6320Db7a3c1B95fD5684DC725C2cda9B82Fa20Fa;
     address internal constant MerklPoolBoosterBribesModule = 0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369;
 
     // SSV network
