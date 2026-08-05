@@ -117,6 +117,12 @@
             "proposalId": 1,
             "tsDeployment": 1723685111,
             "tsGovernance": 1
+        },
+        {
+            "name": "004_CurvePoolBoosterRemoteManager",
+            "proposalId": 0,
+            "tsDeployment": 1785929915,
+            "tsGovernance": 0
         }
     ]
 }
