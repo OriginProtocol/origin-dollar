@@ -40,6 +40,6 @@ const main = async () => {
 main.id = "001_core";
 main.dependencies = ["mocks"];
 main.tags = ["unit_tests", "arb_unit_tests"];
-main.skip = () => isFork;
+main.skip = () => isFork || hre.network.live === true;
 
 module.exports = main;

@@ -135,6 +135,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
 deployMocks.id = "000_mock";
 deployMocks.tags = ["mocks", "unit_tests"];
-deployMocks.skip = () => isMainnetOrFork;
+deployMocks.skip = () => isMainnetOrFork || hre.network.live === true;
 
 module.exports = deployMocks;

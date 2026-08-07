@@ -6,6 +6,8 @@ uint256 constant UINT64_LENGTH = 8;
 uint256 constant UINT256_LENGTH = 32;
 // Address is 20 bytes, but we expect the data to be padded with 0s to 32 bytes
 uint256 constant ADDRESS_LENGTH = 32;
+// Raw 20-byte address (no padding), used for abi.encodePacked envelopes.
+uint256 constant ADDRESS_PACKED_LENGTH = 20;
 
 library BytesHelper {
     /**
@@ -59,6 +61,30 @@ library BytesHelper {
     }
 
     /**
+     * @dev Decode a uint64 from a bytes memory
+     * @param data The bytes memory to decode
+     * @return uint64 The decoded uint64
+     */
+    function decodeUint64(bytes memory data) internal pure returns (uint64) {
+        require(data.length == 8, "Invalid data length");
+        return uint64(uint256(bytes32(data)) >> 192);
+    }
+
+    /**
+     * @dev Extract a uint64 from a bytes memory
+     * @param data The bytes memory to extract from
+     * @param start The start index (inclusive)
+     * @return uint64 The extracted uint64
+     */
+    function extractUint64(bytes memory data, uint256 start)
+        internal
+        pure
+        returns (uint64)
+    {
+        return decodeUint64(extractSlice(data, start, start + UINT64_LENGTH));
+    }
+
+    /**
      * @dev Decode an address from a bytes memory.
      *      Expects the data to be padded with 0s to 32 bytes.
      * @param data The bytes memory to decode
@@ -82,6 +108,31 @@ library BytesHelper {
         returns (address)
     {
         return decodeAddress(extractSlice(data, start, start + ADDRESS_LENGTH));
+    }
+
+    /**
+     * @dev Extract a 20-byte (unpadded) address from a bytes memory. Use this when the
+     *      source is `abi.encodePacked(..., address, ...)` rather than `abi.encode(...)`,
+     *      where addresses occupy 20 bytes instead of 32.
+     * @param data The bytes memory to extract from
+     * @param start The start index (inclusive)
+     * @return result The extracted address
+     */
+    function extractAddressPacked(bytes memory data, uint256 start)
+        internal
+        pure
+        returns (address result)
+    {
+        require(
+            data.length >= start + ADDRESS_PACKED_LENGTH,
+            "Invalid data length"
+        );
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            // Load 32 bytes starting at the address offset; the address occupies the high
+            // 20 bytes when read from packed encoding, so right-shift by 96 (= 12 * 8) bits.
+            result := shr(96, mload(add(add(data, 0x20), start)))
+        }
     }
 
     /**
