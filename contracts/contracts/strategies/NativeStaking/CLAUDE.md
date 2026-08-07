@@ -672,8 +672,7 @@ Proof generation (`utils/beacon.js:130-254`, `utils/proofs.js`):
 1. `client.beacon.getBlockV2({ blockId })` — `blockId` is the snapped `blockRoot`
    (`tasks/beacon.js:577-579`), so the proof is built against exactly the root the contract stored.
 2. `GET eth/v2/debug/beacon/states/{slot}` with `Accept: application/octet-stream` — the full SSZ
-   `BeaconState` (hundreds of MB; 15-minute timeout, cached to `os.tmpdir()`, wiped by
-   `cleanStateCache()` in the action's `finally`).
+   `BeaconState` (hundreds of MB; 15-minute timeout, held in memory for proof generation).
 3. `blockTree.setNode(stateRootGindex, stateView.node)` grafts the state into the block tree so a
    single `createProof` spans both containers.
 4. `@chainsafe/persistent-merkle-tree` `createProof({ type: ProofType.single, gindex })`, then
