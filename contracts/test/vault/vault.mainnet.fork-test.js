@@ -56,6 +56,19 @@ describe("ForkTest: Vault", function () {
         .populateTransaction.checkBalance(usdc.address);
       await josh.sendTransaction(tx);
     });
+
+    // Values set by deploy/mainnet/202_vault_loss_socialization.js
+    it("Should have the loss socialization settings applied", async () => {
+      const { vault } = fixture;
+
+      expect(await vault.maxSupplyDiff()).to.equal(ousdUnits("0.2"));
+
+      // The live vault is healthy, so it is fully backed and pays claims 1:1
+      expect(await vault.backingRatio()).to.approxEqualTolerance(
+        ousdUnits("1"),
+        1
+      );
+    });
   });
 
   describe("Admin", () => {

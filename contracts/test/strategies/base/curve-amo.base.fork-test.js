@@ -568,6 +568,11 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
+      // Mint the WETH to be deposited while the vault is still fully backed. The
+      // vault's own under-backed mint gate would otherwise block this user mint
+      // before the strategy's insolvency check could be reached.
+      await mintToVault({});
+
       // Make protocol insolvent by minting a lot of OETH
       // This is a cheat.
       // prettier-ignore
@@ -575,7 +580,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
 
       await expect(
-        mintAndDepositToStrategy({ returnTransaction: true })
+        mintAndDepositToStrategy({ returnTransaction: true, skipMint: true })
       ).to.be.revertedWith("Protocol insolvent");
     });
     it("Withdraw: Must withdraw something", async () => {
@@ -782,12 +787,8 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     josh: nick,
   }));
 
-  const mintAndDepositToStrategy = async ({
-    userOverride,
-    amount,
-    returnTransaction,
-  } = {}) => {
-    const user = userOverride || defaultDepositor;
+  const mintToVault = async ({ user, amount } = {}) => {
+    user = user || defaultDepositor;
     amount = amount || defaultDeposit;
 
     const balance = await weth.balanceOf(user.address);
@@ -796,6 +797,23 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     }
     await weth.connect(user).approve(oethbVault.address, amount);
     await oethbVault.connect(user).mint(amount);
+  };
+
+  // `skipMint` deposits WETH the vault already holds, without a fresh user mint.
+  // Needed to reach the strategy's own solvency check on an under-backed vault,
+  // since the vault's mint gate would otherwise block the user mint first.
+  const mintAndDepositToStrategy = async ({
+    userOverride,
+    amount,
+    returnTransaction,
+    skipMint,
+  } = {}) => {
+    const user = userOverride || defaultDepositor;
+    amount = amount || defaultDeposit;
+
+    if (!skipMint) {
+      await mintToVault({ user, amount });
+    }
 
     const gov = await oethbVault.governor();
     log(`Depositing ${formatUnits(amount)} WETH to AMO strategy`);

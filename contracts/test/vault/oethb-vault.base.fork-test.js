@@ -21,6 +21,21 @@ describe("ForkTest: OETHb Vault", function () {
     await oethbVault.connect(signer).mint(oethUnits("1"));
   }
 
+  describe("post deployment", function () {
+    // Values set by deploy/base/055_vault_loss_socialization.js
+    it("Should have the loss socialization settings applied", async () => {
+      const { oethbVault } = fixture;
+
+      expect(await oethbVault.maxSupplyDiff()).to.equal(oethUnits("0.2"));
+
+      // The live vault is healthy, so it is fully backed and pays claims 1:1
+      expect(await oethbVault.backingRatio()).to.approxEqualTolerance(
+        oethUnits("1"),
+        1
+      );
+    });
+  });
+
   describe("Mint & Permissioned redeems", function () {
     it("Should allow anyone to mint", async () => {
       const { nick, weth, oethb, oethbVault, strategist } = fixture;
