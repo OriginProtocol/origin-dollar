@@ -160,7 +160,7 @@ That fails safe, but it consumes a Safe nonce and gas — pass an explicit
 - `--profit-variance` and `--vault-change-variance` override the defaults:
   OUSD `100/100`, OETH `1/1`, and SuperOETH `1/10`.
 
-The runner requires `SAFE_API_KEY`. Its active KMS or Defender signer must also
+The runner requires `SAFE_API_KEY`. Its active KMS signer must also
 be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
 to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
 Delegation only permits proposal submission; it does not count toward the

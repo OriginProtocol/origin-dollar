@@ -2013,7 +2013,7 @@ Fixture: `crossChainHyperEVMFixture` from `_fixture-hyperevm.js` — attaches to
 
 ### `test/strategies/crosschain/decode-origin-nonce.js` — unit test (pure JS, no chain state)
 
-No fixture — tests the JS helper `decodeOriginNonce` from `tasks/crossChain.js` (used by the CCTP relay Defender actions to dedupe/track messages), feeding it messages built with the same encoders from `_crosschain-helpers.js` that the fork tests use, so the decoder sees production-shaped bytes. Constants: sourceDomain 6, dummy sender/recipient/usdc addresses, amount 1e6.
+No fixture — tests the JS helper `decodeOriginNonce` from `tasks/crossChain.js`, which CCTP relay actions use to dedupe and track messages. It feeds the decoder messages built with the same encoders from `_crosschain-helpers.js` that the fork tests use, so the decoder sees production-shaped bytes. Constants: sourceDomain 6, dummy sender/recipient/usdc addresses, amount 1e6.
 
 **describe: "Unit: decodeOriginNonce (CCTP relay)"**
 - `it("decodes nonce from a deposit (burn message with hook data)")` — builds a deposit body (nonce 7) as hook data inside a burn message body inside a full CCTP message; asserts `decodeOriginNonce(message).toNumber() == 7`.
@@ -2795,4 +2795,3 @@ Uses `createFixtureLoader(rebornFixture)` from `_fixture.js`. `rebornFixture` ex
 - `it("Should have correct balance even after recreating")` — setup: matt transfers 4 USDC to the reborner; `deployAndCall({shouldAttack: true, shouldDestruct: true})` mints 1 OUSD in the constructor then self-destructs; asserts the reborner has an OUSD `balanceOf` of exactly "1" (custom `balanceOf` chai matcher); redeploys with `shouldAttack: false` and asserts the balance is still exactly "1" (recreation must not change the balance outside the constructor); calls `reborner.mint()` and asserts the balance is exactly "2".
 
 ---
-
