@@ -7,7 +7,10 @@ const {
 const { setERC20TokenBalance } = require("../../_fund");
 const { units, usdcUnits } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
-const { encodeBalanceCheckMessageBody } = require("./_crosschain-helpers");
+const {
+  encodeBalanceCheckMessageBody,
+  encodeCCTPMessage,
+} = require("./_crosschain-helpers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 const DAY_IN_SECONDS = 86400;
@@ -454,6 +457,39 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     ).to.eq(await units("700", usdc));
 
     await assertVaultTotalValue("1000");
+  });
+
+  it("Should reject direct replay of an already-relayed balance update message", async function () {
+    const { messageTransmitter } = fixture;
+    await sendBalanceUpdateToMaster();
+
+    const nonce = await crossChainMasterStrategy.lastTransferNonce();
+    const balance = await crossChainRemoteStrategy.checkBalance(usdc.address);
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const body = encodeBalanceCheckMessageBody(
+      nonce,
+      balance,
+      false,
+      latestBlock.timestamp
+    );
+    const encodedMessage = encodeCCTPMessage(
+      await crossChainMasterStrategy.peerDomainID(),
+      crossChainRemoteStrategy.address,
+      crossChainMasterStrategy.address,
+      body
+    );
+
+    await expect(messageTransmitter.processFront())
+      .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
+      .withArgs(balance);
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
+
+    const transmitterSigner = await impersonateAndFund(messageTransmitter.address);
+    await expect(
+      crossChainMasterStrategy
+        .connect(transmitterSigner)
+        .relay(encodedMessage, "0x")
+    ).to.be.revertedWith("Message already processed");
   });
 
   it("Should emit a BalanceCheckIgnored event if balance update message is too old", async function () {
