@@ -1756,6 +1756,112 @@ async function loadSimpleOETHFixture() {
   return await simpleOETHFixture();
 }
 
+// Unit test fixture for the Credit Market AMO Strategy. Deploys a mock Morpho V2
+// credit vault (asset == the OToken) plus the strategy behind a proxy, registers it
+// with the OToken vault and turns on minting. Pass { oTokenSymbol: "OETH" } to exercise
+// the OETH/WETH (18-decimal) config; defaults to OUSD/USDC (6-decimal).
+async function creditMarketAMOFixture(config = {}) {
+  const oTokenSymbol = config.oTokenSymbol || "OUSD";
+  const fixture = await defaultFixture();
+  const { josh } = fixture;
+
+  let oToken, hardAsset, oTokenVault;
+  if (oTokenSymbol === "OETH") {
+    oToken = fixture.oeth;
+    hardAsset = fixture.weth;
+    oTokenVault = fixture.oethVault;
+  } else {
+    oToken = fixture.ousd;
+    hardAsset = fixture.usdc;
+    oTokenVault = fixture.vault;
+  }
+
+  // The strategy and vault are governed by the OToken vault's governor (the deployer
+  // locally, the Timelock on a fork).
+  const govAddr = await oTokenVault.governor();
+  const govSigner = await impersonateAndFund(govAddr);
+
+  // Mock Morpho V2 credit vault (asset == oToken) wired to a Morpho V1 liquidity adapter.
+  const creditVault = await (
+    await ethers.getContractFactory("MockMorphoV2CreditVault")
+  )
+    .connect(josh)
+    .deploy(oToken.address);
+  const creditVaultV1Leg = await (
+    await ethers.getContractFactory("MockMorphoV1Vault")
+  )
+    .connect(josh)
+    .deploy(oToken.address);
+  const creditVaultAdapter = await (
+    await ethers.getContractFactory("MockMorphoV1VaultLiquidityAdapter")
+  )
+    .connect(josh)
+    .deploy();
+  await creditVaultAdapter
+    .connect(josh)
+    .setMockMorphoVault(creditVaultV1Leg.address);
+  await creditVault
+    .connect(josh)
+    .setLiquidityAdapter(creditVaultAdapter.address);
+
+  // Deploy the strategy behind a proxy, governed by the OToken vault's governor.
+  const proxy = await (
+    await ethers.getContractFactory("OUSDCreditMarketAMOStrategyProxy")
+  )
+    .connect(josh)
+    .deploy();
+  const impl = await (
+    await ethers.getContractFactory("CreditMarketAMOStrategy")
+  )
+    .connect(josh)
+    .deploy(
+      [creditVault.address, oTokenVault.address],
+      oToken.address,
+      hardAsset.address
+    );
+  const initData = impl.interface.encodeFunctionData("initialize()", []);
+  const initializeProxy =
+    proxy.connect(josh)["initialize(address,address,bytes)"];
+  await initializeProxy(impl.address, govAddr, initData);
+  const creditAMOStrategy = await ethers.getContractAt(
+    "CreditMarketAMOStrategy",
+    proxy.address
+  );
+
+  // Register the strategy with the OToken vault and turn on minting.
+  await oTokenVault
+    .connect(govSigner)
+    .approveStrategy(creditAMOStrategy.address);
+  await oTokenVault
+    .connect(govSigner)
+    .addStrategyToMintWhitelist(creditAMOStrategy.address);
+  await creditAMOStrategy.connect(govSigner).safeApproveAllTokens();
+  await creditAMOStrategy
+    .connect(govSigner)
+    .setMintCap(parseUnits("1000000", 18));
+
+  // Ensure capital operations are enabled so mintForStrategy works.
+  if (await oTokenVault.capitalPaused()) {
+    await oTokenVault.connect(govSigner).unpauseCapital();
+  }
+
+  const oTokenVaultSigner = await impersonateAndFund(oTokenVault.address);
+
+  return {
+    ...fixture,
+    governor: govSigner,
+    oTokenSymbol,
+    oToken,
+    hardAsset,
+    oTokenVault,
+    oTokenVaultSigner,
+    creditVault,
+    creditVaultV1Leg,
+    creditVaultAdapter,
+    creditAMOStrategy,
+  };
+}
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -1764,6 +1870,7 @@ mocha.after(async () => {
 
 module.exports = {
   createFixtureLoader,
+  creditMarketAMOFixture,
   simpleOETHFixture,
   loadDefaultFixture,
   loadSimpleOETHFixture,

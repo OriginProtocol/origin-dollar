@@ -227,6 +227,11 @@ addresses.mainnet.MorphoOUSDv2Adapter =
 addresses.mainnet.MorphoOUSDv2Vault =
   "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
+// Gated Morpho Vault V2 credit vault for the OUSD Credit Market AMO.
+// asset() == OUSD, deposit-gated to OUSDCreditMarketAMOStrategyProxy only.
+// TODO: set once the gated credit vault is deployed, then enable deploy 202.
+addresses.mainnet.OUSDCreditMarketVault = addresses.zero;
+
 // Morpho Blue singleton (same address on mainnet and Base)
 addresses.mainnet.MorphoBlue = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
 // Morpho Adaptive Curve IRM
