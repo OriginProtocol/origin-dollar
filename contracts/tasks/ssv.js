@@ -14,11 +14,17 @@ const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
+// Talos actions pass the chain id from their run context. Hardhat tasks don't,
+// so fall back to the network the hardhat provider is connected to.
+const resolveChainId = async (actionChainId) =>
+  actionChainId ?? (await ethers.provider.getNetwork()).chainId;
+
 async function removeValidator({
   consol,
   index,
   pubkey,
   operatorids,
+  chainId: actionChainId,
   signer: taskSigner,
 }) {
   const signer = taskSigner || (await getSigner());
@@ -28,7 +34,7 @@ async function removeValidator({
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await signer.provider.getNetwork();
+  const chainId = await resolveChainId(actionChainId);
 
   // Cluster details
   const { cluster } = await getClusterInfo({
@@ -65,7 +71,12 @@ const printClusterInfo = async (options) => {
   console.log(`Cluster: ${JSON.stringify(cluster.cluster, null, "  ")}`);
 };
 
-const depositCluster = async ({ amount, index, operatorids }) => {
+const depositCluster = async ({
+  amount,
+  index,
+  operatorids,
+  chainId: actionChainId,
+}) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const sortedOperatorIds = await sortOperatorIds(operatorids);
@@ -75,7 +86,7 @@ const depositCluster = async ({ amount, index, operatorids }) => {
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const chainId = await resolveChainId(actionChainId);
   const networkName = await getNetworkName();
   const ssvNetworkAddress = addresses[networkName].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
@@ -104,7 +115,13 @@ const depositCluster = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositCluster");
 };
 
-const migrateClusterToETH = async ({ type, amount, operatorids, index }) => {
+const migrateClusterToETH = async ({
+  type,
+  amount,
+  operatorids,
+  index,
+  chainId: actionChainId,
+}) => {
   const etherAmountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = splitOperatorIds(operatorids);
@@ -119,7 +136,7 @@ const migrateClusterToETH = async ({ type, amount, operatorids, index }) => {
         )
       : await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const chainId = await resolveChainId(actionChainId);
 
   // Cluster details
   const clusterInfo = await getClusterInfo({

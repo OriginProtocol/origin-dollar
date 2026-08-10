@@ -28,7 +28,7 @@ action({
       types.boolean
     );
   },
-  run: async ({ signer, args }) => {
+  run: async ({ signer, chainId, args }) => {
     if (!validatorKeys.test(args.pubkey)) {
       throw new Error(
         "pubkey must contain one or more comma-separated 48-byte hex public keys with 0x prefixes"
@@ -42,6 +42,7 @@ action({
         index: 2,
         operatorids: NATIVE_STAKING_STRATEGY_2_OPERATOR_IDS,
         pubkey,
+        chainId,
         signer,
       });
 
