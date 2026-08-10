@@ -130,7 +130,16 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     // path segments in the provider URL (e.g. QuickNode API key in path).
     const stateUrl = `${base}eth/v2/debug/beacon/states/${blockView.slot}`;
     const parsedUrl = new URL(stateUrl);
-    const headers = { Accept: "application/octet-stream" };
+    // Node's fetch defaults to `accept-encoding: gzip, deflate`, which makes
+    // Lighthouse gzip the ~330MB state and drop content-length. Inflating that
+    // on the main thread backpressures the socket down to ~2 Mbps (a 15min
+    // download that hits the abort below), and the missing content-length also
+    // forces the slow chunk-accumulation path further down. Asking for
+    // identity doubles the wire bytes but the transfer takes ~2s.
+    const headers = {
+      Accept: "application/octet-stream",
+      "Accept-Encoding": "identity",
+    };
     // Preserve Basic auth credentials embedded in the provider URL
     if (parsedUrl.username || parsedUrl.password) {
       const creds = `${decodeURIComponent(
