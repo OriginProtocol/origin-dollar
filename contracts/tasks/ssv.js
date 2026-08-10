@@ -28,12 +28,11 @@ async function removeValidator({
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const { chainId } = await signer.provider.getNetwork();
 
   // Cluster details
   const { cluster } = await getClusterInfo({
     chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     ownerAddress: nativeStakingStrategy.address,
   });
