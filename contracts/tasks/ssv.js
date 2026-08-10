@@ -10,6 +10,7 @@ const {
 } = require("../utils/ssv");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const { getChainId } = require("./lib/network");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
@@ -28,12 +29,11 @@ async function removeValidator({
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const chainId = getChainId();
 
   // Cluster details
   const { cluster } = await getClusterInfo({
     chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     ownerAddress: nativeStakingStrategy.address,
   });
