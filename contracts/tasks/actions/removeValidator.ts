@@ -16,8 +16,8 @@ action({
     "Removes registered or exited validators from Native Staking Strategy 2",
   params: (t) => {
     t.addParam(
-      "pubkeys",
-      "Comma-separated validator public keys in hex format with 0x prefixes",
+      "pubkey",
+      "One or more comma-separated validator public keys in hex format with 0x prefixes",
       undefined,
       types.string
     );
@@ -29,13 +29,13 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    if (!validatorKeys.test(args.pubkeys)) {
+    if (!validatorKeys.test(args.pubkey)) {
       throw new Error(
-        "pubkeys must be a comma-separated list of 48-byte hex public keys with 0x prefixes"
+        "pubkey must contain one or more comma-separated 48-byte hex public keys with 0x prefixes"
       );
     }
 
-    const pubkeys = args.pubkeys.split(",");
+    const pubkeys = args.pubkey.split(",");
     for (const [index, pubkey] of pubkeys.entries()) {
       await removeValidator({
         consol: args.consol,

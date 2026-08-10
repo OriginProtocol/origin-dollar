@@ -13,7 +13,7 @@ import { registry } from "./tasks/lib/action";
 // Per-task parameter allow-lists — only these params are editable from the
 // Talos admin UI. Copied verbatim from the old dump-actions-catalog.cjs.
 const TALOS_PARAM_ALLOWLISTS: Record<string, Set<string>> = {
-  removeValidator: new Set(["consol", "pubkeys"]),
+  removeValidator: new Set(["consol", "pubkey"]),
   stakeValidator: new Set([
     "amount",
     "consol",
