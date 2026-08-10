@@ -3,23 +3,21 @@
 import { types } from "../lib/action";
 import { action } from "../lib/action";
 
-const { removeValidator } = require("../validatorCompound");
+const { validatorKeys } = require("../../utils/regex");
+const { sleep } = require("../../utils/time");
+const { removeValidator } = require("../ssv");
+const NATIVE_STAKING_STRATEGY_2_OPERATOR_IDS = "752,753,754,755";
+const SSV_API_UPDATE_DELAY_MS = 30_000;
 
 action({
   name: "removeValidator",
   chains: [1],
   description:
-    "Removes a registered or exited compounding validator from the SSV cluster",
+    "Removes registered or exited validators from Native Staking Strategy 2",
   params: (t) => {
     t.addParam(
-      "operatorids",
-      "Comma separated operator ids. E.g. 342,343,344,345",
-      undefined,
-      types.string
-    );
-    t.addParam(
-      "pubkey",
-      "The validator's public key in hex format with a 0x prefix",
+      "pubkeys",
+      "Comma-separated validator public keys in hex format with 0x prefixes",
       undefined,
       types.string
     );
@@ -31,6 +29,25 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    await removeValidator({ ...args, signer });
+    if (!validatorKeys.test(args.pubkeys)) {
+      throw new Error(
+        "pubkeys must be a comma-separated list of 48-byte hex public keys with 0x prefixes"
+      );
+    }
+
+    const pubkeys = args.pubkeys.split(",");
+    for (const [index, pubkey] of pubkeys.entries()) {
+      await removeValidator({
+        consol: args.consol,
+        index: 2,
+        operatorids: NATIVE_STAKING_STRATEGY_2_OPERATOR_IDS,
+        pubkey,
+        signer,
+      });
+
+      if (index < pubkeys.length - 1) {
+        await sleep(SSV_API_UPDATE_DELAY_MS);
+      }
+    }
   },
 });
