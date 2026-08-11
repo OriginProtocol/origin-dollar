@@ -134,17 +134,6 @@ example: HOT_DEPLOY=strategy,vault,harvester
 
 Each fixture from the `_fixture.js` file needs to have custom support added for hot deploys. Usually that consists of creating constructor arguments for the associated strategy contract and mapping the fixture to strategy contracts needing the update. See how things work in "contracts/test/\_hot-deploy.js"
 
-### Echidna tests
-
-[Echidna](https://github.com/crytic/echidna#echidna-a-fast-smart-contract-fuzzer-) is used for fuzzing tests.
-
-Installation instructions can be found [here](https://github.com/crytic/echidna#installation).
-
-```
-# Run Echidna tests
-pnpm echidna
-```
-
 ## Logger
 
 A logger using the [debug](https://www.npmjs.com/package/debug) packages is used for logging tests and tasks.
@@ -457,26 +446,9 @@ action workflows can be found at https://github.com/OriginProtocol/origin-dollar
 There are separate actions for:
 
 - Contract formatting and linting
-- Dapp formatting and linting
 - Slither static analysis
 - Unit tests
 - Fork tests
-
-## Coverage
-
-The Hardhat plug-in [solidity-coverage](https://github.com/sc-forks/solidity-coverage#solidity-coverage) is used to gather Solidity code coverage. The configuration is in [.solcover.js](./.solcover.js). The coverage output is written to `coverage.json`.
-
-[Codecov](https://about.codecov.io/) is used to report Solidity code coverage. The coverage reports for this repository can be found [here](https://app.codecov.io/gh/OriginProtocol/origin-dollar).
-
-```
-# Unit test coverage
-pnpm test:coverage
-
-# For test coverage
-pnpm test:fork:coverage
-```
-
-The CI will upload the coverage reports to Codecov if they complete successfully.
 
 ## Active yield forwards
 

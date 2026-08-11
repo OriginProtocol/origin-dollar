@@ -461,7 +461,7 @@ All three identifiers **must match exactly** — if they drift, the script will 
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.23;
+pragma solidity 0.8.28;
 
 import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
 import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
