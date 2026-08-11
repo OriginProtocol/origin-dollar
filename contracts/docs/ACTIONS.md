@@ -98,7 +98,7 @@ each run (see notes in `seed_schedules.sql`).
 | Action                       | Description                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------ |
 | `stakeValidator`             | Convert WETH to ETH and deposit to a validator from the Compounding Staking Strategy |
-| `removeValidator`            | Remove a registered or exited compounding validator from the SSV cluster             |
+| `removeValidator`            | Remove registered or exited validators from Native Staking Strategy 2                |
 | `ousdRebalancer`             | Plan and execute OUSD strategy rebalancing via the RebalancerModule                  |
 | `proposeVaultStrategyMoves`  | Simulate and propose ordered OUSD/OETH strategy movements to the Strategist 2/8 Safe |
 | `queueGovernorSixProposal`   | Queue a GovernorSix proposal (`--propid`)                                            |
