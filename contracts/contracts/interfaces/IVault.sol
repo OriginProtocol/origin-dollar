@@ -28,6 +28,7 @@ interface IVault {
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event OperatorUpdated(address newOperator);
+    event AdminUpdated(address newAdmin);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -67,6 +68,10 @@ interface IVault {
     function setOperatorAddr(address _operator) external;
 
     function operatorAddr() external view returns (address);
+
+    function setAdminAddr(address _admin) external;
+
+    function adminAddr() external view returns (address);
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 

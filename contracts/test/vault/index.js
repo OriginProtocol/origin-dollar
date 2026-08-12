@@ -162,6 +162,26 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
+  it("Should allow governor to change Admin address", async () => {
+    const { vault, governor, josh } = fixture;
+
+    await expect(vault.connect(governor).setAdminAddr(josh.address))
+      .to.emit(vault, "AdminUpdated")
+      .withArgs(josh.address);
+
+    expect(await vault.adminAddr()).to.equal(josh.address);
+  });
+
+  it("Should not allow non-governor to change Admin address", async () => {
+    const { vault, admin, josh, matt, strategist } = fixture;
+
+    for (const signer of [matt, strategist, admin]) {
+      await expect(
+        vault.connect(signer).setAdminAddr(josh.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    }
+  });
+
   it("Should allow the Governor to call withdraw and then deposit", async () => {
     const { vault, governor, usdc, josh, mockStrategy } = fixture;
 

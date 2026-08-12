@@ -43,6 +43,7 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event OperatorUpdated(address newOperator);
+    event AdminUpdated(address newAdmin);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -207,8 +208,14 @@ abstract contract VaultStorage is Initializable, Governable {
     ///         and Strategist are always allowed in addition to this address.
     address public operatorAddr;
 
+    /// @notice Address authorized to pause and unpause the Vault. Held by the
+    ///         Admin multisig. Deliberately separate from the Strategist so a
+    ///         single key cannot both pause and immediately unpause: the
+    ///         Strategist trips the pause, only the Admin can lift it.
+    address public adminAddr;
+
     // For future use
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
     /// Legacy OETHVaultCore code, relocated here for vault consistency.

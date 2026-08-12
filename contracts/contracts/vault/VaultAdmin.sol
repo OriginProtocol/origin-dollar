@@ -31,6 +31,30 @@ abstract contract VaultAdmin is VaultCore {
         _;
     }
 
+    /**
+     * @dev Verifies that the caller is the Governor or Admin.
+     */
+    modifier onlyGovernorOrAdmin() {
+        require(
+            msg.sender == adminAddr || isGovernor(),
+            "Caller is not the Admin or Governor"
+        );
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Governor, Strategist or Admin.
+     */
+    modifier onlyGovernorOrStrategistOrAdmin() {
+        require(
+            msg.sender == strategistAddr ||
+                msg.sender == adminAddr ||
+                isGovernor(),
+            "Caller is not the Strategist, Admin or Governor"
+        );
+        _;
+    }
+
     constructor(address _asset) VaultCore(_asset) {}
 
     /***************************************
@@ -80,6 +104,15 @@ abstract contract VaultAdmin is VaultCore {
     function setOperatorAddr(address _operator) external onlyGovernor {
         operatorAddr = _operator;
         emit OperatorUpdated(_operator);
+    }
+
+    /**
+     * @notice Set the address authorized to pause and unpause the Vault.
+     * @param _admin New Admin address.
+     */
+    function setAdminAddr(address _admin) external onlyGovernor {
+        adminAddr = _admin;
+        emit AdminUpdated(_admin);
     }
 
     /**
@@ -391,7 +424,7 @@ abstract contract VaultAdmin is VaultCore {
     /**
      * @notice Set the deposit paused flag to true to prevent rebasing.
      */
-    function pauseRebase() external onlyGovernorOrStrategist {
+    function pauseRebase() external onlyGovernorOrStrategistOrAdmin {
         rebasePaused = true;
         emit RebasePaused();
     }
@@ -399,7 +432,7 @@ abstract contract VaultAdmin is VaultCore {
     /**
      * @notice Set the deposit paused flag to true to allow rebasing.
      */
-    function unpauseRebase() external onlyGovernorOrStrategist {
+    function unpauseRebase() external onlyGovernorOrAdmin {
         rebasePaused = false;
         emit RebaseUnpaused();
     }
@@ -407,7 +440,7 @@ abstract contract VaultAdmin is VaultCore {
     /**
      * @notice Set the deposit paused flag to true to prevent capital movement.
      */
-    function pauseCapital() external onlyGovernorOrStrategist {
+    function pauseCapital() external onlyGovernorOrStrategistOrAdmin {
         capitalPaused = true;
         emit CapitalPaused();
     }
@@ -415,7 +448,7 @@ abstract contract VaultAdmin is VaultCore {
     /**
      * @notice Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseCapital() external onlyGovernorOrStrategist {
+    function unpauseCapital() external onlyGovernorOrAdmin {
         capitalPaused = false;
         emit CapitalUnpaused();
     }

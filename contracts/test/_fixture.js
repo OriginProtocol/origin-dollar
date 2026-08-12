@@ -133,17 +133,22 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
   let strategist = signers[0];
+  let admin = signers[2];
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
     governor = await impersonateAndFund(governorAddr);
     strategist = await impersonateAndFund(multichainStrategistAddr);
+    // The Admin (5/8) multisig, stored in addresses.js as `Guardian`.
+    admin = await impersonateAndFund(addresses.mainnet.Guardian);
+    admin.address = addresses.mainnet.Guardian;
 
     // Production vault sits paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    await oethVault.connect(strategist).unpauseRebase();
+    // Only the Admin can unpause.
+    await oethVault.connect(admin).unpauseRebase();
 
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
@@ -152,6 +157,8 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       await resetAllowance(weth, user, oethVault.address);
     }
   } else {
+    await oethVault.connect(sGovernor).setAdminAddr(admin.address);
+
     // Fund WETH contract
     await hardhatSetBalance(weth.address, "999999999999999");
 
@@ -171,6 +178,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     anna,
     governor,
     strategist,
+    admin,
     domen,
     daniel,
     franck,
@@ -694,6 +702,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
   let strategist = signers[0];
+  let admin = signers[2];
   let timelock;
   let oldTimelock;
 
@@ -702,22 +711,34 @@ const defaultFixture = deployments.createFixture(async () => {
   if (isFork) {
     governor = await impersonateAndFund(governorAddr);
     strategist = await impersonateAndFund(multichainStrategistAddr);
+    // The Admin (5/8) multisig, stored in addresses.js as `Guardian`.
+    admin = await impersonateAndFund(addresses.mainnet.Guardian);
     timelock = await impersonateAndFund(timelockAddr);
     oldTimelock = await impersonateAndFund(addresses.mainnet.OldTimelock);
 
     // Just a hack to get around using `.getAddress()` on the signer
     governor.address = governorAddr;
     strategist.address = multichainStrategistAddr;
+    admin.address = addresses.mainnet.Guardian;
     timelock.address = timelockAddr;
     oldTimelock.address = addresses.mainnet.OldTimelock;
 
     // Production vaults sit paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    await vaultAndTokenContracts.vault.connect(strategist).unpauseRebase();
-    await vaultAndTokenContracts.oethVault.connect(strategist).unpauseRebase();
+    // Only the Admin can unpause.
+    await vaultAndTokenContracts.vault.connect(admin).unpauseRebase();
+    await vaultAndTokenContracts.oethVault.connect(admin).unpauseRebase();
   } else {
     timelock = governor;
+
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    await vaultAndTokenContracts.vault
+      .connect(sGovernor)
+      .setAdminAddr(admin.address);
+    await vaultAndTokenContracts.oethVault
+      .connect(sGovernor)
+      .setAdminAddr(admin.address);
   }
 
   if (!isFork) {
@@ -747,6 +768,7 @@ const defaultFixture = deployments.createFixture(async () => {
     anna,
     governor,
     strategist,
+    admin,
     domen,
     daniel,
     franck,

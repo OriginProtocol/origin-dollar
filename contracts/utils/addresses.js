@@ -424,6 +424,8 @@ addresses.base.WETH = "0x4200000000000000000000000000000000000006";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
 addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// 5/8 Multisig. Same Safe.
+addresses.base.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // 2/8 Multisig
 addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";

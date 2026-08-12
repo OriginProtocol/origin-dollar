@@ -21,6 +21,50 @@ describe("ForkTest: OETHb Vault", function () {
     await oethbVault.connect(signer).mint(oethUnits("1"));
   }
 
+  describe("Admin", function () {
+    it("Should have the correct admin address set", async () => {
+      const { oethbVault } = fixture;
+      expect(await oethbVault.adminAddr()).to.equal(addresses.base.admin);
+    });
+
+    it("Should let the strategist pause but not unpause capital", async () => {
+      const { admin, oethbVault, strategist } = fixture;
+
+      await oethbVault.connect(strategist).pauseCapital();
+      expect(await oethbVault.capitalPaused()).to.be.true;
+
+      await expect(
+        oethbVault.connect(strategist).unpauseCapital()
+      ).to.be.revertedWith("Caller is not the Admin or Governor");
+      expect(await oethbVault.capitalPaused()).to.be.true;
+
+      // Only the Admin can lift the pause the Strategist tripped
+      await oethbVault.connect(admin).unpauseCapital();
+      expect(await oethbVault.capitalPaused()).to.be.false;
+    });
+
+    it("Should let the admin pause and unpause rebase", async () => {
+      const { admin, oethbVault } = fixture;
+
+      await oethbVault.connect(admin).pauseRebase();
+      expect(await oethbVault.rebasePaused()).to.be.true;
+      await oethbVault.connect(admin).unpauseRebase();
+      expect(await oethbVault.rebasePaused()).to.be.false;
+    });
+
+    it("Should still read pre-existing storage correctly after the upgrade", async () => {
+      const { oethbVault } = fixture;
+
+      // The admin slot was taken from the storage gap, so a layout shift
+      // would show up in the slots around it first.
+      expect(await oethbVault.strategistAddr()).to.equal(
+        addresses.multichainStrategist
+      );
+      expect(await oethbVault.governor()).to.equal(addresses.base.timelock);
+      expect(await oethbVault.totalValue()).to.be.gt(0);
+    });
+  });
+
   describe("Mint & Permissioned redeems", function () {
     it("Should allow anyone to mint", async () => {
       const { nick, weth, oethb, oethbVault, strategist } = fixture;
