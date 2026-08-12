@@ -68,61 +68,16 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const cWOETHProxy = await ethers.getContract("WOETHProxy");
   const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
 
-  let weth,
-    ssv,
-    nativeStakingSSVStrategy,
-    oethFixedRateDripper,
-    simpleOETHHarvester;
+  let weth, ssv;
 
   if (isFork) {
     const addressContext = addresses.mainnet;
 
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
-
-    const oethFixedRateDripperProxy = await ethers.getContract(
-      "OETHFixedRateDripperProxy"
-    );
-    oethFixedRateDripper = await ethers.getContractAt(
-      "OETHFixedRateDripper",
-      oethFixedRateDripperProxy.address
-    );
-
-    const simpleOETHHarvesterProxy = await ethers.getContract(
-      "OETHSimpleHarvesterProxy"
-    );
-    simpleOETHHarvester = await ethers.getContractAt(
-      "OETHHarvesterSimple",
-      simpleOETHHarvesterProxy.address
-    );
-
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
   } else {
     weth = await ethers.getContract("MockWETH");
     ssv = await ethers.getContract("MockSSV");
-
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
-
-    const simpleOETHHarvesterProxy = await ethers.getContract(
-      "OETHSimpleHarvesterProxy"
-    );
-    simpleOETHHarvester = await ethers.getContractAt(
-      "OETHHarvesterSimple",
-      simpleOETHHarvesterProxy.address
-    );
   }
 
   if (!isFork) {
@@ -181,10 +136,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oethVault,
     oeth,
     woeth,
-    nativeStakingSSVStrategy,
-    oethFixedRateDripper,
-    simpleOETHHarvester,
-    oethHarvester: simpleOETHHarvester,
   };
 });
 
@@ -550,22 +501,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
-  const nativeStakingStrategyProxy = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
-  );
-  const nativeStakingSSVStrategy = await ethers.getContractAt(
-    "NativeStakingSSVStrategy",
-    nativeStakingStrategyProxy.address
-  );
-
-  const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
-    "NativeStakingFeeAccumulatorProxy"
-  );
-  const nativeStakingFeeAccumulator = await ethers.getContractAt(
-    "FeeAccumulator",
-    nativeStakingFeeAccumulatorProxy.address
-  );
-
   const morphoOUSDv2StrategyProxy = !isFork
     ? undefined
     : await ethers.getContract("OUSDMorphoV2StrategyProxy");
@@ -582,24 +517,6 @@ const defaultFixture = deployments.createFixture(async () => {
         "0xF4c001dfe53C584425d7943395C7E57b10BD1DC8" // hardcoded as generated with CreateX.
       )
     : undefined;
-
-  const simpleHarvesterProxy = await ethers.getContract(
-    "OETHSimpleHarvesterProxy"
-  );
-  const simpleOETHHarvester = await ethers.getContractAt(
-    "OETHHarvesterSimple",
-    simpleHarvesterProxy.address
-  );
-
-  const oethFixedRateDripperProxy = !isFork
-    ? undefined
-    : await ethers.getContract("OETHFixedRateDripperProxy");
-  const oethFixedRateDripper = !isFork
-    ? undefined
-    : await ethers.getContractAt(
-        "OETHFixedRateDripper",
-        oethFixedRateDripperProxy.address
-      );
 
   const OUSDCurveAMOProxy = isFork
     ? await ethers.getContract("OUSDCurveAMOProxy")
@@ -766,9 +683,6 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoOUSDv2Strategy,
     morphoOUSDv2Vault,
     curvePoolBooster,
-    simpleOETHHarvester,
-    oethHarvester: simpleOETHHarvester,
-    oethFixedRateDripper,
     OUSDCurveAMO,
     curvePoolOusdUsdc,
     curveGaugeOusdUsdc,
@@ -777,9 +691,6 @@ const defaultFixture = deployments.createFixture(async () => {
     curveGaugeOETHWETH,
 
     // OETH
-    nativeStakingSSVStrategy,
-    nativeStakingFeeAccumulator,
-    oethFixedRateDripperProxy,
     oethZapper,
 
     poolBoosterCentralRegistry,
@@ -1074,72 +985,6 @@ async function morphoOUSDv2Fixture(
 }
 
 /**
- * NativeStakingSSVStrategy fixture
- */
-async function nativeStakingSSVStrategyFixture() {
-  const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "nativeStakingSSVStrategyFixture", {
-    isOethFixture: true,
-  });
-
-  if (isFork) {
-    const { nativeStakingSSVStrategy, ssv } = fixture;
-
-    fixture.validatorRegistrator = await impersonateAndFund(
-      addresses.mainnet.validatorRegistrator
-    );
-
-    // Fund some SSV to the native staking strategy
-    const ssvWhale = await impersonateAndFund(
-      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
-    );
-    await ssv
-      .connect(ssvWhale)
-      .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
-
-    fixture.ssvNetwork = await ethers.getContractAt(
-      "ISSVNetwork",
-      addresses.mainnet.SSVNetwork
-    );
-  } else {
-    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
-    const { governorAddr } = await getNamedAccounts();
-    const { oethVault, nativeStakingSSVStrategy } = fixture;
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-    // Approve Strategy
-    await oethVault
-      .connect(sGovernor)
-      .approveStrategy(nativeStakingSSVStrategy.address);
-
-    const fuseStartBn = ethers.utils.parseEther("21.6");
-    const fuseEndBn = ethers.utils.parseEther("25.6");
-
-    // Set as default
-    await oethVault
-      .connect(sGovernor)
-      .setDefaultStrategy(nativeStakingSSVStrategy.address);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setFuseInterval(fuseStartBn, fuseEndBn);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setRegistrator(governorAddr);
-
-    // Set harvester address on the strategy
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setHarvesterAddress(fixture.simpleOETHHarvester.address);
-
-    fixture.validatorRegistrator = sGovernor;
-  }
-
-  return fixture;
-}
-
-/**
  * CompoundingStakingSSVStrategy fixture
  */
 async function compoundingStakingSSVStrategyFixture() {
@@ -1214,10 +1059,6 @@ async function compoundingStakingSSVStrategyFixture() {
       .connect(sGovernor)
       .setRegistrator(registratorAddr);
 
-    await compoundingStakingSSVStrategy
-      .connect(sGovernor)
-      .setHarvesterAddress(fixture.simpleOETHHarvester.address);
-
     fixture.validatorRegistrator = sRegistrator;
   }
 
@@ -1288,10 +1129,6 @@ async function compoundingStakingStrategyFixture() {
   await fixture.compoundingStakingStrategy
     .connect(sGovernor)
     .setRegistrator(registratorAddr);
-
-  await fixture.compoundingStakingStrategy
-    .connect(sGovernor)
-    .setHarvesterAddress(fixture.simpleOETHHarvester.address);
 
   fixture.validatorRegistrator = sRegistrator;
 
@@ -1537,7 +1374,7 @@ async function beaconChainFixture() {
       addresses.mainnet.toConsensus.withdrawals
     );
   } else {
-    fixture.beaconProofs = await resolveContract("EnhancedBeaconProofs");
+    fixture.beaconProofs = await ethers.getContract("EnhancedBeaconProofs");
 
     fixture.beaconRoots = await ethers.getContractAt(
       "MockBeaconRoots",
@@ -1558,10 +1395,12 @@ async function beaconChainFixture() {
     fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
     fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
 
-    fixture.beaconConsolidation = await resolveContract(
+    fixture.beaconConsolidation = await ethers.getContract(
       "MockBeaconConsolidation"
     );
-    fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
+    fixture.partialWithdrawal = await ethers.getContract(
+      "MockPartialWithdrawal"
+    );
 
     // fund the beacon communication contracts so they can pay the fee
     await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
@@ -1776,7 +1615,6 @@ module.exports = {
   morphoOUSDv2Fixture,
   instantRebaseVaultFixture,
   rebornFixture,
-  nativeStakingSSVStrategyFixture,
   compoundingStakingStrategyFixture,
   compoundingStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyMerkleProofsMockedFixture,

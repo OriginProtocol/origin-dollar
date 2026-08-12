@@ -31,7 +31,7 @@ action({
     );
     t.addOptionalParam(
       "depositMessageRoot",
-      "Deposit message root provided by p2p",
+      "Deposit message root provided by the validator operator",
       undefined,
       types.string
     );

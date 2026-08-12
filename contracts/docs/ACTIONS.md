@@ -19,11 +19,11 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | Action                 | Network | Cron             | Description                                                                                                                               |
 | ---------------------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Rebase OUSD on mainnet                                                                                                                    |
-| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Collect the OETH dripper and rebase OETH on mainnet                                                                                       |
+| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Rebase OETH on mainnet                                                                                                                     |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
 | `otokenOsRebase`       | sonic   | `45 11,23 * * *` | Collect the OS dripper and rebase OS on Sonic                                                                                             |
 | `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
-| `permissionedRebase`   | mainnet | `15 10,22 * * *` | Collect fixed-rate drippers, then `permissionedRebase()` every managed vault via the Safe module (unpause → rebase → re-pause atomically) |
+| `permissionedRebase`   | mainnet | `15 10,22 * * *` | `permissionedRebase()` every managed vault via the Safe module (unpause → rebase → re-pause atomically)                                  |
 | `permissionedRebase`   | base    | `15 10,22 * * *` | As above, on Base                                                                                                                         |
 | `permissionedRebase`   | sonic   | `15 10,22 * * *` | As above, on Sonic                                                                                                                        |
 

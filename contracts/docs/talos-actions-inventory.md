@@ -55,7 +55,6 @@
 | `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |
-| `utils/p2pValidatorCompound` | 1 | eth |
 | `utils/proofs` | 1 | eth |
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |

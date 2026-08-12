@@ -3,9 +3,7 @@ const { isFork } = require("../../test/helpers.js");
 const {
   deployOracles,
   deployCore,
-  deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
-  deploySimpleOETHHarvester,
   configureVault,
   configureOETHVault,
   deployUniswapV3Pool,
@@ -22,9 +20,7 @@ const main = async () => {
 
   await deployOracles();
   await deployCore();
-  await deployNativeStakingSSVStrategy();
   await deployCompoundingStakingSSVStrategy();
-  await deploySimpleOETHHarvester();
   await configureVault();
   await configureOETHVault();
   await deployUniswapV3Pool();
