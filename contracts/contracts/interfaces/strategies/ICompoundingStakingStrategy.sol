@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {CompoundingBalanceProofs} from "./CompoundingStakingTypes.sol";
-import {CompoundingValidatorState} from "./CompoundingStakingTypes.sol";
-import {CompoundingValidatorStakeData} from "./CompoundingStakingTypes.sol";
-import {CompoundingPendingDepositProofs} from "./CompoundingStakingTypes.sol";
-import {CompoundingStrategyValidatorProofData} from "./CompoundingStakingTypes.sol";
-import {CompoundingFirstPendingDepositSlotProofData} from "./CompoundingStakingTypes.sol";
+import { CompoundingBalanceProofs } from "./CompoundingStakingTypes.sol";
+import { CompoundingValidatorState } from "./CompoundingStakingTypes.sol";
+import { CompoundingValidatorStakeData } from "./CompoundingStakingTypes.sol";
+import { CompoundingPendingDepositProofs } from "./CompoundingStakingTypes.sol";
+import { CompoundingStrategyValidatorProofData } from "./CompoundingStakingTypes.sol";
+import { CompoundingFirstPendingDepositSlotProofData } from "./CompoundingStakingTypes.sol";
 
 interface ICompoundingStakingStrategy {
     // Errors (from CompoundingStakingStrategy)
@@ -20,23 +20,47 @@ interface ICompoundingStakingStrategy {
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
     event PTokenAdded(address indexed _asset, address _pToken);
     event PTokenRemoved(address indexed _asset, address _pToken);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     // Events (from CompoundingStakingStrategy)
     event RegistratorChanged(address indexed newAddress);
     event FirstDepositReset();
-    event ETHStaked(bytes32 indexed pubKeyHash, bytes32 indexed pendingDepositRoot, bytes pubKey, uint256 amountWei);
-    event ValidatorVerified(bytes32 indexed pubKeyHash, uint40 indexed validatorIndex);
+    event ETHStaked(
+        bytes32 indexed pubKeyHash,
+        bytes32 indexed pendingDepositRoot,
+        bytes pubKey,
+        uint256 amountWei
+    );
+    event ValidatorVerified(
+        bytes32 indexed pubKeyHash,
+        uint40 indexed validatorIndex
+    );
     event ValidatorInvalid(bytes32 indexed pubKeyHash);
-    event DepositVerified(bytes32 indexed pendingDepositRoot, uint256 amountWei);
+    event DepositVerified(
+        bytes32 indexed pendingDepositRoot,
+        uint256 amountWei
+    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
-        uint64 indexed timestamp, uint256 totalDepositsWei, uint256 totalValidatorBalance, uint256 ethBalance
+        uint64 indexed timestamp,
+        uint256 totalDepositsWei,
+        uint256 totalValidatorBalance,
+        uint256 ethBalance
     );
 
     // IStrategy functions
@@ -44,11 +68,18 @@ interface ICompoundingStakingStrategy {
 
     function depositAll() external;
 
-    function withdraw(address _recipient, address _asset, uint256 _amount) external;
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external;
 
     function withdrawAll() external;
 
-    function checkBalance(address _asset) external view returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
 
     function supportsAsset(address _asset) external view returns (bool);
 
@@ -60,7 +91,8 @@ interface ICompoundingStakingStrategy {
 
     function transferToken(address token, uint256 amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 
     // InitializableAbstractStrategy functions
     function platformAddress() external view returns (address);
@@ -71,7 +103,10 @@ interface ICompoundingStakingStrategy {
 
     function safeApproveAllTokens() external;
 
-    function rewardTokenAddresses(uint256 _index) external view returns (address);
+    function rewardTokenAddresses(uint256 _index)
+        external
+        view
+        returns (address);
 
     function setPTokenAddress(address _asset, address _pToken) external;
 
@@ -110,7 +145,10 @@ interface ICompoundingStakingStrategy {
 
     function setInitialDepositAmount(uint256 amountWei) external;
 
-    function stakeEth(CompoundingValidatorStakeData calldata stakeData, uint64 amountGwei) external;
+    function stakeEth(
+        CompoundingValidatorStakeData calldata stakeData,
+        uint64 amountGwei
+    ) external;
 
     function verifyValidator(
         uint64 nextBlockTimestamp,
@@ -134,9 +172,14 @@ interface ICompoundingStakingStrategy {
         CompoundingPendingDepositProofs calldata pendingDepositProofs
     ) external;
 
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei) external payable;
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
+        external
+        payable;
 
-    function validator(bytes32 pubKeyHash) external view returns (CompoundingValidatorState, uint40);
+    function validator(bytes32 pubKeyHash)
+        external
+        view
+        returns (CompoundingValidatorState, uint40);
 
     function verifiedValidatorsLength() external view returns (uint256);
 
@@ -147,9 +190,22 @@ interface ICompoundingStakingStrategy {
     function deposits(bytes32 pendingDepositRoot)
         external
         view
-        returns (bytes32 pubKeyHash, uint64 depositAmount, uint64 depositSlot, bool isVerified, uint40 validatorIndex);
+        returns (
+            bytes32 pubKeyHash,
+            uint64 depositAmount,
+            uint64 depositSlot,
+            bool isVerified,
+            uint40 validatorIndex
+        );
 
-    function snappedBalance() external view returns (bytes32 blockRoot, uint64 timestamp, uint128 ethBalance);
+    function snappedBalance()
+        external
+        view
+        returns (
+            bytes32 blockRoot,
+            uint64 timestamp,
+            uint128 ethBalance
+        );
 
     function lastVerifiedEthBalance() external view returns (uint256);
 }

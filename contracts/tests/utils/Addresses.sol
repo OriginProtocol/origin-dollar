@@ -211,8 +211,6 @@ library Mainnet {
     address internal constant NativeStakingSSVStrategyProxy = 0x34eDb2ee25751eE67F68A45813B22811687C0238;
     address internal constant NativeStakingSSVStrategy2Proxy = 0x4685dB8bF2Df743c861d71E6cFb5347222992076;
     address internal constant NativeStakingSSVStrategy3Proxy = 0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63;
-    address internal constant NativeStakingFeeAccumulator2Proxy = 0xfEE31c09fA5E9cdbC1f80C90b42B58640be91DDF;
-    address internal constant NativeStakingFeeAccumulator3Proxy = 0x49674fBce040D95366604d1db3392E9bDEa14d48;
     address internal constant BeaconProofs = 0xc4444C5D9e7C1a5A0a01c5E4b11692d589DcAF22;
     address internal constant ConsolidationController = 0x7e57a2AF9F41aF41D6bCf53cc3C299fB7e7A51B4;
 

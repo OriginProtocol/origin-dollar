@@ -33,7 +33,6 @@
 | `utils/txLogger` | 6 | eth, sonic, hyper, base, plume, hoodi |
 | `utils/defender` | 5 | eth, hyper, base, holesky, hoodi |
 | `abi/IWETH9.json` | 3 | eth, holesky, hoodi |
-| `abi/native_staking_SSV_strategy.json` | 3 | eth, holesky, hoodi |
 | `utils/cctp` | 3 | eth, hyper, base |
 | `utils/hardhat-helpers` | 3 | eth, hyper, base |
 | `utils/validator` | 3 | eth, holesky, hoodi |
@@ -52,7 +51,6 @@
 | `utils/constants` | 1 | eth |
 | `utils/discord` | 1 | eth |
 | `utils/hardhat` | 1 | eth |
-| `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |
 | `utils/proofs` | 1 | eth |

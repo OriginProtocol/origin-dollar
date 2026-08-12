@@ -112,9 +112,6 @@ const configureOETHVault = async () => {
 };
 
 /**
- * upgradeNativeStakingFeeAccumulator
- */
-/**
  * Upgrade NativeStakingSSVStrategy
  */
 const upgradeCompoundingStakingSSVStrategy = async () => {
@@ -177,11 +174,6 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
   );
 };
 
-/**
- * Deploy NativeStakingSSVStrategy
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- * the strategy.
- */
 /**
  * Deploy CompoundingStakingSSVStrategy
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
