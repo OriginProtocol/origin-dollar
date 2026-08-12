@@ -44,7 +44,6 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'cross_chain_mainnet_base',                 'cd /app && pnpm exec tsx tasks/run.ts relayCCTPMessage --network mainnet',             '43 4,10,16,22 * * *',   'UTC', false, 'permissioned'),
 ('origin-dollar', 'cross_chain_hyper_mainnet',                'cd /app && pnpm exec tsx tasks/run.ts crossChainRelayHyperEVM --network hyperevm',     '17 1,6,11,16,21 * * *', 'UTC', false, 'permissioned'),
 ('origin-dollar', 'cross_chain_mainnet_hyper',                'cd /app && pnpm exec tsx tasks/run.ts crossChainRelayHyperEVM --network mainnet',      '7 3,8,13,18,23 * * *',  'UTC', false, 'permissioned'),
-('origin-dollar', 'claim_ssv_rewards',                        'cd /app && pnpm exec tsx tasks/run.ts claimSSVRewards --network mainnet',              '45 0 1 * *',            'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_oeth_rebase',                  'cd /app && pnpm exec tsx tasks/run.ts otokenOusdOethRebase --network mainnet',         '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_oeth_rebase',                       'cd /app && pnpm exec tsx tasks/run.ts otokenOethRebase --network mainnet',             '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_rebase',                       'cd /app && pnpm exec tsx tasks/run.ts otokenOusdRebase --network mainnet',             '45 11,23 * * *',        'UTC', false, NULL),

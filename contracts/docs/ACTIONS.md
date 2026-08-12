@@ -81,7 +81,6 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `claimBribes`               | base        | `30 10 * * 4` | Claim bribes from Aerodrome veNFT lockers on Base                                               |
 | `updateVotemarketEpochs`    | arbitrumOne | `0 6 * * 5`   | Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum                       |
 | `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`  | Claim and forward OGN rewards from all modules                                                  |
-| `claimSSVRewards`           | mainnet     | `45 0 1 * *`  | Claim SSV rewards and forward the claimed SSV                                                   |
 | `managePassThrough`         | mainnet     | `30 12 * * 0` | Transfer tokens via the pass-through mechanism                                                  |
 
 ## System

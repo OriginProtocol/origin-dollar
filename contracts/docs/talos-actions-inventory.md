@@ -6,7 +6,7 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, claimSSVRewards, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdOethRebase, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, removeValidator, snapBalances, stakeValidator, verifyBalances, verifyDeposits |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdOethRebase, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, snapBalances, stakeValidator, verifyBalances, verifyDeposits |
 | sonic | manageBribeOnSonic, otokenOsCollectAndRelease, otokenOsRebase, otokenOsSonicRestakeRewards, sonicClaimWithdrawals, sonicUndelegate |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
@@ -57,6 +57,5 @@
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |
 | `utils/sonicActions` | 1 | sonic |
-| `utils/ssv` | 1 | eth |
 | `utils/units` | 1 | eth |
 | `utils/vault` | 1 | eth |

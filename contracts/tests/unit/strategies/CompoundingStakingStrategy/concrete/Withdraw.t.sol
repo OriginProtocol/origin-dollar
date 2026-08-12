@@ -47,7 +47,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_Withdraw_Test is Unit_Compound
     function test_withdraw_RevertWhen_wrongAsset() public {
         vm.prank(address(oethVault));
         vm.expectRevert(ICompoundingStakingStrategy.UnsupportedAsset.selector);
-        compoundingStakingStrategy.withdraw(address(oethVault), address(mockSsv), 1 ether);
+        compoundingStakingStrategy.withdraw(address(oethVault), address(unsupportedToken), 1 ether);
     }
 
     function test_withdraw_RevertWhen_zeroAmount() public {

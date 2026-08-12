@@ -31,7 +31,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_Configuration_Test is Unit_Com
     }
 
     function test_supportsAsset_notWeth() public view {
-        assertFalse(compoundingStakingStrategy.supportsAsset(address(mockSsv)));
+        assertFalse(compoundingStakingStrategy.supportsAsset(address(unsupportedToken)));
     }
 
     /// @dev `resetFirstDeposit` is callable by the Governor or the Strategist.

@@ -58,7 +58,6 @@ const {
 } = require("./curve");
 const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
-const { getSSVRewardsStatus } = require("./ssvRewards");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -1041,44 +1040,6 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
   .setAction(setRewardTokenAddresses);
 
 // Harvester
-
-// SSV
-
-subtask(
-  "ssvRewards",
-  "Display claimable SSV rewards from the Incentivized Mainnet Program"
-).setAction(async () => {
-  const status = await getSSVRewardsStatus(ethers.provider);
-
-  console.log(`\nSSV Rewards Status for ${status.account}`);
-  console.log(
-    `  Cumulative entitlement: ${ethers.utils.formatUnits(
-      status.cumulativeEntitlement,
-      18
-    )} SSV`
-  );
-  console.log(
-    `  Already claimed:        ${ethers.utils.formatUnits(
-      status.cumulativeClaimed,
-      18
-    )} SSV`
-  );
-  console.log(
-    `  Unclaimed:              ${ethers.utils.formatUnits(
-      status.unclaimed,
-      18
-    )} SSV`
-  );
-
-  if (status.rootMatches === false) {
-    console.log(`\n  WARNING: On-chain root does not match latest proof root`);
-    console.log(`    On-chain: ${status.onChainRoot}`);
-    console.log(`    Proof:    ${status.proofRoot}`);
-  }
-});
-task("ssvRewards").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
 
 subtask("deployStakingProxy", "Deploy the compounding staking proxy").setAction(
   async () => {

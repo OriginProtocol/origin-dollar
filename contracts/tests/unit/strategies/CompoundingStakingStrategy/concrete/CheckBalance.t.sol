@@ -21,7 +21,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_CheckBalance_Test is Unit_Comp
 
     function test_checkBalance_RevertWhen_unsupportedAsset() public {
         vm.expectRevert(ICompoundingStakingStrategy.UnsupportedAsset.selector);
-        compoundingStakingStrategy.checkBalance(address(mockSsv));
+        compoundingStakingStrategy.checkBalance(address(unsupportedToken));
     }
 
     function test_checkBalance_includesLastVerifiedBalance() public {

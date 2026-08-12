@@ -67,16 +67,16 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const cWOETHProxy = await ethers.getContract("WOETHProxy");
   const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
 
-  let weth, ssv;
+  let weth, unsupportedToken;
 
   if (isFork) {
     const addressContext = addresses.mainnet;
 
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
-    ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
+    unsupportedToken = await ethers.getContractAt(erc20Abi, addressContext.DAI);
   } else {
     weth = await ethers.getContract("MockWETH");
-    ssv = await ethers.getContract("MockSSV");
+    unsupportedToken = await ethers.getContract("MockDAI");
   }
 
   if (!isFork) {
@@ -129,7 +129,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     daniel,
     franck,
     // Assets
-    ssv,
+    unsupportedToken,
     weth,
     // OETH
     oethVault,
@@ -553,7 +553,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ? undefined
     : await ethers.getContract("MockStrategy");
 
-  let usdt, usds, usdc, weth, ogn, morphoOUSDv2Vault, ssv;
+  let usdt, usds, usdc, weth, ogn, morphoOUSDv2Vault, unsupportedToken;
 
   let depositContractUtils,
     oethZapper,
@@ -567,13 +567,15 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
     weth = await ethers.getContractAt("IWETH9", addresses.mainnet.WETH);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
+    unsupportedToken = await ethers.getContractAt(
+      erc20Abi,
+      addresses.mainnet.DAI
+    );
 
     morphoOUSDv2Vault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoOUSDv2Vault
     );
-    ssv = await ethers.getContractAt(erc20Abi, addresses.mainnet.SSV);
-
     oethZapper = await ethers.getContract("OETHZapper");
 
     poolBoosterCentralRegistry = await ethers.getContractAt(
@@ -596,7 +598,7 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc = await ethers.getContract("MockUSDC");
     weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
-    ssv = await ethers.getContract("MockSSV");
+    unsupportedToken = await ethers.getContract("MockDAI");
     depositContractUtils = await ethers.getContract("DepositContractUtils");
   }
 
@@ -675,7 +677,7 @@ const defaultFixture = deployments.createFixture(async () => {
     usds,
     usdc,
     ogn,
-    ssv,
+    unsupportedToken,
     weth,
     depositContractUtils,
     wousd,

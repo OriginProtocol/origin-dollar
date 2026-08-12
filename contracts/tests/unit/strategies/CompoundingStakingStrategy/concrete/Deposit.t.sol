@@ -30,7 +30,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_Deposit_Test is Unit_Compoundi
     function test_deposit_RevertWhen_wrongAsset() public {
         vm.prank(address(oethVault));
         vm.expectRevert(ICompoundingStakingStrategy.UnsupportedAsset.selector);
-        compoundingStakingStrategy.deposit(address(mockSsv), 1 ether);
+        compoundingStakingStrategy.deposit(address(unsupportedToken), 1 ether);
     }
 
     function test_deposit_RevertWhen_zeroAmount() public {

@@ -30,7 +30,7 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
 import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
-import {MockSSV} from "contracts/mocks/MockSSV.sol";
+import {MockDAI} from "contracts/mocks/MockDAI.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
 
@@ -42,7 +42,7 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    MockSSV internal mockSsv;
+    MockDAI internal unsupportedToken;
     MockDepositContract internal mockDepositContract;
     MockBeaconProofs internal mockBeaconProofs;
     IOToken internal oeth;
@@ -140,7 +140,7 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     function _deployContracts() internal {
         // Deploy mocks
         mockWeth = new MockWETH();
-        mockSsv = new MockSSV();
+        unsupportedToken = new MockDAI();
         mockDepositContract = new MockDepositContract();
         address beaconProofsAddress = _deployBeaconProofs();
 
@@ -241,7 +241,7 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
         vm.label(address(compoundingStakingStrategy), "CompoundingStakingStrategy");
         vm.label(address(compoundingStakingView), "CompoundingStakingView");
         vm.label(address(mockWeth), "MockWETH");
-        vm.label(address(mockSsv), "MockSSV");
+        vm.label(address(unsupportedToken), "Unsupported Token");
         vm.label(address(mockDepositContract), "MockDepositContract");
         vm.label(address(mockBeaconProofs), "MockBeaconProofs");
         vm.label(address(oeth), "OETH");

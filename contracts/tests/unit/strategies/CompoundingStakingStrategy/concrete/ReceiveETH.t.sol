@@ -8,7 +8,7 @@ import {
 
 contract Unit_Concrete_CompoundingStakingStrategy_ReceiveETH_Test is Unit_CompoundingStakingStrategy_Shared_Test {
     function test_receiveETH_fromAnyone() public {
-        // Unlike NativeStakingSSVStrategy, CompoundingStaking accepts ETH from anyone
+        // CompoundingStaking accepts ETH from anyone
         vm.deal(strategist, 10 ether);
         vm.prank(strategist);
         (bool success,) = address(compoundingStakingStrategy).call{value: 2 ether}("");
