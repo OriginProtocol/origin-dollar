@@ -20,9 +20,10 @@ contract $005_RemoveSecondNativeStakingStrategy is AbstractDeployScript("005_Rem
     using GovHelper for GovProposal;
 
     // SSV cluster state for NativeStakingSSVStrategy2 at block 25,724,239.
-    uint32 internal constant VALIDATOR_COUNT = 104;
+    uint32 internal constant VALIDATOR_COUNT = 0;
     uint64 internal constant NETWORK_FEE_INDEX = 27_051_034_992;
     uint64 internal constant CLUSTER_INDEX = 0;
+    // TODO needs to be updated after the last validators have been removed
     uint256 internal constant CLUSTER_ETH_BALANCE = 0.051885958642 ether;
 
     // ==================== Governance Proposal ==================== //
