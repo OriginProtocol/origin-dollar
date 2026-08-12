@@ -1,4 +1,4 @@
-# CompoundingStakingSSVStrategy — Foundry Tests
+# CompoundingStakingStrategy — Foundry Tests
 
 ## Coverage Notes
 
@@ -6,7 +6,7 @@ The unit tests here use `MockBeaconProofs` which auto-passes all proof verificat
 
 ### Hardhat tests not yet ported (candidates for fork tests)
 
-The following Hardhat test scenarios from `test/strategies/compoundingSSVStaking.js` require real beacon chain proof data and are not suitable for mock-based unit tests. They should be ported as **fork tests** instead:
+The following Hardhat test scenarios from `test/strategies/compoundingStaking.js` require real beacon chain proof data and are not suitable for mock-based unit tests. They should be ported as **fork tests** instead:
 
 1. **21-validator balance verification** (lines 2622-2695)
    - `"Should verify balances with some WETH, ETH and no deposits"` — 21 active validators with real balance proofs
@@ -33,4 +33,4 @@ These tests rely on the `testBalancesProofs` array (loaded from external JSON fi
 
 ### Test data
 
-Validator test data is loaded at runtime from `test/strategies/compoundingSSVStaking-validatorsData.json` using `vm.readFile` + `stdJson`. The JSON contains 21 validators with public keys, operator IDs, shares data, signatures, and deposit data roots.
+Validator test data is loaded at runtime from `test/strategies/compoundingStaking-validatorsData.json` using `vm.readFile` + `stdJson`. The JSON contains 21 validators with public keys, operator IDs, shares data, signatures, and deposit data roots.

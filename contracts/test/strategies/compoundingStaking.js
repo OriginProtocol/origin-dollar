@@ -9,9 +9,7 @@ const {
   createFixtureLoader,
   compoundingStakingStrategyFixture,
 } = require("../_fixture");
-const {
-  testValidators,
-} = require("./compoundingSSVStaking-validatorsData.json");
+const { testValidators } = require("./compoundingStaking-validatorsData.json");
 
 const loadFixture = createFixtureLoader(compoundingStakingStrategyFixture);
 

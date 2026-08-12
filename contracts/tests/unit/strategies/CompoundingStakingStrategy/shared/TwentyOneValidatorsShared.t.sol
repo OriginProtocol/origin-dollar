@@ -11,13 +11,13 @@ import {
     CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
     CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 import {EnhancedBeaconProofs} from "contracts/mocks/beacon/EnhancedBeaconProofs.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
-import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from "./Shared.t.sol";
+import {Unit_CompoundingStakingStrategy_Shared_Test} from "./Shared.t.sol";
 
-abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
+abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Test is
+    Unit_CompoundingStakingStrategy_Shared_Test
 {
     using stdJson for string;
 
@@ -66,12 +66,11 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
 
     function _deployStrategy(address beaconProofsAddress) internal override returns (address strategyAddress) {
         deployCodeTo(
-            Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
+            Strategies.COMPOUNDING_STAKING_STRATEGY,
             abi.encode(
                 address(0),
                 address(oethVault),
                 address(mockWeth),
-                address(mockSsvNetwork),
                 address(mockDepositContract),
                 beaconProofsAddress,
                 BEACON_GENESIS_TIMESTAMP
@@ -86,14 +85,14 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
             this.processHistoricalValidator(i);
         }
 
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), VALIDATOR_COUNT);
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 0);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), VALIDATOR_COUNT);
+        assertEq(compoundingStakingStrategy.depositListLength(), 0);
     }
 
     function processHistoricalValidator(uint256 i) external {
         require(msg.sender == address(this), "only self");
         assertEq(_hashPubKey(testValidators[i].publicKey), testValidators[i].publicKeyHash, "public key hash");
-        bytes32 pendingDepositRoot = _registerAndStake(i);
+        bytes32 pendingDepositRoot = _stakeNewValidator(i);
         _verifyHistoricalValidator(i);
         _verifyHistoricalDeposit(i, pendingDepositRoot);
         uint64 historicalAmountGwei = _historicalDepositAmountGwei(i);
@@ -107,7 +106,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
         bytes memory proof = validatorsJson.readBytes(string.concat(base, ".bytes"));
 
         mockBeaconRootsContract.setBeaconRoot(nextBlockTimestamp, beaconBlockRoot);
-        compoundingStakingSSVStrategy.verifyValidator(
+        compoundingStakingStrategy.verifyValidator(
             nextBlockTimestamp,
             uint40(testValidators[validatorPosition].index),
             testValidators[validatorPosition].publicKeyHash,
@@ -135,7 +134,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
         });
 
         mockBeaconRootsContract.setBeaconRoot(_calcNextBlockTimestamp(processedSlot), processedBlockRoot);
-        compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
+        compoundingStakingStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
     }
 
     function _topUpValidator(uint256 validatorPosition, uint64 amountGwei, bool verifyDeposit)
@@ -155,9 +154,8 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
         });
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.stakeEth(stakeData, amountGwei);
-        pendingDepositRoot =
-            compoundingStakingSSVStrategy.depositList(compoundingStakingSSVStrategy.depositListLength() - 1);
+        compoundingStakingStrategy.stakeEth(stakeData, amountGwei);
+        pendingDepositRoot = compoundingStakingStrategy.depositList(compoundingStakingStrategy.depositListLength() - 1);
 
         if (verifyDeposit) {
             _verifyHistoricalDeposit(validatorPosition, pendingDepositRoot);
@@ -200,7 +198,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
         internal
         returns (BalanceTotals memory totals)
     {
-        uint256 depositCount = compoundingStakingSSVStrategy.depositListLength();
+        uint256 depositCount = compoundingStakingStrategy.depositListLength();
         if (expectedPendingDepositsWei == 0) assertEq(depositCount, 0);
         assertLe(depositCount, 8);
 
@@ -212,26 +210,26 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
         PendingDepositProofs memory pendingDepositProofs = _pendingDepositProofs(snapshot, depositCount);
         totals = _expectedTotals(snapshot.validatorBalances, expectedPendingDepositsWei);
 
-        mockWeth.mintTo(address(compoundingStakingSSVStrategy), totals.wethBalance);
-        vm.deal(address(compoundingStakingSSVStrategy), totals.ethBalance);
+        mockWeth.mintTo(address(compoundingStakingStrategy), totals.wethBalance);
+        vm.deal(address(compoundingStakingStrategy), totals.ethBalance);
         mockBeaconRootsContract.setBeaconRoot(block.timestamp, snapshot.blockRoot);
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.snapBalances();
+        compoundingStakingStrategy.snapBalances();
         uint64 snapTimestamp = uint64(block.timestamp);
 
-        vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
-        emit ICompoundingStakingSSVStrategy.BalancesVerified(
+        vm.expectEmit(true, false, false, true, address(compoundingStakingStrategy));
+        emit ICompoundingStakingStrategy.BalancesVerified(
             snapTimestamp, totals.totalDepositsWei, totals.totalValidatorBalance, totals.ethBalance
         );
         vm.prank(governor);
-        compoundingStakingSSVStrategy.verifyBalances(snapshot.balanceProofs, pendingDepositProofs);
+        compoundingStakingStrategy.verifyBalances(snapshot.balanceProofs, pendingDepositProofs);
 
         assertEq(
-            compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
+            compoundingStakingStrategy.lastVerifiedEthBalance(),
             totals.totalDepositsWei + totals.totalValidatorBalance + totals.ethBalance
         );
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), totals.totalBalance);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), totals.totalBalance);
     }
 
     function _pendingDepositProofs(HistoricalSnapshot memory snapshot, uint256 depositCount)
@@ -270,21 +268,21 @@ abstract contract Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_
     }
 
     function _replacePendingDepositRoot(uint256 depositIndex, bytes32 newPendingDepositRoot) internal {
-        bytes32 oldPendingDepositRoot = compoundingStakingSSVStrategy.depositList(depositIndex);
+        bytes32 oldPendingDepositRoot = compoundingStakingStrategy.depositList(depositIndex);
         bytes32 oldMappingSlot = _depositMappingSlot(oldPendingDepositRoot);
-        bytes32 oldDepositSlot0 = vm.load(address(compoundingStakingSSVStrategy), oldMappingSlot);
-        bytes32 oldDepositSlot1 = vm.load(address(compoundingStakingSSVStrategy), bytes32(uint256(oldMappingSlot) + 1));
+        bytes32 oldDepositSlot0 = vm.load(address(compoundingStakingStrategy), oldMappingSlot);
+        bytes32 oldDepositSlot1 = vm.load(address(compoundingStakingStrategy), bytes32(uint256(oldMappingSlot) + 1));
 
         bytes32 depositListElementSlot = bytes32(DEPOSIT_LIST_DATA_SLOT + depositIndex);
-        vm.store(address(compoundingStakingSSVStrategy), depositListElementSlot, newPendingDepositRoot);
-        assertEq(compoundingStakingSSVStrategy.depositList(depositIndex), newPendingDepositRoot);
+        vm.store(address(compoundingStakingStrategy), depositListElementSlot, newPendingDepositRoot);
+        assertEq(compoundingStakingStrategy.depositList(depositIndex), newPendingDepositRoot);
 
         bytes32 newMappingSlot = _depositMappingSlot(newPendingDepositRoot);
-        vm.store(address(compoundingStakingSSVStrategy), newMappingSlot, oldDepositSlot0);
-        vm.store(address(compoundingStakingSSVStrategy), bytes32(uint256(newMappingSlot) + 1), oldDepositSlot1);
+        vm.store(address(compoundingStakingStrategy), newMappingSlot, oldDepositSlot0);
+        vm.store(address(compoundingStakingStrategy), bytes32(uint256(newMappingSlot) + 1), oldDepositSlot1);
 
-        assertEq(vm.load(address(compoundingStakingSSVStrategy), newMappingSlot), oldDepositSlot0);
-        assertEq(vm.load(address(compoundingStakingSSVStrategy), bytes32(uint256(newMappingSlot) + 1)), oldDepositSlot1);
+        assertEq(vm.load(address(compoundingStakingStrategy), newMappingSlot), oldDepositSlot0);
+        assertEq(vm.load(address(compoundingStakingStrategy), bytes32(uint256(newMappingSlot) + 1)), oldDepositSlot1);
     }
 
     function replaceHistoricalPendingDepositRoot(uint256 depositIndex) external {

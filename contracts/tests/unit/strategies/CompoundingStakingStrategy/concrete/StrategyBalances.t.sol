@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 // --- Test base
 import {
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+    Unit_CompoundingStakingStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingStrategy/shared/Shared.t.sol";
 
 // --- Project imports
 import {
@@ -14,23 +14,20 @@ import {
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-{
+contract Unit_Concrete_CompoundingStakingStrategy_StrategyBalances_Test is Unit_CompoundingStakingStrategy_Shared_Test {
     function setUp() public override {
         super.setUp();
-        deal(address(mockSsv), address(compoundingStakingSSVStrategy), 1000 ether);
     }
 
     function test_snapBalances() public {
         vm.warp(block.timestamp + 500);
         uint64 snapTs = _snapBalances();
 
-        (bytes32 blockRoot, uint64 timestamp, uint128 ethBalance) = compoundingStakingSSVStrategy.snappedBalance();
+        (bytes32 blockRoot, uint64 timestamp, uint128 ethBalance) = compoundingStakingStrategy.snappedBalance();
         assertEq(timestamp, snapTs);
-        assertEq(uint256(ethBalance), address(compoundingStakingSSVStrategy).balance);
+        assertEq(uint256(ethBalance), address(compoundingStakingStrategy).balance);
         assertTrue(blockRoot != bytes32(0));
     }
 
@@ -41,7 +38,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         // Try immediately again
         vm.prank(governor);
         vm.expectRevert("Snap too soon");
-        compoundingStakingSSVStrategy.snapBalances();
+        compoundingStakingStrategy.snapBalances();
     }
 
     function test_verifyBalances_noValidators() public {
@@ -51,7 +48,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
         // lastVerifiedEthBalance should be the snapped ETH balance
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0);
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0);
     }
 
     function test_verifyBalances_withWethDeposit() public {
@@ -64,11 +61,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // lastVerifiedEthBalance = 0 (no ETH, only WETH which isn't included in snap)
         // checkBalance = lastVerifiedEthBalance + WETH.balanceOf = 0 + 5 = 5
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 5 ether);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 5 ether);
     }
 
     function test_verifyBalances_withValidator() public {
-        // Process validator (register, stake 1 ETH, verify validator, verify deposit)
+        // Process validator (stake 1 ETH, verify validator, verify deposit)
         _processValidator(0, 100);
 
         // Advance time, snap, verify balances
@@ -79,13 +76,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         // Validator balance should be 33 ETH (mock default)
-        uint256 expectedVerifiedBalance = 33 ether + address(compoundingStakingSSVStrategy).balance;
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), expectedVerifiedBalance);
+        uint256 expectedVerifiedBalance = 33 ether + address(compoundingStakingStrategy).balance;
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), expectedVerifiedBalance);
     }
 
     function test_verifyBalances_withPendingDeposit() public {
-        // Register, stake, verify validator but don't verify deposit
-        _registerAndStake(0);
+        // Stake, verify validator but don't verify deposit
+        _stakeNewValidator(0);
         _verifyValidator(0, 100);
 
         // Advance time, snap, verify balances
@@ -96,8 +93,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(1));
 
         // lastVerifiedEthBalance = pendingDeposit(1 ETH) + validatorBalance(33 ETH) + snapEthBalance
-        uint256 expected = 1 ether + 33 ether + address(compoundingStakingSSVStrategy).balance;
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), expected);
+        uint256 expected = 1 ether + 33 ether + address(compoundingStakingStrategy).balance;
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), expected);
     }
 
     function test_verifyBalances_RevertWhen_noSnap() public {
@@ -112,22 +109,22 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
         // Snap timestamp should be reset to 0
-        (, uint64 timestamp,) = compoundingStakingSSVStrategy.snappedBalance();
+        (, uint64 timestamp,) = compoundingStakingStrategy.snappedBalance();
         assertEq(timestamp, 0);
     }
 
     function test_depositListLength() public {
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 0);
+        assertEq(compoundingStakingStrategy.depositListLength(), 0);
 
-        _registerAndStake(0);
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 1);
+        _stakeNewValidator(0);
+        assertEq(compoundingStakingStrategy.depositListLength(), 1);
     }
 
     function test_verifiedValidatorsLength() public {
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 0);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 0);
 
         _processValidator(0, 100);
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 1);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 1);
     }
 
     //////////////////////////////////////////////////////
@@ -140,12 +137,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         uint64 snapTs = _snapBalances();
 
         vm.expectEmit(true, false, false, true);
-        emit ICompoundingStakingSSVStrategy.BalancesVerified(snapTs, 0, 0, 0);
+        emit ICompoundingStakingStrategy.BalancesVerified(snapTs, 0, 0, 0);
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0);
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 0);
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 0);
     }
 
     function test_verifyBalances_wethBeforeSnap() public {
@@ -157,8 +154,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0);
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 1.23 ether);
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 1.23 ether);
     }
 
     function test_verifyBalances_wethAfterSnap() public {
@@ -167,12 +164,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _snapBalances();
 
         vm.prank(josh);
-        weth.transfer(address(compoundingStakingSSVStrategy), 5.67 ether);
+        weth.transfer(address(compoundingStakingStrategy), 5.67 ether);
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0);
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 5.67 ether);
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 5.67 ether);
     }
 
     function test_verifyBalances_wethBeforeAndAfterSnap() public {
@@ -184,31 +181,16 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Transfer 5.67 ether directly after snap
         vm.prank(josh);
-        weth.transfer(address(compoundingStakingSSVStrategy), 5.67 ether);
+        weth.transfer(address(compoundingStakingStrategy), 5.67 ether);
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 6.9 ether);
-    }
-
-    function test_verifyBalances_withRegisteredValidator() public {
-        // Register validator 0 (don't stake), deposit 10 ether
-        _registerValidator(0);
-        _depositToStrategy(10 ether);
-
-        vm.warp(block.timestamp + 500);
-        _snapBalances();
-
-        // 0 validators in balance proofs (not staked, so not verified)
-        _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
-
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0);
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 10 ether);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 6.9 ether);
     }
 
     function test_verifyBalances_withStakedValidator() public {
-        // Register and stake validator 0 (1 ETH staked, deposit is pending)
-        _registerAndStake(0);
+        // Stake validator 0 (1 ETH staked, deposit is pending)
+        _stakeNewValidator(0);
 
         // Validator is STAKED but not verified on beacon chain yet.
         // However, the deposit is in depositList (1 pending deposit).
@@ -221,12 +203,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         // totalDepositsWei = 1 ether (from pending deposit)
         // totalValidatorBalance = 0 (no verified validators)
         // ethBalance = snapped ETH balance (0, ETH was sent to deposit contract)
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 1 ether);
-        assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 1 ether);
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 1 ether);
+        assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), 1 ether);
     }
 
     function test_verifyBalances_withVerifiedDeposit() public {
-        // Process validator 0 fully (register, stake, verify validator, verify deposit)
+        // Process validator 0 fully (stake, verify validator, verify deposit)
         _processValidator(0, 100);
 
         // Now deposit is VERIFIED and removed from depositList.
@@ -238,8 +220,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         // MockBeaconProofs returns default 33 ETH for the validator
-        uint256 ethBal = address(compoundingStakingSSVStrategy).balance;
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 33 ether + ethBal);
+        uint256 ethBal = address(compoundingStakingStrategy).balance;
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 33 ether + ethBal);
     }
 
     //////////////////////////////////////////////////////
@@ -354,7 +336,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Validator state should remain VERIFIED (not activated since balance <= threshold)
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(state), uint256(ValidatorState.VERIFIED));
     }
 
@@ -372,7 +354,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Validator state should be ACTIVE (balance > 32.25 ETH threshold)
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(state), uint256(ValidatorState.ACTIVE));
     }
 
@@ -392,7 +374,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Confirm validator is now ACTIVE
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState stateBeforeExit,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateBeforeExit,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(stateBeforeExit), uint256(ValidatorState.ACTIVE));
 
         // Set validator balance to 0 (type(uint256).max is the special "zero" value in mock)
@@ -404,11 +386,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         // Validator state should be EXITED
-        (ValidatorState stateAfterExit,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateAfterExit,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(stateAfterExit), uint256(ValidatorState.EXITED));
 
         // Verified validators list should be empty
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 0);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 0);
     }
 
     //////////////////////////////////////////////////////
@@ -423,7 +405,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Assert validator 0 is now ACTIVE
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(state), uint256(ValidatorState.ACTIVE));
     }
 
@@ -438,7 +420,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         });
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(amount / 1 gwei));
+        compoundingStakingStrategy.stakeEth(stakeData, uint64(amount / 1 gwei));
     }
 
     function test_verifyBalances_partialWithdrawal() public {
@@ -447,12 +429,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _activateValidator(1);
 
         // Record lastVerifiedEthBalance before partial withdrawal
-        uint256 balanceBefore = compoundingStakingSSVStrategy.lastVerifiedEthBalance();
+        uint256 balanceBefore = compoundingStakingStrategy.lastVerifiedEthBalance();
 
         // Do partial withdrawal of 5 ETH
         vm.deal(governor, 1 wei);
         vm.prank(governor);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(
             testValidators[0].publicKey, uint64(5 ether / 1 gwei)
         );
 
@@ -460,7 +442,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         mockBeaconProofs.setValidatorBalance(uint40(100), uint256(28 ether / 1e9));
 
         // Simulate the 5 ETH withdrawal arriving at the strategy
-        vm.deal(address(compoundingStakingSSVStrategy), address(compoundingStakingSSVStrategy).balance + 5 ether);
+        vm.deal(address(compoundingStakingStrategy), address(compoundingStakingStrategy).balance + 5 ether);
 
         // Advance time, snap, verifyBalances
         vm.warp(block.timestamp + 500);
@@ -469,13 +451,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Verify validator state remains ACTIVE
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(state), uint256(ValidatorState.ACTIVE));
 
         // Verify lastVerifiedEthBalance reflects the new balance
         // 28 ETH (validator) + strategy ETH balance (includes the 5 ETH withdrawal)
-        uint256 expectedBalance = 28 ether + address(compoundingStakingSSVStrategy).balance;
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), expectedBalance);
+        uint256 expectedBalance = 28 ether + address(compoundingStakingStrategy).balance;
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), expectedBalance);
     }
 
     function test_verifyBalances_fullWithdrawalAccounting() public {
@@ -484,24 +466,24 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _activateValidator(1);
 
         // Record lastVerifiedEthBalance and verifiedValidatorsLength
-        uint256 balanceBefore = compoundingStakingSSVStrategy.lastVerifiedEthBalance();
-        uint256 validatorsLenBefore = compoundingStakingSSVStrategy.verifiedValidatorsLength();
+        uint256 balanceBefore = compoundingStakingStrategy.lastVerifiedEthBalance();
+        uint256 validatorsLenBefore = compoundingStakingStrategy.verifiedValidatorsLength();
 
         // Do full withdrawal (amountGwei = 0) → state becomes EXITING
         vm.deal(governor, 1 wei);
         vm.prank(governor);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
 
         // Confirm state is EXITING
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState exitingState,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState exitingState,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(exitingState), uint256(ValidatorState.EXITING));
 
         // Set validator balance to 0 (type(uint256).max is the sentinel for zero in mock)
         mockBeaconProofs.setValidatorBalance(uint40(100), type(uint256).max);
 
         // Simulate the 33 ETH withdrawal arriving at the strategy
-        vm.deal(address(compoundingStakingSSVStrategy), address(compoundingStakingSSVStrategy).balance + 33 ether);
+        vm.deal(address(compoundingStakingStrategy), address(compoundingStakingStrategy).balance + 33 ether);
 
         // Advance time, snap, verifyBalances
         vm.warp(block.timestamp + 500);
@@ -509,11 +491,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         // Verify validator state is EXITED
-        (ValidatorState exitedState,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState exitedState,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(exitedState), uint256(ValidatorState.EXITED));
 
         // Verify verifiedValidatorsLength == 0
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 0);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 0);
     }
 
     function test_verifyBalances_twoDepositsToExitingValidator() public {
@@ -523,11 +505,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Top up with 5 ETH (creates pending deposit, but don't verify deposit)
         _topUp(0, 5 ether);
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 1);
+        assertEq(compoundingStakingStrategy.depositListLength(), 1);
 
         // Top up with 3 ETH (creates another pending deposit)
         _topUp(0, 3 ether);
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 2);
+        assertEq(compoundingStakingStrategy.depositListLength(), 2);
 
         // Set validator balance to 0 (type(uint256).max sentinel) to simulate exit
         mockBeaconProofs.setValidatorBalance(uint40(100), type(uint256).max);
@@ -540,14 +522,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         // Validator has pending deposits, so it cannot be removed from verifiedValidators.
         // The contract keeps the validator in the list to avoid under-counting once the
         // beacon chain processes the pending deposits and the validator balance increases.
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 1);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 1);
 
         // Deposits remain pending (not removed by verifyBalances)
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 2);
+        assertEq(compoundingStakingStrategy.depositListLength(), 2);
 
         // Validator state should still be ACTIVE (not EXITED) because deposits are pending
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint256(state), uint256(ValidatorState.ACTIVE));
     }
 
@@ -556,8 +538,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
     //////////////////////////////////////////////////////
 
     function test_verifyDeposit_RevertWhen_depositAfterSnap_duringSnapCycle() public {
-        // Register, stake, verify validator for validator 0
-        bytes32 pendingDepositRoot = _registerAndStake(0);
+        // Stake, verify validator for validator 0
+        bytes32 pendingDepositRoot = _stakeNewValidator(0);
         _verifyValidator(0, 100);
 
         // Snap balances
@@ -565,7 +547,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
         _snapBalances();
 
         // Get the pending deposit data to construct the processedSlot
-        (,, uint64 depositSlot,,) = compoundingStakingSSVStrategy.deposits(pendingDepositRoot);
+        (,, uint64 depositSlot,,) = compoundingStakingStrategy.deposits(pendingDepositRoot);
         // Use a processedSlot that is AFTER the snap timestamp
         // The snap was at block.timestamp, so use a slot that maps to after the snap
         uint64 processedSlot = _calcSlot(block.timestamp) + 100;
@@ -581,6 +563,6 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_StrategyBalances_Test is
 
         // Should revert with "Deposit after balance snapshot"
         vm.expectRevert("Deposit after balance snapshot");
-        compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
+        compoundingStakingStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
     }
 }

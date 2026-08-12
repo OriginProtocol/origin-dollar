@@ -985,87 +985,6 @@ async function morphoOUSDv2Fixture(
 }
 
 /**
- * CompoundingStakingSSVStrategy fixture
- */
-async function compoundingStakingSSVStrategyFixture() {
-  const fixture = await beaconChainFixture();
-  await hotDeployOption(fixture, "compoundingStakingSSVStrategyFixture", {
-    isOethFixture: true,
-  });
-
-  let compoundingStakingStrategyProxy;
-  if (isTest && !isFork) {
-    // For unit tests, the proxy is pinned to a fixed address
-    compoundingStakingStrategyProxy = await ethers.getContractAt(
-      "CompoundingStakingSSVStrategyProxy",
-      addresses.unitTests.CompoundingStakingStrategyProxy
-    );
-  } else {
-    compoundingStakingStrategyProxy = await ethers.getContract(
-      "CompoundingStakingSSVStrategyProxy"
-    );
-  }
-
-  const compoundingStakingSSVStrategy = await ethers.getContractAt(
-    "CompoundingStakingSSVStrategy",
-    compoundingStakingStrategyProxy.address
-  );
-  fixture.compoundingStakingSSVStrategy = compoundingStakingSSVStrategy;
-
-  fixture.compoundingStakingStrategyView = await ethers.getContract(
-    "CompoundingStakingStrategyView"
-  );
-
-  if (isFork) {
-    /*
-    const { compoundingStakingSSVStrategy, ssv } = fixture;
-
-    // The automation operator
-    fixture.validatorRegistrator = await impersonateAndFund(
-      addresses.mainnet.validatorRegistrator
-    );
-
-    // Fund some SSV to the compounding staking strategy
-    const ssvWhale = await impersonateAndFund(
-      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
-    );
-    await ssv
-      .connect(ssvWhale)
-      .transfer(compoundingStakingSSVStrategy.address, oethUnits("100"));
-
-    fixture.ssvNetwork = await ethers.getContractAt(
-      "ISSVNetwork",
-      addresses.mainnet.SSVNetwork
-    );
-    */
-  } else {
-    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
-    const { governorAddr, registratorAddr } = await getNamedAccounts();
-    const { oethVault } = fixture;
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
-    const sRegistrator = await ethers.provider.getSigner(registratorAddr);
-
-    // Approve Strategy
-    await oethVault
-      .connect(sGovernor)
-      .approveStrategy(compoundingStakingSSVStrategy.address);
-
-    // Set as default
-    await oethVault
-      .connect(sGovernor)
-      .setDefaultStrategy(compoundingStakingSSVStrategy.address);
-
-    await compoundingStakingSSVStrategy
-      .connect(sGovernor)
-      .setRegistrator(registratorAddr);
-
-    fixture.validatorRegistrator = sRegistrator;
-  }
-
-  return fixture;
-}
-
-/**
  * CompoundingStakingStrategy fixture
  */
 async function compoundingStakingStrategyFixture() {
@@ -1131,25 +1050,6 @@ async function compoundingStakingStrategyFixture() {
     .setRegistrator(registratorAddr);
 
   fixture.validatorRegistrator = sRegistrator;
-
-  return fixture;
-}
-
-async function compoundingStakingSSVStrategyMerkleProofsMockedFixture() {
-  const fixture = await compoundingStakingSSVStrategyFixture();
-
-  const beaconProofsAddress =
-    await fixture.compoundingStakingSSVStrategy.BEACON_PROOFS();
-
-  const mockBeaconProof = await ethers.getContract("MockBeaconProofs");
-
-  // replace beacon proofs library with the mocked one
-  await replaceContractAt(beaconProofsAddress, mockBeaconProof);
-
-  fixture.mockBeaconProof = await ethers.getContractAt(
-    "MockBeaconProofs",
-    beaconProofsAddress
-  );
 
   return fixture;
 }
@@ -1616,8 +1516,6 @@ module.exports = {
   instantRebaseVaultFixture,
   rebornFixture,
   compoundingStakingStrategyFixture,
-  compoundingStakingSSVStrategyFixture,
-  compoundingStakingSSVStrategyMerkleProofsMockedFixture,
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,

@@ -30,9 +30,9 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
 sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategyHierarchy.svg
-sol2uml .. -s -d 0 -i prettier-plugin-solidity -b CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategySquashed.svg
-sol2uml storage .. -i prettier-plugin-solidity -c CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategyStorage.svg --hideExpand __gap,______gap,_reserved
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CompoundingStakingStrategy -o CompoundingStakingStrategyHierarchy.svg
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b CompoundingStakingStrategy -o CompoundingStakingStrategySquashed.svg
+sol2uml storage .. -i prettier-plugin-solidity -c CompoundingStakingStrategy -o CompoundingStakingStrategyStorage.svg --hideExpand __gap,______gap,_reserved
 
 sol2uml .. -s -d 0 -i prettier-plugin-solidity -b ConsolidationController -o ConsolidationControllerSquashed.svg
 

@@ -960,152 +960,7 @@ Fixture: `createFixtureLoader(defaultSonicFixture)` from `test/_fixture-sonic.js
 
 ---
 
-## Compounding SSV staking strategy (unit)
-
-Unit tests for the compounding (0x02 withdrawal-credential) beacon-chain staking strategies: `CompoundingStakingSSVStrategy` (SSV-registered validators, plus the `CompoundingStakingStrategyView` helper) and the SSV-free `CompoundingStakingStrategy`. Coverage spans strategy configuration (registrator, initial deposit amount, pause), the validator lifecycle (registerSsvValidator → stakeEth → verifyValidator → verifyDeposit → verifyBalances → validatorWithdrawal → removeSsvValidator), vault-facing deposit/withdraw accounting (`depositedWethAccountedFor`, `checkBalance`), the snapBalances/verifyBalances merkle-proof accounting (using real proofs from `compoundingSSVStaking-validatorsData.json` and a `MockBeaconProofs` variant for front-run/slashing edge cases), and first-deposit anti-front-running protections. Files covered:
-
-- `test/strategies/compoundingSSVStaking.js`
-- `test/strategies/compoundingStaking.js`
-
-Validator state enum used throughout: 0 NON_REGISTERED, 1 REGISTERED, 2 STAKED, 3 VERIFIED, 4 ACTIVE, 5 EXITING, 6 EXITED, 7 REMOVED, 8 INVALID. Deposit status enum: 2 = VERIFIED.
-
-### `test/strategies/compoundingSSVStaking.js` — unit test (mainnet mocks)
-
-Fixture: `compoundingStakingSSVStrategyFixture` (builds on `beaconChainFixture`; strategy proxy pinned at a fixed unit-test address, approved and set as the OETH vault default strategy, registrator set, `MockSSVNetwork`, mock `beaconRoots` contract); a nested describe swaps to `compoundingStakingSSVStrategyMerkleProofsMockedFixture` which replaces the `BEACON_PROOFS` library bytecode with `MockBeaconProofs` (proofs not verified, mockable validator balances). Contracts under test: `CompoundingStakingSSVStrategy` (proxy) + `CompoundingStakingStrategyView`. Top-level `beforeEach` impersonates+funds the strategy governor (`sGov`) and the vault address (`sVault`), and josh approves the strategy for MAX_UINT256 WETH. Suite runs with `this.timeout(0)` and retries 3x on CI. `INITIAL_DEPOSIT_AMOUNT` = 1 ETH.
-
-Key shared helpers (used by many tests below):
-- `processValidator(testValidator, state)` — drives a validator from `testValidators` (JSON proof data) to the given state: `registerSsvValidator` (REGISTERED) → deposit 1 WETH to strategy + `stakeEth` 1 ETH with computed `depositDataRoot` (STAKED) → set mock beacon root and `verifyValidator` with 0x02 withdrawal credentials (VERIFIED_VALIDATOR) → set beacon root at depositSlot+10000 and `verifyDeposit` (VERIFIED_DEPOSIT).
-- `topUpValidator(testValidator, amount, state)` — deposit WETH + `stakeEth(amount)` (STAKED), optionally `verifyDeposit` (VERIFIED_DEPOSIT).
-- `snapBalances(blockRoot)` — sets the mock beacon root and calls `snapBalances()` from the registrator in the same block (automine toggled off/on).
-- `assertBalances({wethAmount, ethAmount, balancesProof, pendingDepositAmount, activeValidators, hackDeposits})` — force-sets strategy WETH/raw-ETH balances, snaps balances at the proof's block root, filters balance leaves/proofs to the given active-validator indexes, rewrites the on-chain `depositList` roots + `deposits` mapping entries via `setStorageAt` (slots 53/52) to match the proof's pending-deposit roots, then calls `verifyBalances` and asserts: `BalancesVerified` event withNamedArgs `{totalDepositsWei, totalValidatorBalance, ethBalance}` matching expected values, and `lastVerifiedEthBalance == totalDepositsWei + totalValidatorBalance + ethBalance`. Returns the components plus `checkBalance(weth)`.
-- `depositToStrategy(amount)` — josh transfers WETH to the strategy and the vault signer calls `depositAll()`.
-
-Consumes shared behaviour suites (see `test/behaviour/` docs; bullets not duplicated here):
-- `shouldBehaveLikeGovernable(() => ({...fixture, strategy: fixture.compoundingStakingSSVStrategy}))` — standard 2-step governor transfer suite from `test/behaviour/governable.js`.
-- `shouldBehaveLikeStrategy(() => ({...fixture, strategy: fixture.compoundingStakingSSVStrategy, assets: [weth], valueAssets: [], harvester: oethHarvester, vault: oethVault, newBehavior: true}))` — generic strategy suite from `test/behaviour/strategy.js` (with `newBehavior: true` branch).
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Initial setup"**
-- `it("Should anyone to send ETH")` — assertions: sending a plain 2 ETH transaction from the strategist to the strategy address does not revert (receive() accepts ETH from anyone).
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Configuring the strategy"**
-- `it("Governor should be able to change the registrator address")` — assertions: `setRegistrator(strategist)` from governor emits `RegistratorChanged(strategist.address)`.
-- `it("Non governor should not be able to change the registrator address")` — assertions: `setRegistrator` from strategist reverts with `"Caller is not the Governor"`.
-- `it("Should support WETH as the only asset")` — assertions: `supportsAsset(weth)` returns true.
-- `it("Should initialize the first deposit amount to 1 ETH")` — assertions: `initialDepositAmountWei()` equals 1 ETH.
-- `it("Governor should be able to change the first deposit amount")` — assertions: governor `setInitialDepositAmount(2048 ETH)` emits `InitialDepositAmountChanged(2048e18)` and `initialDepositAmountWei()` reads back 2048 ETH.
-- `it("Non governor should not be able to change the first deposit amount")` — assertions: strategist call reverts with `"Caller is not the Governor"`.
-- `it("Should revert when setting the first deposit amount below 1 ETH")` — assertions: governor setting 0.5 ETH reverts with `"Deposit too small"`.
-- `it("Should revert when setting the first deposit amount above 2048 ETH")` — assertions: governor setting 2048 ETH + 1 wei reverts with `"Deposit too large"`.
-- `it("Should not collect rewards")` — assertions: after governor sets itself as harvester, `collectRewardTokens()` reverts with custom error `UnsupportedFunction()`.
-- `it("Should not set platform token")` — assertions: governor `setPTokenAddress(weth, weth)` reverts with custom error `UnsupportedFunction()`.
-- `it("Should not remove platform token")` — assertions: governor `removePToken(0)` reverts with custom error `UnsupportedFunction()`.
-- `it("Regular user should not be able to reset the first deposit flag")` — assertions: josh calling `resetFirstDeposit()` reverts with `"Caller is not the Strategist or Governor"`.
-- `it("Should revert reset of first deposit if there is no first deposit")` — assertions: governor `resetFirstDeposit()` with no first deposit pending reverts with custom error `NoFirstDeposit()`.
-- `it("Registrator or governor should be the only ones to pause the strategy")` — assertions: governor pause/unPause and registrator pause succeed (no revert); josh calling `pause()` reverts with custom error `NotRegistratorOrGovernor()`.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Register, stake, withdraw and remove validators"** — beforeEach funds the strategy with 1000 SSV and 5000 WETH. Local helper `stakeValidators(idx, amount)` asserts validator state 0 (NON_REGISTERED) before, registers with 2 ETH msg.value → state 1 (REGISTERED), then `stakeEth` and asserts `ETHStaked` event withNamedArgs `{pubKeyHash, pubKey, amountWei = amountGwei*1e9}` → state 2 (STAKED).
-- `it("Should stake the initial deposit amount to a validator")` — assertions: full `stakeValidators(0, 1 ETH)` flow: state transitions 0→1→2 and `ETHStaked` event as described in the helper.
-- `it("Should stake less than the initial deposit amount to a validator")` — assertions: after governor raises `initialDepositAmount` to 2 ETH, staking only 1 ETH still succeeds with the same state transitions/event.
-- `it("Should stake the initial deposit amount then 2047 ETH to a validator")` — assertions: registers + stakes 1 ETH, checks `hashPubKey(publicKey) == publicKeyHash`, verifies validator and first deposit against mock beacon roots; then stakes another 2047 ETH and asserts `ETHStaked` with exact args `(publicKeyHash, pendingDepositRoot2, publicKey, 2047e18)`; verifies the second deposit (reusing the first proof); final `checkBalance(weth)` equals the pre-test balance (staking doesn't change the strategy's total balance).
-- `it("Should revert when first stake amount is above the initial deposit amount")` — assertions: after registering, first `stakeEth` of 32 ETH reverts with custom error `InvalidFirstDepositAmount()`.
-- `it("Should revert registerSsvValidator when contract paused")` — assertions: after governor `pause()`, `registerSsvValidator` reverts with `"Pausable: paused"`.
-- `it("Should revert stakeEth when contract paused")` — assertions: register first, then pause; `stakeEth` reverts with `"Pausable: paused"`.
-- `it("Should revert when registering a validator that is already registered")` — assertions: second `registerSsvValidator` for the same pubkey reverts with custom error `AlreadyRegistered()`.
-- `it("Should revert when re-registering a removed validator")` — assertions: register then `removeSsvValidator` → validator state is 7 (REMOVED); re-registering reverts with custom error `AlreadyRegistered()`.
-- `it("Should revert when staking because of insufficient ETH balance")` — assertions: `stakeEth` for (strategy WETH balance in gwei + 1) reverts with `"Insufficient WETH"`.
-- `it("Should revert when staking a validator that hasn't been registered")` — assertions: `stakeEth` of 1 ETH to an unregistered validator reverts (generic revert, no reason asserted).
-- `it("Should exit a validator with no pending deposit")` — assertions: after processValidator + topUp to ~1588.9 ETH and `assertBalances` (proof #1, active validator index 2), validator state moves 3 (VERIFIED) → 4 (ACTIVE); `validatorWithdrawal(pubkey, 0, {value:1})` (0 = full exit) emits `ValidatorWithdraw(publicKeyHash, 0)` and state becomes 5 (EXITING).
-- `it("Should exit a validator that is already exiting")` — assertions: same setup; after a first full-exit request (state 5 EXITING), a second `validatorWithdrawal(pubkey, 0)` still succeeds and emits `ValidatorWithdraw(publicKeyHash, 0)`.
-- `it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32.25 ETH")` — assertions: validator only VERIFIED_DEPOSIT (no verifyBalances so still VERIFIED); full-exit `validatorWithdrawal(pubkey, 0)` reverts with `"Validator not active/exiting"`.
-- `it("Should revert partial withdrawal when validator's balance hasn't been confirmed to equal or surpass 32 ETH")` — assertions: same setup with a top-up but no verifyBalances; partial `validatorWithdrawal(pubkey, 1)` reverts with `"Validator not active/exiting"`.
-- `it("Should revert when exiting a validator with a pending deposit")` — assertions: after activating the validator via `assertBalances`, a fresh 1 ETH `topUpValidator(..., "STAKED")` leaves an unverified pending deposit; full exit `validatorWithdrawal(pubkey, 0, {value:1})` reverts with `"Pending deposit"`.
-- `it("Should revert when verifying deposit between snapBalances and verifyBalances")` — assertions: validator at VERIFIED_VALIDATOR with a pending deposit; registrator calls `snapBalances()` and then `verifyDeposit` at depositSlot+10000 reverts with `"Deposit after balance snapshot"`.
-- `it("Should partial withdraw from a validator with a pending deposit")` — assertions: ACTIVE validator (state 4) with a fresh unverified 1 ETH deposit; partial `validatorWithdrawal(pubkey, 5 gwei-ETH)` succeeds, emits `ValidatorWithdraw(publicKeyHash, 5e18)` and state remains 4 (ACTIVE).
-- `it("Should remove a validator when validator is registered")` — assertions: registered validator (state 1); `removeSsvValidator` emits `SSVValidatorRemoved(publicKeyHash, operatorIds)`.
-- `it("Should revert when removing a validator that is not registered")` — assertions: validator state 0; `removeSsvValidator` reverts (generic).
-- `it("Should remove a validator when validator is exited")` — assertions: ACTIVE validator (view contract reports 1 verified validator); a second `assertBalances` with a zero-balance proof (proof #2) marks it exited (0 verified validators); `removeSsvValidator` then emits `SSVValidatorRemoved(publicKeyHash, operatorIds)`.
-- `it("Should not remove a validator if it still has a pending deposit")` — assertions: ACTIVE validator with a later unverified deposit; verifyBalances with zero-balance proof keeps 1 verified validator (not exited because of the pending deposit, `pendingDepositAmount: 50.497526`); after `verifyDeposit` of that deposit and another zero-balance `assertBalances`, verified validators drops to 0.
-- `it("Should revert when removing a validator that has been found")` — assertions: despite the name, only asserts that after `stakeValidators(0, 1 ETH)` the validator state is 2 (STAKED); no remove call is made.
-- `it("Should fail removing a strategy with funds")` — assertions: after staking, governor clears the vault default strategy if needed, then `oethVault.removeStrategy(strategy)` reverts with `"Strategy has funds"`.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Verify deposits"** — beforeEach: `processValidator(testValidators[1], "VERIFIED_VALIDATOR")` and captures the last `pendingDepositRoot` + `depositSlot`.
-- `it("Should revert first pending deposit slot is zero")` — assertions: `verifyDeposit` with `firstPendingDeposit.slot = 0` reverts with `"Zero 1st pending deposit slot"`.
-- `it("Should revert when no deposit")` — assertions: `verifyDeposit` with a random 32-byte pendingDepositRoot reverts with `"Deposit not pending"`.
-- `it("Should revert when deposit verified again")` — assertions: after a successful `verifyDeposit` at depositSlot+100 (beacon root pre-set), a second `verifyDeposit` for the same root reverts with `"Deposit not pending"`.
-- `it("Should revert when processed slot is after snapped balances")` — assertions: advance 12s, registrator `snapBalances()`; `verifyDeposit` with `depositProcessedSlot` = current slot reverts with `"Deposit after balance snapshot"`.
-- `it("Should verify deposit with no snapped balances")` — assertions: `verifyDeposit` at depositSlot+1 (beacon root set) emits `DepositVerified(pendingDepositRoot, 1e18)`.
-- `it("Should verify deposit with processed slot 1 before the snapped balances slot")` — assertions: advance 24s, snap balances; `verifyDeposit` with processed slot = snappedBalance slot − 1 emits `DepositVerified(pendingDepositRoot, 1e18)`.
-- `it("Should verify deposit with processed slot well before the snapped balances slot")` — assertions: advance 120s (10 slots), snap balances; `verifyDeposit` at depositSlot+1 emits `DepositVerified(pendingDepositRoot, 1e18)`.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Deposit/Withdraw in the strategy"**
-- `it("Should deposit ETH in the strategy")` — assertions: after transferring 10 WETH and vault calling `deposit(weth, 10e18)`: emits `Deposit(weth, address(0), 10e18)`; `depositedWethAccountedFor` increases by 10e18; `checkBalance(weth)` increases by 10e18.
-- `it("Should depositAll ETH in the strategy when depositedWethAccountedFor is zero")` — assertions: transfer 10 WETH then vault `depositAll()`: emits `Deposit(weth, 0x0, 10e18)`; `depositedWethAccountedFor` and `checkBalance(weth)` each increase by 10e18.
-- `it("Should depositAll ETH in the strategy when depositedWethAccountedFor is not zero")` — assertions: first `deposit` of 10 WETH sets `depositedWethAccountedFor` to 10e18; then transfer 20 WETH and `depositAll()` emits `Deposit(weth, 0x0, 20e18)` (only the new WETH), incrementing `depositedWethAccountedFor` and `checkBalance(weth)` by 20e18.
-- `it("Should revert when depositing 0 ETH in the strategy")` — assertions: vault `deposit(weth, 0)` reverts with `"Must deposit something"`.
-- `it("Should withdraw ETH from the strategy, no ETH")` — assertions: after 10 WETH deposited, vault `withdraw(vault, weth, 10e18)` emits `Withdrawal(weth, 0x0, 10e18)`; `depositedWethAccountedFor` becomes 0; `checkBalance(weth)` decreases by 10e18.
-- `it("Should withdraw ETH from the strategy, withdraw some ETH")` — assertions: 10 WETH deposited plus 5 raw ETH set on the strategy; registrator `withdraw(vault, weth, 15e18)` emits `Withdrawal(weth, 0x0, 15e18)` (raw ETH is wrapped and included); `depositedWethAccountedFor` = 0; `checkBalance(weth)` decreases by only the 10e18 accounted WETH (donated raw ETH is intentionally not part of checkBalance).
-- `it("Should revert when withdrawing other than WETH")` — assertions: vault `withdraw(josh, josh-as-asset, 10e18)` reverts with custom error `UnsupportedAsset()`.
-- `it("Should revert when withdrawing 0 ETH from the strategy")` — assertions: `withdraw(josh, weth, 0)` reverts with `"Must withdraw something"`.
-- `it("Should revert when withdrawing to the zero address")` — assertions: `withdraw(address(0), weth, 10e18)` reverts with `"Recipient not Vault"`.
-- `it("Should revert when withdrawing to a user")` — assertions: `withdraw(josh, weth, 10e18)` reverts with `"Recipient not Vault"`.
-- `it("Should withdrawAll ETH from the strategy, no ETH")` — assertions: after 10 WETH deposited, vault `withdrawAll()` emits `Withdrawal(weth, 0x0, 10e18)`; `depositedWethAccountedFor` = 0 and `checkBalance(weth)` = 0.
-- `it("Should withdrawAll ETH from the strategy, withdraw some ETH")` — assertions: 10 WETH deposited + 5 raw ETH donated; `withdrawAll()` emits `Withdrawal(weth, 0x0, 15e18)` (raw ETH swept too); `depositedWethAccountedFor` = 0 and `checkBalance(weth)` = 0.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Strategy balances" > "When no execution rewards (ETH), no pending deposits and no active validators"** — local helper `verifyBalancesNoDepositsOrValidators()` calls `verifyBalances` with empty leaf/proof arrays and empty pending-deposit proofs.
-- `it("Should verify balances with no WETH")` — assertions: after `snapBalances()`, `verifyBalances` emits `BalancesVerified(snapTimestamp, 0, 0, 0)`; `lastVerifiedEthBalance` = 0; `checkBalance(weth)` = 0.
-- `it("Should verify balances with some WETH transferred before snap")` — assertions: 1.23 WETH deposited (depositAll) before snap; `BalancesVerified(timestamp, 0, 0, 0)` (WETH is excluded from verified ETH); `lastVerifiedEthBalance` = 0; `checkBalance(weth)` = 1.23e18.
-- `it("Should verify balances with some WETH transferred after snap")` — assertions: 5.67 WETH transferred after snap; `BalancesVerified(timestamp, 0, 0, 0)`; `lastVerifiedEthBalance` = 0; `checkBalance(weth)` = 5.67e18.
-- `it("Should verify balances with some WETH transferred before and after snap")` — assertions: 1.23 WETH before + 5.67 WETH after snap; `BalancesVerified(timestamp, 0, 0, 0)`; `lastVerifiedEthBalance` = 0; `checkBalance(weth)` = 6.90e18 (sum).
-- `it("Should verify balances with one registered validator")` — assertions: validator only REGISTERED; `assertBalances` with 10 WETH, no deposits/validators (proof #2, no active validators): wethBalance 10e18, `verifiedEthBalance` = 0, strategy `checkBalance` = 10e18; plus assertBalances' internal `BalancesVerified` and `lastVerifiedEthBalance` checks.
-- `it("Should verify balances with one staked validator")` — assertions: validator STAKED (1 ETH pending deposit); `assertBalances` with pendingDepositAmount 1: `totalDepositsWei` = 1e18, `verifiedEthBalance` = 1e18, `checkBalance` = 1e18 (all via `BalancesVerified` named args + lastVerifiedEthBalance equality).
-- `it("Should verify balances with one exited verified validator")` — assertions: validator index 4 (beacon index 2018225, 32.008954871 ETH balance) at VERIFIED_VALIDATOR with a 1 ETH pending deposit; `assertBalances` with proof #5 passes its internal checks (`BalancesVerified` named args match `{totalDepositsWei: 1e18, totalValidatorBalance, ethBalance: 0}`, `lastVerifiedEthBalance` = sum).
-- `it("Should not verify a validator with incorrect withdrawal credential validator type")` — assertions: mutating the validator proof's credential type byte from 0x02 to 0x01 makes `processValidator(..., "VERIFIED_DEPOSIT")` revert with `"Invalid withdrawal cred"` (proof restored afterwards).
-- `it("Should not verify a validator with incorrect withdrawal zero padding")` — assertions: corrupting the credential zero-padding bytes (`0x020001...`) makes `processValidator` revert with `"Invalid withdrawal cred"` (proof restored afterwards).
-- `it("Should verify balances with one verified deposit")` — assertions: validator at VERIFIED_DEPOSIT; `assertBalances` (proof #2, active validator 0): `totalDepositsWei` = 0, `totalValidatorBalance` = proof balance of validator 0, `verifiedEthBalance` and `checkBalance` both equal that validator balance.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Strategy balances" > "When an active validator does a" > "partial withdrawal"** — beforeEach: testValidators[3] to VERIFIED_DEPOSIT plus top-up to ~1588.9 ETH, then `assertBalances` (proof #0, active validator 2) to activate and record `balancesBefore`.
-- `it("Should account for a pending partial withdrawal")` — assertions: registrator `validatorWithdrawal(pubkey, 640 ETH in gwei)` (strategy funded 1 wei for the request fee) emits `ValidatorWithdraw(publicKeyHash, 640e18)`; a subsequent `assertBalances` with the same proof (withdrawal not yet processed on beacon) yields `stratBalance` (checkBalance) unchanged vs before.
-- `it("Should account for a processed partial withdrawal")` — assertions: same 640 ETH withdrawal request + `ValidatorWithdraw(publicKeyHash, 640e18)`; re-verify with proof #1 (lower validator balance) and strategy ETH set to `640 + consensusRewards` (rewards computed as proof0.balance − proof1.balance − 640): `stratBalance` unchanged vs before (validator balance decrease exactly offset by strategy ETH).
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Strategy balances" > "When an active validator does a" > "full withdrawal"** — beforeEach: same validator setup; `assertBalances` with proof #1 records `balancesBefore`.
-- `it("Should account for full withdrawal")` — assertions: view contract has 1 verified validator and state is 4 (ACTIVE); withdrawal request for the full 1588.918094377 ETH emits `ValidatorWithdraw(publicKeyHash, fullAmount)`; re-verify with proof #2 (zero validator balance) and strategy ETH = withdrawn amount: `stratBalance` unchanged, verified validators drops to 0 and validator state becomes 6 (EXITED).
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Strategy balances" > "When WETH, ETH, no pending deposits and 2 active validators"** — beforeEach: validators 0 and 1 processed + topped up to full deposit amounts; `assertBalances` with 10 WETH + 0.987 ETH (proof #3, active validators [0,1]) records `balancesBefore`.
-- `it("consensus rewards are earned by the validators")` — assertions: re-verifying with proof #4 (higher validator balances) increases `totalValidatorBalance` and `totalBalance` by exactly 0.007672545 ETH.
-- `it("execution rewards are earned as ETH in the strategy")` — assertions: re-verifying with ETH raised from 0.987 to 1 (same proof #3) increases `ethBalance` and `totalBalance` by exactly 0.013 ETH.
-
-**describe: "... > When WETH, ETH, no pending deposits and 2 active validators > when balances have been snapped"** — beforeEach: `snapBalances(proof #3 blockRoot)`.
-- `it("Fail to verify balances with not enough validator leaves")` — assertions: `verifyBalances` with 1 leaf / 2 proofs for 2 active validators reverts with `"Invalid balance leaves"`.
-- `it("Fail to verify balances with too many validator leaves")` — assertions: 3 leaves / 2 proofs reverts with `"Invalid balance leaves"`.
-- `it("Fail to verify balances with not enough validator proofs")` — assertions: 2 leaves / 1 proof reverts with `"Invalid balance proofs"`.
-- `it("Fail to verify balances with too many proofs")` — assertions: 2 leaves / 3 proofs reverts with `"Invalid balance proofs"`.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Strategy balances" > "With 21 active validators"** — beforeEach loops over testValidators[0..20]: asserts `hashPubKey(publicKey) == publicKeyHash` for each, processes each to VERIFIED_DEPOSIT and tops each up to its full deposit amount (loop variant of the single-validator flow).
-- `it("Should verify balances with some WETH, ETH and no deposits")` — assertions: `assertBalances` over all 21 validators (proof #5) with 123.456 WETH + 0.345 ETH and 0 pending deposits passes its internal checks (`BalancesVerified` named args, `lastVerifiedEthBalance` = deposits+validators+eth).
-- `it("Should verify balances with one validator exited with two pending deposits")` — assertions: two extra unverified deposits (1 + 2 ETH) to validator index 3 (zero balance in proof #5, i.e. exited); `assertBalances` with `pendingDepositAmount: 3` passes — the deposits to the exited validator are treated as removed from the pending totals per the proof data.
-- `it("Should verify balances with one validator exited with two pending deposits and three deposits to non-exiting validators")` — assertions: deposits 2+3 ETH to validator 0, 4 ETH to validator 1 (kept — validators have balances) and 5+6 ETH to exited validator 3; `assertBalances` with `pendingDepositAmount: 20` (2+3+4+5+6) passes its internal checks.
-
-**describe: "Unit test: Compounding SSV Staking Strategy" > "Compounding SSV Staking Strategy Mocked proofs"** — beforeEach reloads `compoundingStakingSSVStrategyMerkleProofsMockedFixture` (BEACON_PROOFS replaced by `MockBeaconProofs` so merkle proofs are not checked and validator balances can be set), re-impersonates sGov/sVault and re-approves WETH.
-- `it("Should be allowed 2 deposits to an exiting validator ")` — assertions: validator processed then two extra staked deposits; validator's `withdrawableEpoch` mocked to 2 epochs ahead (simulated slashing); both `verifyDeposit` calls succeed and both deposit records have status 2 (VERIFIED); after advancing 4 epochs and mocking validator balance to 0 (fully swept), `assertBalances` (empty mocked proofs, `hackDeposits: false`, pendingDepositAmount 0) passes; `getPendingDeposits()` is then empty and both deposits remain status 2 (VERIFIED).
-- `it("Should verify validator that has a front-run deposit")` — assertions: validator STAKED; `verifyValidator` with withdrawal credentials pointing at a random attacker address emits `ValidatorInvalid(publicKeyHash)`; validator state becomes 8 (INVALID); `getPendingDeposits()` is empty; the deposit's status is 2 (VERIFIED); `lastVerifiedEthBalance` is reduced by the 1 ETH initial deposit; `firstDeposit()` remains true.
-- `it("Should verify validator with incorrect type")` — assertions: `verifyValidator` with 0x01-type credentials (strategy address) emits `ValidatorInvalid(publicKeyHash)` and state becomes 8 (INVALID).
-- `it("Should verify validator with malformed credentials")` — assertions: `verifyValidator` with non-zero padding bytes in otherwise-0x02 credentials emits `ValidatorInvalid(publicKeyHash)` and state becomes 8 (INVALID).
-- `it("Should fail to verify front-run deposit")` — assertions: after `verifyValidator` marks the validator INVALID (attacker credentials), `verifyDeposit` for the front-run deposit reverts with `"Deposit not pending"`; also asserts `firstDeposit()` was true before.
-- `it("Governor should reset first deposit after front-run deposit")` — assertions: after the validator is invalidated, governor `resetFirstDeposit()` emits `FirstDepositReset` and `firstDeposit()` becomes false.
-- `it("Should remove a validator from SSV cluster when validator is invalid")` — assertions: after invalidation, registrator `removeSsvValidator` emits `SSVValidatorRemoved(publicKeyHash, operatorIds)`.
-- `it("Should fail to active a validator with a 32.25 ETH balance")` — assertions: validator at VERIFIED_DEPOSIT (state 3); snap, mock balance to exactly 32.25 ETH (gwei); `verifyBalances` emits `BalancesVerified` withNamedArgs `{totalDepositsWei: 0}` but state remains 3 (VERIFIED — needs > 32.25 ETH to activate).
-- `it("Should active a validator with more than 32.25 ETH balance")` — assertions: same setup with mocked balance 32.26 ETH; `verifyBalances` emits `BalancesVerified` `{totalDepositsWei: 0}` and state becomes 4 (ACTIVE).
-
-**describe: "... Mocked proofs" > "When a verified validator is exiting after being slashed And a new deposit is made to the validator"** — beforeEach: testValidators[11] to VERIFIED_DEPOSIT + full top-up, then a new 3 ETH deposit left STAKED; computes `withdrawableEpoch` = current epoch + 4 (and its slot/timestamp) and builds `strategyValidatorData` with that withdrawableEpoch (simulated slashing exit).
-- `it("Should fail verify deposit when first pending deposit slot before the withdrawable epoch")` — assertions: `verifyDeposit` with firstPendingDeposit slot = withdrawableSlot − 1 reverts with `"Exit Deposit likely not proc."`.
-- `it("Should verify deposit when the pending deposit queue is empty")` — assertions: `verifyDeposit` using the empty-pending-deposit-queue proof (slot 1) emits `DepositVerified(pendingDepositRoot, 3e18)`; deposit status = 2 (VERIFIED); `getPendingDeposits()` is empty.
-- `it("Should verify deposit when the first pending deposit slot equals the withdrawable epoch")` — assertions: firstPendingDeposit slot == withdrawableSlot: emits `DepositVerified(pendingDepositRoot, 3e18)`; deposit status 2; no pending deposits.
-- `it("Should verify deposit when the first pending deposit slot is after the withdrawable epoch")` — assertions: firstPendingDeposit slot = withdrawableSlot + 1 (processed slot +5): emits `DepositVerified(pendingDepositRoot, 3e18)`; deposit status 2; no pending deposits.
-
-**describe: "... Mocked proofs > When a verified validator is exiting after being slashed ... > When deposit has been verified to an exiting validator"** — beforeEach: the 3 ETH deposit is verified with the slashed-validator data.
-- `it("Should verify balances")` — assertions: advance EVM time past the withdrawable timestamp (asserted greater-than), snap balances, mock the validator balance to MAX_UINT256 sentinel (exited/swept); `verifyBalances` with one empty balance leaf + one pending-deposit proof emits `BalancesVerified` withNamedArgs `{totalDepositsWei: 0}` (the verified deposit to the exited validator no longer counts).
-
-- `it("Deposit alternate deposit_data_root ")` (skipped — entire test commented out) — would have asserted `depositContractUtils.calculateDepositDataRoot` for a mainnet pubkey/signature with 0x01 withdrawal credentials equals a hardcoded root `0xf7d7...f446`.
+## Compounding staking strategy (unit)
 
 ### `test/strategies/compoundingStaking.js` — unit test (mainnet mocks)
 
@@ -1688,7 +1543,7 @@ Files covered:
 
 ### `test/behaviour/strategy.js` — behaviour suite (unit + fork consumers)
 
-Exports `shouldBehaveLikeStrategy(context)`. `context()` must return a fixture plus: `strategy`, `assets` (tokens to test), optional `valueAssets` (assets valid for `checkBalance`/`withdraw`, defaults to `assets`), `vault`, `harvester`, optional `checkWithdrawAmounts`, optional `newBehavior` flag (upgraded strategies where strategist can set harvester), optional `beforeEach` hook (run first if provided). Vault/harvester signers are obtained via `impersonateAndFund`. Consumers (grep of `contracts/test`): `test/strategies/compoundingSSVStaking.js`, `test/strategies/nativeSSVStaking.js`, `test/strategies/curve-amo-oeth.mainnet.fork-test.js`, `test/strategies/curve-amo-ousd.mainnet.fork-test.js`, `test/strategies/base/curve-amo.base.fork-test.js`.
+Exports `shouldBehaveLikeStrategy(context)`. `context()` must return a fixture plus: `strategy`, `assets` (tokens to test), optional `valueAssets` (assets valid for `checkBalance`/`withdraw`, defaults to `assets`), `vault`, `harvester`, optional `checkWithdrawAmounts`, optional `newBehavior` flag (upgraded strategies where strategist can set harvester), optional `beforeEach` hook (run first if provided). Vault/harvester signers are obtained via `impersonateAndFund`. Consumers (grep of `contracts/test`): `test/strategies/nativeSSVStaking.js`, `test/strategies/curve-amo-oeth.mainnet.fork-test.js`, `test/strategies/curve-amo-ousd.mainnet.fork-test.js`, `test/strategies/base/curve-amo.base.fork-test.js`.
 
 **describe: "Strategy behaviour"**
 - `it("Should have vault configured")` — asserts `strategy.vaultAddress()` equals `vault.address`.
@@ -1730,7 +1585,7 @@ Exports `shouldHaveRewardTokensConfigured(context)`; returns immediately (regist
 
 ### `test/behaviour/governable.js` — behaviour suite (unit + fork consumers)
 
-Exports `shouldBehaveLikeGovernable(context)`; `context()` returns a fixture plus `strategy` (any Governable contract). Tests the two-step transfer/claim governance pattern. Consumers: `test/strategies/compoundingSSVStaking.js`, `test/strategies/nativeSSVStaking.js`, `test/strategies/curve-amo-oeth.mainnet.fork-test.js`, `test/strategies/curve-amo-ousd.mainnet.fork-test.js`, `test/strategies/base/curve-amo.base.fork-test.js`.
+Exports `shouldBehaveLikeGovernable(context)`; `context()` returns a fixture plus `strategy` (any Governable contract). Tests the two-step transfer/claim governance pattern. Consumers: `test/strategies/nativeSSVStaking.js`, `test/strategies/curve-amo-oeth.mainnet.fork-test.js`, `test/strategies/curve-amo-ousd.mainnet.fork-test.js`, `test/strategies/base/curve-amo.base.fork-test.js`.
 
 **describe: "Governable behaviour"**
 - `it("Should have governor set")` — asserts `strategy.governor()` == fixture governor address.
@@ -2795,4 +2650,3 @@ Uses `createFixtureLoader(rebornFixture)` from `_fixture.js`. `rebornFixture` ex
 - `it("Should have correct balance even after recreating")` — setup: matt transfers 4 USDC to the reborner; `deployAndCall({shouldAttack: true, shouldDestruct: true})` mints 1 OUSD in the constructor then self-destructs; asserts the reborner has an OUSD `balanceOf` of exactly "1" (custom `balanceOf` chai matcher); redeploys with `shouldAttack: false` and asserts the balance is still exactly "1" (recreation must not change the balance outside the constructor); calls `reborner.mint()` and asserts the balance is exactly "2".
 
 ---
-

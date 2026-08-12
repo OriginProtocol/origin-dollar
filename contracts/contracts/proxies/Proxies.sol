@@ -146,15 +146,6 @@ contract OETHCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice CompoundingStakingSSVStrategyProxy delegates calls to a CompoundingStakingSSVStrategy implementation
- */
-contract CompoundingStakingSSVStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
  * @notice CompoundingStakingStrategyProxy delegates calls to a CompoundingStakingStrategy implementation
  */
 contract CompoundingStakingStrategyProxy is

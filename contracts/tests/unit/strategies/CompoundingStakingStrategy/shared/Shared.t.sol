@@ -15,7 +15,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 
 // --- Project imports
-import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {
     CompoundingBalanceProofs as BalanceProofs,
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
@@ -24,7 +23,7 @@ import {
     CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -32,11 +31,10 @@ import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
 import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
 import {MockSSV} from "contracts/mocks/MockSSV.sol";
-import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
 
-abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
+abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     using stdJson for string;
 
     //////////////////////////////////////////////////////
@@ -44,7 +42,6 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    MockSSVNetwork internal mockSsvNetwork;
     MockSSV internal mockSsv;
     MockDepositContract internal mockDepositContract;
     MockBeaconProofs internal mockBeaconProofs;
@@ -52,7 +49,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     IVault internal oethVault;
     IProxy internal oethProxy;
     IProxy internal oethVaultProxy;
-    ICompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    ICompoundingStakingStrategy internal compoundingStakingStrategy;
     CompoundingStakingStrategyView internal compoundingStakingView;
 
     //////////////////////////////////////////////////////
@@ -71,7 +68,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     uint64 internal constant SLOTS_PER_EPOCH = 32;
 
     // Path to JSON test data (relative to project root)
-    string internal constant VALIDATORS_JSON_PATH = "test/strategies/compoundingSSVStaking-validatorsData.json";
+    string internal constant VALIDATORS_JSON_PATH = "test/strategies/compoundingStaking-validatorsData.json";
 
     //////////////////////////////////////////////////////
     /// --- VALIDATOR DATA (loaded from JSON)
@@ -143,7 +140,6 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     function _deployContracts() internal {
         // Deploy mocks
         mockWeth = new MockWETH();
-        mockSsvNetwork = new MockSSVNetwork();
         mockSsv = new MockSSV();
         mockDepositContract = new MockDepositContract();
         address beaconProofsAddress = _deployBeaconProofs();
@@ -191,27 +187,27 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         oethVault.setRebaseRateMax(200e18);
         vm.stopPrank();
 
-        // Deploy CompoundingStakingSSVStrategy
-        compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(_deployStrategy(beaconProofsAddress));
+        // Deploy CompoundingStakingStrategy
+        compoundingStakingStrategy = ICompoundingStakingStrategy(_deployStrategy(beaconProofsAddress));
 
         // Set governor via storage slot (constructor sets it to address(0))
-        vm.store(address(compoundingStakingSSVStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
+        vm.store(address(compoundingStakingStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 
         // Initialize and configure
         vm.startPrank(governor);
 
         address[] memory emptyAddresses = new address[](0);
         // Matches the Hardhat fixture's initial validator deposit amount.
-        compoundingStakingSSVStrategy.initialize(emptyAddresses, emptyAddresses, emptyAddresses, INITIAL_DEPOSIT_AMOUNT);
-        oethVault.approveStrategy(address(compoundingStakingSSVStrategy));
+        compoundingStakingStrategy.initialize(emptyAddresses, emptyAddresses, emptyAddresses, INITIAL_DEPOSIT_AMOUNT);
+        oethVault.approveStrategy(address(compoundingStakingStrategy));
 
-        compoundingStakingSSVStrategy.setRegistrator(governor);
-        compoundingStakingSSVStrategy.setHarvesterAddress(nick);
+        compoundingStakingStrategy.setRegistrator(governor);
+        compoundingStakingStrategy.setHarvesterAddress(nick);
 
         vm.stopPrank();
 
         // Deploy view contract
-        compoundingStakingView = new CompoundingStakingStrategyView(address(compoundingStakingSSVStrategy));
+        compoundingStakingView = new CompoundingStakingStrategyView(address(compoundingStakingStrategy));
 
         // Assign weth
         weth = IERC20(address(mockWeth));
@@ -229,12 +225,11 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
 
     function _deployStrategy(address beaconProofsAddress) internal virtual returns (address strategyAddress) {
         strategyAddress = vm.deployCode(
-            Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
+            Strategies.COMPOUNDING_STAKING_STRATEGY,
             abi.encode(
                 address(0), // platformAddress
                 address(oethVault), // vaultAddress
                 address(mockWeth),
-                address(mockSsvNetwork),
                 address(mockDepositContract),
                 beaconProofsAddress,
                 BEACON_GENESIS_TIMESTAMP
@@ -243,10 +238,9 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     }
 
     function _labelContracts() internal {
-        vm.label(address(compoundingStakingSSVStrategy), "CompoundingStakingSSVStrategy");
+        vm.label(address(compoundingStakingStrategy), "CompoundingStakingStrategy");
         vm.label(address(compoundingStakingView), "CompoundingStakingView");
         vm.label(address(mockWeth), "MockWETH");
-        vm.label(address(mockSsvNetwork), "MockSSVNetwork");
         vm.label(address(mockSsv), "MockSSV");
         vm.label(address(mockDepositContract), "MockDepositContract");
         vm.label(address(mockBeaconProofs), "MockBeaconProofs");
@@ -260,21 +254,6 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     /// --- HELPERS
     //////////////////////////////////////////////////////
 
-    /// @dev Get an empty cluster struct
-    function _emptyCluster() internal pure returns (Cluster memory) {
-        return Cluster({validatorCount: 0, networkFeeIndex: 0, index: 0, active: true, balance: 0});
-    }
-
-    /// @dev Get operator IDs for validator at index
-    function _operatorIds(uint256 validatorIdx) internal view returns (uint64[] memory) {
-        return testValidators[validatorIdx].operatorIds;
-    }
-
-    /// @dev Get operator IDs for first validator (convenience)
-    function _operatorIds() internal view returns (uint64[] memory) {
-        return _operatorIds(0);
-    }
-
     /// @dev Hash a public key using beacon chain format
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
@@ -282,12 +261,12 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
 
     /// @dev Get withdrawal credentials for this strategy (0x02 type)
     function _withdrawalCredentials() internal view returns (bytes memory) {
-        return abi.encodePacked(bytes1(0x02), bytes11(0), address(compoundingStakingSSVStrategy));
+        return abi.encodePacked(bytes1(0x02), bytes11(0), address(compoundingStakingStrategy));
     }
 
     /// @dev Get withdrawal credentials as bytes32
     function _withdrawalCredentialsBytes32() internal view returns (bytes32) {
-        return bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), address(compoundingStakingSSVStrategy)));
+        return bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), address(compoundingStakingStrategy)));
     }
 
     /// @dev Calculate slot from timestamp
@@ -303,19 +282,12 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     /// @dev Transfer WETH from josh to strategy (simulating vault deposit)
     function _depositToStrategy(uint256 amount) internal {
         vm.prank(josh);
-        weth.transfer(address(compoundingStakingSSVStrategy), amount);
+        weth.transfer(address(compoundingStakingStrategy), amount);
         vm.prank(address(oethVault));
-        compoundingStakingSSVStrategy.deposit(address(mockWeth), amount);
+        compoundingStakingStrategy.deposit(address(mockWeth), amount);
     }
 
-    /// @dev Register a single validator on SSV using JSON data
-    function _registerValidator(uint256 index) internal {
-        TestValidator storage v = testValidators[index];
-        vm.prank(governor);
-        compoundingStakingSSVStrategy.registerSsvValidator(v.publicKey, v.operatorIds, v.sharesData, _emptyCluster());
-    }
-
-    /// @dev Stake 1 ETH to a registered validator (first deposit) using JSON data
+    /// @dev Stake the first deposit to a new validator using JSON data
     function _stakeFirstDeposit(uint256 index) internal returns (bytes32 pendingDepositRoot) {
         TestValidator storage v = testValidators[index];
         _depositToStrategy(1 ether);
@@ -324,16 +296,15 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
             ValidatorStakeData({pubkey: v.publicKey, signature: v.signature, depositDataRoot: v.depositDataRoot});
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
+        compoundingStakingStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
 
         // Get the pending deposit root
-        uint256 listLen = compoundingStakingSSVStrategy.depositListLength();
-        pendingDepositRoot = compoundingStakingSSVStrategy.depositList(listLen - 1);
+        uint256 listLen = compoundingStakingStrategy.depositListLength();
+        pendingDepositRoot = compoundingStakingStrategy.depositList(listLen - 1);
     }
 
-    /// @dev Register and stake first deposit
-    function _registerAndStake(uint256 index) internal returns (bytes32 pendingDepositRoot) {
-        _registerValidator(index);
+    /// @dev Stake the first deposit
+    function _stakeNewValidator(uint256 index) internal returns (bytes32 pendingDepositRoot) {
         pendingDepositRoot = _stakeFirstDeposit(index);
     }
 
@@ -343,14 +314,14 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         bytes32 pubKeyHash = _hashPubKey(v.publicKey);
         uint64 nextBlockTimestamp = uint64(block.timestamp);
 
-        compoundingStakingSSVStrategy.verifyValidator(
+        compoundingStakingStrategy.verifyValidator(
             nextBlockTimestamp, validatorIndex, pubKeyHash, _withdrawalCredentialsBytes32(), hex"00"
         );
     }
 
     /// @dev Verify a deposit as processed (mock - always passes with empty queue)
     function _verifyDeposit(bytes32 pendingDepositRoot) internal {
-        (,, uint64 depositSlot,,) = compoundingStakingSSVStrategy.deposits(pendingDepositRoot);
+        (,, uint64 depositSlot,,) = compoundingStakingStrategy.deposits(pendingDepositRoot);
         uint64 processedSlot = depositSlot + 10_000;
 
         // Empty deposit queue proof (37 * 32 = 1184 bytes)
@@ -362,12 +333,12 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         StrategyValidatorProofData memory strategyValidator =
             StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
-        compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
+        compoundingStakingStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
     }
 
-    /// @dev Full flow: register -> stake -> verify validator -> verify deposit
+    /// @dev Full flow: stake -> verify validator -> verify deposit
     function _processValidator(uint256 index, uint40 validatorIndex) internal returns (bytes32 pendingDepositRoot) {
-        pendingDepositRoot = _registerAndStake(index);
+        pendingDepositRoot = _stakeNewValidator(index);
         _verifyValidator(index, validatorIndex);
         _verifyDeposit(pendingDepositRoot);
     }
@@ -376,7 +347,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     function _snapBalances() internal returns (uint64 snapTimestamp) {
         snapTimestamp = uint64(block.timestamp);
         vm.prank(governor);
-        compoundingStakingSSVStrategy.snapBalances();
+        compoundingStakingStrategy.snapBalances();
     }
 
     /// @dev Empty balance proofs for verifyBalances
@@ -416,7 +387,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         internal
     {
         vm.prank(governor);
-        compoundingStakingSSVStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
+        compoundingStakingStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
     }
 
     /// @dev Allow test contract to receive ETH

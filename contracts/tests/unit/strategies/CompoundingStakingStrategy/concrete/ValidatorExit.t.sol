@@ -3,22 +3,19 @@ pragma solidity ^0.8.0;
 
 // --- Test base
 import {
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+    Unit_CompoundingStakingStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingStrategy/shared/Shared.t.sol";
 
 // --- Project imports
 import {
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-{
+contract Unit_Concrete_CompoundingStakingStrategy_ValidatorExit_Test is Unit_CompoundingStakingStrategy_Shared_Test {
     function setUp() public override {
         super.setUp();
-        deal(address(mockSsv), address(compoundingStakingSSVStrategy), 1000 ether);
         vm.deal(governor, 10 ether);
     }
 
@@ -31,11 +28,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
 
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        emit ICompoundingStakingStrategy.ValidatorWithdraw(pubKeyHash, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
 
         // State should be EXITING (5)
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 5);
     }
 
@@ -46,22 +43,22 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(
             testValidators[0].publicKey, uint64(1 ether / 1 gwei)
         );
 
         // State should still be ACTIVE (4)
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 4);
     }
 
     function test_validatorWithdrawal_RevertWhen_notActiveOrExiting() public {
-        _registerAndStake(0);
+        _stakeNewValidator(0);
 
         vm.deal(governor, 1 ether);
         vm.prank(governor);
         vm.expectRevert("Validator not active/exiting");
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 
     function test_validatorWithdrawal_RevertWhen_pendingDeposit() public {
@@ -74,14 +71,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
 
         vm.prank(governor);
         vm.expectRevert("Pending deposit");
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 
     function test_validatorWithdrawal_RevertWhen_notRegistrator() public {
         vm.deal(josh, 1 ether);
         vm.prank(josh);
-        vm.expectRevert(ICompoundingStakingSSVStrategy.NotRegistrator.selector);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        vm.expectRevert(ICompoundingStakingStrategy.NotRegistrator.selector);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 
     function test_validatorWithdrawal_exitAlreadyExiting() public {
@@ -95,34 +92,34 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         // First full withdrawal call: ACTIVE (4) → EXITING (5)
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
+        emit ICompoundingStakingStrategy.ValidatorWithdraw(pubKeyHash, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
 
-        (ValidatorState state1,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state1,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state1), 5, "Should be EXITING after first call");
 
         // Second full withdrawal call: still EXITING (5)
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
+        emit ICompoundingStakingStrategy.ValidatorWithdraw(pubKeyHash, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
 
-        (ValidatorState state2,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state2,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state2), 5, "Should remain EXITING after second call");
     }
 
     function test_validatorWithdrawal_RevertWhen_notActive_onlyVerified() public {
-        // Process validator to VERIFIED state (register → stake → verify validator → verify deposit)
+        // Process validator to VERIFIED state (stake → verify validator → verify deposit)
         // but do NOT activate it
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         vm.prank(governor);
         vm.expectRevert("Validator not active/exiting");
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 
     function test_validatorWithdrawal_partialRevertWhen_notActive() public {
@@ -130,22 +127,22 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         vm.prank(governor);
         vm.expectRevert("Validator not active/exiting");
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(
             testValidators[0].publicKey, uint64(1 ether / 1 gwei)
         );
     }
 
     function test_validatorWithdrawal_RevertWhen_notActive_onlyVerified_withTopUp() public {
-        // Process validator through full verification (register → stake → verify validator → verify deposit)
+        // Process validator through full verification (stake → verify validator → verify deposit)
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         // Top up with 31 ETH (stake but validator is still VERIFIED, not ACTIVE)
@@ -153,15 +150,15 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _stakeTopUp(0, 31 ether);
 
         // Verify deposit to clear the pending deposit
-        uint256 listLen = compoundingStakingSSVStrategy.depositListLength();
-        bytes32 pendingDepositRoot = compoundingStakingSSVStrategy.depositList(listLen - 1);
+        uint256 listLen = compoundingStakingStrategy.depositListLength();
+        bytes32 pendingDepositRoot = compoundingStakingStrategy.depositList(listLen - 1);
         _verifyDeposit(pendingDepositRoot);
 
         // Validator has NOT been activated (no verifyBalances call)
         // Full withdrawal (amount=0) should revert
         vm.prank(governor);
         vm.expectRevert("Validator not active/exiting");
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
     }
 
     function test_validatorWithdrawal_partialWithPendingDeposit() public {
@@ -170,7 +167,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _activateValidator(0);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (ValidatorState stateBeforeTopUp,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateBeforeTopUp,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(stateBeforeTopUp), 4, "Should be ACTIVE before top-up");
 
         // Top up with 5 ETH (stake but don't verify deposit - creates pending deposit)
@@ -179,12 +176,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
 
         // Partial withdrawal should succeed even with pending deposit
         vm.prank(governor);
-        compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(
+        compoundingStakingStrategy.validatorWithdrawal{value: 1 wei}(
             testValidators[0].publicKey, uint64(5 ether / 1 gwei)
         );
 
         // State should remain ACTIVE (4)
-        (ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateAfter,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(stateAfter), 4, "Should remain ACTIVE after partial withdrawal");
     }
 
@@ -201,7 +198,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[index].publicKey);
-        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 4, "Validator should be ACTIVE");
     }
 
@@ -213,7 +210,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         });
 
         vm.prank(governor);
-        compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(amount / 1 gwei));
+        compoundingStakingStrategy.stakeEth(stakeData, uint64(amount / 1 gwei));
     }
 
     // ----------------

@@ -2,22 +2,22 @@
 pragma solidity ^0.8.0;
 
 import {
-    Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_Test
+    Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Test
 } from "../shared/TwentyOneValidatorsShared.t.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_TwentyOneValidators_Test is
-    Unit_CompoundingStakingSSVStrategy_TwentyOneValidators_Shared_Test
+contract Unit_Concrete_CompoundingStakingStrategy_TwentyOneValidators_Test is
+    Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Test
 {
     function test_verifyBalances_21ValidatorsNoPendingDeposits() public {
         _assertHistoricalBalances(0);
 
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 16);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 16);
         assertFalse(_containsVerifiedValidator(testValidators[3].publicKeyHash));
         assertFalse(_containsVerifiedValidator(testValidators[11].publicKeyHash));
         assertFalse(_containsVerifiedValidator(testValidators[12].publicKeyHash));
         assertFalse(_containsVerifiedValidator(testValidators[13].publicKeyHash));
         assertFalse(_containsVerifiedValidator(testValidators[14].publicKeyHash));
-        assertEq(compoundingStakingSSVStrategy.lastVerifiedEthBalance(), 0.345 ether + _validatorTotal());
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0.345 ether + _validatorTotal());
     }
 
     function test_verifyBalances_zeroBalanceValidatorWithTwoPendingDeposits() public {
@@ -26,8 +26,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_TwentyOneValidators_Test is
 
         _assertHistoricalBalances(3 ether);
 
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 2);
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 17);
+        assertEq(compoundingStakingStrategy.depositListLength(), 2);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 17);
         assertTrue(_containsVerifiedValidator(testValidators[3].publicKeyHash));
     }
 
@@ -40,8 +40,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_TwentyOneValidators_Test is
 
         _assertHistoricalBalances(20 ether);
 
-        assertEq(compoundingStakingSSVStrategy.depositListLength(), 5);
-        assertEq(compoundingStakingSSVStrategy.verifiedValidatorsLength(), 17);
+        assertEq(compoundingStakingStrategy.depositListLength(), 5);
+        assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 17);
         assertTrue(_containsVerifiedValidator(testValidators[0].publicKeyHash));
         assertTrue(_containsVerifiedValidator(testValidators[1].publicKeyHash));
         assertTrue(_containsVerifiedValidator(testValidators[3].publicKeyHash));
