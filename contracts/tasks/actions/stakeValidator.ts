@@ -35,12 +35,6 @@ action({
       undefined,
       types.string
     );
-    t.addOptionalParam(
-      "consol",
-      "Call the consolidation controller instead of the strategy",
-      false,
-      types.boolean
-    );
   },
   run: async ({ signer, args }) => {
     await stakeValidator({ ...args, signer });
