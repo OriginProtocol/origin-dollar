@@ -409,7 +409,6 @@ library Hoodi {
     address internal constant OETHVaultProxy = 0xD0cC28bc8F4666286F3211e465ecF1fe5c72AC8B;
     address internal constant WETH = 0x2387fD72C1DA19f6486B843F5da562679FbB4057;
     address internal constant beaconChainDepositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
-    address internal constant defenderRelayer = 0x419B6BdAE482f41b8B194515749F3A2Da26d583b;
     address internal constant mockBeaconRoots = 0xdCfcAE4A084AA843eE446f400B23aA7B6340484b;
 }
 
