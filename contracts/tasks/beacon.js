@@ -175,7 +175,26 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({ slot, index, dryrun, cred, signer }) {
+async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
+  if (index === undefined && ids === undefined) {
+    throw new Error("Pass either --index or --ids");
+  }
+  if (index !== undefined && ids !== undefined) {
+    throw new Error("Pass either --index or --ids, not both");
+  }
+
+  const validatorIds =
+    ids === undefined ? [String(index)] : ids.split(",").map((id) => id.trim());
+  if (validatorIds.length === 0 || validatorIds.some((id) => id === "")) {
+    throw new Error("--ids must contain at least one validator ID");
+  }
+  const validatorIndexes = [...new Set(validatorIds)].map((id) => {
+    if (!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id))) {
+      throw new Error(`Invalid validator ID: "${id}"`);
+    }
+    return Number(id);
+  });
+
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
 
@@ -187,32 +206,36 @@ async function verifyValidator({ slot, index, dryrun, cred, signer }) {
   );
 
   const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
   );
 
   if (cred) {
     log(`Overriding withdrawal credentials to ${cred}`);
 
-    // Update the validator's withdrawalCredentials in stateView
-    const validator = stateView.validators.get(index);
-    if (
-      !validator ||
-      toHex(validator.node.root) ==
-        "0x0000000000000000000000000000000000000000000000000000000000000000"
-    ) {
-      throw new Error(`Validator at index ${index} not found for slot ${slot}`);
+    for (const validatorIndex of validatorIndexes) {
+      // Update the validator's withdrawalCredentials in stateView
+      const validator = stateView.validators.get(validatorIndex);
+      if (
+        !validator ||
+        toHex(validator.node.root) ==
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ) {
+        throw new Error(
+          `Validator at index ${validatorIndex} not found for slot ${blockView.slot}`
+        );
+      }
+
+      log(
+        `Original withdrawal credentials for validator ${validatorIndex}: ${toHex(
+          validator.withdrawalCredentials
+        )}`
+      );
+
+      // Override the address in the withdrawal credentials
+      validator.withdrawalCredentials = arrayify(cred);
+      stateView.validators.set(validatorIndex, validator);
     }
-
-    log(
-      `Original withdrawal credentials: ${toHex(
-        validator.withdrawalCredentials
-      )}`
-    );
-
-    // Override the address in the withdrawal credentials
-    validator.withdrawalCredentials = arrayify(cred);
-    stateView.validators.set(index, validator); // Update validator in state
 
     // Update blockTree with new stateRoot
     const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
@@ -227,45 +250,67 @@ async function verifyValidator({ slot, index, dryrun, cred, signer }) {
     `Next execution layer block ${nextBlock} has timestamp ${nextBlockTimestamp}`
   );
 
-  const {
-    proof,
-    leaf: pubKeyHash,
-    root: beaconBlockRoot,
-    pubKey,
-  } = await generateValidatorPubKeyProof({
-    validatorIndex: index,
-    blockView,
-    blockTree,
-    stateView,
-  });
+  const validatorProofs = [];
+  for (const validatorIndex of validatorIndexes) {
+    const {
+      proof,
+      leaf: pubKeyHash,
+      root: beaconBlockRoot,
+      pubKey,
+    } = await generateValidatorPubKeyProof({
+      validatorIndex,
+      blockView,
+      blockTree,
+      stateView,
+    });
 
-  // Check the validator is in STAKED state
-  const stateEnum = (await strategy.validator(pubKeyHash)).state;
-  log(`Validator with pub key hash ${pubKeyHash} has state: ${stateEnum}`);
-  if (stateEnum !== 2)
-    // STAKED
-    throw Error(
-      `Validator ${index} with pub key hash ${pubKeyHash} is not STAKED. Status: ${stateEnum}`
-    );
+    // Check the validator is in STAKED state
+    const stateEnum = (await strategy.validator(pubKeyHash)).state;
+    log(`Validator with pub key hash ${pubKeyHash} has state: ${stateEnum}`);
+    if (stateEnum !== 2)
+      // STAKED
+      throw Error(
+        `Validator ${validatorIndex} with pub key hash ${pubKeyHash} is not STAKED. Status: ${stateEnum}`
+      );
+
+    validatorProofs.push({
+      beaconBlockRoot,
+      proof,
+      pubKey,
+      pubKeyHash,
+      stateEnum,
+      validatorIndex,
+    });
+  }
 
   if (dryrun) {
-    console.log(`beaconBlockRoot       : ${beaconBlockRoot}`);
-    console.log(`nextBlockTimestamp    : ${nextBlockTimestamp}`);
-    console.log(`validator index       : ${index}`);
-    console.log(`pubKeyHash            : ${pubKeyHash}`);
-    console.log(`withdrawal credentials: ${cred}`);
-    console.log(`Validator status      : ${stateEnum}`);
-    console.log(`proof:\n${proof}`);
+    for (const validatorProof of validatorProofs) {
+      console.log(`beaconBlockRoot       : ${validatorProof.beaconBlockRoot}`);
+      console.log(`nextBlockTimestamp    : ${nextBlockTimestamp}`);
+      console.log(`validator index       : ${validatorProof.validatorIndex}`);
+      console.log(`pubKeyHash            : ${validatorProof.pubKeyHash}`);
+      console.log(`withdrawal credentials: ${cred}`);
+      console.log(`Validator status      : ${validatorProof.stateEnum}`);
+      console.log(`proof:\n${validatorProof.proof}`);
+    }
     return;
   }
 
-  log(
-    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash}, withdrawal credential ${cred} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
-  );
-  const tx = await strategy
-    .connect(signer)
-    .verifyValidator(nextBlockTimestamp, index, pubKeyHash, cred, proof);
-  await logTxDetails(tx, "verifyValidator");
+  for (const validatorProof of validatorProofs) {
+    log(
+      `About verify validator ${validatorProof.validatorIndex} with pub key ${validatorProof.pubKey}, pub key hash ${validatorProof.pubKeyHash}, withdrawal credential ${cred} at slot ${blockView.slot} to beacon chain root ${validatorProof.beaconBlockRoot}`
+    );
+    const tx = await strategy
+      .connect(signer)
+      .verifyValidator(
+        nextBlockTimestamp,
+        validatorProof.validatorIndex,
+        validatorProof.pubKeyHash,
+        cred,
+        validatorProof.proof
+      );
+    await logTxDetails(tx, "verifyValidator");
+  }
 }
 
 // get deposits that have been processed on the beacon chain but not yet validated by the strategy
@@ -309,8 +354,8 @@ async function getProcessedDeposits(pendingDeposits) {
 
 async function verifyDeposits({ dryrun, signer, consol = false }) {
   const stakingStrategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
   );
   const contract = consol
     ? await resolveContract("ConsolidationController")
@@ -364,8 +409,8 @@ async function verifyDeposit({
   signer,
 }) {
   const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
+    "CompoundingStakingStrategyProxy",
+    "CompoundingStakingStrategy"
   );
 
   let strategyDepositSlot = 0;
@@ -567,8 +612,8 @@ async function verifyBalances({
   const strategy = test
     ? undefined
     : await resolveContract(
-        "CompoundingStakingSSVStrategyProxy",
-        "CompoundingStakingSSVStrategy"
+        "CompoundingStakingStrategyProxy",
+        "CompoundingStakingStrategy"
       );
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
 

@@ -78,7 +78,6 @@ async function failConsolidation({ source }) {
 }
 
 async function confirmConsolidation({ safe = false }) {
-  const signer = await getSigner();
   const controller = await resolveContract("ConsolidationController");
 
   const { balanceProofs, pendingDepositProofs } = await verifyBalances({
@@ -102,6 +101,7 @@ async function confirmConsolidation({ safe = false }) {
     return;
   }
 
+  const signer = await getSigner();
   log(`About to confirm validator consolidations`);
   const tx = await controller
     .connect(signer)

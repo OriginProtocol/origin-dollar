@@ -16,7 +16,7 @@ async function withdrawFromStrategyIfNeeded({
   dryrun,
 }) {
   const wethInStrategy = await weth.balanceOf(strategy.address);
-  const ethInStrategy = await ethers.provider.getBalance(strategy.address);
+  const ethInStrategy = await signer.provider.getBalance(strategy.address);
   log(`WETH available in strategy ${formatUnits(wethInStrategy, 18)}`);
   log(`ETH available in strategy ${formatUnits(ethInStrategy, 18)}`);
 
