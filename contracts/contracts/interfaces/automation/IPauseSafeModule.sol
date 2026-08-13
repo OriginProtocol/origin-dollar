@@ -8,12 +8,15 @@ interface IPauseSafeModule is IAbstractSafeModule {
     event TargetRevoked(address indexed target);
     event CapitalPauseExecuted(address indexed target);
     event RebasePauseExecuted(address indexed target);
+    event PauseExecuted(address indexed target);
 
     function isPausableTarget(address target) external view returns (bool);
 
     function pauseCapital(address _target) external;
 
     function pauseRebase(address _target) external;
+
+    function pause(address _target) external;
 
     function allowTarget(address _target) external;
 

@@ -10,19 +10,20 @@ import { IVault } from "../interfaces/IVault.sol";
  * @notice Gnosis Safe module that lets a threat-detection operator pause OToken
  *         vaults without waiting for multisig signatures to be gathered.
  *
- * @dev The Safe hosting this module is the Guardian multisig, which is the
- *      vaults' `strategistAddr` and therefore already authorized to pause. This
- *      module does not widen that authority — it only lets a keyed operator
- *      exercise it without collecting signatures.
+ * @dev The Safe hosting this module is the Guardian multisig, which is already
+ *      authorized to pause every supported target: it is the vaults'
+ *      `strategistAddr`, and the ARMs' `guardian`. This module does not widen
+ *      that authority — it only lets a keyed operator exercise it without
+ *      collecting signatures.
  *
  *      Safety properties, in order of importance:
  *
- *      1. This module can never unpause. The only two selectors it can encode
- *         are `pauseCapital()` and `pauseRebase()`, both compiled in below.
- *         That is a property of the bytecode, not of configuration — there is
- *         no allow-list entry or role that could turn an unpause into a legal
- *         call. Unpausing requires the Admin multisig acting directly on the
- *         vault.
+ *      1. This module can never unpause. The only three selectors it can encode
+ *         are `pauseCapital()`, `pauseRebase()` and `pause()`, all compiled in
+ *         below. That is a property of the bytecode, not of configuration —
+ *         there is no allow-list entry or role that could turn an unpause into
+ *         a legal call. Unpausing requires the Admin multisig acting directly
+ *         on the target.
  *      2. Targets are allow-listed by the Safe, so a compromised operator key
  *         cannot aim a pause at an arbitrary contract.
  *      3. Pause failures revert. A pause that silently did not land is worse
@@ -33,6 +34,14 @@ import { IVault } from "../interfaces/IVault.sol";
  *      do anything at all.
  */
 contract PauseSafeModule is AbstractSafeModule {
+    /// @dev `bytes4(keccak256("pause()"))`. Not taken from a project interface
+    ///      because it is shared by contracts that have none in common: the ARMs
+    ///      (`AbstractARM.pause()`, guarded by `onlyPauser`, which includes the
+    ///      Guardian Safe hosting this module) and the native staking strategies.
+    ///      Any target exposing a no-argument `pause()` is reachable through
+    ///      `pause(address)` below.
+    bytes4 internal constant PAUSE_SELECTOR = 0x8456cb59;
+
     /// @notice Contracts this module is permitted to pause.
     mapping(address => bool) public isPausableTarget;
 
@@ -40,6 +49,7 @@ contract PauseSafeModule is AbstractSafeModule {
     event TargetRevoked(address indexed target);
     event CapitalPauseExecuted(address indexed target);
     event RebasePauseExecuted(address indexed target);
+    event PauseExecuted(address indexed target);
 
     /**
      * @param _safeContract Address of the Gnosis Safe (Guardian multisig).
@@ -78,6 +88,16 @@ contract PauseSafeModule is AbstractSafeModule {
     function pauseRebase(address _target) external onlyOperator {
         _execPause(_target, IVault.pauseRebase.selector);
         emit RebasePauseExecuted(_target);
+    }
+
+    /**
+     * @notice Halt an allow-listed contract that exposes a no-argument `pause()`
+     *         — the ARMs, and the native staking strategies.
+     * @param _target Contract to pause.
+     */
+    function pause(address _target) external onlyOperator {
+        _execPause(_target, PAUSE_SELECTOR);
+        emit PauseExecuted(_target);
     }
 
     /// @dev Execute a pause selector on `_target` through the Safe.

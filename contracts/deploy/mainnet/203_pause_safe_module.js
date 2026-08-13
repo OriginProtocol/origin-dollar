@@ -48,6 +48,14 @@ REQUIRED POST-DEPLOY STEPS — the module does nothing until these are done
 
   Step 1 is the one that was silently skipped for PermissionedRebaseModule,
   leaving it dead on-chain for months. Do not close this PR until it is done.
+
+  LATER — ARM targets. The module can already drive AbstractARM.pause() via
+  pause(address), but the ARMs are deliberately NOT allow-listed here. They
+  only become pausable by this Safe once arm-oeth PR #337 ships and each ARM
+  has been upgraded and had setPauseRoles(2/8, 5/8) called. After that, the
+  Safe adds each one with:
+       pauseSafeModule.allowTarget(<arm>)
+  Allow-listing them before then would look configured but revert on use.
 =======================================================================
 `);
 

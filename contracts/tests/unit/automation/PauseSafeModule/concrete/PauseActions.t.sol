@@ -4,9 +4,13 @@ pragma solidity ^0.8.0;
 // --- Test base
 import {Unit_PauseSafeModule_Shared_Test} from "tests/unit/automation/PauseSafeModule/shared/Shared.t.sol";
 
+// --- Mocks
+import {MockPausableARM} from "tests/mocks/MockPausableARM.sol";
+
 contract Unit_Concrete_PauseSafeModule_PauseActions_Test is Unit_PauseSafeModule_Shared_Test {
     event CapitalPauseExecuted(address indexed target);
     event RebasePauseExecuted(address indexed target);
+    event PauseExecuted(address indexed target);
 
     //////////////////////////////////////////////////////
     /// --- PAUSE CAPITAL
@@ -95,6 +99,66 @@ contract Unit_Concrete_PauseSafeModule_PauseActions_Test is Unit_PauseSafeModule
         pauseSafeModule.pauseRebase(address(unlistedVault));
 
         assertFalse(unlistedVault.rebasePaused());
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- PAUSE (ARM-shaped targets)
+    //////////////////////////////////////////////////////
+
+    function test_pause_operatorTripsAnArm() public {
+        assertFalse(arm.paused());
+
+        vm.expectEmit(address(pauseSafeModule));
+        emit PauseExecuted(address(arm));
+
+        vm.prank(operator);
+        pauseSafeModule.pause(address(arm));
+
+        assertTrue(arm.paused());
+    }
+
+    function test_pause_revertsForNonOperator() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not an operator");
+        pauseSafeModule.pause(address(arm));
+
+        assertFalse(arm.paused());
+    }
+
+    function test_pause_revertsForUnlistedTarget() public {
+        vm.prank(operator);
+        vm.expectRevert("Target not allowed");
+        pauseSafeModule.pause(address(unlistedVault));
+    }
+
+    /// @dev The vault selectors do not exist on an ARM and vice versa. Aiming the
+    ///      wrong entry point at a target fails loudly rather than doing something
+    ///      unexpected.
+    function test_pause_mismatchedSelectorReverts() public {
+        vm.prank(operator);
+        vm.expectRevert("Pause failed");
+        pauseSafeModule.pauseCapital(address(arm));
+
+        vm.prank(operator);
+        vm.expectRevert("Pause failed");
+        pauseSafeModule.pause(address(oethVault));
+    }
+
+    /// @dev Same separation as the vaults, on an ARM: the Safe hosting the module
+    ///      is the ARM guardian, so it can pause but the ARM rejects its unpause.
+    function test_onlyAdminCanLiftAnArmPause() public {
+        vm.prank(operator);
+        pauseSafeModule.pause(address(arm));
+        assertTrue(arm.paused());
+
+        vm.prank(address(mockSafe));
+        vm.expectRevert(MockPausableARM.OnlyUnpauser.selector);
+        arm.unpause();
+        assertTrue(arm.paused());
+
+        vm.prank(guardian);
+        arm.unpause();
+        assertFalse(arm.paused());
     }
 
     //////////////////////////////////////////////////////

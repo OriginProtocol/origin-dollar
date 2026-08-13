@@ -20,6 +20,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // --- Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockPausableARM} from "tests/mocks/MockPausableARM.sol";
 
 abstract contract Unit_PauseSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -35,6 +36,10 @@ abstract contract Unit_PauseSafeModule_Shared_Test is Base {
     /// @dev A second vault, deliberately left off the module's allow-list.
     IOToken internal otherOeth;
     IVault internal unlistedVault;
+
+    /// @dev An ARM-shaped target: no-argument `pause()`, guardian can pause,
+    ///      only the admin multisig can unpause.
+    MockPausableARM internal arm;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -55,10 +60,15 @@ abstract contract Unit_PauseSafeModule_Shared_Test is Base {
         (oeth, oethVault) = _deployOethVault();
         (otherOeth, unlistedVault) = _deployOethVault();
 
-        // Only `oethVault` is allow-listed. `unlistedVault` exists so tests can
-        // prove the module refuses targets the Safe never approved.
-        address[] memory initialTargets = new address[](1);
+        // The Safe hosting the module is the ARM's guardian, exactly as
+        // arm-oeth deploy script 043 wires it on mainnet.
+        arm = new MockPausableARM(address(mockSafe), guardian);
+
+        // `unlistedVault` is left off so tests can prove the module refuses
+        // targets the Safe never approved.
+        address[] memory initialTargets = new address[](2);
         initialTargets[0] = address(oethVault);
+        initialTargets[1] = address(arm);
 
         address[] memory operators = new address[](1);
         operators[0] = operator;
@@ -122,5 +132,6 @@ abstract contract Unit_PauseSafeModule_Shared_Test is Base {
         vm.label(address(oeth), "OETH");
         vm.label(address(oethVault), "OETHVault");
         vm.label(address(unlistedVault), "UnlistedVault");
+        vm.label(address(arm), "MockPausableARM");
     }
 }
