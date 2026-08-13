@@ -383,10 +383,28 @@ contract Unit_Concrete_OETHVault_Admin_Test is Unit_OETHVault_Shared_Test {
         assertTrue(oethVault.rebasePaused());
     }
 
+    function test_pauseRebase_byAdmin() public {
+        vm.prank(guardian);
+        oethVault.pauseRebase();
+        assertTrue(oethVault.rebasePaused());
+    }
+
     function test_pauseRebase_RevertWhen_unauthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Strategist or Governor");
+        vm.expectRevert("Caller is not the Strategist, Admin or Governor");
         oethVault.pauseRebase();
+    }
+
+    /// @dev The Strategist can pause but not unpause — a compromised Strategist
+    ///      key cannot re-open what it closed.
+    function test_unpauseRebase_RevertWhen_strategist() public {
+        vm.prank(governor);
+        oethVault.pauseRebase();
+
+        vm.prank(strategist);
+        vm.expectRevert("Caller is not the Admin or Governor");
+        oethVault.unpauseRebase();
+        assertTrue(oethVault.rebasePaused());
     }
 
     function test_unpauseRebase_works() public {

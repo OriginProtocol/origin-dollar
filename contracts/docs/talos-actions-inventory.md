@@ -14,7 +14,6 @@
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, hoodi | doAccounting, registerValidators, stakeValidators |
-| eth, sonic, base | permissionedRebase |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, holesky, arb, plume, hoodi | healthcheck |
 
