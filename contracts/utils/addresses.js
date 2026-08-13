@@ -203,7 +203,7 @@ addresses.unitTests.CompoundingStakingStrategyProxy =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
+  "0x177198aDb759a9715bC7259BE1b7bE535BeD7542";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

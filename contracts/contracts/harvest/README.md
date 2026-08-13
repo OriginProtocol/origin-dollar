@@ -48,20 +48,6 @@ Used on Mainnet for OETH.
 
 ![OETH Simple Harvester Storage](../../docs/OETHHarvesterSimpleStorage.svg)
 
-## Base Harvester
-
-### Hierarchy
-
-![OETH Base Harvester Hierarchy](../../docs/OETHBaseHarvesterHierarchy.svg)
-
-### Squashed
-
-![OETH Base Harvester Squashed](../../docs/OETHBaseHarvesterSquashed.svg)
-
-### Storage
-
-![OETH Base Harvester Storage](../../docs/OETHBaseHarvesterStorage.svg)
-
 ## Sonic Harvester
 
 ### Hierarchy

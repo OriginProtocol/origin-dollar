@@ -127,7 +127,7 @@ library Mainnet {
     address internal constant CurveOETHETHplusGauge = 0xCAe10a7553AccA53ad58c4EC63e3aB6Ad6546F71;
 
     // Votemarket - StakeDAO
-    address internal constant CampaignRemoteManager = 0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2;
+    address internal constant CampaignRemoteManager = 0x177198aDb759a9715bC7259BE1b7bE535BeD7542;
 
     // Morpho
     address internal constant MorphoStrategyProxy = 0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D;
@@ -194,7 +194,7 @@ library Mainnet {
 
     // Curve Pool Booster
     address internal constant CurvePoolBoosterOETH = 0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E;
-    address internal constant CurvePoolBoosterBribesModule = 0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe;
+    address internal constant CurvePoolBoosterBribesModule = 0x6320Db7a3c1B95fD5684DC725C2cda9B82Fa20Fa;
     address internal constant MerklPoolBoosterBribesModule = 0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369;
 
     // SSV network
@@ -424,7 +424,6 @@ library Hoodi {
     address internal constant SSV = 0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e;
     address internal constant SSVNetwork = 0x58410Bef803ECd7E63B23664C586A6DB72DAf59c;
     address internal constant beaconChainDepositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
-    address internal constant defenderRelayer = 0x419B6BdAE482f41b8B194515749F3A2Da26d583b;
     address internal constant mockBeaconRoots = 0xdCfcAE4A084AA843eE446f400B23aA7B6340484b;
 }
 

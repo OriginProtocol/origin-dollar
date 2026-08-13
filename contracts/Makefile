@@ -8,7 +8,7 @@ MAKEFLAGS += --no-print-directory
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 DEPLOY_SCRIPT   := scripts/deploy/DeployManager.s.sol
-DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow --no-isolate
+DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow
 DEPLOY_BUILD    := contracts/ scripts/deploy/
 
 # Rewrites deployments/<network>/<Name>.json for whatever the broadcast just
