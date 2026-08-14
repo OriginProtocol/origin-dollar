@@ -6,6 +6,8 @@
   "packageManager": "pnpm@10.18.3",
   "scripts": {
     "check:storage": "node scripts/check-storage-layout.js",
+    "test:scripts": "node --test scripts/test/check-storage-upgrade.test.js scripts/test/storage-upgrade.test.js",
+    "test:layouts": "node --test scripts/test/layout-pinned.test.js",
     "deploy": "rm -rf deployments/hardhat && npx hardhat deploy",
     "deploy:mainnet": "VERIFY_CONTRACTS=true npx hardhat deploy --network mainnet --verbose",
     "deploy:arbitrum": "FORK_NETWORK_NAME=arbitrumOne npx hardhat deploy --network arbitrumOne --tags arbitrumOne --verbose",
@@ -31,7 +33,7 @@
     "node:anvil:hoodi": "anvil --fork-url $HOODI_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:hyperevm": "anvil --fork-url $HYPEREVM_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "lint": "pnpm run lint:js && pnpm run lint:ts && pnpm run lint:sol",
-    "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
+    "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\" \"scripts/lib/**/*.js\" \"scripts/test/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "lint:ts": "eslint \"tasks/actions/**/*.ts\" \"tasks/lib/**/*.ts\"",
     "prettier": "pnpm run prettier:js && pnpm run prettier:sol",

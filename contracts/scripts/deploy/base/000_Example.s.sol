@@ -34,7 +34,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
     ///      by _buildGovernanceProposal() and _fork().
     function _execute() internal override {
         OETHBase newImpl = new OETHBase();
-        _recordDeployment("OETHB_IMPL", address(newImpl));
+        _recordDeployment("OETHB_IMPL", address(newImpl), type(OETHBase).name);
     }
 
     // ==================== Governance Proposal ==================== //

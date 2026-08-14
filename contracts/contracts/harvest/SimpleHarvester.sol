@@ -14,7 +14,8 @@ abstract contract SimpleHarvester is Initializable, Strategizable {
     address public immutable wrappedNativeToken;
     address public dripper;
     mapping(address => bool) public supportedStrategies;
-    uint256[48] private ___gap;
+    /// @notice Gap for upgrade safety
+    uint256[48] private __gap;
 
     event Harvested(
         address indexed strategy,
