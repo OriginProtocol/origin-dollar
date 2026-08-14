@@ -21,6 +21,31 @@ pnpm i
 
 Key `.env` variables: `PROVIDER_URL`, `SONIC_PROVIDER_URL`, `BASE_PROVIDER_URL`, `BLOCK_NUMBER`, `ACCOUNTS_TO_FUND`.
 
+### `@oplabs/talos-client` (private, optional)
+
+`pnpm i` deliberately does **not** install `@oplabs/talos-client`. It is declared
+as an *optional peer dependency* so that CI and external contributors can install
+this repo without GitHub Packages credentials.
+
+**Nothing local needs it.** `hardhat`, `tsx tasks/run.ts <action>` and the tests
+all load and run without it. Only the runner image does: `runner.ts` (container
+entrypoint) imports it statically, and `tasks/lib/signer.ts` `require()`s it
+lazily for the Postgres nonce queue, which is gated on `DATABASE_URL` — unset
+locally, so the require never fires. `dockerfile-actions` installs it with the
+`talos_package_token` build secret, reading the pinned version from
+`peerDependencies`.
+
+Keep it that way. Two regressions to avoid:
+
+- Do not make the `signer.ts` require a static import. `tasks/run.ts` imports
+  `getSigner` at the top level, so a static import makes every local action run
+  fail with `Cannot find module '@oplabs/talos-client'`.
+- Do not import it from `tasks/lib/network.ts`. That used to drag the
+  requirement up through `utils/resolvers.js` → `utils/morpho.js` →
+  `tasks/tasks.js` → `hardhat.config.js` and broke `hardhat deploy` in the ABI
+  publish workflow, which installs without GitHub Packages auth. #2954 replaced
+  it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
+
 ## Commands (run from `contracts/`)
 
 ### Build
@@ -159,6 +184,79 @@ test/
 Located in `deploy/` and numbered sequentially (e.g., `001_ousd.js`, `002_vault.js`). Each script uses `hardhat-deploy` plugin conventions - exports a deploy function and tags.
 
 When adding a new deployment script, increment the number and follow existing patterns in `utils/deploy.js` (especially `deployWithConfirmation` and `withConfirmation`).
+
+## Storage Layout Checks
+
+**The baseline is the descriptor.** `deployments/<network>/<Name>.json` holds
+`{address, abi, storageLayout}` — the layout is what is deployed at that address
+right now, written by `scripts/create-hardhat-format-descriptors.js` in the same
+step that records the address, so the write side cannot silently stop.
+
+**The gate runs per deployed contract, before broadcast.** Call
+`_assertStorageSafe(type(X).name)` in a deploy script before `new X()`. It shells
+out to `scripts/check-storage-upgrade.js` over `vm.ffi`; a non-zero exit aborts
+the whole forge script, so nothing is broadcast and the ledger is untouched.
+Checking the deployed contract is sufficient — its layout is the flattened layout
+of every source file it inherits (e.g. `OUSDVault` = `VaultStorage` 37 slots +
+`Initializable` 3).
+
+For a deliberate break — retiring a slot behind a `uint256` placeholder and
+abandoning the data — use `_allowStorageBreak(type(X).name, "<reason>")`. The
+reason is required and lands in the PR diff next to the deployment.
+
+Comparison is `@openzeppelin/upgrades-core`, which supplies the `__gap` shrink
+arithmetic. Two policies are ours: a rename is ignored only when the new label is
+derived from the old (`assets` -> `_deprecated_assets`); an unrelated rename is
+not, because two same-typed variables trading labels also reports as two renames.
+Enum member data is absent from solc layouts and is ignored — an enum is one byte
+regardless of variant count, so no slot moves; what is given up is noticing that a
+stored value now decodes to a different variant.
+
+Prefer `__gap` for new gaps, but any number of leading underscores works — labels
+matching `/^_+[a-z]*gap$/i` are normalised to `__gap` **in memory** at comparison
+time, because OZ's `isGap()` matches only `__gap`/`__gap_*` while contracts
+deployed before the rename still carry `______gap` on chain. Stored layouts stay
+faithful to their source, so a bug in that normalisation never costs a re-fetch.
+
+Storage-slot checks cover **Ethereum mainnet and Base** only. ArbitrumOne, Sonic,
+Plume, Hoodi and HyperEVM are out of scope; the gate is a no-op there.
+
+**Re-supporting a chain means re-fetching every layout.** The legacy
+`storageLayout/` tree has been deleted; baselines now live only in descriptors.
+To bring a chain back, run
+`scripts/fetch-onchain-storage-layouts.js --network <net>` (reads each deployed
+implementation's layout from its verified source) then
+`scripts/seed-descriptor-storage-layouts.js --network <net>`, and add the chain to
+`NETWORK_BY_CHAIN` in both that script and `check-storage-upgrade.js`.
+
+`scripts/check-storage-layout.js` remains for ad-hoc "what did this PR change"
+investigation between two git refs. It is **not** the gate: it compares type
+identifier strings, which embed AST node ids that shift between compilations, so
+it false-positives on any contract with an enum or struct in storage.
+
+### Tests
+
+Two suites, both `node --test` (`scripts/test/`), because this is JSON handling
+rather than on-chain behaviour:
+
+- `pnpm test:scripts` — the gate's policy. Runs in its own CI job with **no**
+  Foundry setup: `forge` is faked by a shim on `PATH`, so if these ever come to
+  need a real toolchain the job breaks loudly instead of absorbing a build.
+- `pnpm test:layouts` — pins the layouts of `OUSDVault`, `OUSD`, `WOETH` and
+  `CompoundingStakingSSVStrategy`. Appended to the `unit-tests` job, which has
+  just rebuilt `contracts/`. **A diff in `layout-pinned.test.js` means storage
+  moved; say why in the PR.** It pins the working tree, so it is a tripwire, not
+  a compatibility check — the deploy-time gate remains the authority on what is
+  safe against what is deployed. Regenerate a block with the one-liner in that
+  file's header.
+
+Two traps worth knowing before editing either suite. The gate's whole agreement
+with Solidity is *two bytes on stdout*, and upgrades-core prints advisory notes
+that currently go to stderr — one test exists solely to catch a library bump
+that reroutes them. And OZ classifies two variables swapping labels as a
+`rename` pair **only** when another variable sits between them; adjacent
+same-typed ones come back as delete/insert, so a fixture of the wrong shape
+tests nothing.
 
 ## Roles & Access Control
 

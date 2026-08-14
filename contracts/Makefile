@@ -11,6 +11,27 @@ DEPLOY_SCRIPT   := scripts/deploy/DeployManager.s.sol
 DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow
 DEPLOY_BUILD    := contracts/ scripts/deploy/
 
+# Rewrites deployments/<network>/<Name>.json for whatever the broadcast just
+# deployed, so Talos crons and the hardhat task CLI keep resolving live
+# addresses. Deliberately NOT wired into deploy-local: that target also
+# broadcasts, but against a throwaway node.
+#
+# It runs even when `forge script` exits non-zero, with forge's exit code
+# preserved afterwards. That matters because --verify runs AFTER the broadcast:
+# a successful deploy whose Etherscan verification failed would otherwise skip
+# the descriptor update and leave live crons pointing at the old contract — the
+# exact silent drift this step exists to prevent. A descriptor failure still
+# fails the target (`|| exit 1`); only forge's own exit code is deferred.
+DESCRIPTORS     := node scripts/create-hardhat-format-descriptors.js
+
+# Clearing the chain's broadcast dir first is what makes "a run file exists"
+# mean "this run deployed something". forge leaves the PREVIOUS run-latest.json
+# byte-identical when a broadcast produces zero transactions, and `make
+# deploy-local` broadcasts against `pnpm node:anvil` — which forks mainnet and
+# so reports chain id 1. Without this, a local rehearsal followed by a
+# no-op deploy-mainnet would replay anvil addresses into live descriptors.
+CLEAR_BROADCAST := rm -rf broadcast/DeployManager.s.sol
+
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                  DEFAULT                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
@@ -135,15 +156,18 @@ snapshot:
 #   make deploy-local            -> deploy to local node (no verification)
 deploy-mainnet:
 	forge build $(DEPLOY_BUILD)
-	@forge script $(DEPLOY_SCRIPT) --rpc-url $(MAINNET_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
+	$(CLEAR_BROADCAST)/1
+	@forge script $(DEPLOY_SCRIPT) --rpc-url $(MAINNET_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv; rc=$$?; $(DESCRIPTORS) --chain-id 1 || exit 1; exit $$rc
 
 deploy-base:
 	forge build $(DEPLOY_BUILD)
-	@forge script $(DEPLOY_SCRIPT) --rpc-url $(BASE_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
+	$(CLEAR_BROADCAST)/8453
+	@forge script $(DEPLOY_SCRIPT) --rpc-url $(BASE_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv; rc=$$?; $(DESCRIPTORS) --chain-id 8453 || exit 1; exit $$rc
 
 deploy-hyperevm:
 	forge build $(DEPLOY_BUILD)
-	@forge script $(DEPLOY_SCRIPT) --rpc-url $(HYPEREVM_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
+	$(CLEAR_BROADCAST)/999
+	@forge script $(DEPLOY_SCRIPT) --rpc-url $(HYPEREVM_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv; rc=$$?; $(DESCRIPTORS) --chain-id 999 || exit 1; exit $$rc
 
 deploy-local:
 	forge build $(DEPLOY_BUILD)
