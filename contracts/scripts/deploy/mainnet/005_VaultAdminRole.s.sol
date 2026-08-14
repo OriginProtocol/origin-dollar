@@ -36,10 +36,10 @@ contract $005_VaultAdminRole is AbstractDeployScript("005_VaultAdminRole") {
 
     function _execute() internal override {
         OUSDVault ousdVaultImpl = new OUSDVault(Mainnet.USDC);
-        _recordDeployment("OUSD_VAULT_IMPL", address(ousdVaultImpl));
+        _recordDeployment("OUSD_VAULT_IMPL", address(ousdVaultImpl), type(OUSDVault).name);
 
         OETHVault oethVaultImpl = new OETHVault(Mainnet.WETH);
-        _recordDeployment("OETH_VAULT_IMPL", address(oethVaultImpl));
+        _recordDeployment("OETH_VAULT_IMPL", address(oethVaultImpl), type(OETHVault).name);
     }
 
     // ==================== Governance Proposal ==================== //

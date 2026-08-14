@@ -39,7 +39,7 @@ contract $002_PauseSafeModule is AbstractDeployScript("002_PauseSafeModule") {
         targets[0] = resolver.resolve("OETHBASE_VAULT_PROXY");
 
         PauseSafeModule pauseSafeModule = new PauseSafeModule(CrossChain.multichainStrategist, operators, targets);
-        _recordDeployment("PAUSE_SAFE_MODULE", address(pauseSafeModule));
+        _recordDeployment("PAUSE_SAFE_MODULE", address(pauseSafeModule), type(PauseSafeModule).name);
     }
 
     // ==================== Fork Verification ==================== //

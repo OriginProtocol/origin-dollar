@@ -18,6 +18,5 @@ library Automation {
         "contracts/automation/EthereumBridgeHelperModule.sol:EthereumBridgeHelperModule";
     string internal constant MERKL_POOL_BOOSTER_BRIBES_MODULE =
         "contracts/automation/MerklPoolBoosterBribesModule.sol:MerklPoolBoosterBribesModule";
-    string internal constant PAUSE_SAFE_MODULE =
-        "contracts/automation/PauseSafeModule.sol:PauseSafeModule";
+    string internal constant PAUSE_SAFE_MODULE = "contracts/automation/PauseSafeModule.sol:PauseSafeModule";
 }

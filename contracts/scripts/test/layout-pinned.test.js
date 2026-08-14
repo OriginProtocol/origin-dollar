@@ -76,7 +76,8 @@ const PINS = {
     "79|24|rebasePerSecondTarget|uint64|8",
     "80|0|defaultStrategy|address|20",
     "81|0|operatorAddr|address|20",
-    "82|0|__gap|uint256[41]|1312",
+    "82|0|adminAddr|address|20",
+    "83|0|__gap|uint256[40]|1280",
     "123|0|_deprecated_wethAssetIndex|uint256|32",
   ],
 

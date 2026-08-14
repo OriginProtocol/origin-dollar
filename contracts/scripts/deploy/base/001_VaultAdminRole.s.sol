@@ -33,7 +33,7 @@ contract $001_VaultAdminRole is AbstractDeployScript("001_VaultAdminRole") {
 
     function _execute() internal override {
         OETHBaseVault oethbVaultImpl = new OETHBaseVault(BaseAddresses.WETH);
-        _recordDeployment("OETHBASE_VAULT_IMPL", address(oethbVaultImpl));
+        _recordDeployment("OETHBASE_VAULT_IMPL", address(oethbVaultImpl), type(OETHBaseVault).name);
     }
 
     // ==================== Governance Proposal ==================== //
