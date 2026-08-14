@@ -3,6 +3,7 @@ const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("../_fixture");
 const { ousdUnits, usdsUnits, usdcUnits, isFork } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 describe("Vault", function () {
   if (isFork) {
@@ -180,6 +181,16 @@ describe("Vault", function () {
         vault.connect(signer).setAdminAddr(josh.address)
       ).to.be.revertedWith("Caller is not the Governor");
     }
+  });
+
+  it("Should not allow the Admin address to be unset", async () => {
+    const { vault, governor, admin } = fixture;
+
+    await expect(
+      vault.connect(governor).setAdminAddr(addresses.zero)
+    ).to.be.revertedWith("Invalid admin");
+
+    expect(await vault.adminAddr()).to.equal(admin.address);
   });
 
   it("Should allow the Governor to call withdraw and then deposit", async () => {

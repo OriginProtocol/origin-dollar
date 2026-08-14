@@ -147,8 +147,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     // Production vault sits paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    // Only the Admin can unpause.
-    await oethVault.connect(admin).unpauseRebase();
+    // The Strategist is still the unpauser on the live implementation; this
+    // becomes `admin` once scripts/deploy/mainnet/005_VaultAdminRole executes.
+    await oethVault.connect(strategist).unpauseRebase();
 
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
@@ -726,9 +727,10 @@ const defaultFixture = deployments.createFixture(async () => {
     // Production vaults sit paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    // Only the Admin can unpause.
-    await vaultAndTokenContracts.vault.connect(admin).unpauseRebase();
-    await vaultAndTokenContracts.oethVault.connect(admin).unpauseRebase();
+    // The Strategist is still the unpauser on the live implementations; this
+    // becomes `admin` once scripts/deploy/mainnet/005_VaultAdminRole executes.
+    await vaultAndTokenContracts.vault.connect(strategist).unpauseRebase();
+    await vaultAndTokenContracts.oethVault.connect(strategist).unpauseRebase();
   } else {
     timelock = governor;
 

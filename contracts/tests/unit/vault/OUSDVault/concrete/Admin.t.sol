@@ -317,6 +317,40 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
+    /// --- SETADMINADDR
+    //////////////////////////////////////////////////////
+
+    function test_setAdminAddr_governor() public {
+        vm.prank(governor);
+        ousdVault.setAdminAddr(alice);
+        assertEq(ousdVault.adminAddr(), alice);
+    }
+
+    function test_setAdminAddr_emitsEvent() public {
+        vm.prank(governor);
+        vm.expectEmit(true, true, true, true);
+        emit IVault.AdminUpdated(alice);
+        ousdVault.setAdminAddr(alice);
+    }
+
+    /// @dev Unlike the Operator, the Admin cannot be switched off with the zero
+    ///      address — that would leave the Governor as the only account able to
+    ///      lift a pause.
+    function test_setAdminAddr_RevertWhen_zeroAddress() public {
+        vm.prank(governor);
+        vm.expectRevert("Invalid admin");
+        ousdVault.setAdminAddr(address(0));
+
+        assertEq(ousdVault.adminAddr(), guardian);
+    }
+
+    function test_setAdminAddr_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Governor");
+        ousdVault.setAdminAddr(alice);
+    }
+
+    //////////////////////////////////////////////////////
     /// --- SETSTRATEGISTADDR
     //////////////////////////////////////////////////////
 

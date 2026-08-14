@@ -51,7 +51,17 @@ contract Unit_Concrete_PauseSafeModule_Constructor_Test is Unit_PauseSafeModule_
         address[] memory targets = new address[](1);
         targets[0] = address(0);
 
-        vm.expectRevert("Invalid target");
+        vm.expectRevert("Target has no code");
+        vm.deployCode(Automation.PAUSE_SAFE_MODULE, abi.encode(address(mockSafe), operators, targets));
+    }
+
+    function test_constructor_revertsOnEOATarget() public {
+        address[] memory operators = new address[](1);
+        operators[0] = operator;
+        address[] memory targets = new address[](1);
+        targets[0] = alice;
+
+        vm.expectRevert("Target has no code");
         vm.deployCode(Automation.PAUSE_SAFE_MODULE, abi.encode(address(mockSafe), operators, targets));
     }
 }

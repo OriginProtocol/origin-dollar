@@ -37,8 +37,20 @@ contract Unit_Concrete_PauseSafeModule_TargetManagement_Test is Unit_PauseSafeMo
 
     function test_allowTarget_revertsForZeroAddress() public {
         vm.prank(address(mockSafe));
-        vm.expectRevert("Invalid target");
+        vm.expectRevert("Target has no code");
         pauseSafeModule.allowTarget(address(0));
+    }
+
+    /// @dev A Safe module call to a codeless address returns success, so an EOA
+    ///      target would let `_execPause` emit its event and revert nothing while
+    ///      pausing nothing. Rejecting it at allow-list time is what keeps the
+    ///      "pause failures revert" property honest.
+    function test_allowTarget_revertsForEOA() public {
+        vm.prank(address(mockSafe));
+        vm.expectRevert("Target has no code");
+        pauseSafeModule.allowTarget(alice);
+
+        assertFalse(pauseSafeModule.isPausableTarget(alice));
     }
 
     function test_allowTarget_revertsWhenAlreadyAllowed() public {

@@ -109,6 +109,40 @@ contract Unit_Concrete_OETHVault_Admin_Test is Unit_OETHVault_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
+    /// --- SETADMINADDR
+    //////////////////////////////////////////////////////
+
+    function test_setAdminAddr_works() public {
+        vm.prank(governor);
+        oethVault.setAdminAddr(alice);
+        assertEq(oethVault.adminAddr(), alice);
+    }
+
+    function test_setAdminAddr_emitsEvent() public {
+        vm.prank(governor);
+        vm.expectEmit(true, true, true, true);
+        emit IVault.AdminUpdated(alice);
+        oethVault.setAdminAddr(alice);
+    }
+
+    /// @dev Unlike the Operator, the Admin cannot be switched off with the zero
+    ///      address — that would leave the Governor as the only account able to
+    ///      lift a pause.
+    function test_setAdminAddr_RevertWhen_zeroAddress() public {
+        vm.prank(governor);
+        vm.expectRevert("Invalid admin");
+        oethVault.setAdminAddr(address(0));
+
+        assertEq(oethVault.adminAddr(), guardian);
+    }
+
+    function test_setAdminAddr_RevertWhen_notGovernor() public {
+        vm.prank(strategist);
+        vm.expectRevert("Caller is not the Governor");
+        oethVault.setAdminAddr(alice);
+    }
+
+    //////////////////////////////////////////////////////
     /// --- SETDEFAULTSTRATEGY
     //////////////////////////////////////////////////////
 

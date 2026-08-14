@@ -170,17 +170,12 @@ contract Unit_Concrete_PauseSafeModule_PauseActions_Test is Unit_PauseSafeModule
     ///      that lifts a pause. If someone later adds an unpause entry point these
     ///      calls stop reverting and this test fails.
     function test_module_hasNoUnpauseEntryPoint() public {
-        string[4] memory signatures = [
-            "unpauseCapital(address)",
-            "unpauseRebase(address)",
-            "unpauseCapital()",
-            "unpauseRebase()"
-        ];
+        string[4] memory signatures =
+            ["unpauseCapital(address)", "unpauseRebase(address)", "unpauseCapital()", "unpauseRebase()"];
 
         for (uint256 i = 0; i < signatures.length; i++) {
-            (bool success,) = address(pauseSafeModule).call(
-                abi.encodeWithSelector(bytes4(keccak256(bytes(signatures[i]))), address(oethVault))
-            );
+            (bool success,) = address(pauseSafeModule)
+                .call(abi.encodeWithSelector(bytes4(keccak256(bytes(signatures[i]))), address(oethVault)));
             assertFalse(success, signatures[i]);
         }
     }

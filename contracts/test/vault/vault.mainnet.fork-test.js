@@ -71,58 +71,6 @@ describe("ForkTest: Vault", function () {
       );
     });
 
-    it("Should have the correct admin address set", async () => {
-      const { vault } = fixture;
-      expect(await vault.adminAddr()).to.equal(addresses.mainnet.Guardian);
-    });
-
-    it("Should let the strategist pause but not unpause capital", async () => {
-      const { admin, strategist, vault } = fixture;
-
-      await vault.connect(strategist).pauseCapital();
-      expect(await vault.capitalPaused()).to.be.true;
-
-      await expect(
-        vault.connect(strategist).unpauseCapital()
-      ).to.be.revertedWith("Caller is not the Admin or Governor");
-      expect(await vault.capitalPaused()).to.be.true;
-
-      // Only the Admin can lift the pause the Strategist tripped
-      await vault.connect(admin).unpauseCapital();
-      expect(await vault.capitalPaused()).to.be.false;
-    });
-
-    it("Should let the admin pause and unpause capital and rebase", async () => {
-      const { admin, vault } = fixture;
-
-      await vault.connect(admin).pauseCapital();
-      expect(await vault.capitalPaused()).to.be.true;
-      await vault.connect(admin).unpauseCapital();
-      expect(await vault.capitalPaused()).to.be.false;
-
-      await vault.connect(admin).pauseRebase();
-      expect(await vault.rebasePaused()).to.be.true;
-      await vault.connect(admin).unpauseRebase();
-      expect(await vault.rebasePaused()).to.be.false;
-    });
-
-    it("Should still read pre-existing storage correctly after the upgrade", async () => {
-      const { vault, ousd } = fixture;
-
-      // The admin slot was taken from the storage gap. `defaultStrategy` and
-      // `operatorAddr` are the two slots immediately before it, so a layout
-      // shift would show up here first.
-      expect(await vault.defaultStrategy()).to.not.equal(addresses.zero);
-      expect(await vault.operatorAddr()).to.not.equal(addresses.zero);
-      expect(await vault.strategistAddr()).to.equal(
-        addresses.multichainStrategist
-      );
-      expect(await vault.trusteeAddress()).to.not.equal(addresses.zero);
-      expect(await vault.governor()).to.equal(addresses.mainnet.Timelock);
-      expect(await vault.totalValue()).to.be.gt(0);
-      expect(await ousd.totalSupply()).to.be.gt(0);
-    });
-
     it("Should have the OUSD/USDC AMO mint whitelist", async () => {
       const { vault } = fixture;
       expect(

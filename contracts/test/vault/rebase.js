@@ -48,11 +48,16 @@ describe("Vault rebase", () => {
     it("Should allow admin to pause rebasing", async () => {
       const { vault, admin } = fixture;
       await vault.connect(admin).pauseRebase();
+      expect(await vault.rebasePaused()).to.be.true;
     });
 
     it("Should allow admin to unpause rebasing", async () => {
       const { vault, admin } = fixture;
+      await vault.connect(admin).pauseRebase();
+      expect(await vault.rebasePaused()).to.be.true;
+
       await vault.connect(admin).unpauseRebase();
+      expect(await vault.rebasePaused()).to.be.false;
     });
 
     it("Should allow governor to pause rebasing", async () => {

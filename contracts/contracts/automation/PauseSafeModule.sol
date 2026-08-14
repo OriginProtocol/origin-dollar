@@ -28,18 +28,19 @@ import { IVault } from "../interfaces/IVault.sol";
  *         cannot aim a pause at an arbitrary contract.
  *      3. Pause failures revert. A pause that silently did not land is worse
  *         than a loud failure, because the detection service would treat the
- *         protocol as contained when it is not.
+ *         protocol as contained when it is not. Targets are checked for code at
+ *         allow-list time for the same reason: a Safe module call to a codeless
+ *         address reports success, so an EOA target would pause nothing while
+ *         looking like it had.
  *
  *      The Safe must call `enableModule(address(this))` before this module can
  *      do anything at all.
  */
 contract PauseSafeModule is AbstractSafeModule {
-    /// @dev `bytes4(keccak256("pause()"))`. Not taken from a project interface
-    ///      because it is shared by contracts that have none in common: the ARMs
-    ///      (`AbstractARM.pause()`, guarded by `onlyPauser`, which includes the
-    ///      Guardian Safe hosting this module) and the native staking strategies.
-    ///      Any target exposing a no-argument `pause()` is reachable through
-    ///      `pause(address)` below.
+    /// @dev `bytes4(keccak256("pause()"))`. Hardcoded rather than taken from a
+    ///      project interface because the target lives in another repo: this is
+    ///      `AbstractARM.pause()`, guarded by `onlyPauser`, which includes the
+    ///      Guardian Safe hosting this module.
     bytes4 internal constant PAUSE_SELECTOR = 0x8456cb59;
 
     /// @notice Contracts this module is permitted to pause.
@@ -91,9 +92,8 @@ contract PauseSafeModule is AbstractSafeModule {
     }
 
     /**
-     * @notice Halt an allow-listed contract that exposes a no-argument `pause()`
-     *         — the ARMs, and the native staking strategies.
-     * @param _target Contract to pause.
+     * @notice Halt an allow-listed ARM, which exposes a no-argument `pause()`.
+     * @param _target ARM to pause.
      */
     function pause(address _target) external onlyOperator {
         _execPause(_target, PAUSE_SELECTOR);
@@ -123,7 +123,11 @@ contract PauseSafeModule is AbstractSafeModule {
     }
 
     function _allowTarget(address _target) internal {
-        require(_target != address(0), "Invalid target");
+        // A Safe module call to a codeless address succeeds, so an EOA or a
+        // mistyped address here would make `_execPause` report a pause that
+        // never happened. Checked at allow-list time rather than on the
+        // latency-critical pause path. Also covers address(0).
+        require(_target.code.length > 0, "Target has no code");
         require(!isPausableTarget[_target], "Target already allowed");
         isPausableTarget[_target] = true;
         emit TargetAllowed(_target);

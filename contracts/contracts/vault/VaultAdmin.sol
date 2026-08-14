@@ -111,6 +111,10 @@ abstract contract VaultAdmin is VaultCore {
      * @param _admin New Admin address.
      */
     function setAdminAddr(address _admin) external onlyGovernor {
+        // Unlike the Strategist and Operator, the zero address is not a useful
+        // way to disable this role: it would silently leave the Governor as the
+        // only account able to lift a pause.
+        require(_admin != address(0), "Invalid admin");
         adminAddr = _admin;
         emit AdminUpdated(_admin);
     }
