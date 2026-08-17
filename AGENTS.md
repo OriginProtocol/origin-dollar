@@ -1,6 +1,6 @@
-# CLAUDE.md
+# origin-dollar
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for AI coding agents working in this repository.
 
 ## Project Overview
 
