@@ -37,8 +37,7 @@ interface IVault {
     event WithdrawalClaimed(
         address indexed _withdrawer,
         uint256 indexed _requestId,
-        uint256 _amount,
-        uint256 _paidAmount
+        uint256 _amount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
@@ -72,12 +71,6 @@ interface IVault {
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
     function maxSupplyDiff() external view returns (uint256);
-
-    function grossAssets() external view returns (uint256);
-
-    function effectiveSupply() external view returns (uint256);
-
-    function backingRatio() external view returns (uint256);
 
     function setTrusteeAddress(address _address) external;
 

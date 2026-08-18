@@ -36,14 +36,21 @@ describe("Vault mock with rebase", async () => {
     await expect(josh).has.an.approxBalanceOf("100.00", ousd);
   });
 
-  // The circuit breaker in `_postRedeem` now bounds the backing ratio
-  // (grossAssets / effectiveSupply) within maxSupplyDiff of 1.0. Effective
-  // supply here is 200 (matt + josh each hold 100); a request moves supply into
-  // the queue but leaves effective supply unchanged, so ratio = grossValue / 200.
-  const testSupplyDiff = async ({ grossValue, revertMessage = false }) => {
-    await mockVault.setTotalValue(utils.parseUnits(`${grossValue}`, 18));
+  const testSupplyDiff = async ({
+    vaultTotalValue,
+    redeemAmount,
+    revertMessage = false,
+  }) => {
+    /* mockVault doesn't reduce total value while redeeming (as the real Vault does)
+     * for that reason we set an already reduced total value to it
+     */
+    await mockVault.setTotalValue(
+      utils.parseUnits(`${vaultTotalValue - redeemAmount}`, 18)
+    );
     const promise = expect(
-      mockVault.connect(matt).requestWithdrawal(utils.parseUnits("100", 18))
+      mockVault
+        .connect(matt)
+        .requestWithdrawal(utils.parseUnits(`${redeemAmount}`, 18))
     );
 
     if (revertMessage) {
@@ -53,29 +60,46 @@ describe("Vault mock with rebase", async () => {
     }
   };
 
-  it("Should revert when backing ratio far exceeds 1 (eg over-reporting)", async () => {
-    // 240 / 200 = 1.2 -> 20% over, beyond the 10% band
+  it("Should revert when totalValue far exceeding totalSupply", async () => {
+    // totalValue far exceeding totalSupply
     await testSupplyDiff({
-      grossValue: 240,
-      revertMessage: "Backing ratio out of range",
+      vaultTotalValue: 300,
+      redeemAmount: 100,
+      revertMessage: "Backing supply liquidity error",
+      mockVault,
+      matt,
     });
   });
 
-  it("Should revert when backing ratio far below 1 (large loss)", async () => {
-    // 160 / 200 = 0.8 -> 20% under, beyond the 10% band
+  it("Should revert when totalSupply far exceeding totalValue", async () => {
+    // totalValue far exceeding totalSupply
     await testSupplyDiff({
-      grossValue: 160,
-      revertMessage: "Backing ratio out of range",
+      vaultTotalValue: 170,
+      redeemAmount: 100,
+      revertMessage: "Backing supply liquidity error",
+      mockVault,
+      matt,
     });
   });
 
-  it("Should pass when backing ratio above 1 but within limits", async () => {
-    // 218 / 200 = 1.09 -> 9% over, within the 10% band
-    await testSupplyDiff({ grossValue: 218, revertMessage: false });
+  it("Should pass when totalValue exceeding totalSupply but within limits", async () => {
+    // totalValue exceeding totalSupply but within limits
+    await testSupplyDiff({
+      vaultTotalValue: 209, // 209 - 100 = 109 -> 9% over total supply
+      redeemAmount: 100,
+      revertMessage: false,
+      mockVault,
+      matt,
+    });
   });
 
-  it("Should pass when backing ratio below 1 but within limits", async () => {
-    // 182 / 200 = 0.91 -> 9% under, within the 10% band
-    await testSupplyDiff({ grossValue: 182, revertMessage: false });
+  it("Should pass when totalSupply exceeding totalValue but within limits", async () => {
+    await testSupplyDiff({
+      vaultTotalValue: 191, // 191 - 100 = 91 -> 9% under total supply
+      redeemAmount: 100,
+      revertMessage: false,
+      mockVault,
+      matt,
+    });
   });
 });

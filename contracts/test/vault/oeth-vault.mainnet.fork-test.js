@@ -35,19 +35,6 @@ describe("ForkTest: OETH Vault", function () {
         );
       }
     });
-
-    // Values set by deploy/mainnet/202_vault_loss_socialization.js
-    it("Should have the loss socialization settings applied", async () => {
-      const { oethVault } = fixture;
-
-      expect(await oethVault.maxSupplyDiff()).to.equal(parseUnits("0.2", 18));
-
-      // The live vault is healthy, so it is fully backed and pays claims 1:1
-      expect(await oethVault.backingRatio()).to.approxEqualTolerance(
-        parseUnits("1", 18),
-        1
-      );
-    });
   });
 
   describe("user operations", () => {
@@ -164,12 +151,7 @@ describe("ForkTest: OETH Vault", function () {
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimed")
-        .withArgs(
-          oethWhaleAddress,
-          requestId,
-          oethWhaleBalance,
-          oethWhaleBalance
-        );
+        .withArgs(oethWhaleAddress, requestId, oethWhaleBalance);
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock, matt } = fixture;
