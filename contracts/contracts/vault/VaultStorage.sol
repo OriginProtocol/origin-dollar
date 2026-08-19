@@ -208,6 +208,7 @@ abstract contract VaultStorage is Initializable, Governable {
     address public operatorAddr;
 
     // For future use
+    // slither-disable-next-line shadowing-state
     uint256[41] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
