@@ -39,9 +39,15 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         ousdVault.pauseCapital();
     }
 
+    function test_pauseCapital_admin() public {
+        vm.prank(guardian);
+        ousdVault.pauseCapital();
+        assertTrue(ousdVault.capitalPaused());
+    }
+
     function test_pauseCapital_RevertWhen_unauthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Strategist or Governor");
+        vm.expectRevert("Caller is not the Strategist, Admin or Governor");
         ousdVault.pauseCapital();
     }
 
@@ -54,13 +60,26 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         assertFalse(ousdVault.capitalPaused());
     }
 
-    function test_unpauseCapital_strategist() public {
+    function test_unpauseCapital_admin() public {
+        vm.prank(governor);
+        ousdVault.pauseCapital();
+
+        vm.prank(guardian);
+        ousdVault.unpauseCapital();
+        assertFalse(ousdVault.capitalPaused());
+    }
+
+    /// @dev The Strategist can trip the capital pause but cannot lift it. That
+    ///      asymmetry is deliberate: it stops a single compromised Strategist key
+    ///      from re-opening the vault after an emergency pause.
+    function test_unpauseCapital_RevertWhen_strategist() public {
         vm.prank(governor);
         ousdVault.pauseCapital();
 
         vm.prank(strategist);
+        vm.expectRevert("Caller is not the Admin or Governor");
         ousdVault.unpauseCapital();
-        assertFalse(ousdVault.capitalPaused());
+        assertTrue(ousdVault.capitalPaused());
     }
 
     function test_unpauseCapital_emitsEvent() public {
@@ -75,7 +94,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
     function test_unpauseCapital_RevertWhen_unauthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Strategist or Governor");
+        vm.expectRevert("Caller is not the Admin or Governor");
         ousdVault.unpauseCapital();
     }
 
@@ -133,9 +152,15 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         ousdVault.pauseRebase();
     }
 
+    function test_pauseRebase_admin() public {
+        vm.prank(guardian);
+        ousdVault.pauseRebase();
+        assertTrue(ousdVault.rebasePaused());
+    }
+
     function test_pauseRebase_RevertWhen_unauthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Strategist or Governor");
+        vm.expectRevert("Caller is not the Strategist, Admin or Governor");
         ousdVault.pauseRebase();
     }
 
@@ -148,13 +173,23 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         assertFalse(ousdVault.rebasePaused());
     }
 
-    function test_unpauseRebase_strategist() public {
+    function test_unpauseRebase_admin() public {
+        vm.prank(governor);
+        ousdVault.pauseRebase();
+
+        vm.prank(guardian);
+        ousdVault.unpauseRebase();
+        assertFalse(ousdVault.rebasePaused());
+    }
+
+    function test_unpauseRebase_RevertWhen_strategist() public {
         vm.prank(governor);
         ousdVault.pauseRebase();
 
         vm.prank(strategist);
+        vm.expectRevert("Caller is not the Admin or Governor");
         ousdVault.unpauseRebase();
-        assertFalse(ousdVault.rebasePaused());
+        assertTrue(ousdVault.rebasePaused());
     }
 
     function test_unpauseRebase_emitsEvent() public {
@@ -169,7 +204,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
     function test_unpauseRebase_RevertWhen_unauthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Strategist or Governor");
+        vm.expectRevert("Caller is not the Admin or Governor");
         ousdVault.unpauseRebase();
     }
 
@@ -279,6 +314,40 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         vm.prank(alice);
         vm.expectRevert("Caller is not the Governor");
         ousdVault.setOperatorAddr(operator);
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- SETADMINADDR
+    //////////////////////////////////////////////////////
+
+    function test_setAdminAddr_governor() public {
+        vm.prank(governor);
+        ousdVault.setAdminAddr(alice);
+        assertEq(ousdVault.adminAddr(), alice);
+    }
+
+    function test_setAdminAddr_emitsEvent() public {
+        vm.prank(governor);
+        vm.expectEmit(true, true, true, true);
+        emit IVault.AdminUpdated(alice);
+        ousdVault.setAdminAddr(alice);
+    }
+
+    /// @dev Unlike the Operator, the Admin cannot be switched off with the zero
+    ///      address — that would leave the Governor as the only account able to
+    ///      lift a pause.
+    function test_setAdminAddr_RevertWhen_zeroAddress() public {
+        vm.prank(governor);
+        vm.expectRevert("Invalid admin");
+        ousdVault.setAdminAddr(address(0));
+
+        assertEq(ousdVault.adminAddr(), guardian);
+    }
+
+    function test_setAdminAddr_RevertWhen_unauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("Caller is not the Governor");
+        ousdVault.setAdminAddr(alice);
     }
 
     //////////////////////////////////////////////////////

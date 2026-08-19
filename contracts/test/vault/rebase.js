@@ -24,10 +24,10 @@ describe("Vault rebase", () => {
       const { vault, anna } = fixture;
 
       await expect(vault.connect(anna).pauseRebase()).to.be.revertedWith(
-        "Caller is not the Strategist or Governor"
+        "Caller is not the Strategist, Admin or Governor"
       );
       await expect(vault.connect(anna).unpauseRebase()).to.be.revertedWith(
-        "Caller is not the Strategist or Governor"
+        "Caller is not the Admin or Governor"
       );
     });
 
@@ -37,10 +37,27 @@ describe("Vault rebase", () => {
       await vault.connect(josh).pauseRebase();
     });
 
-    it("Should allow strategist to unpause rebasing", async () => {
+    it("Should not allow strategist to unpause rebasing", async () => {
       const { vault, governor, josh } = fixture;
       await vault.connect(governor).setStrategistAddr(josh.address);
-      await vault.connect(josh).unpauseRebase();
+      await expect(vault.connect(josh).unpauseRebase()).to.be.revertedWith(
+        "Caller is not the Admin or Governor"
+      );
+    });
+
+    it("Should allow admin to pause rebasing", async () => {
+      const { vault, admin } = fixture;
+      await vault.connect(admin).pauseRebase();
+      expect(await vault.rebasePaused()).to.be.true;
+    });
+
+    it("Should allow admin to unpause rebasing", async () => {
+      const { vault, admin } = fixture;
+      await vault.connect(admin).pauseRebase();
+      expect(await vault.rebasePaused()).to.be.true;
+
+      await vault.connect(admin).unpauseRebase();
+      expect(await vault.rebasePaused()).to.be.false;
     });
 
     it("Should allow governor to pause rebasing", async () => {

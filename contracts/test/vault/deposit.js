@@ -21,21 +21,34 @@ describe("Vault deposit pausing", function () {
     expect(await vault.connect(anna).capitalPaused()).to.be.false;
   });
 
-  it("Strategist can pause and unpause", async () => {
-    const { anna, strategist, vault } = fixture;
+  it("Strategist can pause but not unpause", async () => {
+    const { anna, admin, strategist, vault } = fixture;
     await vault.connect(strategist).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
-    await vault.connect(strategist).unpauseCapital();
+    await expect(vault.connect(strategist).unpauseCapital()).to.be.revertedWith(
+      "Caller is not the Admin or Governor"
+    );
+    expect(await vault.connect(anna).capitalPaused()).to.be.true;
+    // Only the Admin can lift the pause the Strategist tripped
+    await vault.connect(admin).unpauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.false;
+  });
+
+  it("Admin can pause and unpause", async () => {
+    const { anna, admin, vault } = fixture;
+    await vault.connect(admin).pauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.true;
+    await vault.connect(admin).unpauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.false;
   });
 
   it("Other can not pause and unpause", async () => {
     const { anna, vault } = fixture;
     await expect(vault.connect(anna).pauseCapital()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
+      "Caller is not the Strategist, Admin or Governor"
     );
     await expect(vault.connect(anna).unpauseCapital()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
+      "Caller is not the Admin or Governor"
     );
   });
 

@@ -3,6 +3,7 @@ const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("../_fixture");
 const { ousdUnits, usdsUnits, usdcUnits, isFork } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 describe("Vault", function () {
   if (isFork) {
@@ -160,6 +161,36 @@ describe("Vault", function () {
     await expect(
       vault.connect(matt).setStrategistAddr(await josh.getAddress())
     ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow governor to change Admin address", async () => {
+    const { vault, governor, josh } = fixture;
+
+    await expect(vault.connect(governor).setAdminAddr(josh.address))
+      .to.emit(vault, "AdminUpdated")
+      .withArgs(josh.address);
+
+    expect(await vault.adminAddr()).to.equal(josh.address);
+  });
+
+  it("Should not allow non-governor to change Admin address", async () => {
+    const { vault, admin, josh, matt, strategist } = fixture;
+
+    for (const signer of [matt, strategist, admin]) {
+      await expect(
+        vault.connect(signer).setAdminAddr(josh.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    }
+  });
+
+  it("Should not allow the Admin address to be unset", async () => {
+    const { vault, governor, admin } = fixture;
+
+    await expect(
+      vault.connect(governor).setAdminAddr(addresses.zero)
+    ).to.be.revertedWith("Invalid admin");
+
+    expect(await vault.adminAddr()).to.equal(admin.address);
   });
 
   it("Should allow the Governor to call withdraw and then deposit", async () => {

@@ -100,6 +100,7 @@ abstract contract Unit_Shared_Test is Base {
         vm.startPrank(governor);
         ousdVault.unpauseCapital();
         ousdVault.setStrategistAddr(strategist);
+        ousdVault.setAdminAddr(guardian); // Admin multisig: the only unpauser
         ousdVault.setMaxSupplyDiff(5e16); // 5%
         ousdVault.setWithdrawalClaimDelay(DELAY_PERIOD);
         ousdVault.setDripDuration(0); // Disable drip smoothing for instant rebase in tests

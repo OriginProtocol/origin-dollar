@@ -258,6 +258,9 @@ library Base {
     address internal constant WETH = 0x4200000000000000000000000000000000000006;
     address internal constant wethAeroPoolAddress = 0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0;
     address internal constant governor = 0x92A19381444A001d62cE67BaFF066fA1111d7202;
+    /// @dev 5/8 Multisig, holder of the vaults' `adminAddr`. The same Safe as the
+    ///      governor above; aliased rather than repeated so the two cannot drift.
+    address internal constant admin = governor;
     address internal constant strategist = 0x28bce2eE5775B652D92bB7c2891A89F036619703;
     address internal constant timelock = 0xf817cb3092179083c48c014688D98B72fB61464f;
     address internal constant multichainStrategist = 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971;

@@ -153,10 +153,15 @@ const defaultFixture = async () => {
   const oethVaultSigner = await impersonateAccount(oethbVault.address);
 
   let strategist;
+  let admin;
   if (isFork) {
     // Impersonate strategist on Fork
     strategist = await impersonateAndFund(multichainStrategistAddr);
     strategist.address = multichainStrategistAddr;
+
+    // The Admin (5/8) multisig
+    admin = await impersonateAndFund(addresses.base.admin);
+    admin.address = addresses.base.admin;
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);
@@ -167,7 +172,12 @@ const defaultFixture = async () => {
     // Production vault sits paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
+    // The Strategist is still the unpauser on the live implementation; this
+    // becomes `admin` once scripts/deploy/base/001_VaultAdminRole executes.
     await oethbVault.connect(strategist).unpauseRebase();
+  } else {
+    admin = signers[2];
+    await oethbVault.connect(governor).setAdminAddr(admin.address);
   }
 
   // Make sure we can print bridged WOETH for tests
@@ -260,6 +270,7 @@ const defaultFixture = async () => {
     guardian,
     timelock,
     strategist,
+    admin,
     minter,
     burner,
     oethVaultSigner,
