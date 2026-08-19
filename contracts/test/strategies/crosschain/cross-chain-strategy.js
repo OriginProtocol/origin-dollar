@@ -12,7 +12,7 @@ const { encodeBalanceCheckMessageBody } = require("./_crosschain-helpers");
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 const DAY_IN_SECONDS = 86400;
 
-describe("ForkTest: CrossChainRemoteStrategy", function () {
+describe("Unit test: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
