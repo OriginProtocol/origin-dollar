@@ -23,7 +23,7 @@ contract $001_VaultMintGate is AbstractDeployScript("001_VaultMintGate") {
 
     function _execute() internal override {
         OETHBaseVault vaultImpl = new OETHBaseVault(BaseAddresses.WETH);
-        _recordDeployment("OETHBASE_VAULT_IMPL", address(vaultImpl));
+        _recordDeployment("OETHBASE_VAULT_IMPL", address(vaultImpl), type(OETHBaseVault).name);
     }
 
     // ==================== Governance Proposal ==================== //
