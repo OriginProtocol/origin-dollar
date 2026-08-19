@@ -18,7 +18,7 @@ contract $026_VaultUpgrade is AbstractDeployScript("026_VaultUpgrade") {
     /// @notice Deploys a new OSVault implementation contract.
     function _execute() internal override {
         OSVault newImpl = new OSVault(Sonic.wS);
-        _recordDeployment("OSONIC_VAULT_IMPL", address(newImpl));
+        _recordDeployment("OSONIC_VAULT_IMPL", address(newImpl), type(OSVault).name);
     }
 
     // ==================== Governance Proposal ==================== //
