@@ -120,38 +120,4 @@ contract MockCrossChainV3HelperHarness {
     {
         return CrossChainV3Helper.decodeBalanceCheckResponsePayload(payload);
     }
-
-    function encodeBridgeUserPayload(
-        bytes32 bridgeId,
-        uint256 amount,
-        address recipient,
-        bytes calldata callData,
-        uint32 callGasLimit
-    ) external pure returns (bytes memory) {
-        CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
-            .BridgeUserPayload({
-                bridgeId: bridgeId,
-                amount: amount,
-                recipient: recipient,
-                callData: callData,
-                callGasLimit: callGasLimit
-            });
-        return CrossChainV3Helper.encodeBridgeUserPayload(p);
-    }
-
-    function decodeBridgeUserPayload(bytes calldata payload)
-        external
-        pure
-        returns (
-            bytes32,
-            uint256,
-            address,
-            bytes memory,
-            uint32
-        )
-    {
-        CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
-            .decodeBridgeUserPayload(payload);
-        return (p.bridgeId, p.amount, p.recipient, p.callData, p.callGasLimit);
-    }
 }

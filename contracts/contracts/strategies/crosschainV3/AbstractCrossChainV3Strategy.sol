@@ -196,15 +196,9 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
 
     // --- Outbound helper ----------------------------------------------------
     //
-    // One send path, parameterised by `userFunded`:
-    //   userFunded = true  → user-initiated sends (bridgeOTokenToPeer). msg.value MUST cover
-    //                        the fee; the pool is NOT consulted. Security gate: stops an
-    //                        attacker draining the operator-funded pool by spamming bridge
-    //                        in/out with msg.value = 0.
-    //   userFunded = false → operator/protocol-funded sends (yield deposits/withdraws/claims
-    //                        and the acks Remote sends back). Fee paid from
-    //                        `address(this).balance`, which already absorbs any attached
-    //                        msg.value via `receive()`.
+    // Every send is operator/protocol-funded: yield deposits/withdraws/claims and the acks
+    // Remote sends back. The fee is paid from `address(this).balance`, which already absorbs
+    // any attached msg.value via `receive()`.
     //
     // `token == address(0)` selects the message-only path; otherwise tokens ride along.
     // Excess msg.value is NEVER refunded — overpayment joins the strategy's pool (recover via
@@ -214,8 +208,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         uint256 amount,
         uint32 msgType,
         uint64 nonce,
-        bytes memory body,
-        bool userFunded
+        bytes memory body
     ) internal {
         bytes memory payload = CrossChainV3Helper.packPayload(
             msgType,
@@ -228,18 +221,15 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
             address feeToken,
             bool requiresExternalPayment
         ) = IBridgeAdapter(adapter).quoteFee(token, amount, payload);
-        // Native to forward: the quoted `fee` when the bridge needs external payment, else 0
-        // (CCTP-style auto-deduct path). `{ value: 0 }` is a no-op, so a single dispatch
-        // serves both fee modes.
+        // Native to forward: the quoted `fee` when the bridge needs external payment, else
+        // 0 (auto-deduct path). `{ value: 0 }` is a no-op, so a single dispatch serves both
+        // fee modes.
         uint256 payValue = 0;
         if (requiresExternalPayment) {
             // Only native fee supported today. ERC20 fee tokens (e.g., LINK-mode CCIP)
             // would need explicit allowance handling; not implemented here.
             require(feeToken == address(0), "V3: only native fee supported");
-            require(
-                (userFunded ? msg.value : address(this).balance) >= fee,
-                userFunded ? "V3: insufficient user fee" : "V3: pool unfunded"
-            );
+            require(address(this).balance >= fee, "V3: pool unfunded");
             payValue = fee;
         }
         // `adapter` is the governor-set outbound adapter, not arbitrary user input.
@@ -257,8 +247,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     }
 
     /// @notice Sweep native ETH out of the strategy to governor. Used to drain the fee
-    ///         pool (operator rotation, decommission) or recover stray donations (a user
-    ///         that overpaid msg.value when calling `bridgeOTokenToPeer`).
+    ///         pool (operator rotation, decommission) or recover stray donations.
     function transferNative(uint256 amount) external onlyGovernor {
         // slither-disable-next-line low-level-calls
         (bool ok, ) = governor().call{ value: amount }("");

@@ -87,8 +87,8 @@ contract MockBridgeAdapter is IBridgeAdapter {
             return;
         }
         // Optional simulated underdelivery: consume `underdeliveryForNext` of `amount`
-        // before forwarding. Lets tests assert claim-ack behaviour when CCTP fast-finality
-        // (or similar protocol-side fees) reduces delivered amount below `ackAmount`.
+        // before forwarding. Lets tests assert claim-ack behaviour when a protocol-side
+        // fee reduces the delivered amount below `ackAmount`.
         uint256 deliver = amount;
         if (underdeliveryForNext > 0 && underdeliveryForNext <= amount) {
             deliver = amount - underdeliveryForNext;
@@ -138,7 +138,7 @@ contract MockBridgeAdapter is IBridgeAdapter {
 
     /// @notice One-shot simulated under-delivery for the next `sendMessageAndTokens`.
     ///         Resets to 0 after consumption. Used to exercise the `amount < ackAmount`
-    ///         path on the receiving strategy (CCTP fast-finality fee scenario).
+    ///         path on the receiving strategy (token-side bridge fee scenario).
     uint256 public underdeliveryForNext;
 
     function setUnderdeliveryForNextMessage(uint256 _amount) external {

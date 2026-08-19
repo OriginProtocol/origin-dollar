@@ -103,7 +103,7 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
   };
 
   it("token-carrying message with tokens already on adapter delivers atomically", async () => {
-    const amount = ethers.utils.parseUnits("100", 6);
+    const amount = ethers.utils.parseUnits("100", 18);
     await deliverBridgeEth(amount);
 
     const data = wrapEnvelope(
@@ -128,7 +128,7 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
   });
 
   it("message-first: stores until tokens land, then exact delivery", async () => {
-    const amount = ethers.utils.parseUnits("250", 6);
+    const amount = ethers.utils.parseUnits("250", 18);
     const data = wrapEnvelope(strategy.address, amount, packPayload("pending"));
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
@@ -240,7 +240,7 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
   });
 
   it("stored message honours a pause/revoke issued after it was stored (incident response)", async () => {
-    const amount = ethers.utils.parseUnits("250", 6);
+    const amount = ethers.utils.parseUnits("250", 18);
     const data = wrapEnvelope(strategy.address, amount, packPayload("pending"));
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
 
@@ -290,8 +290,8 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     };
     await receiver.connect(governor).authorise(strategy2.address, cfg);
 
-    const amount1 = ethers.utils.parseUnits("100", 6);
-    const amount2 = ethers.utils.parseUnits("250", 6);
+    const amount1 = ethers.utils.parseUnits("100", 18);
+    const amount2 = ethers.utils.parseUnits("250", 18);
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
 
     await receiver.connect(sRouter).ccipReceive(

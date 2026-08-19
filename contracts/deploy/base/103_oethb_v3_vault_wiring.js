@@ -18,16 +18,11 @@ module.exports = deployOnBase(
     );
 
     return {
-      name: "Approve OETHb V3 Master strategy + add to mint whitelist",
+      name: "Approve OETHb V3 Master strategy",
       actions: [
         {
           contract: cVault,
           signature: "approveStrategy(address)",
-          args: [masterProxyAddress],
-        },
-        {
-          contract: cVault,
-          signature: "addStrategyToMintWhitelist(address)",
           args: [masterProxyAddress],
         },
       ],

@@ -3,13 +3,11 @@ const { ethers } = require("hardhat");
 const { impersonateAndFund } = require("../../../utils/signers");
 
 // remoteStrategyBalance is OToken-denominated (18dp); withdraw amounts and adapter transfer
-// caps are bridgeAsset units (6dp for USDC). SCALE is the 6→18 factor used when seeding rsb.
-const SCALE = ethers.BigNumber.from(10).pow(12);
+const SCALE = ethers.BigNumber.from(1);
 
 /**
- * Coverage for the adapter-level transfer caps + CCTPAdapter-specific behaviour
- * (MAX_TRANSFER_AMOUNT constant, minTransferAmount setter, minFinalityThreshold
- * pre-init guard, fast-finality unfinalised handler).
+ * Coverage for the adapter-level transfer caps and the Master-side clamping that
+ * reads them back through the `IBridgeAdapter` views.
  *
  * Separated from `fee-path.js` because the caps mechanism is orthogonal to fee
  * plumbing and warrants standalone coverage.
@@ -130,247 +128,17 @@ describe("Unit: Adapter transfer caps", function () {
     });
   });
 
-  describe("CCTPAdapter — constant cap + min + threshold + fast finality", function () {
-    let governor, operator, alice;
-    let usdc, transmitter, tokenMessenger, adapter, strategy;
-    const SOURCE_DOMAIN = 6;
-    const TEN_MILLION = ethers.utils.parseUnits("10000000", 6);
-
-    function addrToBytes32(addr) {
-      return ethers.utils.hexZeroPad(addr, 32);
-    }
-
-    function buildCCTPMessage({
-      version = 1,
-      sourceDomain = SOURCE_DOMAIN,
-      sender,
-      recipient,
-      body,
-    }) {
-      return ethers.utils.solidityPack(
-        [
-          "uint32",
-          "uint32",
-          "uint32",
-          "bytes32",
-          "bytes32",
-          "bytes32",
-          "bytes32",
-          "uint32",
-          "uint32",
-          "bytes",
-        ],
-        [
-          version,
-          sourceDomain,
-          0,
-          ethers.constants.HashZero,
-          addrToBytes32(sender),
-          addrToBytes32(recipient),
-          ethers.constants.HashZero,
-          0,
-          0,
-          body,
-        ]
-      );
-    }
-
-    function appEnvelope(envSender, intendedAmount, payload) {
-      return ethers.utils.solidityPack(
-        ["address", "uint256", "bytes"],
-        [envSender, intendedAmount, payload]
-      );
-    }
-
-    beforeEach(async () => {
-      [governor, operator, alice] = await ethers.getSigners();
-
-      const USDCFactory = await ethers.getContractFactory("MockUSDC");
-      usdc = await USDCFactory.deploy();
-
-      const TransmitterFactory = await ethers.getContractFactory(
-        "MockCCTPRelayTransmitter"
-      );
-      transmitter = await TransmitterFactory.deploy();
-
-      const TokenMessengerFactory = await ethers.getContractFactory(
-        "CCTPTokenMessengerMock"
-      );
-      tokenMessenger = await TokenMessengerFactory.deploy(
-        usdc.address,
-        transmitter.address
-      );
-
-      const AdapterFactory = await ethers.getContractFactory("CCTPAdapter");
-      adapter = await AdapterFactory.connect(governor).deploy(
-        usdc.address,
-        tokenMessenger.address,
-        transmitter.address
-      );
-
-      await adapter.connect(governor).setOperator(operator.address);
-
-      const StrategyFactory = await ethers.getContractFactory(
-        "MockBridgeReceiver"
-      );
-      strategy = await StrategyFactory.connect(governor).deploy();
-      await adapter.connect(governor).authorise(strategy.address, {
-        paused: false,
-        chainSelector: SOURCE_DOMAIN,
-        destGasLimit: 500000,
-      });
-    });
-
-    it("exposes MAX_TRANSFER_AMOUNT = 10M USDC as a constant", async () => {
-      expect(await adapter.MAX_TRANSFER_AMOUNT()).to.equal(TEN_MILLION);
-    });
-
-    it("_sendMessage reverts when minFinalityThreshold is not set", async () => {
-      await adapter.connect(governor).authorise(alice.address, {
-        paused: false,
-        chainSelector: SOURCE_DOMAIN,
-        destGasLimit: 500000,
-      });
-      await expect(
-        adapter.connect(alice).sendMessage("0xdeadbeef")
-      ).to.be.revertedWith("CCTP: threshold not set");
-    });
-
-    it("_sendMessageAndTokens reverts when below min, above CCTP cap, and when threshold unset", async () => {
-      const sender = await impersonateAndFund(strategy.address);
-
-      // Threshold unset → revert
-      await usdc.mintTo(strategy.address, TEN_MILLION);
-      await usdc.connect(sender).approve(adapter.address, TEN_MILLION);
-      await expect(
-        adapter.connect(sender).sendMessageAndTokens(usdc.address, 1000, "0x")
-      ).to.be.revertedWith("CCTP: threshold not set");
-
-      // Set threshold + min, now bounds apply
-      await adapter.connect(governor).setMinFinalityThreshold(2000);
-      await adapter.connect(governor).setMinTransferAmount(1000);
-
-      // Below min
-      await expect(
-        adapter.connect(sender).sendMessageAndTokens(usdc.address, 999, "0x")
-      ).to.be.revertedWith("CCTP: amount below min");
-
-      // Above the effective cap (10M + 1 wei). After round-4 #18 the base-layer check
-      // (via maxTransferAmount(), whose CCTP override surfaces the 10M constant) catches
-      // this first, so the revert now comes from AbstractAdapter, not CCTP's own require.
-      const tooBig = TEN_MILLION.add(1);
-      await usdc.mintTo(strategy.address, tooBig);
-      await usdc.connect(sender).approve(adapter.address, tooBig);
-      await expect(
-        adapter.connect(sender).sendMessageAndTokens(usdc.address, tooBig, "0x")
-      ).to.be.revertedWith("Adapter: amount above max");
-
-      // We don't assert the in-bounds happy path here — the TokenMessenger mock used by
-      // these tests (MockCCTPRelayTransmitter) is wired for inbound-relay testing and
-      // doesn't accept the outbound burn callback. Coverage for successful burns lives
-      // in the broader cctp-relay test using the v2 mock transmitter family.
-    });
-
-    it("setMinFinalityThreshold rejects out-of-range values + governor-only", async () => {
-      await expect(
-        adapter.connect(governor).setMinFinalityThreshold(999)
-      ).to.be.revertedWith("CCTP: bad threshold");
-      await expect(
-        adapter.connect(governor).setMinFinalityThreshold(2001)
-      ).to.be.revertedWith("CCTP: bad threshold");
-      await expect(
-        adapter.connect(alice).setMinFinalityThreshold(2000)
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("handleReceiveUnfinalizedMessage requires finalityThresholdExecuted >= minFinalityThreshold", async () => {
-      // Set fast finality at 1500.
-      await adapter.connect(governor).setMinFinalityThreshold(1500);
-
-      // We can't easily drive handleReceiveUnfinalizedMessage from MockCCTPRelayTransmitter
-      // because the mock always calls handleReceiveFinalizedMessage. Call it directly
-      // by impersonating the transmitter.
-      const sTransmitter = await impersonateAndFund(transmitter.address);
-
-      const body = appEnvelope(strategy.address, 0, "0x");
-      // Build only the message body (not the full CCTP wire frame) — the handler takes
-      // it as the `messageBody` parameter.
-
-      // Below threshold → revert
-      await expect(
-        adapter
-          .connect(sTransmitter)
-          .handleReceiveUnfinalizedMessage(
-            SOURCE_DOMAIN,
-            addrToBytes32(adapter.address),
-            1499,
-            body
-          )
-      ).to.be.revertedWith("CCTP: insufficient finality");
-
-      // At threshold → accepted
-      await adapter
-        .connect(sTransmitter)
-        .handleReceiveUnfinalizedMessage(
-          SOURCE_DOMAIN,
-          addrToBytes32(adapter.address),
-          1500,
-          body
-        );
-      expect(await strategy.callCount()).to.equal(1);
-
-      // Above threshold but below 2000 (still unfinalised path) → accepted
-      await adapter
-        .connect(sTransmitter)
-        .handleReceiveUnfinalizedMessage(
-          SOURCE_DOMAIN,
-          addrToBytes32(adapter.address),
-          1999,
-          body
-        );
-      expect(await strategy.callCount()).to.equal(2);
-    });
-
-    it("handleReceiveUnfinalizedMessage reverts when threshold not set", async () => {
-      const sTransmitter = await impersonateAndFund(transmitter.address);
-      const body = appEnvelope(strategy.address, 0, "0x");
-      await expect(
-        adapter
-          .connect(sTransmitter)
-          .handleReceiveUnfinalizedMessage(
-            SOURCE_DOMAIN,
-            addrToBytes32(adapter.address),
-            1500,
-            body
-          )
-      ).to.be.revertedWith("CCTP: threshold not set");
-    });
-
-    it("handleReceiveFinalizedMessage still works at finalityThresholdExecuted=2000", async () => {
-      // Even without setMinFinalityThreshold being called, finalized handler accepts
-      // (it doesn't check minFinalityThreshold).
-      const message = buildCCTPMessage({
-        sender: adapter.address,
-        recipient: adapter.address,
-        body: appEnvelope(strategy.address, 0, "0x"),
-      });
-      await adapter.connect(governor).setMinFinalityThreshold(2000); // for relay path
-      await adapter.connect(operator).relay(message, "0x");
-      expect(await strategy.callCount()).to.equal(1);
-    });
-  });
-
   describe("Master.depositAll / withdrawAll clamping by adapter caps", function () {
     let deployer, governor;
     let bridgeAsset, oTokenL2, mockL2Vault, master;
     let outbound, inbound;
 
-    const ONE_K = ethers.utils.parseUnits("1000", 6);
+    const ONE_K = ethers.utils.parseUnits("1000", 18);
 
     beforeEach(async () => {
       [deployer, governor] = await ethers.getSigners();
 
-      const ERC20Factory = await ethers.getContractFactory("MockUSDC");
+      const ERC20Factory = await ethers.getContractFactory("MockDAI");
       bridgeAsset = await ERC20Factory.deploy();
 
       const VaultFactory = await ethers.getContractFactory("MockOTokenVault");
@@ -394,8 +162,7 @@ describe("Unit: Adapter transfer caps", function () {
           platformAddress: ethers.constants.AddressZero,
           vaultAddress: mockL2Vault.address,
         },
-        bridgeAsset.address,
-        oTokenL2.address
+        bridgeAsset.address
       );
       const ProxyFactory = await ethers.getContractFactory(
         "InitializeGovernedUpgradeabilityProxy"

@@ -33,17 +33,17 @@ describe("Unit: V3 Withdrawal", function () {
   let master, remote;
   let adapterME, adapterRM;
 
-  const SEED = ethers.utils.parseUnits("10000", 6);
-  const WITHDRAW = ethers.utils.parseUnits("4000", 6);
+  const SEED = ethers.utils.parseUnits("10000", 18);
+  const WITHDRAW = ethers.utils.parseUnits("4000", 18);
   const DELAY = 86400; // 1 day queue delay
-  // bridgeAsset (USDC) is 6dp; remoteStrategyBalance / wOToken shares are OToken (18dp).
+  // The pair accounts in a single 18-decimal domain, so no scaling is needed.
   // Withdraw amounts, outstandingRequestAmount, and checkBalance are bridgeAsset units.
-  const SCALE = ethers.BigNumber.from(10).pow(12);
+  const SCALE = ethers.BigNumber.from(1);
 
   beforeEach(async () => {
     [deployer, governor, alice] = await ethers.getSigners();
 
-    const ERC20Factory = await ethers.getContractFactory("MockUSDC");
+    const ERC20Factory = await ethers.getContractFactory("MockDAI");
     bridgeAsset = await ERC20Factory.deploy();
 
     const L2VaultFactory = await ethers.getContractFactory("MockOTokenVault");
@@ -90,8 +90,7 @@ describe("Unit: V3 Withdrawal", function () {
         platformAddress: ethers.constants.AddressZero,
         vaultAddress: mockL2Vault.address,
       },
-      bridgeAsset.address,
-      oTokenL2.address
+      bridgeAsset.address
     );
 
     const RemoteFactory = await ethers.getContractFactory(
@@ -178,7 +177,7 @@ describe("Unit: V3 Withdrawal", function () {
 
     expect(await master.pendingWithdrawalAmount()).to.equal(WITHDRAW);
     // Remote's checkBalance stays at SEED — queue + remaining shares. outstandingRequestAmount
-    // tracks the bridgeAsset value (6dp) committed to the queue.
+    // tracks the bridgeAsset value committed to the queue.
     expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW);
     expect(await remote.outstandingRequestId()).to.not.equal(EMPTY);
     expect(await remote.checkBalance(bridgeAsset.address)).to.equal(SEED);
@@ -197,7 +196,7 @@ describe("Unit: V3 Withdrawal", function () {
     // Master forwarded WITHDRAW tokens to the vault.
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
-    // Remote's balance dropped by WITHDRAW (18dp on Remote, 6dp on checkBalance).
+    // Remote's balance dropped by WITHDRAW.
     expect(await master.remoteStrategyBalance()).to.equal(
       SEED.sub(WITHDRAW).mul(SCALE)
     );
@@ -377,7 +376,7 @@ describe("Unit: V3 Withdrawal", function () {
     expect(await remote.outstandingRequestAmount()).to.equal(WITHDRAW);
 
     // Donate residual bridgeAsset to Remote (donation, leftover, rounding gain).
-    const DONATION = ethers.utils.parseUnits("777", 6);
+    const DONATION = ethers.utils.parseUnits("777", 18);
     await bridgeAsset.mintTo(remote.address, DONATION);
     expect(await bridgeAsset.balanceOf(remote.address)).to.equal(
       WITHDRAW.add(DONATION)
@@ -416,7 +415,7 @@ describe("Unit: V3 Withdrawal", function () {
     expect(await bridgeAsset.balanceOf(mockL2Vault.address)).to.equal(WITHDRAW);
   });
 
-  it("claim ack tolerates `amount < ackAmount` (CCTP fast-finality fee scenario)", async () => {
+  it("claim ack tolerates `amount < ackAmount` (token-side bridge fee)", async () => {
     // Drive leg 1 then claim on Remote.
     await mockL2Vault.callWithdraw(
       master.address,
@@ -457,7 +456,7 @@ describe("Unit: V3 Withdrawal", function () {
     // both the Master leg-1 pre-check and the Remote leg-2 NACK.
     it("leg-1 rejects a sub-min withdrawal", async () => {
       await adapterRM.setMinTransferAmountOverride(
-        ethers.utils.parseUnits("5000", 6)
+        ethers.utils.parseUnits("5000", 18)
       );
       await expect(
         mockL2Vault.callWithdraw(
@@ -471,7 +470,7 @@ describe("Unit: V3 Withdrawal", function () {
 
     it("leg-1 rejects an above-cap withdrawal", async () => {
       await adapterRM.setMaxTransferAmountOverride(
-        ethers.utils.parseUnits("1000", 6)
+        ethers.utils.parseUnits("1000", 18)
       );
       await expect(
         mockL2Vault.callWithdraw(
@@ -486,7 +485,7 @@ describe("Unit: V3 Withdrawal", function () {
     it("withdrawAll no-ops below the bridge floor", async () => {
       // Floor above the whole seeded balance → nothing is sweepable; best-effort no-op.
       await adapterRM.setMinTransferAmountOverride(
-        ethers.utils.parseUnits("20000", 6)
+        ethers.utils.parseUnits("20000", 18)
       );
       await mockL2Vault.callWithdrawAll(master.address);
       expect(await master.pendingWithdrawalAmount()).to.equal(0);
@@ -511,7 +510,7 @@ describe("Unit: V3 Withdrawal", function () {
       );
       await time.increase(DELAY + 1);
       await adapterRM.setMinTransferAmountOverride(
-        ethers.utils.parseUnits("5000", 6) // > WITHDRAW (4000)
+        ethers.utils.parseUnits("5000", 18) // > WITHDRAW (4000)
       );
 
       // Leg 2 NACKs instead of reverting: pending stays set, nothing shipped, channel free.

@@ -31,7 +31,6 @@ module.exports = deployOnBase(
     console.log(`OETHbV3MasterProxy resolved at: ${masterProxyAddress}`);
 
     const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
-    const cOETHb = await ethers.getContract("OETHBaseProxy");
 
     // --- 1. Deploy Master impl ---
     await deployWithConfirmation("MasterWOTokenStrategy", [
@@ -40,7 +39,6 @@ module.exports = deployOnBase(
         vaultAddress: cOETHBaseVaultProxy.address,
       },
       addresses.base.WETH,
-      cOETHb.address,
     ]);
     const dMasterImpl = await ethers.getContract("MasterWOTokenStrategy");
     console.log(`MasterWOTokenStrategy impl: ${dMasterImpl.address}`);

@@ -8,8 +8,9 @@ pragma solidity ^0.8.0;
  *      its companion token leg arrive in separate transactions (e.g., OP Stack canonical
  *      bridge for the tokens + a separate message bridge for the envelope).
  *
- *      Atomic adapters (CCIP, CCTP V2 with combined token + message) do NOT implement this
- *      interface — they deliver in a single transaction and have no pending-slot lifecycle.
+ *      Atomic adapters (CCIP, which combines the token and message legs) do NOT implement
+ *      this interface — they deliver in a single transaction and have no pending-slot
+ *      lifecycle.
  *
  *      Split-delivery adapters are multi-tenant: each pending slot is keyed by the destination
  *      strategy's address on this chain (which equals the source sender by CreateX/CREATE2 parity),

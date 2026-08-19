@@ -13,8 +13,7 @@ import { InitializeGovernedUpgradeabilityProxy2 } from "../InitializeGovernedUpg
 
 /**
  * @notice BridgeAdapterProxy delegates calls to a concrete
- * crosschainV3 adapter implementation (CCIPAdapter, CCTPAdapter,
- * SuperbridgeAdapter).
+ * crosschainV3 adapter implementation (CCIPAdapter, SuperbridgeAdapter).
  *
  * Deployed via CreateX/CREATE2 with a coordinated salt across chains so
  * the peer adapter on the destination chain shares this contract's

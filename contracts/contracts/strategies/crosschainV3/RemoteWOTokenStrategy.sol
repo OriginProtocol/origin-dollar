@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IBasicToken } from "../../interfaces/IBasicToken.sol";
 import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
 
 import { AbstractWOTokenStrategy } from "./AbstractWOTokenStrategy.sol";
@@ -32,7 +33,10 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Immutables --------------------------------------------------------
 
-    /// @notice ERC-4626 wrapper of the OToken (wOUSD or wOETH).
+    /// @notice OToken on this chain (the rebasing OToken — OETH).
+    address public immutable oToken;
+
+    /// @notice ERC-4626 wrapper of the OToken (wOETH).
     address public immutable woToken;
 
     /// @notice Yield-side OToken vault. Used to convert bridgeAsset ↔ OToken via mint / redeem.
@@ -94,7 +98,13 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         address _oToken,
         address _woToken,
         address _oTokenVault
-    ) AbstractWOTokenStrategy(_stratConfig, _bridgeAsset, _oToken) {
+    ) AbstractWOTokenStrategy(_stratConfig, _bridgeAsset) {
+        require(_oToken != address(0), "Remote: oToken required");
+        require(
+            IBasicToken(_oToken).decimals() == 18,
+            "Remote: oToken not 18dp"
+        );
+        oToken = _oToken;
         // Remote has no vault and uses `woToken` as its "platform" for the strategy registry.
         require(
             _stratConfig.vaultAddress == address(0),
@@ -132,7 +142,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         require(_asset == bridgeAsset, "Remote: unsupported asset");
         // _viewCheckBalance is OToken-denominated (18dp); checkBalance reports in bridgeAsset
         // units like every strategy. (The R→M yield reports use the 18dp baseline directly.)
-        return _toAsset(_viewCheckBalance());
+        return _viewCheckBalance();
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -215,26 +225,15 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             _processWithdrawRequest(nonce, body);
         } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM) {
             _processWithdrawClaim(nonce);
-        } else if (msgType == CrossChainV3Helper.BRIDGE_OUT) {
-            _handleInboundBridgeMessage(msgType, amountReceived, body);
         } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_REQUEST) {
             _processBalanceCheckRequest(nonce, body);
-        } else if (msgType == CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING) {
-            _processSettlement(nonce, body);
         } else {
             revert("Remote: unsupported message type");
         }
     }
 
-    /// @dev Reports the YIELD-ONLY baseline: `_viewCheckBalance() - bridgeAdjustment`.
-    ///      This cancels bridge-channel deltas on both sides — for each BRIDGE_OUT,
-    ///      `_viewCheckBalance` drops by `net` AND `bridgeAdjustment` drops by `net`, so
-    ///      the difference stays constant. Bridge channel becomes invisible at this layer.
-    ///
-    ///      Master combines this yield-only value with its own `bridgeAdjustment` to
-    ///      reconstruct the true backing total via `checkBalance`. The math is consistent
-    ///      regardless of whether bridge messages have been processed on Remote yet —
-    ///      see the design doc for the full case analysis.
+    /// @dev Reports Remote's full custody value; Master stores it verbatim as
+    ///      `remoteStrategyBalance`.
     ///
     ///      DOES NOT call `_acceptYieldNonce`: balance check is non-blocking, read-only,
     ///      and the nonce is echoed back unchanged so Master can validate it's still in
@@ -244,46 +243,14 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     {
         uint256 srcTimestamp = CrossChainV3Helper.decodeUint256(payload);
         bytes memory ackPayload = CrossChainV3Helper
-            .encodeBalanceCheckResponsePayload(
-                _yieldOnlyBaseline(),
-                srcTimestamp
-            );
+            .encodeBalanceCheckResponsePayload(_balance(), srcTimestamp);
         _send(
             address(0),
             0,
             CrossChainV3Helper.BALANCE_CHECK_RESPONSE,
             nonce,
-            ackPayload,
-            false
+            ackPayload
         );
-    }
-
-    /// @dev Subtracts the snapshot Master sent (NOT `= 0`). Rationale:
-    ///
-    ///      At Remote-processing time, Remote.bridgeAdjustment may equal Master's snapshot
-    ///      (no in-flight ops), or differ by some delta (new bridge op has reached Remote
-    ///      between Master sending settle and Remote processing it). By subtracting only
-    ///      the exact snapshot, any newer delta is preserved on Remote — and Master does
-    ///      the symmetric subtract in `_processSettlementAck`, so both sides converge.
-    ///
-    ///      The reported balance is yield-only baseline (`_viewCheckBalance - bridgeAdj`
-    ///      post-subtract), so even if a new bridge op landed in between, the report is
-    ///      consistent with Master's reconstruction.
-    function _processSettlement(uint64 nonce, bytes memory body) internal {
-        int256 snapshot = abi.decode(body, (int256));
-        bridgeAdjustment -= snapshot;
-        bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
-            _yieldOnlyBaseline()
-        );
-        _send(
-            address(0),
-            0,
-            CrossChainV3Helper.SETTLE_BRIDGE_ACCOUNTING_ACK,
-            nonce,
-            ackPayload,
-            false
-        );
-        _acceptYieldNonce(nonce);
     }
 
     /**
@@ -303,9 +270,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             "Remote: queue already busy"
         );
 
-        // `amount` is in bridgeAsset units (what the L2 vault asked back). The wOToken unwrap
-        // and the OToken-vault queue operate in OToken (18dp) units.
-        uint256 oTokenAmount = _toOToken(amount);
+        // Single 18-decimal domain: `amount` doubles as the OToken amount to unwrap and
+        // queue. Aliased for readability at the unwrap / queue call sites below.
+        uint256 oTokenAmount = amount;
 
         // Unwrap + queue can revert (insufficient shares, vault queue paused, 4626 edge). A revert
         // must NOT brick the serialized channel, so each external call is guarded individually
@@ -347,7 +314,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         }
 
         // Reply to Master with the new total and whether the queue was created.
-        uint256 yieldBaseline = _yieldOnlyBaseline();
+        uint256 yieldBaseline = _balance();
         bytes memory ackPayload = CrossChainV3Helper
             .encodeWithdrawRequestAckPayload(yieldBaseline, success);
         _send(
@@ -355,8 +322,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             0,
             CrossChainV3Helper.WITHDRAW_REQUEST_ACK,
             nonce,
-            ackPayload,
-            false
+            ackPayload
         );
         _acceptYieldNonce(nonce);
 
@@ -399,7 +365,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             shipOutOfBounds
         ) {
             // Claim not landed / no request / un-shippable amount: NACK so Master can retry.
-            uint256 currentBalance = _yieldOnlyBaseline();
+            uint256 currentBalance = _balance();
             bytes memory nackPayload = CrossChainV3Helper
                 .encodeWithdrawClaimAckPayload(currentBalance, false, 0);
             _send(
@@ -407,8 +373,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
                 0,
                 CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
                 nonce,
-                nackPayload,
-                false
+                nackPayload
             );
             _acceptYieldNonce(nonce);
             emit WithdrawClaimNack(nonce, currentBalance);
@@ -421,9 +386,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         outstandingRequestId = REQUEST_ID_EMPTY;
         outstandingRequestAmount = 0;
 
-        // `amount` (bridgeAsset units) is about to leave us; subtract its OToken-equivalent
-        // value from the yield baseline.
-        uint256 yieldBaseline = _yieldOnlyBaselineAfter(_toOToken(amount));
+        // `amount` is about to leave us; subtract it from the reported baseline.
+        uint256 yieldBaseline = _balanceAfter(amount);
         bytes memory ackPayload = CrossChainV3Helper
             .encodeWithdrawClaimAckPayload(yieldBaseline, true, amount);
         // bridgeAsset → outboundAdapter allowance is granted by `setOutboundAdapter`.
@@ -432,8 +396,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             amount,
             CrossChainV3Helper.WITHDRAW_CLAIM_ACK,
             nonce,
-            ackPayload,
-            false
+            ackPayload
         );
         _acceptYieldNonce(nonce);
 
@@ -508,18 +471,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
         // Reply to Master with the new balance and mark the yield nonce processed (always — the
         // baseline counts any idle bridgeAsset/oToken, so Master's accounting stays correct).
-        uint256 yieldBaseline = _yieldOnlyBaseline();
+        uint256 yieldBaseline = _balance();
         bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
             yieldBaseline
         );
-        _send(
-            address(0),
-            0,
-            CrossChainV3Helper.DEPOSIT_ACK,
-            nonce,
-            ackPayload,
-            false
-        );
+        _send(address(0), 0, CrossChainV3Helper.DEPOSIT_ACK, nonce, ackPayload);
         _acceptYieldNonce(nonce);
 
         emit DepositProcessed(nonce, amount, yieldBaseline);
@@ -561,99 +517,49 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         emit IdleDepositRetried(idleBridgeAsset, oTokenBefore);
     }
 
-    // --- AbstractWOTokenStrategy hooks -------------------------------------
-
-    /// @inheritdoc AbstractWOTokenStrategy
-    function _bridgeOutboundMsgType() internal pure override returns (uint32) {
-        return CrossChainV3Helper.BRIDGE_IN;
-    }
-
-    /// @inheritdoc AbstractWOTokenStrategy
-    /// @dev Bridging out of Remote wraps the user's own OToken, so there's no Remote-side
-    ///      liquidity ceiling — the bound is the user's balance. Report unbounded.
-    function availableBridgeLiquidity() public pure override returns (uint256) {
-        return type(uint256).max;
-    }
-
-    /// @inheritdoc AbstractWOTokenStrategy
-    function _consumeOTokenForBridge(uint256 amount) internal override {
-        // Pull OToken from the user and wrap into wOToken shares held by this strategy.
-        IERC20(oToken).safeTransferFrom(msg.sender, address(this), amount);
-        IERC4626(woToken).deposit(amount, address(this));
-    }
-
-    /// @inheritdoc AbstractWOTokenStrategy
-    function _deliverOTokenForBridge(uint256 amount, address recipient)
-        internal
-        override
-    {
-        // Defensive: ensure we actually hold enough OToken value to satisfy this bridge-out.
-        uint256 sharesNeeded = IERC4626(woToken).previewWithdraw(amount);
-        require(
-            IERC20(woToken).balanceOf(address(this)) >= sharesNeeded,
-            "Remote: insufficient remote wOToken"
-        );
-
-        IERC4626(woToken).withdraw(amount, address(this), address(this));
-        IERC20(oToken).safeTransfer(recipient, amount);
-    }
-
     // --- Helpers -----------------------------------------------------------
 
     function _viewCheckBalance() internal view returns (uint256) {
-        // Denominated in OToken (18dp). Value lives in exactly one slot at any time per the
-        // state-transition table:
-        //   - shares       (4626-wrapped wOToken) — OToken units
-        //   - oToken       (unwrapped but not yet queued / redeemed) — OToken units
-        //   - bridgeAsset  (claimed / redeemed but not yet bridged back) — bridgeAsset units,
-        //                   scaled up to OToken units here
-        //   - the OToken-vault queue — tracked by outstandingRequestAmount (bridgeAsset units,
-        //                   scaled up), counted only while the request is still outstanding
+        // Value lives in exactly one slot at any time per the state-transition table:
+        //   - shares       (4626-wrapped wOToken)
+        //   - oToken       (unwrapped but not yet queued / redeemed)
+        //   - bridgeAsset  (claimed / redeemed but not yet bridged back)
+        //   - the OToken-vault queue — tracked by outstandingRequestAmount, counted only
+        //                   while the request is still outstanding
         uint256 sharesBalance = IERC20(woToken).balanceOf(address(this));
         uint256 valueOfShares = sharesBalance == 0
             ? 0
             : IERC4626(woToken).previewRedeem(sharesBalance);
         uint256 queued = outstandingRequestId != REQUEST_ID_EMPTY
-            ? _toOToken(outstandingRequestAmount)
+            ? outstandingRequestAmount
             : 0;
         return
             valueOfShares +
             IERC20(oToken).balanceOf(address(this)) +
-            _toOToken(IERC20(bridgeAsset).balanceOf(address(this))) +
+            IERC20(bridgeAsset).balanceOf(address(this)) +
             queued;
     }
 
-    /// @dev Remote's yield-only baseline = full custody value minus the bridge-channel
-    ///      delta. `Master.remoteStrategyBalance` must hold exactly this, because
-    ///      `Master.checkBalance` re-adds its OWN `bridgeAdjustment` separately — so every
-    ///      R→M balance report routes through here (deposit / withdraw / claim acks, not
-    ///      just balance-check / settle).
-    function _yieldOnlyBaseline() internal view returns (uint256) {
-        return _yieldOnlyBaselineAfter(0);
+    /// @dev Remote's full custody value. `Master.remoteStrategyBalance` holds exactly this,
+    ///      so every R→M balance report routes through here (deposit / withdraw / claim acks,
+    ///      not just balance-check).
+    function _balance() internal view returns (uint256) {
+        return _balanceAfter(0);
     }
 
-    /// @dev Yield-only baseline as it will stand AFTER `oTokenAmount` of OToken value leaves
-    ///      on a WITHDRAW_CLAIM_ACK (the bridgeAsset is still held when this is computed).
-    ///      `oTokenAmount` is in OToken (18dp) units, matching `_viewCheckBalance`;
-    ///      `_yieldOnlyBaseline()` is the `oTokenAmount == 0` case.
-    /// @dev Clamps to 0 rather than reverting on a negative. `_viewCheckBalance - bridgeAdjustment`
-    ///      is principal + yield + retained fees and is never *economically* negative **while
-    ///      (w)OTokens are up-only** — the only thing that pushes it a few wei negative is the
-    ///      wOToken 4626 rounding against the strategy (~1 wei per BRIDGE_IN floor / BRIDGE_OUT
-    ///      ceil) once a `withdrawAll` drains it near 0. Reverting on that dust would freeze the
-    ///      serialized yield channel, so we clamp (matches checkBalance-never-reverts).
-    ///      CAVEAT: a real negative rebase (loss/slashing) would make this genuinely negative; the
-    ///      clamp then masks it, and because Master re-adds its OWN `bridgeAdjustment`,
-    ///      `checkBalance` OVER-reports by ~`bridgeAdjustment` (not 0). Out of scope while
-    ///      (w)OTokens never negative-rebase; revisit (signed baseline) if that changes. See DESIGN §3.10.
-    function _yieldOnlyBaselineAfter(uint256 oTokenAmount)
-        internal
-        view
-        returns (uint256)
-    {
-        int256 v = int256(_viewCheckBalance()) -
-            int256(oTokenAmount) -
-            bridgeAdjustment;
-        return v > 0 ? uint256(v) : 0;
+    /// @dev The balance as it will stand AFTER `amount` leaves on a WITHDRAW_CLAIM_ACK (the
+    ///      bridgeAsset is still held when this is computed). `_balance()` is the
+    ///      `amount == 0` case.
+    /// @dev Clamps to 0 rather than reverting on a negative. The custody value is principal +
+    ///      yield and is never *economically* negative **while (w)OTokens are up-only** — the
+    ///      only thing that pushes it a few wei negative is wOToken 4626 rounding against the
+    ///      strategy once a `withdrawAll` drains it near 0. Reverting on that dust would freeze
+    ///      the serialized yield channel, so we clamp (matches checkBalance-never-reverts).
+    ///      CAVEAT: a real negative rebase (loss/slashing) would make this genuinely negative
+    ///      and the clamp would mask it. Out of scope while (w)OTokens never negative-rebase;
+    ///      revisit (signed baseline) if that changes. See DESIGN §3.10.
+    function _balanceAfter(uint256 amount) internal view returns (uint256) {
+        uint256 v = _viewCheckBalance();
+        return v > amount ? v - amount : 0;
     }
 }

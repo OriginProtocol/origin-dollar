@@ -5,8 +5,8 @@ pragma solidity ^0.8.0;
  * @title CrossChainV3Helper
  * @author Origin Protocol Inc
  *
- * @dev Strategy-level message-type constants and payload codecs for OUSD V3
- *      cross-chain messages. The wire envelope (sender + intendedAmount + payload) is
+ * @dev Strategy-level message-type constants and payload codecs for the V3
+ *      cross-chain yield channel. The wire envelope (sender + intendedAmount + payload) is
  *      bridge-adapter-internal; strategies only encode and decode the per-message-type
  *      payloads below, with the message type discriminator embedded inside the payload
  *      itself.
@@ -32,34 +32,6 @@ library CrossChainV3Helper {
     uint32 internal constant BALANCE_CHECK_REQUEST = 7;
     /// @notice Remote → Master: balance response (balance + originating timestamp).
     uint32 internal constant BALANCE_CHECK_RESPONSE = 8;
-    /// @notice Master → Remote: clear the bridge-adjustment accounting on both sides.
-    uint32 internal constant SETTLE_BRIDGE_ACCOUNTING = 9;
-    /// @notice Remote → Master: settlement acknowledgement with Remote's yield-only baseline (OToken 18dp).
-    uint32 internal constant SETTLE_BRIDGE_ACCOUNTING_ACK = 10;
-
-    // Bridge channel (nonceless, multiple operations in flight)
-
-    /// @notice Remote → Master: user-driven bridge of OToken from Ethereum onto the L2.
-    uint32 internal constant BRIDGE_IN = 11;
-    /// @notice Master → Remote: user-driven bridge of OToken from L2 back to Ethereum.
-    uint32 internal constant BRIDGE_OUT = 12;
-
-    // --- Bridge user payload (BRIDGE_IN / BRIDGE_OUT) -----------------------
-
-    /**
-     * @dev User-supplied payload for the bridge channel. Encoded inside the
-     *      envelope body. The destination strategy uses `bridgeId` for replay
-     *      protection (see Master / Remote `consumedBridgeIds` mapping) and
-     *      validates `callGasLimit` against its adapter-configured maximum
-     *      before issuing the optional post-delivery call.
-     */
-    struct BridgeUserPayload {
-        bytes32 bridgeId;
-        uint256 amount;
-        address recipient;
-        bytes callData;
-        uint32 callGasLimit;
-    }
 
     // --- Strategy-level envelope (msgType + nonce + body) -------------------
     //
@@ -104,14 +76,11 @@ library CrossChainV3Helper {
     // WITHDRAW_CLAIM_ACK            : payload = abi.encode(yieldBaseline, success, amount)
     // BALANCE_CHECK_REQUEST         : payload = abi.encode(timestamp)
     // BALANCE_CHECK_RESPONSE        : payload = abi.encode(balance, timestamp)
-    // SETTLE_BRIDGE_ACCOUNTING      : payload = abi.encode(int256 snapshot)
-    // SETTLE_BRIDGE_ACCOUNTING_ACK  : payload = abi.encode(yieldBaseline)
-    // BRIDGE_IN / BRIDGE_OUT        : payload = abi.encode(BridgeUserPayload)
 
     /**
      * @notice Encode a single-`uint256` payload — shared by every message whose body is one
-     *         uint256: DEPOSIT_ACK / SETTLE_BRIDGE_ACCOUNTING_ACK (a balance),
-     *         WITHDRAW_REQUEST (an amount), BALANCE_CHECK_REQUEST (a timestamp).
+     *         uint256: DEPOSIT_ACK (a balance), WITHDRAW_REQUEST (an amount),
+     *         BALANCE_CHECK_REQUEST (a timestamp).
      */
     function encodeUint256(uint256 value) internal pure returns (bytes memory) {
         return abi.encode(value);
@@ -194,52 +163,5 @@ library CrossChainV3Helper {
         returns (uint256 balance, uint256 timestamp)
     {
         return abi.decode(payload, (uint256, uint256));
-    }
-
-    /**
-     * @notice Encode the BRIDGE_IN / BRIDGE_OUT payload — packs the 5 user-supplied
-     *         fields the receiving strategy needs to deliver tokens and run the
-     *         optional post-delivery call.
-     */
-    function encodeBridgeUserPayload(BridgeUserPayload memory p)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        // Field-by-field, NOT `abi.encode(p)`: this struct has a dynamic member
-        // (`callData`), so `abi.encode(struct)` would prepend an extra offset word and
-        // diverge from this established wire layout (and from the JS test encoders /
-        // already-deployed peers). Keep the flat tuple.
-        return
-            abi.encode(
-                p.bridgeId,
-                p.amount,
-                p.recipient,
-                p.callData,
-                p.callGasLimit
-            );
-    }
-
-    /// @notice Decode the BRIDGE_IN / BRIDGE_OUT payload into a `BridgeUserPayload`.
-    function decodeBridgeUserPayload(bytes memory payload)
-        internal
-        pure
-        returns (BridgeUserPayload memory)
-    {
-        (
-            bytes32 bridgeId,
-            uint256 amount,
-            address recipient,
-            bytes memory callData,
-            uint32 callGasLimit
-        ) = abi.decode(payload, (bytes32, uint256, address, bytes, uint32));
-        return
-            BridgeUserPayload({
-                bridgeId: bridgeId,
-                amount: amount,
-                recipient: recipient,
-                callData: callData,
-                callGasLimit: callGasLimit
-            });
     }
 }

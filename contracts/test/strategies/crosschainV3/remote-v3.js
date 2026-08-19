@@ -1,15 +1,10 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const {
-  MSG,
-  encodePackedEnvelope,
-  encodeBridgeUserPayload,
-} = require("./_helpers");
+const { MSG, encodePackedEnvelope } = require("./_helpers");
 
-// bridgeAsset (MockUSDC) is 6dp; oToken / wOToken are 18dp. The strategy holds value in the
-// OToken (18dp) domain and reports checkBalance in bridgeAsset (6dp) units. SCALE is 6→18.
-const SCALE = ethers.BigNumber.from(10).pow(12);
+// The pair accounts in a single 18-decimal domain, so no scaling is needed.
+const SCALE = ethers.BigNumber.from(1);
 
 describe("Unit: RemoteWOTokenStrategy", function () {
   let deployer, governor, alice;
@@ -20,7 +15,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
     [deployer, governor, alice] = await ethers.getSigners();
 
     // bridgeAsset (USDC stand-in)
-    const ERC20Factory = await ethers.getContractFactory("MockUSDC");
+    const ERC20Factory = await ethers.getContractFactory("MockDAI");
     bridgeAsset = await ERC20Factory.deploy();
 
     // OToken + Ethereum vault
@@ -130,7 +125,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
   });
 
   describe("checkBalance sums all state-table slots", () => {
-    const FIVE = ethers.utils.parseUnits("5", 6); // 5 bridgeAsset (USDC, 6dp)
+    const FIVE = ethers.utils.parseUnits("5", 18);
     const FIVE_OT = ethers.utils.parseUnits("5", 18); // 5 OToken (18dp) == 5 USDC of value
 
     it("returns 0 when idle", async () => {
@@ -162,7 +157,7 @@ describe("Unit: RemoteWOTokenStrategy", function () {
   });
 
   describe("DEPOSIT inbound handling", () => {
-    const ONE_K = ethers.utils.parseUnits("1000", 6);
+    const ONE_K = ethers.utils.parseUnits("1000", 18);
 
     it("mints OToken, wraps to wOToken, sends DEPOSIT_ACK with new balance", async () => {
       // Drive an atomic tokens-with-message delivery through the receiver adapter.
@@ -228,174 +223,6 @@ describe("Unit: RemoteWOTokenStrategy", function () {
     });
   });
 
-  describe("bridge channel: bridge-in (user-facing, R→M)", () => {
-    const AMT = ethers.utils.parseUnits("250", 6);
-
-    const mintOTokenToAlice = async (amount) => {
-      await bridgeAsset.mintTo(alice.address, amount);
-      await bridgeAsset.connect(alice).approve(ethVault.address, amount);
-      await ethVault.connect(alice).mint(amount);
-    };
-
-    it("wraps OToken, emits BridgeRequested, sends BRIDGE_IN message", async () => {
-      await mintOTokenToAlice(AMT);
-      await oToken.connect(alice).approve(remote.address, AMT);
-
-      await expect(
-        remote
-          .connect(alice)
-          .bridgeOTokenToPeer(AMT, ethers.constants.AddressZero, "0x", 0)
-      ).to.emit(remote, "BridgeRequested");
-
-      expect(await woToken.balanceOf(remote.address)).to.equal(AMT);
-      expect(await remote.bridgeAdjustment()).to.equal(AMT);
-
-      const sent = await outboundAdapter.lastMessageSent();
-      const [msgType, nonce] = ethers.utils.defaultAbiCoder.decode(
-        ["uint32", "uint64", "bytes"],
-        sent
-      );
-      expect(msgType).to.equal(MSG.BRIDGE_IN);
-      expect(nonce).to.equal(0);
-    });
-
-    it("rejects callGasLimit above MAX_BRIDGE_CALL_GAS", async () => {
-      await mintOTokenToAlice(AMT);
-      await oToken.connect(alice).approve(remote.address, AMT);
-      await expect(
-        remote
-          .connect(alice)
-          .bridgeOTokenToPeer(AMT, alice.address, "0xdeadbeef", 600000)
-      ).to.be.revertedWith("WOT: callGasLimit too high");
-    });
-  });
-
-  describe("bridge channel: BRIDGE_OUT inbound (M→R)", () => {
-    const AMT = ethers.utils.parseUnits("100", 6);
-
-    const seedRemoteShares = async (amount) => {
-      await bridgeAsset.mintTo(deployer.address, amount);
-      await bridgeAsset.approve(ethVault.address, amount);
-      await ethVault.mint(amount);
-      await oToken.approve(woToken.address, amount);
-      await woToken.deposit(amount, remote.address);
-    };
-
-    it("unwraps wOToken, transfers OToken to recipient, decrements bridgeAdjustment", async () => {
-      await seedRemoteShares(AMT.mul(2));
-
-      const bridgeId = ethers.utils.id("bridge-out-1");
-      const payload = encodeBridgeUserPayload({
-        bridgeId,
-        amount: AMT,
-        recipient: alice.address,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-
-      await expect(inboundAdapter.sendMessage(envelope))
-        .to.emit(remote, "BridgeDelivered")
-        .withArgs(bridgeId, alice.address, AMT);
-
-      expect(await oToken.balanceOf(alice.address)).to.equal(AMT);
-      expect(await remote.bridgeAdjustment()).to.equal(
-        ethers.BigNumber.from(0).sub(AMT)
-      );
-      expect(await woToken.balanceOf(remote.address)).to.equal(AMT);
-      expect(await remote.consumedBridgeIds(bridgeId)).to.equal(true);
-    });
-
-    it("rejects a replayed bridgeId", async () => {
-      await seedRemoteShares(AMT.mul(2));
-      const bridgeId = ethers.utils.id("bridge-out-replay");
-      const payload = encodeBridgeUserPayload({
-        bridgeId,
-        amount: AMT,
-        recipient: alice.address,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await inboundAdapter.sendMessage(envelope);
-      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "WOT: bridgeId replayed"
-      );
-    });
-
-    it("reverts with insufficient remote wOToken", async () => {
-      // No shares.
-      const bridgeId = ethers.utils.id("bridge-out-low");
-      const payload = encodeBridgeUserPayload({
-        bridgeId,
-        amount: AMT,
-        recipient: alice.address,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "Remote: insufficient remote wOToken"
-      );
-    });
-
-    it("invokes optional callData on the recipient", async () => {
-      await seedRemoteShares(AMT.mul(2));
-      const TargetFactory = await ethers.getContractFactory(
-        "MockBridgeCallTarget"
-      );
-      const target = await TargetFactory.deploy();
-
-      const bridgeId = ethers.utils.id("bridge-out-call");
-      const iface = new ethers.utils.Interface([
-        "function onBridgeDelivered(bytes32,uint256)",
-      ]);
-      const callData = iface.encodeFunctionData("onBridgeDelivered", [
-        bridgeId,
-        AMT,
-      ]);
-      const payload = encodeBridgeUserPayload({
-        bridgeId,
-        amount: AMT,
-        recipient: target.address,
-        callData,
-        callGasLimit: 200000,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-
-      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
-        remote,
-        "BridgeCallSucceeded"
-      );
-      expect(await target.callCount()).to.equal(1);
-    });
-
-    it("still delivers tokens when callData reverts", async () => {
-      await seedRemoteShares(AMT.mul(2));
-      const TargetFactory = await ethers.getContractFactory(
-        "MockBridgeCallTarget"
-      );
-      const target = await TargetFactory.deploy();
-      await target.setAlwaysRevert(true);
-
-      const bridgeId = ethers.utils.id("bridge-out-revert");
-      const iface = new ethers.utils.Interface([
-        "function onBridgeDelivered(bytes32,uint256)",
-      ]);
-      const callData = iface.encodeFunctionData("onBridgeDelivered", [
-        bridgeId,
-        AMT,
-      ]);
-      const payload = encodeBridgeUserPayload({
-        bridgeId,
-        amount: AMT,
-        recipient: target.address,
-        callData,
-        callGasLimit: 200000,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
-        remote,
-        "BridgeCallFailed"
-      );
-      expect(await oToken.balanceOf(target.address)).to.equal(AMT);
-    });
-  });
-
   describe("transferToken custody protection (round-4 #17)", () => {
     it("rejects sweeping woToken / oToken / bridgeAsset", async () => {
       await expect(
@@ -410,9 +237,9 @@ describe("Unit: RemoteWOTokenStrategy", function () {
     });
 
     it("still rescues an unrelated token to governor, governor-only", async () => {
-      const ERC20Factory = await ethers.getContractFactory("MockUSDC");
+      const ERC20Factory = await ethers.getContractFactory("MockDAI");
       const stray = await ERC20Factory.deploy();
-      const amt = ethers.utils.parseUnits("10", 6);
+      const amt = ethers.utils.parseUnits("10", 18);
       await stray.mintTo(remote.address, amt);
 
       await expect(
@@ -422,20 +249,6 @@ describe("Unit: RemoteWOTokenStrategy", function () {
       await remote.connect(governor).transferToken(stray.address, amt);
       expect(await stray.balanceOf(governor.address)).to.equal(amt);
       expect(await stray.balanceOf(remote.address)).to.equal(0);
-    });
-  });
-
-  describe("inbound bridge zero-recipient guard (round-4 #2)", () => {
-    it("reverts a BRIDGE_OUT whose payload recipient is address(0)", async () => {
-      const payload = encodeBridgeUserPayload({
-        bridgeId: ethers.utils.id("zero-recipient"),
-        amount: ethers.utils.parseEther("1"),
-        recipient: ethers.constants.AddressZero,
-      });
-      const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "WOT: zero recipient"
-      );
     });
   });
 });

@@ -15,10 +15,6 @@ const MSG = {
   WITHDRAW_CLAIM_ACK: 6,
   BALANCE_CHECK_REQUEST: 7,
   BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE_ACCOUNTING: 9,
-  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
 };
 
 /**
@@ -35,26 +31,8 @@ const encodePackedEnvelope = (msgType, nonce, payloadHex) => {
 };
 
 /**
- * Bridge-channel user payload: `(bridgeId, amount, recipient, callData, callGasLimit)`.
- * Used as the `body` argument inside the strategy envelope for BRIDGE_IN /
- * BRIDGE_OUT messages.
- */
-const encodeBridgeUserPayload = ({
-  bridgeId,
-  amount,
-  recipient,
-  callData = "0x",
-  callGasLimit = 0,
-}) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint256", "address", "bytes", "uint32"],
-    [bridgeId, amount, recipient, callData, callGasLimit]
-  );
-};
-
-/**
- * Single-`uint256` body. Used by DEPOSIT_ACK, WITHDRAW_REQUEST_ACK, and
- * SETTLE_BRIDGE_ACCOUNTING_ACK whose body is just `newBalance`.
+ * Single-`uint256` body. Used by DEPOSIT_ACK and WITHDRAW_REQUEST_ACK whose
+ * body is just `newBalance`.
  */
 const encodeNewBalancePayload = (newBalance) =>
   ethers.utils.defaultAbiCoder.encode(["uint256"], [newBalance]);
@@ -62,8 +40,7 @@ const encodeNewBalancePayload = (newBalance) =>
 /**
  * Adapter-level envelope (the OUTER 52-byte header + opaque payload). The
  * MockBridgeAdapter / real adapters build this in Solidity; tests that
- * synthesize raw CCTP wire messages (e.g., cctp-burn-relay.js, cctp-relay.js)
- * build it manually with `solidityPack`.
+ * synthesize raw wire messages build it manually with `solidityPack`.
  */
 const wrapAppEnvelope = (envelopeSender, intendedAmount, payload) => {
   return ethers.utils.solidityPack(
@@ -75,7 +52,6 @@ const wrapAppEnvelope = (envelopeSender, intendedAmount, payload) => {
 module.exports = {
   MSG,
   encodePackedEnvelope,
-  encodeBridgeUserPayload,
   encodeNewBalancePayload,
   wrapAppEnvelope,
 };

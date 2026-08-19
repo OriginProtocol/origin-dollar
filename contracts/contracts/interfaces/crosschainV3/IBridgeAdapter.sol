@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  *
  * @notice Bridge-agnostic adapter interface used by Master / Remote strategies. The adapter
- *         encapsulates one bridge transport (CCIP, CCTP, OP Stack canonical bridge) so the
+ *         encapsulates one bridge transport (CCIP, OP Stack canonical bridge) so the
  *         strategy stays bridge-ignorant. The adapter owns the envelope shape; the strategy
  *         only ever passes its own opaque `payload` bytes.
  *
@@ -42,9 +42,9 @@ interface IBridgeAdapter {
      *
      * @return fee The fee amount, denominated in `feeToken`. When `feeToken == address(0)`
      *             this is a native (ETH) fee. When non-zero this is an ERC20 fee in that
-     *             token. When the bridge protocol auto-deducts from the bridged amount
-     *             (e.g., CCTP V2 fast-finality), `fee` is informational only — the actual
-     *             deduction happens transparently inside the bridge, NOT on the caller.
+     *             token. When the bridge protocol auto-deducts from the bridged amount,
+     *             `fee` is informational only — the actual deduction happens transparently
+     *             inside the bridge, NOT on the caller.
      * @return feeToken The token the fee is denominated in. `address(0)` means native.
      * @return requiresExternalPayment True if the caller must supply `fee` of `feeToken`
      *             alongside the send call (e.g., via `msg.value` for native). False if the
@@ -86,9 +86,9 @@ interface IBridgeAdapter {
      *             outbound across chains — the symmetric inbound adapter holds the same
      *             protocol-level cap.
      *
-     *         `0` means "no enforcement" (unlimited). Concrete adapters layer additional
-     *         protocol-level constants on top (e.g., CCTPAdapter enforces a hard 10M USDC
-     *         cap regardless of the configured value).
+     *         `0` means "no enforcement" (unlimited). Concrete adapters may layer
+     *         additional protocol-level constants on top, enforced regardless of the
+     *         configured value.
      */
     function maxTransferAmount() external view returns (uint256);
 

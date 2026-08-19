@@ -62,14 +62,14 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     mapping(address => bool) public strategists;
 
     /// @notice Per-tx maximum token amount this adapter accepts on outbound. Governor-set
-    ///         to match the bridge protocol's per-tx limit (CCIP token-lane rate, CCTP V2
-    ///         per-burn cap, etc.). Strategies on the peer chain treat the same value as
+    ///         to match the bridge protocol's per-tx limit (e.g. the CCIP token-lane
+    ///         rate). Strategies on the peer chain treat the same value as
     ///         "max this adapter can deliver inbound per tx" to size their withdrawAll-style
     ///         requests. `0` = no enforcement at this layer (concrete adapters may still
     ///         apply hard protocol-level constants on top).
     /// @dev Backing storage for the `maxTransferAmount()` getter, which concrete adapters may
-    ///      override to surface a hard protocol cap (e.g. CCTPAdapter's 10M) regardless of the
-    ///      configured value. Internal so the override is the single source of truth externally.
+    ///      override to surface a hard protocol cap regardless of the configured value.
+    ///      Internal so the override is the single source of truth externally.
     uint256 internal _maxTransferAmount;
 
     event Authorised(address indexed sender, ChainConfig cfg);
@@ -143,9 +143,9 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         onlyGovernor
     {
         require(sender != address(0), "Adapter: zero sender");
-        // chainSelector may be 0 — CCTP V2 domain for Ethereum/Sepolia is literally 0.
-        // Authorisation lookup uses the `authorised` flag, not chainSelector, so 0
-        // is a valid (non-uninitialised) value here.
+        // chainSelector is deliberately not range-checked: some transports use 0 as a
+        // legitimate domain id. Authorisation lookup uses the `authorised` flag, not
+        // chainSelector, so 0 is a valid (non-uninitialised) value here.
         authorised[sender] = true;
         laneConfig[sender] = cfg;
         emit Authorised(sender, cfg);
@@ -161,14 +161,14 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         onlyGovernor
     {
         require(authorised[sender], "Adapter: sender not authorised");
-        // See note in `authorise()` — chainSelector may be 0 (CCTP Ethereum domain).
+        // See note in `authorise()` — chainSelector is deliberately not range-checked.
         laneConfig[sender] = cfg;
         emit LaneConfigUpdated(sender, cfg);
     }
 
     /// @notice Governor sets the per-tx token amount ceiling. Set to match the bridge
-    ///         protocol's actual per-tx limit (CCIP lane rate, CCTP burn cap, etc.).
-    ///         `0` disables the check (e.g., canonical bridges with no per-tx limit).
+    ///         protocol's actual per-tx limit (e.g. the CCIP lane rate). `0` disables the
+    ///         check (e.g., canonical bridges with no per-tx limit).
     function setMaxTransferAmount(uint256 _amount) external onlyGovernor {
         emit MaxTransferAmountUpdated(_maxTransferAmount, _amount);
         _maxTransferAmount = _amount;
@@ -181,8 +181,8 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     }
 
     /// @notice Per-tx minimum token amount (dust floor). `0` = no floor. Concrete adapters
-    ///         that enforce a floor (e.g. CCTPAdapter) override this; default is no floor so
-    ///         strategies can quote `[minTransferAmount(), maxTransferAmount()]` generically.
+    ///         that enforce a floor override this; default is no floor so strategies can
+    ///         quote `[minTransferAmount(), maxTransferAmount()]` generically.
     function minTransferAmount() public view virtual returns (uint256) {
         return 0;
     }
@@ -242,7 +242,7 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
             0
         );
         // requiresExternalPayment == false means the bridge handles its own fee internally
-        // (e.g., CCTP V2 auto-deducts from the burn amount); msg.value is not consumed.
+        // (deducting it from the bridged amount); msg.value is not consumed.
         if (requiresExternalPayment) {
             require(msg.value >= fee, "Adapter: insufficient fee");
         }
@@ -261,8 +261,8 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
         // Per-tx amount cap. `0` disables the check (canonical bridges, unconfigured).
         // Reject cleanly here rather than letting the bridge router revert deep inside
         // its own validation. Read the virtual getter (not the raw `_maxTransferAmount`
-        // field) so a concrete adapter's hard-cap override (e.g. CCTP's 10M) is honoured
-        // here even when `_maxTransferAmount` is left at 0.
+        // field) so a concrete adapter's hard-cap override is honoured here even when
+        // `_maxTransferAmount` is left at 0.
         uint256 cap = maxTransferAmount();
         require(cap == 0 || amount <= cap, "Adapter: amount above max");
         ChainConfig memory cfg = laneConfig[msg.sender];
@@ -331,8 +331,8 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     /// @dev Compute the fee details for the outbound op. See `IBridgeAdapter.quoteFee` for
     ///      the meaning of each return value. The three-value form lets the strategy
     ///      separate "is action required?" from "what token / how much?" — important for
-    ///      bridges like CCTP V2 where the fee is real but auto-deducted (caller takes no
-    ///      action) vs CCIP where the caller must supply native.
+    ///      bridges where the fee is real but auto-deducted from the bridged amount (caller
+    ///      takes no action) vs CCIP where the caller must supply native.
     function _quoteFee(
         bytes memory envelope,
         ChainConfig memory cfg,

@@ -10,10 +10,6 @@ const MSG = {
   WITHDRAW_CLAIM_ACK: 6,
   BALANCE_CHECK_REQUEST: 7,
   BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE_ACCOUNTING: 9,
-  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
 };
 
 describe("Unit: CrossChainV3Helper", function () {
@@ -62,11 +58,6 @@ describe("Unit: CrossChainV3Helper", function () {
             [99, 1700000001]
           ),
         },
-        { type: MSG.SETTLE_BRIDGE_ACCOUNTING, body: "0x" },
-        {
-          type: MSG.SETTLE_BRIDGE_ACCOUNTING_ACK,
-          body: ethers.utils.defaultAbiCoder.encode(["uint256"], [555]),
-        },
       ];
 
       const nonce = ethers.BigNumber.from("123456789012345678");
@@ -80,23 +71,6 @@ describe("Unit: CrossChainV3Helper", function () {
         expect(gotBody).to.equal(c.body === "0x" ? "0x" : c.body);
       }
     });
-
-    it("round-trips bridge-channel messages with nonce 0", async () => {
-      const bridgeId = ethers.utils.id("bridge-1");
-      const body = await harness.encodeBridgeUserPayload(
-        bridgeId,
-        ethers.utils.parseEther("100"),
-        "0x000000000000000000000000000000000000beef",
-        "0xdeadbeef",
-        300000
-      );
-
-      const packed = await harness.packPayload(MSG.BRIDGE_IN, 0, body);
-      const [msgType, gotNonce, gotBody] = await harness.unpackPayload(packed);
-      expect(msgType).to.equal(MSG.BRIDGE_IN);
-      expect(gotNonce).to.equal(0);
-      expect(gotBody).to.equal(body);
-    });
   });
 
   describe("payload encoders / decoders", () => {
@@ -107,7 +81,7 @@ describe("Unit: CrossChainV3Helper", function () {
     });
 
     it("encodeAmountPayload round-trips", async () => {
-      const v = ethers.utils.parseUnits("999.99", 6);
+      const v = ethers.utils.parseUnits("999.99", 18);
       const encoded = await harness.encodeAmountPayload(v);
       expect(await harness.decodeAmountPayload(encoded)).to.equal(v);
     });
@@ -148,48 +122,6 @@ describe("Unit: CrossChainV3Helper", function () {
       );
       expect(gotBal).to.equal(bal);
       expect(gotTs).to.equal(ts);
-    });
-
-    it("encodeBridgeUserPayload preserves empty callData", async () => {
-      const bridgeId = ethers.utils.id("empty-call");
-      const amount = ethers.utils.parseEther("1.5");
-      const recipient = "0x000000000000000000000000000000000000abcd";
-      const encoded = await harness.encodeBridgeUserPayload(
-        bridgeId,
-        amount,
-        recipient,
-        "0x",
-        0
-      );
-      const [gotBridgeId, gotAmount, gotRecipient, gotCallData, gotGasLimit] =
-        await harness.decodeBridgeUserPayload(encoded);
-      expect(gotBridgeId).to.equal(bridgeId);
-      expect(gotAmount).to.equal(amount);
-      expect(gotRecipient).to.equal(ethers.utils.getAddress(recipient));
-      expect(gotCallData).to.equal("0x");
-      expect(gotGasLimit).to.equal(0);
-    });
-
-    it("encodeBridgeUserPayload preserves non-trivial callData", async () => {
-      const bridgeId = ethers.utils.id("with-call");
-      const amount = ethers.utils.parseEther("7");
-      const recipient = "0x000000000000000000000000000000000000f00d";
-      const callData = "0x" + "ab".repeat(200);
-      const callGasLimit = 250000;
-      const encoded = await harness.encodeBridgeUserPayload(
-        bridgeId,
-        amount,
-        recipient,
-        callData,
-        callGasLimit
-      );
-      const [gotBridgeId, gotAmount, gotRecipient, gotCallData, gotGasLimit] =
-        await harness.decodeBridgeUserPayload(encoded);
-      expect(gotBridgeId).to.equal(bridgeId);
-      expect(gotAmount).to.equal(amount);
-      expect(gotRecipient).to.equal(ethers.utils.getAddress(recipient));
-      expect(gotCallData).to.equal(callData);
-      expect(gotGasLimit).to.equal(callGasLimit);
     });
   });
 });
