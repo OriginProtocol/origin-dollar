@@ -41,8 +41,7 @@ const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
   );
 
   return (
-    consensusRewards.gt(parseEther("1")) ||
-    executionRewards.gt(parseEther("0.5"))
+    consensusRewards.gt(parseEther("0")) || executionRewards.gt(parseEther("0"))
   );
 };
 

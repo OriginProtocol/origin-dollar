@@ -42,7 +42,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 | Action                     | Network | Cron             | Description                                                                                         |
 | -------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `harvest`                  | mainnet | `25 11,23 * * *` | Harvest and swap rewards from native staking strategies                                             |
+| `harvest`                  | mainnet | `25 11,23 * * *` | Harvest all remaining rewards from deprecated Native Staking Strategy 2 and claim strategy rewards  |
 | `doAccounting`             | mainnet | `30 23 * * *`    | Account for consensus rewards and validator exits in the Native Staking Strategy                    |
 | `snapBalances`             | mainnet | `2 0 * * *`      | Take a snapshot of the staking strategy's balance                                                   |
 | `verifyBalances`           | mainnet | `6 0 * * *`      | Verify validator balances on the Beacon chain                                                       |
