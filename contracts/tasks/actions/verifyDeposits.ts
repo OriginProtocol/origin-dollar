@@ -1,7 +1,6 @@
 import { types, action } from "../lib/action";
 
 const { verifyDeposits } = require("../beacon");
-const { cleanStateCache } = require("../../utils/beacon");
 
 action({
   name: "verifyDeposits",
@@ -22,10 +21,6 @@ action({
     );
   },
   run: async ({ signer, args }) => {
-    try {
-      await verifyDeposits({ ...args, signer });
-    } finally {
-      cleanStateCache();
-    }
+    await verifyDeposits({ ...args, signer });
   },
 });

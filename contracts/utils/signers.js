@@ -21,8 +21,7 @@ async function getStandaloneSigner() {
  *   provider (fork impersonation tooling).
  * - Otherwise delegate to tasks/lib/signer.getSigner(), which selects AWS KMS /
  *   private key / fork impersonation and applies the Postgres nonce queue when
- *   DATABASE_URL is set — the same behavior as before, minus the removed
- *   Defender relay path.
+ *   DATABASE_URL is set.
  * @param {string} [address] optional address of the signer
  */
 async function getSigner(address = undefined) {

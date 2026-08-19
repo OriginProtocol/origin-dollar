@@ -10,24 +10,30 @@ const {
 } = require("../utils/ssv");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const { getChainId } = require("./lib/network");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ consol, index, pubkey, operatorids }) {
-  const signer = await getSigner();
+async function removeValidator({
+  consol,
+  index,
+  pubkey,
+  operatorids,
+  signer: taskSigner,
+}) {
+  const signer = taskSigner || (await getSigner());
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const chainId = getChainId();
 
   // Cluster details
   const { cluster } = await getClusterInfo({
     chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     ownerAddress: nativeStakingStrategy.address,
   });

@@ -1,6 +1,3 @@
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
 const { parseUnits } = require("ethers/lib/utils");
@@ -20,39 +17,6 @@ const fetchImpl =
 
 const SLOTS_PER_EPOCH = 32;
 const BEACON_STATE_FETCH_TIMEOUT_MS = 15 * 60 * 1000;
-const BEACON_STATE_CACHE_DIR = path.join(
-  os.tmpdir(),
-  "origin-dollar-beacon-states"
-);
-
-// Beacon state SSZ files are large and only needed for the duration of an
-// action, so delete them after the action completes.
-const cleanStateCache = () => {
-  if (!fs.existsSync(BEACON_STATE_CACHE_DIR)) {
-    return;
-  }
-
-  for (const entry of fs.readdirSync(BEACON_STATE_CACHE_DIR, {
-    withFileTypes: true,
-  })) {
-    if (
-      !entry.isFile() ||
-      !entry.name.startsWith("state_") ||
-      !entry.name.endsWith(".ssz")
-    ) {
-      continue;
-    }
-
-    const file = path.join(BEACON_STATE_CACHE_DIR, entry.name);
-    try {
-      fs.rmSync(file, { force: true });
-      log(`Removed cached beacon state ${file}`);
-    } catch {
-      // Best-effort cleanup; a missing file is fine.
-    }
-  }
-};
-
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
   index: Number(index),
   validatorindex: Number(index),
@@ -147,11 +111,6 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const BeaconState = ssz[fork].BeaconState;
   const blockView = BeaconBlock.toView(blockRes.value().message);
 
-  fs.mkdirSync(BEACON_STATE_CACHE_DIR, { recursive: true });
-  const stateFilename = path.join(
-    BEACON_STATE_CACHE_DIR,
-    `state_${blockView.slot}.ssz`
-  );
   const fetchStateSsz = async () => {
     log(`Fetching state for slot ${blockView.slot} from the beacon node`);
 
@@ -163,14 +122,24 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     // binary SSZ data, the client calls Response.json() which invokes
     // TextDecoder.decode() on the binary payload, throwing
     // ERR_ENCODING_INVALID_DATA. By requesting SSZ-only via a direct fetch
-    // and reading the response as an ArrayBuffer, we avoid any text decoding.
+    // and reading the response body as binary chunks, we avoid text decoding
+    // and can report download progress.
     let base = process.env.BEACON_PROVIDER_URL;
     if (!base.endsWith("/")) base += "/";
     // Concatenate rather than using `new URL(path, base)` to preserve any
     // path segments in the provider URL (e.g. QuickNode API key in path).
     const stateUrl = `${base}eth/v2/debug/beacon/states/${blockView.slot}`;
     const parsedUrl = new URL(stateUrl);
-    const headers = { Accept: "application/octet-stream" };
+    // Node's fetch defaults to `accept-encoding: gzip, deflate`, which makes
+    // Lighthouse gzip the ~330MB state and drop content-length. Inflating that
+    // on the main thread backpressures the socket down to ~2 Mbps (a 15min
+    // download that hits the abort below), and the missing content-length also
+    // forces the slow chunk-accumulation path further down. Asking for
+    // identity doubles the wire bytes but the transfer takes ~2s.
+    const headers = {
+      Accept: "application/octet-stream",
+      "Accept-Encoding": "identity",
+    };
     // Preserve Basic auth credentials embedded in the provider URL
     if (parsedUrl.username || parsedUrl.password) {
       const creds = `${decodeURIComponent(
@@ -182,11 +151,16 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     }
 
     const controller = new AbortController();
+    let contentLength;
+    let downloadedBytes = 0;
+    let progressInterval;
     const timeout = setTimeout(() => {
       log(
         `Aborting state fetch for slot ${blockView.slot} after ${
           BEACON_STATE_FETCH_TIMEOUT_MS / 60000
-        } minutes`
+        } minutes, downloaded ${downloadedBytes}/${
+          contentLength || "unknown"
+        } bytes`
       );
       controller.abort();
     }, BEACON_STATE_FETCH_TIMEOUT_MS);
@@ -205,45 +179,78 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
         );
       }
 
+      if (!response.body) {
+        throw new Error(
+          `State response for slot ${blockView.slot} did not include a body`
+        );
+      }
+
+      contentLength =
+        Number(response.headers.get("content-length")) || undefined;
       log(
-        `Received response headers for state at slot ${blockView.slot}, downloading body`
+        `Received response headers for state at slot ${
+          blockView.slot
+        }, downloading ${contentLength || "unknown"} bytes`
       );
-      stateSszBytes = new Uint8Array(await response.arrayBuffer());
+
+      const downloadStartedAt = Date.now();
+      progressInterval = setInterval(() => {
+        const elapsedSeconds = (Date.now() - downloadStartedAt) / 1000;
+        const mibPerSecond = downloadedBytes / elapsedSeconds / 1024 / 1024;
+        const percent = contentLength
+          ? `${((downloadedBytes / contentLength) * 100).toFixed(1)}%`
+          : "unknown";
+        log(
+          `Downloaded ${downloadedBytes}/${
+            contentLength || "unknown"
+          } bytes (${percent}) for state at slot ${
+            blockView.slot
+          }, average speed ${mibPerSecond.toFixed(2)} MiB/s`
+        );
+      }, 10_000);
+
+      const chunks = [];
+      if (contentLength) {
+        stateSszBytes = new Uint8Array(contentLength);
+      }
+
+      for await (const chunk of response.body) {
+        if (stateSszBytes) {
+          stateSszBytes.set(chunk, downloadedBytes);
+        } else {
+          chunks.push(chunk);
+        }
+        downloadedBytes += chunk.byteLength;
+      }
+
+      if (contentLength && downloadedBytes !== contentLength) {
+        throw new Error(
+          `Incomplete state response for slot ${blockView.slot}: downloaded ${downloadedBytes}/${contentLength} bytes`
+        );
+      }
+
+      if (!stateSszBytes) {
+        stateSszBytes = new Uint8Array(downloadedBytes);
+        let offset = 0;
+        for (const chunk of chunks) {
+          stateSszBytes.set(chunk, offset);
+          offset += chunk.byteLength;
+        }
+      }
+
       log(
         `Downloaded ${stateSszBytes.byteLength} bytes for state at slot ${blockView.slot}`
       );
     } finally {
       clearTimeout(timeout);
+      clearInterval(progressInterval);
     }
 
-    log(`Writing state to file ${stateFilename}`);
-    fs.writeFileSync(stateFilename, stateSszBytes);
     return stateSszBytes;
   };
 
-  // Read the state from a local file or fetch it from the beacon node.
-  let stateSsz;
-  if (fs.existsSync(stateFilename)) {
-    log(`Loading state from file ${stateFilename}`);
-    stateSsz = fs.readFileSync(stateFilename);
-  } else {
-    stateSsz = await fetchStateSsz();
-  }
-
-  let stateView;
-  try {
-    stateView = BeaconState.deserializeToView(stateSsz);
-  } catch (err) {
-    if (!fs.existsSync(stateFilename)) {
-      throw err;
-    }
-
-    log(
-      `Failed to deserialize cached state ${stateFilename}, refetching fresh state`
-    );
-    stateSsz = await fetchStateSsz();
-    stateView = BeaconState.deserializeToView(stateSsz);
-  }
+  const stateSsz = await fetchStateSsz();
+  const stateView = BeaconState.deserializeToView(stateSsz);
 
   const blockTree = blockView.tree.clone();
   const stateRootGIndex = blockView.type.getPropertyGindex("stateRoot");
@@ -567,7 +574,6 @@ const verifyDepositSignatureAndMessageRoot = async ({
 };
 
 module.exports = {
-  cleanStateCache,
   concatProof,
   getBeaconBlock,
   getSlot,

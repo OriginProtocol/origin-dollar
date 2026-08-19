@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity 0.8.28;
 
 // Deployment framework
 import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
@@ -34,7 +34,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
     ///      by _buildGovernanceProposal() and _fork().
     function _execute() internal override {
         OUSD newImpl = new OUSD();
-        _recordDeployment("OUSD_IMPL", address(newImpl));
+        _recordDeployment("OUSD_IMPL", address(newImpl), type(OUSD).name);
     }
 
     // ==================== Governance Proposal ==================== //

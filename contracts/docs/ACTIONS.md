@@ -45,7 +45,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 | Action                     | Network | Cron             | Description                                                                                         |
 | -------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `harvest`                  | mainnet | `25 11,23 * * *` | Harvest and swap rewards from native staking strategies                                             |
+| `harvest`                  | mainnet | `25 11,23 * * *` | Harvest all remaining rewards from deprecated Native Staking Strategy 2 and claim strategy rewards  |
 | `doAccounting`             | mainnet | `30 23 * * *`    | Account for consensus rewards and validator exits in the Native Staking Strategy                    |
 | `snapBalances`             | mainnet | `2 0 * * *`      | Take a snapshot of the staking strategy's balance                                                   |
 | `verifyBalances`           | mainnet | `6 0 * * *`      | Verify validator balances on the Beacon chain                                                       |
@@ -98,7 +98,7 @@ each run (see notes in `seed_schedules.sql`).
 | Action                       | Description                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------ |
 | `stakeValidator`             | Convert WETH to ETH and deposit to a validator from the Compounding Staking Strategy |
-| `removeValidator`            | Remove a registered or exited compounding validator from the SSV cluster             |
+| `removeValidator`            | Remove registered or exited validators from Native Staking Strategy 2                |
 | `ousdRebalancer`             | Plan and execute OUSD strategy rebalancing via the RebalancerModule                  |
 | `proposeVaultStrategyMoves`  | Simulate and propose ordered OUSD/OETH strategy movements to the Strategist 2/8 Safe |
 | `queueGovernorSixProposal`   | Queue a GovernorSix proposal (`--propid`)                                            |
@@ -160,7 +160,7 @@ That fails safe, but it consumes a Safe nonce and gas — pass an explicit
 - `--profit-variance` and `--vault-change-variance` override the defaults:
   OUSD `100/100`, OETH `1/1`, and SuperOETH `1/10`.
 
-The runner requires `SAFE_API_KEY`. Its active KMS or Defender signer must also
+The runner requires `SAFE_API_KEY`. Its active KMS signer must also
 be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
 to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
 Delegation only permits proposal submission; it does not count toward the
