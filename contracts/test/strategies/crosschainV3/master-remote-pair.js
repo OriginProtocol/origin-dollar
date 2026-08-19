@@ -20,14 +20,14 @@ const SCALE = ethers.BigNumber.from(1);
  */
 
 describe("Unit: V3 Master+Remote loopback", function () {
-  let deployer, governor, alice;
+  let deployer, governor;
   let bridgeAsset, oTokenL2, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
   let master, remote;
   let adapterME, adapterRM;
 
   beforeEach(async () => {
-    [deployer, governor, alice] = await ethers.getSigners();
+    [deployer, governor] = await ethers.getSigners();
 
     // --- bridgeAsset (shared, both sides) ---
     const ERC20Factory = await ethers.getContractFactory("MockDAI");

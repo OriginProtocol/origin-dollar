@@ -4,7 +4,6 @@ const { ethers } = require("hardhat");
 // The pair accounts in a single 18-decimal domain, so no scaling is needed.
 const SCALE = ethers.BigNumber.from(1);
 const usdc = (n) => ethers.utils.parseUnits(n, 18);
-const oToken18 = (n) => ethers.utils.parseUnits(n, 18);
 // Sentinel for "no outstanding queue request" (RemoteWOTokenStrategy.REQUEST_ID_EMPTY).
 const EMPTY = ethers.constants.MaxUint256;
 
@@ -16,14 +15,14 @@ const EMPTY = ethers.constants.MaxUint256;
  * Same in-process loopback harness as `master-remote-pair.js`.
  */
 describe("Unit: V3 failure recovery", function () {
-  let deployer, governor, alice;
+  let deployer, governor;
   let bridgeAsset, oTokenL2, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
   let master, remote;
   let adapterME, adapterRM;
 
   beforeEach(async () => {
-    [deployer, governor, alice] = await ethers.getSigners();
+    [deployer, governor] = await ethers.getSigners();
 
     const ERC20Factory = await ethers.getContractFactory("MockDAI");
     bridgeAsset = await ERC20Factory.deploy();

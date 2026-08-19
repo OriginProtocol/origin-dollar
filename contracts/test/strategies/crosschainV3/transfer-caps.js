@@ -1,9 +1,5 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { impersonateAndFund } = require("../../../utils/signers");
-
-// remoteStrategyBalance is OToken-denominated (18dp); withdraw amounts and adapter transfer
-const SCALE = ethers.BigNumber.from(1);
 
 /**
  * Coverage for the adapter-level transfer caps and the Master-side clamping that

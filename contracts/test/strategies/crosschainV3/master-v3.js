@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { impersonateAndFund } = require("../../../utils/signers");
 
 const {
   MSG,
@@ -8,16 +7,13 @@ const {
   encodeNewBalancePayload,
 } = require("./_helpers");
 
-// The pair accounts in a single 18-decimal domain, so no scaling is needed.
-const SCALE = ethers.BigNumber.from(1);
-
 describe("Unit: MasterWOTokenStrategy", function () {
-  let deployer, governor, alice, bob;
+  let deployer, governor, alice;
   let bridgeAsset, oToken, mockVault, master;
   let outboundAdapter, inboundAdapter;
 
   beforeEach(async () => {
-    [deployer, governor, , alice, bob] = await ethers.getSigners();
+    [deployer, governor, , alice] = await ethers.getSigners();
 
     // --- Tokens & mock vault ---
     const ERC20Factory = await ethers.getContractFactory("MockDAI");
