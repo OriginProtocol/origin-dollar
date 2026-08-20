@@ -903,7 +903,7 @@ function validatorStatus(status) {
 async function setRegistrator({ account }) {
   const signer = await getSigner();
 
-  const strategy = await resolveCompoundingStakingContract().strategy;
+  const strategy = (await resolveCompoundingStakingContract()).strategy;
 
   const tx = await strategy.connect(signer).setRegistrator(account);
   await logTxDetails(tx, "setRegistrator");
