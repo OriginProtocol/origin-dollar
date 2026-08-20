@@ -71,15 +71,16 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 ## Rewards & bribes
 
-| Action                      | Network     | Cron          | Description                                                                                     |
-| --------------------------- | ----------- | ------------- | ----------------------------------------------------------------------------------------------- |
-| `manageMerklBribes`         | mainnet     | `30 13 * * 3` | Call `bribeAll` on the MerklPoolBoosterBribesModule via the Gnosis Safe                         |
-| `manageMerklBribes`         | base        | `35 13 * * 3` | As above, on Base                                                                               |
-| `manageBribes`              | mainnet     | `30 09 * * 5` | `manageBribes` on the CurvePoolBoosterBribesModule; sizes rewards-per-vote by target efficiency |
-| `claimBribes`               | base        | `30 10 * * 4` | Claim bribes from Aerodrome veNFT lockers on Base                                               |
-| `updateVotemarketEpochs`    | arbitrumOne | `0 6 * * 5`   | Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum                       |
-| `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`  | Claim and forward OGN rewards from all modules                                                  |
-| `managePassThrough`         | mainnet     | `30 12 * * 0` | Transfer tokens via the pass-through mechanism                                                  |
+| Action                      | Network     | Cron             | Description                                                                                     |
+| --------------------------- | ----------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `manageMerklBribes`         | mainnet     | `30 13 * * 3`    | Call `bribeAll` on the MerklPoolBoosterBribesModule via the Gnosis Safe                         |
+| `manageMerklBribes`         | base        | `35 13 * * 3`    | As above, on Base                                                                               |
+| `manageBribes`              | mainnet     | `30 09 * * 5`    | `manageBribes` on the CurvePoolBoosterBribesModule; sizes rewards-per-vote by target efficiency |
+| `claimBribes`               | base        | `30 10 * * 4`    | Claim bribes from Aerodrome veNFT lockers on Base                                               |
+| `updateVotemarketEpochs`    | arbitrumOne | `0 6 * * 5`      | Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum                       |
+| `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`     | Claim and forward OGN rewards from all modules                                                  |
+| `managePassThrough`         | mainnet     | `30 12 * * 0`    | Transfer tokens via the pass-through mechanism                                                  |
+| `harvest`                   | mainnet     | `25 11,23 * * *` | Claim strategy rewards through the ClaimStrategyRewards Safe module                             |
 
 ## System
 
