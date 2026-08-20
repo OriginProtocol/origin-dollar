@@ -53,17 +53,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  // Mock SSV token
-  await deploy("MockSSV", {
-    from: deployerAddr,
-  });
-
-  // Mock SSV Network
-  await deploy("MockSSVNetwork", {
-    from: deployerAddr,
-  });
-
-  // Mock SSV Network
+  // Mock beacon chain deposit contract
   await deploy("MockDepositContract", {
     from: deployerAddr,
   });

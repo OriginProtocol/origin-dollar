@@ -775,7 +775,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     cvx: crv,
     comp: crv,
     bal: crv,
-    ssv: crv,
+    unsupportedToken: crv,
     // Users
     anna: rafael,
     matt: clement,
