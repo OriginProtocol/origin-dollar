@@ -81,24 +81,19 @@ const getPendingDeposits = async (strategy, blockTag = "latest") => {
   return deposits;
 };
 
-async function snapBalances({ consol = false }) {
+async function snapBalances() {
   const signer = await getSigner();
 
   // TODO check the slot of the first pending deposit is not zero
 
   const { strategy } = await resolveCompoundingStakingContract();
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
 
-  log(`About to snap balances on ${contract.address}`);
-  const tx = await contract.connect(signer).snapBalances();
+  log(`About to snap balances on ${strategy.address}`);
+  const tx = await strategy.connect(signer).snapBalances();
   await logTxDetails(tx, "snapBalances");
 
   const receipt = await tx.wait();
 
-  // When called via ConsolidationController the BalancesSnapped event is emitted
-  // by the target strategy, so decode logs against the strategy's interface.
   const eventTopic = strategy.interface.getEventTopic("BalancesSnapped");
   const rawLog = receipt.logs.find(
     (l) =>
@@ -126,16 +121,12 @@ async function stakeValidator({
   withdrawalCredentials,
   depositMessageRoot,
   forkVersion,
-  consol = false,
   signer: taskSigner,
 }) {
   const signer = taskSigner || (await getSigner());
 
   const { creatingDepositState, strategy: depositStrategy } =
     await resolveCompoundingStakingContract();
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : depositStrategy;
 
   if (!withdrawalCredentials) {
     withdrawalCredentials = calcWithdrawalCredential(
@@ -197,18 +188,12 @@ async function stakeValidator({
   }
 
   log(
-    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig} via ${
-      consol ? "ConsolidationController" : "strategy"
-    }`
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig}`
   );
   const validatorStakeData = { pubkey, signature: sig, depositDataRoot };
-  const connectedContract = contract.connect(signer);
-  const tx = consol
-    ? await connectedContract["stakeEth((bytes,bytes,bytes32),uint64)"](
-        validatorStakeData,
-        amountGwei
-      )
-    : await connectedContract.stakeEth(validatorStakeData, amountGwei);
+  const tx = await depositStrategy
+    .connect(signer)
+    .stakeEth(validatorStakeData, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
 
   const eventTopic = depositStrategy.interface.getEventTopic("ETHStaked");
@@ -420,21 +405,13 @@ async function autoValidatorDeposits({
   }
 }
 
-async function withdrawValidator({ pubkey, amount, signer, consol = false }) {
+async function withdrawValidator({ pubkey, amount, signer }) {
   const { strategy } = await resolveCompoundingStakingContract();
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
 
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
   const isFullExit = amount === undefined || amount === 0;
-  if (consol && isFullExit) {
-    throw new Error(
-      "The ConsolidationController only supports partial withdrawals. Set a non-zero amount."
-    );
-  }
   const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
@@ -445,13 +422,17 @@ async function withdrawValidator({ pubkey, amount, signer, consol = false }) {
     );
   } else {
     log(
-      `About to partially withdraw ${formatUnits(amountGwei, 9)} ETH from ${
-        consol ? "ConsolidationController" : "validator"
-      } with balance ${formatUnits(balance, 9)} ETH and pubkey ${pubkey}`
+      `About to partially withdraw ${formatUnits(
+        amountGwei,
+        9
+      )} ETH from validator with balance ${formatUnits(
+        balance,
+        9
+      )} ETH and pubkey ${pubkey}`
     );
   }
   // Send 1 wei of value to cover the request withdrawal fee
-  const tx = await contract
+  const tx = await strategy
     .connect(signer)
     .validatorWithdrawal(pubkey, amountGwei, { value: 1 });
   await logTxDetails(tx, "validatorWithdrawal");

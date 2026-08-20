@@ -1463,19 +1463,8 @@ subtask(
     false,
     types.boolean
   )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    if (taskArgs.direct && taskArgs.consol) {
-      throw new Error(
-        "The consol option can not be used with direct withdrawals"
-      );
-    }
     if (taskArgs.direct) {
       await requestValidatorWithdraw({ ...taskArgs, signer });
     } else {
@@ -1551,12 +1540,6 @@ subtask(
     types.string
   )
   .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
     "dryrun",
     "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
     false,
@@ -1567,14 +1550,10 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(snapBalances);
+subtask(
+  "snapBalances",
+  "Takes a snapshot of the staking strategy's balance"
+).setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
