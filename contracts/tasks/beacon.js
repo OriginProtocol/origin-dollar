@@ -34,8 +34,8 @@ const {
   address: mainnetCompoundingStakingSSVStrategyProxy,
 } = require("../deployments/mainnet/CompoundingStakingSSVStrategyProxy.json");
 const {
-  address: hoodiNativeStakingSSVStrategyProxy,
-} = require("../deployments/hoodi/NativeStakingSSVStrategyProxy.json");
+  address: mainnetCompoundingStakingStrategyProxy,
+} = require("../deployments/mainnet/CompoundingStakingStrategyProxy.json");
 const {
   address: hoodiCompoundingStakingSSVStrategyProxy,
 } = require("../deployments/hoodi/CompoundingStakingSSVStrategyProxy.json");
@@ -72,15 +72,15 @@ const getKnownWithdrawalStrategies = (networkName) => {
         label: "CompoundingStakingSSVStrategyProxy",
         address: mainnetCompoundingStakingSSVStrategyProxy,
       },
+      {
+        label: "CompoundingStakingStrategyProxy",
+        address: mainnetCompoundingStakingStrategyProxy,
+      },
     ];
   }
 
   if (networkName === "hoodi") {
     return [
-      {
-        label: "NativeStakingSSVStrategyProxy",
-        address: hoodiNativeStakingSSVStrategyProxy,
-      },
       {
         label: "CompoundingStakingSSVStrategyProxy",
         address: hoodiCompoundingStakingSSVStrategyProxy,
