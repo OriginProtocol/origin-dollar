@@ -15,7 +15,6 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'manage_curve_pb_mainnet',                  'cd /app && pnpm exec tsx tasks/run.ts manageBribes --network mainnet',                 '30 09 * * 5',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'update_votemarket_epochs',                 'cd /app && pnpm exec tsx tasks/run.ts updateVotemarketEpochs --network arbitrumOne',   '0 6 * * 5',             'UTC', false, 'permissioned'),
 ('origin-dollar', 'OETHandOUSD_harvest_CRV_MOPRHO_native_staking','cd /app && pnpm exec tsx tasks/run.ts harvest --network mainnet',                  '25 11,23 * * *',        'UTC', false, NULL),
-('origin-dollar', 'OETH_native_staking_accounting',           'cd /app && pnpm exec tsx tasks/run.ts doAccounting --network mainnet',                 '30 23 * * *',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_pass_through',                      'cd /app && pnpm exec tsx tasks/run.ts managePassThrough --network mainnet',            '30 12 * * 0',           'UTC', false, NULL),
 ('origin-dollar', 'claim_bribes_base',                        'cd /app && pnpm exec tsx tasks/run.ts claimBribes --network base',                     '30 10 * * 4',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_bribes_base',                       'cd /app && pnpm exec tsx tasks/run.ts manageMerklBribes --network base',               '35 13 * * 3',           'UTC', false, 'permissioned'),
