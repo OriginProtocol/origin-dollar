@@ -31,6 +31,8 @@ const FQN = {
   OUSDVault: "contracts/vault/OUSDVault.sol:OUSDVault",
   OUSD: "contracts/token/OUSD.sol:OUSD",
   WOETH: "contracts/token/WOETH.sol:WOETH",
+  CompoundingStakingStrategy:
+    "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
 };
 
 const PINS = {
@@ -111,6 +113,35 @@ const PINS = {
     "56|0|adjuster|uint256|32",
     "57|0|__gap|uint256[49]|1568",
   ],
+
+  // Three variables share slot 51, so an innocent-looking type change can
+  // silently move every strategy field that follows it.
+  CompoundingStakingStrategy: [
+    "0|0|initialized|bool|1",
+    "0|1|initializing|bool|1",
+    "1|0|__gap|uint256[50]|1600",
+    "51|0|_paused|bool|1",
+    "51|1|validatorRegistrator|address|20",
+    "51|21|firstDeposit|bool|1",
+    "52|0|deposits|mapping(bytes32 => struct CompoundingValidatorStorage.DepositData)|32",
+    "53|0|depositList|bytes32[]|32",
+    "54|0|verifiedValidators|bytes32[]|32",
+    "55|0|validator|mapping(bytes32 => struct CompoundingValidatorStorage.ValidatorData)|32",
+    "56|0|snappedBalance|struct CompoundingValidatorStorage.Balances|64",
+    "58|0|lastVerifiedEthBalance|uint256|32",
+    "59|0|depositedWethAccountedFor|uint256|32",
+    "60|0|initialDepositAmountWei|uint256|32",
+    "61|0|__gap|uint256[40]|1280",
+    "101|0|_deprecated_platformAddress|address|20",
+    "102|0|_deprecated_vaultAddress|address|20",
+    "103|0|assetToPToken|mapping(address => address)|32",
+    "104|0|assetsMapped|address[]|32",
+    "105|0|_deprecated_rewardTokenAddress|address|20",
+    "106|0|_deprecated_rewardLiquidationThreshold|uint256|32",
+    "107|0|harvesterAddress|address|20",
+    "108|0|rewardTokenAddresses|address[]|32",
+    "109|0|_reserved|int256[98]|3136",
+  ],
 };
 
 // Where each gap ends, i.e. the slot the next variable would take. A correct
@@ -119,6 +150,7 @@ const GAP_ENDS = {
   OUSDVault: [51, 123],
   OUSD: [154, 200],
   WOETH: [56, 106],
+  CompoundingStakingStrategy: [51, 101],
 };
 
 describe("pinned storage layouts", () => {
