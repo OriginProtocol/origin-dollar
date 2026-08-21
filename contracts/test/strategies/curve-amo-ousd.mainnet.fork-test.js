@@ -775,14 +775,19 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      // Make protocol insolvent by minting a lot of OETH
+      // Mint the USDC to be deposited while the vault is still fully backed. The
+      // vault's own under-backed mint gate would otherwise block this user mint
+      // before the strategy's insolvency check could be reached.
+      await mintToVault({});
+
+      // Make protocol insolvent by minting a lot of OUSD
       // This is a cheat.
       // prettier-ignore
       await ousdVault
         .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
 
       await expect(
-        mintAndDepositToStrategy({ returnTransaction: true })
+        mintAndDepositToStrategy({ returnTransaction: true, skipMint: true })
       ).to.be.revertedWith("Protocol insolvent");
     });
     it("Withdraw: Must withdraw something", async () => {
@@ -988,12 +993,8 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     newBehavior: true,
   }));
 
-  const mintAndDepositToStrategy = async ({
-    userOverride,
-    amount,
-    returnTransaction,
-  } = {}) => {
-    const user = userOverride || defaultDepositor;
+  const mintToVault = async ({ user, amount } = {}) => {
+    user = user || defaultDepositor;
     amount = amount || defaultDeposit.div(1e12);
 
     const balance = await usdc.balanceOf(user.address);
@@ -1004,6 +1005,23 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     await usdc.connect(user).approve(ousdVault.address, 0);
     await usdc.connect(user).approve(ousdVault.address, amount);
     await ousdVault.connect(user).mint(amount);
+  };
+
+  // `skipMint` deposits USDC the vault already holds, without a fresh user mint.
+  // Needed to reach the strategy's own solvency check on an under-backed vault,
+  // since the vault's mint gate would otherwise block the user mint first.
+  const mintAndDepositToStrategy = async ({
+    userOverride,
+    amount,
+    returnTransaction,
+    skipMint,
+  } = {}) => {
+    const user = userOverride || defaultDepositor;
+    amount = amount || defaultDeposit.div(1e12);
+
+    if (!skipMint) {
+      await mintToVault({ user, amount });
+    }
 
     const gov = await ousdVault.governor();
     const tx = await ousdVault
