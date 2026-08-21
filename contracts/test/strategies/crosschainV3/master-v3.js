@@ -31,8 +31,6 @@ describe("Unit: MasterWOTokenStrategy", function () {
       mockVault.address
     );
 
-    await mockVault.setOToken(oToken.address);
-
     // --- Master strategy: deploy impl behind the standard proxy ---
     const ImplFactory = await ethers.getContractFactory(
       "MasterWOTokenStrategy"
@@ -58,8 +56,6 @@ describe("Unit: MasterWOTokenStrategy", function () {
       .initialize(impl.address, governor.address, initData);
 
     master = await ethers.getContractAt("MasterWOTokenStrategy", proxy.address);
-
-    await mockVault.whitelistStrategy(master.address);
 
     // --- Adapters ---
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
@@ -201,7 +197,7 @@ describe("Unit: MasterWOTokenStrategy", function () {
     });
   });
 
-  describe("balance-check + settlement (operator-driven)", () => {
+  describe("balance check (operator-driven)", () => {
     it("rejects requestBalanceCheck from non-operator non-governor", async () => {
       await expect(
         master.connect(alice).requestBalanceCheck()

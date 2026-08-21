@@ -10,7 +10,7 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  * @title AbstractCrossChainV3Strategy
  * @author Origin Protocol Inc
  *
- * @notice Shared base for OUSD V3 Master (L2) and Remote (Ethereum) strategies. Provides:
+ * @notice Shared base for the Master (L2) and Remote (Ethereum) cross-chain strategies. Provides:
  *           - Bridge-agnostic outbound / inbound adapter wiring.
  *           - Yield-channel nonce machinery (one yield op in flight at a time).
  *           - Inbound `receiveMessage` entry point with adapter-only access control,
@@ -44,7 +44,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     address public inboundAdapter;
 
     /// @notice Account allowed to drive periodic, permissioned operations
-    ///         (balance check, settlement, claim trigger). Set by governor.
+    ///         (balance check, claim trigger). Set by governor.
     address public operator;
 
     /// @notice Highest yield-channel nonce ever assigned.
@@ -185,7 +185,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     /**
      * @dev Concrete strategies (Master / Remote) override this to dispatch by `msgType` and
      *      implement the per-message logic. `body` is the message-specific payload (e.g.,
-     *      `abi.encode(yieldBaseline)` for DEPOSIT_ACK).
+     *      `abi.encode(remoteBalance)` for DEPOSIT_ACK).
      */
     function _handleBridgeMessage(
         uint256 amountReceived,

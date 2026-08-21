@@ -1,11 +1,18 @@
-# OUSD V3 — Bridge-Agnostic Cross-Chain Strategy
+# OETHb V3 — Bridge-Agnostic Cross-Chain Strategy
 
-This directory implements the V3 cross-chain strategy pair (Master + Remote) and the bridge-agnostic adapter layer they speak to. Two workstreams share the code:
+This directory implements the V3 cross-chain strategy pair (Master + Remote) and the bridge-agnostic adapter layer they speak to.
 
-- **OUSD V3:** OUSD across multiple L2s with native cross-chain bridging, yield generated on Ethereum and reported to each L2 via a yield-channel round-trip.
-- **OETHb Phase 1:** Migration of 8.7k wOETH from the existing oracle-priced `BridgedWOETHStrategy` on Base into a new Master/Remote pair built on this abstraction.
+**Scope: OETHb Phase 1.** Migration of ~8.7k wOETH from the existing oracle-priced `BridgedWOETHStrategy` on Base into a new Master/Remote pair, so the Base vault's wOETH position earns real, reported yield instead of an oracle price.
 
-**For narrative walkthroughs of each flow (deposit, withdraw, balance check, bridge in/out, settlement) with sequence diagrams, see [`FLOWS.md`](./FLOWS.md).** This README is the reference: file map, message envelope, state-transition table, authorisation surface, adapter knobs.
+| Leg | Chain | Contract | Role |
+|---|---|---|---|
+| Master | Base (8453) | `MasterWOTokenStrategy` | Strategy registered on the OETHb Vault. Holds WETH plus an accounting number. |
+| Remote | Ethereum (1) | `RemoteWOTokenStrategy` | Not registered with any vault. Custodies wOETH shares; mints/redeems OETH at the mainnet OETH Vault. |
+| Migration | Base | `BridgedWOETHMigrationStrategy` | Upgrade impl for the existing `BridgedWOETHStrategyProxy`; `bridgeToRemote()` CCIP-ships wOETH to Remote. |
+
+**Only the backing asset (WETH) crosses a bridge.** The pair never bridges the OToken or the wOToken — see [`DESIGN.md`](./DESIGN.md) §3.11. Every cross-chain message is nonce-gated and originates at Master.
+
+**For narrative walkthroughs of each flow (deposit, withdraw, balance check) with sequence diagrams, see [`FLOWS.md`](./FLOWS.md).** This README is the reference: file map, message envelope, state-transition table, authorisation surface, adapter knobs.
 
 ## File map
 
@@ -18,29 +25,24 @@ contracts/interfaces/crosschainV3/
 contracts/strategies/crosschainV3/
   CrossChainV3Helper.sol           — strategy envelope `abi.encode(msgType, nonce, body)` + per-msgType codec
   AbstractCrossChainV3Strategy.sol — adapter wiring, yield-nonce machinery, inbound dispatch,
-                                     single outbound send helper (_send, parameterised by userFunded)
-  AbstractWOTokenStrategy.sol      — wOToken pair base: bridge-channel state + generic bridge mechanics,
-                                     `bridgeOTokenToPeer`, replay protection, signed bridgeAdjustment,
-                                     onlyOperatorGovernorOrStrategist modifier, side-specific hooks
-  MasterWOTokenStrategy.sol        — vault-facing leg: yield-channel ACK handlers + operator entrypoints,
-                                     implements 4 hooks (burn / mint OToken via vault)
-  RemoteWOTokenStrategy.sol        — yield-side leg: 2-step bridgeAsset↔OToken↔wOToken pipeline,
-                                     implements 4 hooks (wrap / unwrap OToken via 4626)
+                                     single pool-funded outbound send helper (`_send`)
+  AbstractWOTokenStrategy.sol      — wOToken pair base: the `bridgeAsset` immutable and its 18-decimal
+                                     invariant, `onlyOperatorGovernorOrStrategist` modifier, strategy-base
+                                     stubs, outbound-adapter allowance rotation
+  MasterWOTokenStrategy.sol        — vault-facing leg: yield-channel ACK handlers + operator entrypoints
+  RemoteWOTokenStrategy.sol        — yield-side leg: 2-step bridgeAsset↔OToken↔wOToken pipeline
 
 contracts/strategies/crosschainV3/adapters/
   AbstractAdapter.sol     — shared base: multi-tenant whitelist, per-lane config,
                             envelope wrap/unwrap (52-byte header: 20-byte sender + 32-byte
                             intendedAmount), `_validateInbound`, `_deliver`, transfer caps
-  CCTPAdapter.sol         — Circle CCTP V2: manual burn-body parse in `relay()` (auth amount/fee/hookData);
-                            pure messages dispatch via `handleReceiveFinalizedMessage` hook.
-                            Hard 10M USDC `MAX_TRANSFER_AMOUNT` constant; configurable min + threshold.
-  CCIPAdapter.sol         — Chainlink CCIP atomic token + message
+  CCIPAdapter.sol         — Chainlink CCIP atomic token + message. Deployed on both chains;
+                            carries the Base → Ethereum direction (Master outbound, Remote inbound).
   SuperbridgeAdapter.sol  — split delivery: OP Stack L1StandardBridge for the canonical ETH leg + CCIP
                             for the message. Token-bearing sends only on the L1 side; L2 side runs as
                             inbound only (canonical ETH wrapped to WETH via `receive()`).
 
 contracts/strategies/crosschainV3/libraries/
-  CCTPMessageHelper.sol   — CCTP V2 wire-format decoder: transport header + burn-message body
   CCIPMessageBuilder.sol  — shared CCIP `Client.EVM2AnyMessage` construction
 
 contracts/proxies/create2/
@@ -51,9 +53,8 @@ contracts/strategies/
   BridgedWOETHMigrationStrategy.sol — Phase 1 upgrade impl for the existing Base proxy
 
 contracts/mocks/crosschainV3/
-  MockBridgeAdapter, MockBridgeCallTarget, MockBridgeReceiver, MockCCIPRouter,
-  MockCCTPRelayTransmitter, MockCrossChainV3HelperHarness, MockEthOTokenVault,
-  MockMintableBurnableOToken, MockOTokenVault
+  MockBridgeAdapter, MockBridgeReceiver, MockCCIPRouter, MockCrossChainV3HelperHarness,
+  MockEthOTokenVault, MockMintableBurnableOToken, MockOTokenVault
 ```
 
 ## Message envelope (wire format)
@@ -70,89 +71,80 @@ The protocol uses two nested envelopes:
 
 2. **Strategy envelope** (built by `CrossChainV3Helper.packPayload`): `abi.encode(uint32 msgType, uint64 nonce, bytes body)` — no version field.
 
-   - `msgType` ∈ 1..12 (see table below)
-   - `nonce` is the yield-channel nonce for yield-channel messages, 0 for bridge-channel messages
+   - `msgType` ∈ 1..8 (see table below)
+   - `nonce` is the yield-channel nonce — one operation in flight at a time
    - `body` is `abi.encode(...)` of message-specific fields (or empty)
 
-| ID | Type | Channel | Direction | Body | Notes |
-|---|---|---|---|---|---|
-| 1 | DEPOSIT | Yield | M→R | empty | tokens carried via adapter |
-| 2 | DEPOSIT_ACK | Yield | R→M | `(uint256 yieldBaseline)` | |
-| 3 | WITHDRAW_REQUEST | Yield | M→R | `(uint256 amount)` | leg 1 |
-| 4 | WITHDRAW_REQUEST_ACK | Yield | R→M | `(uint256 yieldBaseline, bool success)` | success=false ⇒ leg-1 NACK (nothing queued) |
-| 5 | WITHDRAW_CLAIM | Yield | M→R | empty | leg 2 trigger |
-| 6 | WITHDRAW_CLAIM_ACK | Yield | R→M | `(uint256 yieldBaseline, bool success, uint256 amount)` | tokens carried on success |
-| 7 | BALANCE_CHECK_REQUEST | Yield | M→R | `(uint256 timestamp)` | |
-| 8 | BALANCE_CHECK_RESPONSE | Yield | R→M | `(uint256 balance, uint256 timestamp)` | |
-| 9 | SETTLE_BRIDGE_ACCOUNTING | Yield | M→R | empty | clears bridgeAdjustment both sides |
-| 10 | SETTLE_BRIDGE_ACCOUNTING_ACK | Yield | R→M | `(uint256 yieldBaseline)` | |
-| 11 | BRIDGE_IN | Bridge | R→M | `BridgeUserPayload` | nonceless, mint on destination |
-| 12 | BRIDGE_OUT | Bridge | M→R | `BridgeUserPayload` | nonceless, release on destination |
+| ID | Type | Direction | Body | Notes |
+|---|---|---|---|---|
+| 1 | DEPOSIT | M→R | empty | tokens carried via adapter |
+| 2 | DEPOSIT_ACK | R→M | `(uint256 remoteBalance)` | |
+| 3 | WITHDRAW_REQUEST | M→R | `(uint256 amount)` | leg 1 |
+| 4 | WITHDRAW_REQUEST_ACK | R→M | `(uint256 remoteBalance, bool success)` | success=false ⇒ leg-1 NACK (nothing queued) |
+| 5 | WITHDRAW_CLAIM | M→R | empty | leg 2 trigger |
+| 6 | WITHDRAW_CLAIM_ACK | R→M | `(uint256 remoteBalance, bool success, uint256 amount)` | tokens carried on success |
+| 7 | BALANCE_CHECK_REQUEST | M→R | `(uint256 timestamp)` | |
+| 8 | BALANCE_CHECK_RESPONSE | R→M | `(uint256 balance, uint256 timestamp)` | |
 
-`BridgeUserPayload` = `(bytes32 bridgeId, uint256 amount, address recipient, bytes callData, uint32 callGasLimit)`.
+`remoteBalance` is Remote's `_balance()` — the whole position, denominated in OToken. Because both the OToken and `bridgeAsset` are required to be 18-decimal (asserted in both constructors), the value is directly comparable with Master's local `bridgeAsset` balance with no scaling.
 
 ## Withdrawal state-transition table (Remote)
 
 Authoritative summary of the Option-1 withdrawal flow with idempotent claim. Each row is a single intermediate state; the value lives in exactly one slot per row, and `checkBalance` equals the total in every row:
 
-| State | shares value | oToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
+| State | shares value | OToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
 |---|---|---|---|---|---|---|
-| Idle | X | 0 | 0 | 0 | 0 | X |
-| Requested (post-leg-1) | X − A | 0 | 0 | A | nonzero | X |
-| Claimed (post-`claimRemoteWithdrawal`) | X − A | 0 | A | 0 | 0 | X |
-| Bridging-out (post-leg-2 send) | X − A | 0 | 0 | 0 | 0 | X − A |
-| Completed | X − A | 0 | 0 | 0 | 0 | X − A |
+| Idle | X | 0 | 0 | 0 | EMPTY | X |
+| Requested (post-leg-1) | X − A | 0 | 0 | A | id (verbatim) | X |
+| Claimed (post-`claimRemoteWithdrawal`) | X − A | 0 | A | 0 | EMPTY | X |
+| Bridging-out (post-leg-2 send) | X − A | 0 | 0 | 0 | EMPTY | X − A |
+| Completed | X − A | 0 | 0 | 0 | EMPTY | X − A |
 
-\* `queued` is derived, not a stored slot: `outstandingRequestId != 0 ? outstandingRequestAmount : 0`.
+Failure branches (revert-free handlers; value preserved, recoverable):
+
+| State | shares value | OToken bal | bridgeAsset bal | queued\* | outstandingRequestId | checkBalance |
+|---|---|---|---|---|---|---|
+| Deposit mint-failed | X | 0 | D (idle) | 0 | EMPTY | X + D |
+| Unwrap-ok / queue-fail (leg-1 NACK) | X − A | A (idle) | 0 | 0 | EMPTY | X |
+
+The idle `D` / `A` are re-wrapped into wOETH by the operator `retryDeposit()`; the leg-1 NACK also clears Master's `pendingWithdrawalAmount`.
+
+`EMPTY` = `REQUEST_ID_EMPTY` (`type(uint256).max`). The vault's `requestId` is stored verbatim, so the sentinel is `type(uint256).max` rather than `0` — that way a genuine `requestId` of `0` (the first withdrawal against a fresh vault) is unambiguous.
+
+\* `queued` is derived, not a stored slot: `outstandingRequestId != REQUEST_ID_EMPTY ? outstandingRequestAmount : 0`.
 
 ## Authorisation surface
 
 - **Governor**: sets adapters, operator, bridge configs, sweeps stuck tokens, upgrades.
 - **Operator**: triggers permissioned yield-channel round-trips (`requestBalanceCheck`,
-  `requestSettlement`, `triggerClaim`). Can be a multisig or automation EOA.
+  `triggerClaim`). Can be a multisig or automation EOA.
 - **Vault**: drives `deposit` / `withdraw` on Master (no user-facing redemption against this strategy in normal ops).
 - **Receiver adapter**: the only address allowed to call `receiveMessage` on the strategy.
 - **Anyone**: `claimRemoteWithdrawal` (idempotent), `processStoredMessage` (split-delivery finaliser).
 
-## Bridge-channel composability (`callData`)
-
-Both Master and Remote expose a user-facing `bridgeOTokenToPeer(amount, recipient, callData, callGasLimit)` payable function. On the destination, after the strategy mints/releases tokens to `recipient`, an optional `recipient.call{value: 0, gas: callGasLimit}(callData)` runs. Guardrails:
-
-- Tokens are delivered first (CEI). Reverting calldata never strands funds.
-- `callGasLimit ≤ MAX_BRIDGE_CALL_GAS` (500_000).
-- No `msg.value` ever forwarded.
-- `nonReentrant` on the inbound entry blocks re-entering Master/Remote during the call.
-- Empty calldata = no call.
-
 ## Adapter knobs
 
-All adapter caps and modes are governor-settable post-deploy. See [`FLOWS.md`](./FLOWS.md#9-adapter-knobs-reference) for the full table; high points:
+All adapter caps and modes are governor-settable post-deploy. See [`FLOWS.md`](./FLOWS.md#7-adapter-knobs-reference) for the full table; high points:
 
-- `maxTransferAmount` (all adapters) — per-tx token cap. `0` = unlimited. Strategies on the peer chain read this as "max I can deliver in one tx" via `IBridgeAdapter.maxTransferAmount()` to size their withdrawAll-style requests.
-- `MAX_TRANSFER_AMOUNT` (CCTPAdapter) — hard 10M USDC constant (CCTP V2 protocol cap; never higher than this).
-- `minTransferAmount` (CCTPAdapter) — dust floor.
-- `minFinalityThreshold` (CCTPAdapter) — 1000–1999 = fast finality (non-zero token-side fee), 2000 = finalised. NO declaration default; governor MUST call `setMinFinalityThreshold` post-deploy or sends revert with `"CCTP: threshold not set"`.
-- `operator` (CCTPAdapter) — the single address allowed to call `relay(message, attestation)`.
+- `maxTransferAmount` (all adapters) — per-tx token cap. `0` = unlimited. Master reads it off its **own local** adapters via `IBridgeAdapter.maxTransferAmount()` to size sweep-style requests: the outbound adapter for `depositAll`, and the inbound adapter for `withdrawAll` (the local mirror of the same lane, since Master cannot query across chains).
+- `minTransferAmount` (all adapters) — dust floor.
+- Per-lane `ChainConfig` — remote chain selector, peer adapter address, and the transport-specific gas limit.
 
-`CCTPAdapter` inbound dispatch has two paths:
-
-- **Burn messages** (sourced from `TokenMessenger.depositForBurnWithHook`) — `relay()` manually parses the burn body (`CCTPMessageHelper.decodeBurnBody`) for authoritative `amount` / `feeExecuted` / `hookData`, calls `messageTransmitter.receiveMessage` to credit USDC, then dispatches `_deliver` with `amount - feeExecuted`. The `handleReceiveFinalizedMessage` hook is NOT used for token-bearing messages.
-- **Pure messages** (sourced from `MessageTransmitter.sendMessage`) — `relay()` calls `messageTransmitter.receiveMessage` which fires the hook callback. The hook is restricted to `intendedAmount == 0` and reverts if a token leg sneaks through.
+Bridge fees are paid from a native-token pool held by the strategy and funded by the operator. There is no user-funded send path: `_send` quotes the adapter and requires `address(this).balance >= fee`. Overpayment is not refunded — it stays in the pool.
 
 ## Tests
 
 ```
 test/strategies/crosschainV3/
+  _helpers.js                          — shared envelope/payload encoders and MSG constants
   crosschain-v3-helper.js              — envelope codec
-  master-v3.js / remote-v3.js          — per-side deposit / bridge / init / dispatch
-  master-remote-pair.js                — paired loopback (deposit, BRIDGE_IN/OUT)
-  withdrawal.js                        — full withdrawal cycle (happy / NACK / idempotent / fast-finality)
-  settlement-balance-check.js          — operator-driven rounds, yield-only baseline
-  bridge-fee.js                        — bridgeFeeBps burn-full / deliver-net mechanics
-  fee-path.js                          — adapter fee plumbing (msg.value, pool, refund-stays semantics)
-  transfer-caps.js                     — adapter MAX/min, Master clamp via adapter views
-  cctp-relay.js                        — CCTPAdapter pure-message relay path + auth / threshold
-  cctp-burn-relay.js                   — CCTPAdapter burn-message manual-parse path, donation isolation
+  master-v3.js / remote-v3.js          — per-side deposit / init / dispatch
+  master-remote-pair.js                — paired loopback via MockBridgeAdapter
+  withdrawal.js                        — full withdrawal cycle (happy / NACK / idempotent / bridge-fee tolerance)
+  balance-check.js                     — operator-driven balance-check rounds
+  failure-recovery.js                  — stuck-nonce and desync recovery paths
+  fee-path.js                          — adapter fee plumbing (pool funding, refund-stays semantics)
+  transfer-caps.js                     — adapter max/min, Master clamp via adapter views
   split-inbound-adapter.js             — SuperbridgeAdapter pending-slot lifecycle
   *.fork-test.js                       — base / mainnet fork tests (run via the fork-test.sh harness)
 ```
@@ -169,29 +161,30 @@ For the fork tests, set `FORK=true` and the appropriate `FORK_NETWORK_NAME` (`ba
 FORK_NETWORK_NAME=mainnet pnpm test:fork test/strategies/crosschainV3/withdrawal.mainnet.fork-test.js
 ```
 
-Current total: **111 unit tests** + the per-network `*.fork-test.js` files.
+Current total: **76 unit tests** + the per-network `*.fork-test.js` files.
 
-## Operational runbook (mainnet / testnet)
+> These Hardhat suites are being ported to Foundry (`tests/unit`, `tests/fork`, `tests/smoke`) and will be deleted once the ports land.
 
-Deploy scripts (testnet at `deploy/sepolia/*` + `deploy/baseSepolia/*`, production at `deploy/base/100-104_*` + `deploy/mainnet/210-211_*`) deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses) with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, CCTP TokenMessengers, OP Stack L1StandardBridge addresses, governance multisigs).
+## Operational runbook
+
+Production deploy scripts live at `deploy/base/100-104_*` and `deploy/mainnet/210-211_*`. They deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses), with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, OP Stack L1StandardBridge addresses, governance multisigs).
 
 Key cadences (production targets):
 
 - **Balance check**: every ~2 hours on a cron, operator-triggered.
-- **Settlement**: every 6–12 hours, operator-triggered. Higher cadence on testnet (1h) for surfacing issues.
 - **OETHb Phase 1 migration**: 9 × `bridgeToRemote(1000e18)` over ~9 hours respecting CCIP rate limits. No deposits/withdrawals on the new pair during this window.
+
+**Sequencing constraint:** Base script `102` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `210` + `211` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
 
 ## Open items for follow-up
 
-These were intentionally not authored as part of the protocol code because they require real on-chain configuration. Items completed in earlier sessions (transfer-amount caps on adapters, FLOWS.md walkthrough doc, CCTPAdapter proxy-safe `minFinalityThreshold` + fast-finality inbound handler, `Master.depositAll/withdrawAll` clamp by adapter caps) are no longer on this list.
+These require real on-chain configuration and were intentionally not authored as part of the protocol code.
 
 | # | Item | Status |
 |---|---|---|
-| 1 | **Testnet registration (Sepolia + Base Sepolia)** — full network registration + mock vault/token + deploy scripts wiring `MasterWOTokenStrategy`/`RemoteWOTokenStrategy` + `CCIPAdapter` + `SuperbridgeAdapter` (all behind `BridgeAdapterProxy` via CreateX/CREATE2 for peer parity). OETHb topology only — no CCTP wiring in this scope. | Done |
-| 2 | **CCTP testnet path** — `CCTPAdapter` on Sepolia/Base Sepolia + Iris-sandbox attestation relayer setup for OUSD V3 testnet rehearsal. | Follow-up |
-| 3 | **OETHb Phase 1 base fork test** — `oethb-phase1-migration.base.fork-test.js` driving 9 × `bridgeToRemote(1000e18)` against a Base fork, validating CCIP rate-limit pacing. | Pending |
-| 4 | **Mainnet + Base production deploy scripts** — `deploy/mainnet/200-203_*` and `deploy/base/100-105_*` to wire Master/Remote pair + adapters on production. | Pending |
-| 5 | **Governance proposal 1 (deploy + wire)** — mainnet proposal to deploy + wire Master/Remote and upgrade old `BridgedWOETHStrategy`. | Pending |
-| 6 | **Governance proposal 2 (post-migration cleanup)** — remove old `BridgedWOETHStrategy` from vault + mint whitelist after Phase 1 migration completes. | Pending |
-| 7 | **Operator runbook** — formal cadence + failure-mode runbook (balance-check ~2h, settlement 6–12h, what to do on stuck nonce, etc.); cadences exist in inline comments but no operator-facing doc. | Pending |
-| 8 | **OUSD V3 spoke deploys** — once OETHb Phase 1 stabilises, deploy OUSD V3 Master/Remote pairs per spoke chain (Base, HyperEVM, etc.). | Future |
+| 1 | **Foundry migration** — port the deploy scripts to `scripts/deploy/{base,mainnet}/` and the test suites to `tests/{unit,fork,smoke}/`, then delete the Hardhat equivalents. | In progress |
+| 2 | **`requestBalanceCheck` automation** — no Talos action exists for the ~2h Base cadence. Because Foundry deploys write only `build/deployments-8453.json` (never `deployments/base/<Name>.json` or `utils/addresses.js`, which Talos reads), whoever writes it must hand-create the deployment entry or pin the address. | Pending |
+| 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. | Pending |
+| 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`deploy/base/104`, currently gated by `forceSkip`). | Pending |
+| 5 | **Retire `otokenOethbUpdateWoethPrice`** — once `104` removes the old strategy from the vault, its oracle price no longer feeds anything. | Follow-up |
+| 6 | **Operator runbook** — formal cadence + failure-mode runbook (balance-check ~2h, what to do on a stuck nonce); cadences exist in inline comments but there is no operator-facing doc. | Pending |

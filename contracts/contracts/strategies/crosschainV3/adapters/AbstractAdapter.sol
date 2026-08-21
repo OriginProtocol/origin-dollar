@@ -12,7 +12,7 @@ import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceive
  * @title AbstractAdapter
  * @author Origin Protocol Inc
  *
- * @notice Shared base for OUSD V3 bridge adapters. One adapter deployment serves a single
+ * @notice Shared base for the V3 bridge adapters. One adapter deployment serves a single
  *         (chain, bridge protocol) — multi-tenant across strategies on that chain, with per-
  *         sender lane configuration. Under CreateX/CREATE2 cross-chain parity, the peer adapter on
  *         the destination chain shares this contract's own address, so outbound routing and

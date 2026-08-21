@@ -18,11 +18,11 @@ library CrossChainV3Helper {
 
     /// @notice Master → Remote: deposit `amount` of bridgeAsset (carried by the adapter).
     uint32 internal constant DEPOSIT = 1;
-    /// @notice Remote → Master: deposit acknowledgement with Remote's yield-only baseline (OToken 18dp).
+    /// @notice Remote → Master: deposit acknowledgement with Remote's reported balance (OToken 18dp).
     uint32 internal constant DEPOSIT_ACK = 2;
     /// @notice Master → Remote: leg-1 withdrawal request for `amount` of bridgeAsset.
     uint32 internal constant WITHDRAW_REQUEST = 3;
-    /// @notice Remote → Master: leg-1 acknowledgement with Remote's yield-only baseline (OToken 18dp).
+    /// @notice Remote → Master: leg-1 acknowledgement with Remote's reported balance (OToken 18dp).
     uint32 internal constant WITHDRAW_REQUEST_ACK = 4;
     /// @notice Master → Remote: leg-2 trigger to ship the previously-queued amount.
     uint32 internal constant WITHDRAW_CLAIM = 5;
@@ -69,11 +69,11 @@ library CrossChainV3Helper {
     // --- Per-message payload encoders / decoders ----------------------------
     //
     // DEPOSIT                       : payload empty; amount is carried by the adapter
-    // DEPOSIT_ACK                   : payload = abi.encode(yieldBaseline)
+    // DEPOSIT_ACK                   : payload = abi.encode(remoteBalance)
     // WITHDRAW_REQUEST              : payload = abi.encode(amount)
-    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(yieldBaseline, success)
+    // WITHDRAW_REQUEST_ACK          : payload = abi.encode(remoteBalance, success)
     // WITHDRAW_CLAIM                : payload empty
-    // WITHDRAW_CLAIM_ACK            : payload = abi.encode(yieldBaseline, success, amount)
+    // WITHDRAW_CLAIM_ACK            : payload = abi.encode(remoteBalance, success, amount)
     // BALANCE_CHECK_REQUEST         : payload = abi.encode(timestamp)
     // BALANCE_CHECK_RESPONSE        : payload = abi.encode(balance, timestamp)
 
@@ -100,16 +100,16 @@ library CrossChainV3Helper {
      *         carries tokens — `amount` pins the exact bridgeAsset bundled with the
      *         message (0 on NACK or message-only) so split-delivery receivers can set
      *         `expectedAmount` without inspecting the bridge transport.
-     * @param yieldBaseline Remote's yield-only baseline (OToken 18dp) after the claim leg.
+     * @param remoteBalance Remote's reported balance (OToken 18dp) after the claim leg.
      * @param success    `true` if the claim shipped tokens, `false` if leg-2 NACK'd.
      * @param amount     bridgeAsset units bundled with this ack; 0 when `success` is false.
      */
     function encodeWithdrawClaimAckPayload(
-        uint256 yieldBaseline,
+        uint256 remoteBalance,
         bool success,
         uint256 amount
     ) internal pure returns (bytes memory) {
-        return abi.encode(yieldBaseline, success, amount);
+        return abi.encode(remoteBalance, success, amount);
     }
 
     /// @notice Decode the WITHDRAW_CLAIM_ACK 3-tuple payload.
@@ -117,7 +117,7 @@ library CrossChainV3Helper {
         internal
         pure
         returns (
-            uint256 yieldBaseline,
+            uint256 remoteBalance,
             bool success,
             uint256 amount
         )
@@ -127,23 +127,23 @@ library CrossChainV3Helper {
 
     /**
      * @notice Encode the WITHDRAW_REQUEST_ACK payload.
-     * @param yieldBaseline Remote's yield-only baseline (OToken 18dp) after the leg-1 request.
+     * @param remoteBalance Remote's reported balance (OToken 18dp) after the leg-1 request.
      * @param success    `true` if Remote queued the withdrawal; `false` if the unwrap/queue failed
      *                   (Remote queued nothing, so Master must clear its pending withdrawal and the
      *                   two-leg flow does not proceed to a claim).
      */
     function encodeWithdrawRequestAckPayload(
-        uint256 yieldBaseline,
+        uint256 remoteBalance,
         bool success
     ) internal pure returns (bytes memory) {
-        return abi.encode(yieldBaseline, success);
+        return abi.encode(remoteBalance, success);
     }
 
     /// @notice Decode the WITHDRAW_REQUEST_ACK 2-tuple payload.
     function decodeWithdrawRequestAckPayload(bytes memory payload)
         internal
         pure
-        returns (uint256 yieldBaseline, bool success)
+        returns (uint256 remoteBalance, bool success)
     {
         return abi.decode(payload, (uint256, bool));
     }

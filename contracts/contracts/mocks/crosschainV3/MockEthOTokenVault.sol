@@ -12,11 +12,12 @@ import { StableMath } from "../../utils/StableMath.sol";
  * @title MockEthOTokenVault
  * @notice TEST-ONLY Ethereum-side OToken vault stand-in for the V3 RemoteWOTokenStrategy tests.
  *
- *         Mirrors the OUSD VaultCore surface Remote uses, INCLUDING the decimal scaling the
- *         real vault applies (`scaleBy(18, assetDecimals)` on mint; `scaleBy(assetDecimals, 18)`
- *         on the withdrawal queue), so a 6dp-asset / 18dp-oToken pair is exercised end-to-end.
- *         When the asset and OToken share decimals (e.g. WETH/OETH 18/18) every scale is the
- *         identity, matching production for the OETHb deployment.
+ *         Mirrors the VaultCore surface Remote uses, INCLUDING the decimal scaling the real
+ *         vault applies (`scaleBy(18, assetDecimals)` on mint; `scaleBy(assetDecimals, 18)` on
+ *         the withdrawal queue), so the mock stays faithful to production rather than assuming
+ *         its callers are matched-decimal. The strategies require 18 decimals on both the
+ *         bridgeAsset and the OToken, so for the OETHb deployment (WETH/OETH) every scale here
+ *         is the identity.
  *           - mint(assetAmount): pulls bridgeAsset, mints scaled OToken to caller (instant, 1:1 value).
  *           - redeem(oTokenAmount, minAsset): burns OToken, returns scaled bridgeAsset (instant).
  *           - requestWithdrawal(oTokenAmount) / claimWithdrawal: async queue; the claim pays the
@@ -115,7 +116,7 @@ contract MockEthOTokenVault {
         IERC20(bridgeAsset).safeTransfer(msg.sender, assetAmount);
     }
 
-    // --- Async withdrawal queue (used by the OETH/OUSD withdraw path) ------
+    // --- Async withdrawal queue (used by the OETH withdraw path) -----------
 
     /// @param _oTokenAmount OToken to burn (18dp). The queued payout is in asset decimals.
     function requestWithdrawal(uint256 _oTokenAmount)

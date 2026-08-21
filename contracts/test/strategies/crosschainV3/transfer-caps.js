@@ -129,7 +129,7 @@ describe("Unit: Adapter transfer caps", function () {
 
   describe("Master.depositAll / withdrawAll clamping by adapter caps", function () {
     let deployer, governor;
-    let bridgeAsset, oTokenL2, mockL2Vault, master;
+    let bridgeAsset, mockL2Vault, master;
     let outbound, inbound;
 
     const ONE_K = ethers.utils.parseUnits("1000", 18);
@@ -142,16 +142,6 @@ describe("Unit: Adapter transfer caps", function () {
 
       const VaultFactory = await ethers.getContractFactory("MockOTokenVault");
       mockL2Vault = await VaultFactory.deploy();
-
-      const OTokenFactory = await ethers.getContractFactory(
-        "MockMintableBurnableOToken"
-      );
-      oTokenL2 = await OTokenFactory.deploy(
-        "Mock OToken",
-        "mOT",
-        mockL2Vault.address
-      );
-      await mockL2Vault.setOToken(oTokenL2.address);
 
       const MasterFactory = await ethers.getContractFactory(
         "MasterWOTokenStrategy"
@@ -178,7 +168,6 @@ describe("Unit: Adapter transfer caps", function () {
         "MasterWOTokenStrategy",
         proxy.address
       );
-      await mockL2Vault.whitelistStrategy(master.address);
 
       const AdapterFactory = await ethers.getContractFactory(
         "MockBridgeAdapter"

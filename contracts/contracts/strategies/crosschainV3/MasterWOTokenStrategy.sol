@@ -26,7 +26,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Storage (all new slots; nothing from any parent is relocated) -----
 
-    /// @notice Last reported Remote balance (Remote always reports `_yieldOnlyBaseline()`).
+    /// @notice Last reported Remote balance (Remote always reports `_balance()`).
     ///         The pair accounts in a single 18-decimal domain, so this is directly comparable
     ///         with the local bridgeAsset balance. Updated by each yield-channel ack (deposit,
     ///         withdrawal, balance check).
@@ -46,18 +46,18 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Events -------------------------------------------------------------
 
-    event RemoteStrategyBalanceUpdated(uint256 yieldBaseline);
+    event RemoteStrategyBalanceUpdated(uint256 remoteBalance);
     event DepositRequested(uint64 nonce, uint256 amount);
     event DepositSkipped(uint256 amount, uint256 minTransfer);
-    event DepositAcked(uint64 nonce, uint256 yieldBaseline);
+    event DepositAcked(uint64 nonce, uint256 remoteBalance);
     event WithdrawRequested(uint64 nonce, uint256 amount);
-    event WithdrawRequestAcked(uint64 nonce, uint256 yieldBaseline);
+    event WithdrawRequestAcked(uint64 nonce, uint256 remoteBalance);
     event WithdrawClaimTriggered(uint64 nonce, uint256 amount);
-    event WithdrawClaimAcked(uint64 nonce, uint256 yieldBaseline, bool success);
+    event WithdrawClaimAcked(uint64 nonce, uint256 remoteBalance, bool success);
     event BalanceCheckRequested(uint64 nonce, uint256 timestamp);
     event BalanceCheckResponded(
         uint64 nonce,
-        uint256 yieldBaseline,
+        uint256 remoteBalance,
         uint256 remoteTimestamp
     );
 
@@ -364,30 +364,30 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         // there's nothing to mark. The 3 guards below replace nonce-advance semantics.
         if (isYieldOpInFlight()) return;
         if (nonce != lastYieldNonce) return;
-        (uint256 yieldBaseline, uint256 remoteTimestamp) = CrossChainV3Helper
+        (uint256 remoteBalance, uint256 remoteTimestamp) = CrossChainV3Helper
             .decodeBalanceCheckResponsePayload(payload);
         if (remoteTimestamp <= lastBalanceCheckTimestamp) return;
         lastBalanceCheckTimestamp = remoteTimestamp;
-        remoteStrategyBalance = yieldBaseline;
-        emit BalanceCheckResponded(nonce, yieldBaseline, remoteTimestamp);
-        emit RemoteStrategyBalanceUpdated(yieldBaseline);
+        remoteStrategyBalance = remoteBalance;
+        emit BalanceCheckResponded(nonce, remoteBalance, remoteTimestamp);
+        emit RemoteStrategyBalanceUpdated(remoteBalance);
     }
 
     function _processWithdrawRequestAck(uint64 nonce, bytes memory payload)
         internal
     {
         _markYieldNonceProcessed(nonce);
-        (uint256 yieldBaseline, bool success) = CrossChainV3Helper
+        (uint256 remoteBalance, bool success) = CrossChainV3Helper
             .decodeWithdrawRequestAckPayload(payload);
-        remoteStrategyBalance = yieldBaseline;
+        remoteStrategyBalance = remoteBalance;
         // On success Remote queued the withdrawal — pendingWithdrawalAmount stays set, gating
         // concurrent triggerClaim() calls until the leg-2 ack lands. On failure Remote queued
         // nothing, so clear the pending withdrawal to unblock the channel; it can be re-requested.
         if (!success) {
             pendingWithdrawalAmount = 0;
         }
-        emit WithdrawRequestAcked(nonce, yieldBaseline);
-        emit RemoteStrategyBalanceUpdated(yieldBaseline);
+        emit WithdrawRequestAcked(nonce, remoteBalance);
+        emit RemoteStrategyBalanceUpdated(remoteBalance);
     }
 
     function _processWithdrawClaimAck(
@@ -397,7 +397,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     ) internal {
         _markYieldNonceProcessed(nonce);
         (
-            uint256 yieldBaseline,
+            uint256 remoteBalance,
             bool success,
             uint256 ackAmount
         ) = CrossChainV3Helper.decodeWithdrawClaimAckPayload(payload);
@@ -424,18 +424,18 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             }
         }
         // Either way, update remoteStrategyBalance to Remote's current view.
-        remoteStrategyBalance = yieldBaseline;
-        emit WithdrawClaimAcked(nonce, yieldBaseline, success);
-        emit RemoteStrategyBalanceUpdated(yieldBaseline);
+        remoteStrategyBalance = remoteBalance;
+        emit WithdrawClaimAcked(nonce, remoteBalance, success);
+        emit RemoteStrategyBalanceUpdated(remoteBalance);
     }
 
     function _processDepositAck(uint64 nonce, bytes memory payload) internal {
         _markYieldNonceProcessed(nonce);
-        uint256 yieldBaseline = CrossChainV3Helper.decodeUint256(payload);
+        uint256 remoteBalance = CrossChainV3Helper.decodeUint256(payload);
         // Store the acknowledged deposit in the remote balance and clear the pending amount.
-        remoteStrategyBalance = yieldBaseline;
+        remoteStrategyBalance = remoteBalance;
         pendingDepositAmount = 0;
-        emit DepositAcked(nonce, yieldBaseline);
-        emit RemoteStrategyBalanceUpdated(yieldBaseline);
+        emit DepositAcked(nonce, remoteBalance);
+        emit RemoteStrategyBalanceUpdated(remoteBalance);
     }
 }

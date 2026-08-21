@@ -22,8 +22,7 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *
  *         Remote is NOT registered with any vault — it's a custodian for shares held on
  *         behalf of the peer Master. The `oTokenVault` parameter points at the local
- *         OToken vault on this chain (e.g. the OUSD vault on Ethereum or the OETH vault
- *         on Ethereum).
+ *         OToken vault on this chain (the OETH vault on Ethereum).
  *
  *         For the full Remote state-transition table (Idle → Requested → Claimed → Bridging-out
  *         → Completed) see `FLOWS.md`.
@@ -66,7 +65,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     // --- Events -------------------------------------------------------------
 
-    event DepositProcessed(uint64 nonce, uint256 amount, uint256 yieldBaseline);
+    event DepositProcessed(uint64 nonce, uint256 amount, uint256 remoteBalance);
     event WithdrawRequestProcessed(
         uint64 nonce,
         uint256 amount,
@@ -75,9 +74,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     event WithdrawClaimDelivered(
         uint64 nonce,
         uint256 amount,
-        uint256 yieldBaseline
+        uint256 remoteBalance
     );
-    event WithdrawClaimNack(uint64 nonce, uint256 yieldBaseline);
+    event WithdrawClaimNack(uint64 nonce, uint256 remoteBalance);
     event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
     /// @dev DEPOSIT mint/wrap reverted; bridgeAsset/oToken left idle (recoverable via retryDeposit).
     event DepositUnderlyingFailed(uint64 nonce, uint256 amount, bytes reason);
@@ -140,8 +139,8 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         returns (uint256)
     {
         require(_asset == bridgeAsset, "Remote: unsupported asset");
-        // _viewCheckBalance is OToken-denominated (18dp); checkBalance reports in bridgeAsset
-        // units like every strategy. (The R→M yield reports use the 18dp baseline directly.)
+        // Both the OToken and bridgeAsset are 18dp (enforced in the constructor), so the
+        // OToken-denominated view needs no conversion to report in bridgeAsset units.
         return _viewCheckBalance();
     }
 
@@ -314,9 +313,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         }
 
         // Reply to Master with the new total and whether the queue was created.
-        uint256 yieldBaseline = _balance();
+        uint256 remoteBalance = _balance();
         bytes memory ackPayload = CrossChainV3Helper
-            .encodeWithdrawRequestAckPayload(yieldBaseline, success);
+            .encodeWithdrawRequestAckPayload(remoteBalance, success);
         _send(
             address(0),
             0,
@@ -387,9 +386,9 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         outstandingRequestAmount = 0;
 
         // `amount` is about to leave us; subtract it from the reported baseline.
-        uint256 yieldBaseline = _balanceAfter(amount);
+        uint256 remoteBalance = _balanceAfter(amount);
         bytes memory ackPayload = CrossChainV3Helper
-            .encodeWithdrawClaimAckPayload(yieldBaseline, true, amount);
+            .encodeWithdrawClaimAckPayload(remoteBalance, true, amount);
         // bridgeAsset → outboundAdapter allowance is granted by `setOutboundAdapter`.
         _send(
             bridgeAsset,
@@ -400,7 +399,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         );
         _acceptYieldNonce(nonce);
 
-        emit WithdrawClaimDelivered(nonce, amount, yieldBaseline);
+        emit WithdrawClaimDelivered(nonce, amount, remoteBalance);
     }
 
     /**
@@ -471,14 +470,14 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
         // Reply to Master with the new balance and mark the yield nonce processed (always — the
         // baseline counts any idle bridgeAsset/oToken, so Master's accounting stays correct).
-        uint256 yieldBaseline = _balance();
+        uint256 remoteBalance = _balance();
         bytes memory ackPayload = CrossChainV3Helper.encodeUint256(
-            yieldBaseline
+            remoteBalance
         );
         _send(address(0), 0, CrossChainV3Helper.DEPOSIT_ACK, nonce, ackPayload);
         _acceptYieldNonce(nonce);
 
-        emit DepositProcessed(nonce, amount, yieldBaseline);
+        emit DepositProcessed(nonce, amount, remoteBalance);
     }
 
     /// @dev Mint `mintAmount` of bridgeAsset into OToken via the vault (allowance pre-granted by

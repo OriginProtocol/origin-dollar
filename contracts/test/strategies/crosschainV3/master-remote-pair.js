@@ -21,7 +21,7 @@ const SCALE = ethers.BigNumber.from(1);
 
 describe("Unit: V3 Master+Remote loopback", function () {
   let deployer, governor;
-  let bridgeAsset, oTokenL2, mockL2Vault;
+  let bridgeAsset, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
   let master, remote;
   let adapterME, adapterRM;
@@ -39,12 +39,6 @@ describe("Unit: V3 Master+Remote loopback", function () {
     const OTokenFactory = await ethers.getContractFactory(
       "MockMintableBurnableOToken"
     );
-    oTokenL2 = await OTokenFactory.deploy(
-      "Mock OToken L2",
-      "mOTL2",
-      mockL2Vault.address
-    );
-    await mockL2Vault.setOToken(oTokenL2.address);
 
     const MasterFactory = await ethers.getContractFactory(
       "MasterWOTokenStrategy"
@@ -124,8 +118,6 @@ describe("Unit: V3 Master+Remote loopback", function () {
       "RemoteWOTokenStrategy",
       remoteProxy.address
     );
-
-    await mockL2Vault.whitelistStrategy(master.address);
 
     // --- Adapters wiring ---
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");

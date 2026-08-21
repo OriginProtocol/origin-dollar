@@ -6,7 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 /**
  * @title MockMintableBurnableOToken
  * @notice TEST-ONLY OToken stand-in for the V3 strategy unit tests. Mirrors the
- *         vault-restricted mint / burn surface of the real OUSD / OETH tokens
+ *         vault-restricted mint / burn surface of the real OETH token
  *         without any rebasing or share-credit machinery.
  */
 contract MockMintableBurnableOToken is ERC20 {

@@ -16,7 +16,7 @@ const EMPTY = ethers.constants.MaxUint256;
  */
 describe("Unit: V3 failure recovery", function () {
   let deployer, governor;
-  let bridgeAsset, oTokenL2, mockL2Vault;
+  let bridgeAsset, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
   let master, remote;
   let adapterME, adapterRM;
@@ -32,12 +32,6 @@ describe("Unit: V3 failure recovery", function () {
     const OTokenFactory = await ethers.getContractFactory(
       "MockMintableBurnableOToken"
     );
-    oTokenL2 = await OTokenFactory.deploy(
-      "Mock OToken L2",
-      "mOTL2",
-      mockL2Vault.address
-    );
-    await mockL2Vault.setOToken(oTokenL2.address);
 
     const MasterFactory = await ethers.getContractFactory(
       "MasterWOTokenStrategy"
@@ -115,8 +109,6 @@ describe("Unit: V3 failure recovery", function () {
       "RemoteWOTokenStrategy",
       remoteProxy.address
     );
-
-    await mockL2Vault.whitelistStrategy(master.address);
 
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
     adapterME = await AdapterFactory.deploy();

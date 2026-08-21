@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { MockMintableBurnableOToken } from "./MockMintableBurnableOToken.sol";
-
 interface IStrategyForMock {
     function deposit(address asset, uint256 amount) external;
 
@@ -19,58 +17,27 @@ interface IStrategyForMock {
 
 /**
  * @title MockOTokenVault
- * @notice TEST-ONLY minimal vault that exposes `mintForStrategy` / `burnForStrategy` to
- *         whitelisted strategies for the V3 strategy unit tests. Skips all the real Vault
- *         surface area (assets registry, allocate, redeem queue, rebase, etc.).
+ * @notice TEST-ONLY vault stand-in for the Master side of the V3 strategy unit tests.
+ *         Master holds bridgeAsset and accounting only — it never mints, burns or holds
+ *         the OToken — so this mock carries no OToken surface. It does two jobs:
+ *
+ *           - Serves as the strategy's `vaultAddress`, so `onlyVault` and the
+ *             `IVault(vaultAddress).strategistAddr()` lookup in the shared modifiers resolve.
+ *           - Drives the `onlyVault`-gated entry points via the `call*` helpers below, which
+ *             avoids impersonating the vault through hardhat helpers (that trips up ethers v5
+ *             arg-parsing when the impersonated signer is involved).
+ *
+ *         Skips all the real Vault surface area (assets registry, allocate, redeem queue,
+ *         rebase, etc.).
  */
 contract MockOTokenVault {
-    MockMintableBurnableOToken public oToken;
-    mapping(address => bool) public isMintWhitelistedStrategy;
     address public strategistAddr;
-
-    event StrategyWhitelisted(address strategy);
-
-    function setOToken(MockMintableBurnableOToken _oToken) external {
-        oToken = _oToken;
-    }
 
     function setStrategistAddr(address _strategist) external {
         strategistAddr = _strategist;
     }
 
-    /// @notice TEST-ONLY: mint OToken to an arbitrary holder, mirroring a real user deposit
-    ///         (the vault minting OToken against collateral). Lets a test give a user OToken
-    ///         that did NOT come from a bridge-in, so a BRIDGE_OUT can drive `bridgeAdjustment`
-    ///         negative.
-    function mintOTokenTo(address _to, uint256 _amount) external {
-        oToken.mint(_to, _amount);
-    }
-
-    function whitelistStrategy(address _strategy) external {
-        isMintWhitelistedStrategy[_strategy] = true;
-        emit StrategyWhitelisted(_strategy);
-    }
-
-    function mintForStrategy(uint256 _amount) external {
-        require(
-            isMintWhitelistedStrategy[msg.sender],
-            "MockVault: not whitelisted"
-        );
-        oToken.mint(msg.sender, _amount);
-    }
-
-    function burnForStrategy(uint256 _amount) external {
-        require(
-            isMintWhitelistedStrategy[msg.sender],
-            "MockVault: not whitelisted"
-        );
-        oToken.burn(msg.sender, _amount);
-    }
-
     // --- Test driver helpers -------------------------------------------------
-    // These let tests drive `onlyVault`-gated strategy entry points without
-    // having to impersonate the vault via hardhat helpers (which trips up
-    // ethers v5 arg-parsing when the impersonated signer is involved).
 
     function callDeposit(
         address _strategy,
