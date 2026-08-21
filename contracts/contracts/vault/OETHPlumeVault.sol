@@ -11,11 +11,7 @@ contract OETHPlumeVault is VaultAdmin {
     constructor(address _weth) VaultAdmin(_weth) {}
 
     // @inheritdoc VaultAdmin
-    function _mint(
-        address,
-        uint256 _amount,
-        uint256
-    ) internal virtual {
+    function _mint(uint256 _amount) internal override {
         // Only Strategist or Governor can mint using the Vault for now.
         // This allows the strateigst to fund the Vault with WETH when
         // removing liquidi from wOETH strategy.
