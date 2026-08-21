@@ -176,6 +176,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     const nonceAfter = await crossChainRemoteStrategy.lastTransferNonce();
     expect(nonceAfter).to.eq(nextNonce);
+    expect(await crossChainRemoteStrategy.isTransferPending()).to.eq(false);
 
     const balanceAfter = await crossChainRemoteStrategy.checkBalance(
       usdc.address
@@ -242,6 +243,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     const nonceAfter = await crossChainRemoteStrategy.lastTransferNonce();
     expect(nonceAfter).to.eq(nextNonce);
+    expect(await crossChainRemoteStrategy.isTransferPending()).to.eq(false);
 
     const balanceAfter = await crossChainRemoteStrategy.checkBalance(
       usdc.address
