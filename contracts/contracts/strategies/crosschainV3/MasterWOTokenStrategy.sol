@@ -54,8 +54,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
     event WithdrawRequestAcked(uint64 nonce, uint256 remoteBalance);
     event WithdrawClaimTriggered(uint64 nonce, uint256 amount);
     event WithdrawClaimAcked(uint64 nonce, uint256 remoteBalance, bool success);
-    event BalanceCheckRequested(uint64 nonce, uint256 timestamp);
-    event BalanceCheckResponded(
+    event BalanceReported(
         uint64 nonce,
         uint256 remoteBalance,
         uint256 remoteTimestamp
@@ -207,41 +206,6 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
         emit WithdrawClaimTriggered(nonce, pendingWithdrawalAmount);
     }
 
-    /**
-     * @notice Operator-triggered yield-channel round-trip to refresh `remoteStrategyBalance`
-     *         off the back of Remote's `previewRedeem`. Run on a cron (~2h) in production.
-     *
-     * @dev    Non-blocking: does NOT advance the yield nonce. Sends with the CURRENT
-     *         `lastYieldNonce` as an "epoch marker" — the response is accepted only if
-     *         that nonce still matches when the ack lands AND no other yield op is in
-     *         flight AND the timestamp is newer than the last accepted check. See
-     *         `_processBalanceCheckResponse` for the three-guard logic.
-     *
-     *         Multiple BCs in flight at the same nonce are harmless; whichever response
-     *         is newest wins via the timestamp guard.
-     */
-    function requestBalanceCheck()
-        external
-        payable
-        nonReentrant
-        onlyOperatorGovernorOrStrategist
-    {
-        require(outboundAdapter != address(0), "Master: outbound not set");
-        uint64 nonce = lastYieldNonce; // echo current nonce; do NOT advance it
-        bytes memory payload = CrossChainV3Helper.encodeUint256(
-            block.timestamp
-        );
-        // Read-only on Remote's side.
-        _send(
-            address(0),
-            0,
-            CrossChainV3Helper.BALANCE_CHECK_REQUEST,
-            nonce,
-            payload
-        );
-        emit BalanceCheckRequested(nonce, block.timestamp);
-    }
-
     // --- Yield channel: deposit --------------------------------------------
 
     function _depositToRemote(address _asset, uint256 _amount) internal {
@@ -340,36 +304,43 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             _processWithdrawRequestAck(nonce, body);
         } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM_ACK) {
             _processWithdrawClaimAck(nonce, amountReceived, body);
-        } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_RESPONSE) {
-            _processBalanceCheckResponse(nonce, body);
+        } else if (msgType == CrossChainV3Helper.BALANCE_REPORT) {
+            _processBalanceReport(nonce, body);
         } else {
             revert("Master: unsupported message type");
         }
     }
 
-    /// @dev Three-guard acceptance:
-    ///        1. `!isYieldOpInFlight()` — if a deposit/withdraw is mid-flight, the response
-    ///           would race with its ack; ignore to avoid corrupting pendingDepositAmount /
-    ///           remoteStrategyBalance accounting.
-    ///        2. `respNonce == lastYieldNonce` — the request was sent at this nonce; if
-    ///           lastYieldNonce has since advanced, this response is from a now-stale
-    ///           epoch. Ignore.
-    ///        3. `respTimestamp > lastBalanceCheckTimestamp` — out-of-order CCIP delivery
-    ///           could land an older snapshot after a newer one. Strict monotonic order
-    ///           preserves the latest read.
-    function _processBalanceCheckResponse(uint64 nonce, bytes memory payload)
+    /// @dev Remote sends this unprompted, on an operator cadence (~2h in production). It is
+    ///      the only message Remote originates on its own; everything else it sends is an ack.
+    ///
+    ///      Three-guard acceptance. A report is a snapshot of Remote taken at some earlier
+    ///      moment, so all three guards exist to reject a snapshot that no longer describes
+    ///      the state Master is accounting against:
+    ///        1. `!isYieldOpInFlight()` — a deposit/withdraw is mid-flight, so the report
+    ///           predates it and that op's own ack will carry a fresher balance. Ignore, or
+    ///           we corrupt pendingDepositAmount / remoteStrategyBalance accounting.
+    ///        2. `nonce == lastYieldNonce` — narrower case: the op *completed* between
+    ///           Remote sending and this landing, so guard 1 has already cleared. Remote
+    ///           stamped the report with its own `lastYieldNonce`; if Master has since moved
+    ///           on, the report is from a stale epoch.
+    ///        3. `reportTimestamp > lastBalanceCheckTimestamp` — two reports at the same
+    ///           nonce can be delivered out of order. Both timestamps are Remote's own
+    ///           `block.timestamp`, so this is an exact ordering on a single clock (no
+    ///           cross-chain clock comparison), and strict `>` keeps the newest read.
+    function _processBalanceReport(uint64 nonce, bytes memory payload)
         internal
     {
-        // No _markYieldNonceProcessed here — balance check did NOT advance the nonce, so
+        // No _markYieldNonceProcessed here — a balance report does NOT advance the nonce, so
         // there's nothing to mark. The 3 guards below replace nonce-advance semantics.
         if (isYieldOpInFlight()) return;
         if (nonce != lastYieldNonce) return;
         (uint256 remoteBalance, uint256 remoteTimestamp) = CrossChainV3Helper
-            .decodeBalanceCheckResponsePayload(payload);
+            .decodeBalanceReportPayload(payload);
         if (remoteTimestamp <= lastBalanceCheckTimestamp) return;
         lastBalanceCheckTimestamp = remoteTimestamp;
         remoteStrategyBalance = remoteBalance;
-        emit BalanceCheckResponded(nonce, remoteBalance, remoteTimestamp);
+        emit BalanceReported(nonce, remoteBalance, remoteTimestamp);
         emit RemoteStrategyBalanceUpdated(remoteBalance);
     }
 
@@ -406,7 +377,7 @@ contract MasterWOTokenStrategy is AbstractWOTokenStrategy {
             // Tokens arrived alongside the ack. Forward what landed to the vault.
             // `amount <= ackAmount` (not strict equality) so a transport that deducts
             // a token-side fee is tolerated: the shortfall is absorbed as yield drag
-            // and refreshed on the next BALANCE_CHECK. Mirrors the older
+            // and refreshed on the next BALANCE_REPORT. Mirrors the older
             // `CrossChainMasterStrategy._onTokenReceived` which ignores `feeExecuted`
             // entirely (marked `solhint-disable-next-line no-unused-vars`).
             require(amount > 0, "Master: claim ack missing tokens");

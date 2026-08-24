@@ -196,12 +196,4 @@ describe("Unit: MasterWOTokenStrategy", function () {
       );
     });
   });
-
-  describe("balance check (operator-driven)", () => {
-    it("rejects requestBalanceCheck from non-operator non-governor", async () => {
-      await expect(
-        master.connect(alice).requestBalanceCheck()
-      ).to.be.revertedWith("WOT: not authorised");
-    });
-  });
 });

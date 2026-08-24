@@ -38,14 +38,15 @@ For OETHb: Master on Base (OETHb's chain), Remote on Ethereum (wOETH's chain).
 ### One channel, serialised
 
 Every cross-chain message belongs to a single nonce-gated channel: DEPOSIT,
-WITHDRAW_REQUEST, WITHDRAW_CLAIM, BALANCE_CHECK_REQUEST and their ACK variants
+WITHDRAW_REQUEST, WITHDRAW_CLAIM and their ACK variants, plus BALANCE_REPORT
 (nonce machinery in `AbstractCrossChainV3Strategy`). One operation is in flight
-at a time, except the balance check, which is non-blocking by design (nonce-echo
-— see §5).
+at a time, except the balance report, which does not advance the nonce — see §5.
 
-**All messages originate at Master** (the operator/vault side); Remote only ever
-replies with ACKs. The vault and the operator are the only actors who can start a
-cross-chain operation, and every message they start carries the nonce.
+**Every message is nonce-stamped and adapter-authenticated**, and only the vault
+or an operator can originate one; there is no user-callable entrypoint on either
+side. Master starts every *operation*; Remote replies with ACKs and, on its own
+operator cadence, sends the one unprompted message in the protocol — the balance
+report.
 
 No OToken or wOToken ever crosses the bridge. The channel moves the **backing
 asset** (WETH) plus a message, and Remote mints/wraps on arrival. See
@@ -461,12 +462,17 @@ queue request is outstanding, and `0` once claimed).
 - **`processStoredMessage(target)`** on the split-delivery adapter — once
   both CCIP envelope and canonical ETH have landed, anyone can finalise.
 
-## 5. Check balance
+## 5. Balance report
 
-The operator's "heartbeat" — refreshes `remoteStrategyBalance` to pick up
-yield that's accrued on Remote's wOToken shares. **Non-blocking** and
-**nonce-echo** (no nonce advance) so it can run any time without blocking
-other yield ops.
+The operator's "heartbeat" — refreshes `remoteStrategyBalance` to pick up yield
+that's accrued on Remote's wOToken shares. Pushed by **Remote**, unprompted: there
+is no request leg, so a reading costs one message rather than two. It does not
+advance the nonce, so it never blocks a deposit or withdrawal.
+
+The report is stamped with Remote's **own** `block.timestamp` — the moment the
+snapshot was taken, not the moment anyone asked for it. Master orders readings on
+that value alone, which is what makes an out-of-order delivery safe to resolve
+(see "Why the three guards").
 
 ### Sequence diagram
 
@@ -488,41 +494,29 @@ sequenceDiagram
     participant SuperEth as SuperbridgeAdapter <<Remote outbound>>
     end
 
-    Note over Master: lastYieldNonce = N (any value)
-    Op->>Master: requestBalanceCheck{value: optionalTopUp}()
-    Note over Master: timestamp = block.timestamp<br/>body = abi.encode(timestamp)<br/>payload = packPayload(BALANCE_CHECK_REQUEST, N, body)
-    Master->>Adapter: quoteFee(address(0), 0, payload)
-    Adapter-->>Master: fee, feeToken = native, requiresExternalPayment = true
-    Note over Master: Master Strategy pays the CCIP fee from its own ETH balance
-    Master->>Adapter: sendMessage{value:fee}(payload)
-    Note over Master,Adapter: adapter call is payable<br/>fee is forwarded as msg.value
-    Note over Master: NONCE ECHOED, NOT ADVANCED.<br/>lastYieldNonce stays N.
-    Adapter->>Bridge: ccipSend{value:fee}(ETH_SELECTOR, ccipMessage)
-    Note over Adapter,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
-    Bridge->>AdapterEth: ccipReceive(message)
-    Note over Bridge,AdapterEth: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
-    AdapterEth->>Remote: receiveMessage(Remote, 0, 0, payload)
-    Note over AdapterEth,Remote: params: sender = Remote, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_REQUEST, N, body)
+    Note over Remote: lastYieldNonce = N (any value)
+    Op->>Remote: sendBalanceReport{value: optionalTopUp}()
     Remote->>Remote: _balance()
     Note over Remote: viewCheckBalance = value of held wOETH shares + idle OETH + idle WETH scaled to OETH + queued withdrawal value
     Note over Remote: remoteBalance = _balance(), clamped to 0<br/>clamp only covers tiny 4626 rounding dust
-    Note over Remote: srcTimestamp = timestamp from request body<br/>body = encode(remoteBalance, srcTimestamp)<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
+    Note over Remote: body = encode(remoteBalance, block.timestamp)<br/>timestamp is REMOTE's own clock — the snapshot moment<br/>payload = packPayload(BALANCE_REPORT, N, body)
+    Note over Remote: NONCE STAMPED, NOT ADVANCED.<br/>lastYieldNonce stays N.
     Remote->>SuperEth: quoteFee(address(0), 0, payload)
     SuperEth-->>Remote: fee, feeToken = native, requiresExternalPayment = true
     Note over Remote: Remote Strategy pays the CCIP fee from its own ETH balance
     Remote->>SuperEth: sendMessage{value:fee}(payload)
-    Note over Remote,SuperEth: DOES NOT call _acceptYieldNonce<br/>read-only on Remote Strategy<br/>adapter call is payable and forwards fee as msg.value
+    Note over Remote,SuperEth: DOES NOT call _acceptYieldNonce<br/>read-only on Remote Strategy<br/>adapter call is payable and forwards fee as msg.value<br/>Remote pays the CCIP fee from its own ETH pool
     SuperEth->>Bridge: ccipSend{value:fee}(BASE_SELECTOR, ccipMessage)
     Note over SuperEth,Bridge: ccipMessage fields: receiver = peer adapter, data = envelope, tokenAmounts = empty, feeToken = native<br/>envelope = (envelopeSender, intendedAmount = 0, payload)
     Bridge->>SuperBase: ccipReceive(message)
     Note over Bridge,SuperBase: ccipReceive gets the CCIP message<br/>message.data decodes to envelope = (envelopeSender, intendedAmount = 0, payload)
     SuperBase->>Master: receiveMessage(Master, 0, 0, payload)
-    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_CHECK_RESPONSE, N, body)
-    Master->>Master: _processBalanceCheckResponse(N, body)
-    Note over Master: guard 1: if isYieldOpInFlight() then return<br/>guard 2: if response nonce != lastYieldNonce then return<br/>guard 3: if response timestamp <= lastBalanceCheckTimestamp then return
+    Note over SuperBase,Master: params: sender = Master, token = address(0), amountReceived = 0<br/>payload = packPayload(BALANCE_REPORT, N, body)
+    Master->>Master: _processBalanceReport(N, body)
+    Note over Master: guard 1: if isYieldOpInFlight() then return<br/>guard 2: if report nonce != lastYieldNonce then return<br/>guard 3: if report timestamp <= lastBalanceCheckTimestamp then return
     alt all guards pass
-        Note over Master: store lastBalanceCheckTimestamp = respTimestamp<br/>store remoteStrategyBalance = remoteBalance
-        Note over Master: emit BalanceCheckResponded
+        Note over Master: store lastBalanceCheckTimestamp = reportTimestamp<br/>store remoteStrategyBalance = remoteBalance
+        Note over Master: emit BalanceReported
     else any guard fails
         Note over Master: silently discard
     end
@@ -530,29 +524,40 @@ sequenceDiagram
 
 ### Why the three guards
 
-The response can arrive in three "bad" situations; each guard catches one:
+A report is a snapshot of Remote taken at some earlier moment. It can arrive in
+three "bad" situations; each guard catches one:
 
-1. **`isYieldOpInFlight()`** — a deposit/withdraw was kicked off between the
-   request and the response. Accepting now would race with the upcoming
-   deposit/withdraw ack and corrupt `remoteStrategyBalance` or `pendingDepositAmount`.
-   Skip.
+1. **`isYieldOpInFlight()`** — a deposit/withdraw is mid-flight. Remote's balance
+   already reflects it, while Master still counts the same value in
+   `pendingDepositAmount`, so accepting would double-count it in `checkBalance`.
+   The op's own ack carries the correct post-op figure. Skip.
 
-2. **`respNonce != lastYieldNonce`** — a yield op happened and the nonce
-   advanced. The response is from a prior epoch and reflects pre-op state.
-   Skip.
+2. **`reportNonce != lastYieldNonce`** — the narrower case where the op
+   *completed* while the report was in transit, so guard 1 has already cleared.
+   Remote stamps the report with its own `lastYieldNonce`, so a pre-op snapshot
+   necessarily carries the pre-op nonce and is rejected here. Without this guard
+   a stale snapshot would overwrite the post-op balance the ack just wrote.
 
-3. **`respTimestamp <= lastBalanceCheckTimestamp`** — multiple balance checks
-   in flight with the same nonce, but CCIP delivered them out of order.
-   Without the timestamp guard, an older snapshot could overwrite a newer one
-   (subtle wOToken-depeg edge case). Strict monotonic timestamp preserves the
-   latest read.
+3. **`reportTimestamp <= lastBalanceCheckTimestamp`** — two reports in flight at
+   the same nonce, delivered out of order. Both timestamps are Remote's own
+   `block.timestamp`, so the comparison is an exact ordering on one clock; strict
+   `>` preserves the latest read.
 
 ### Why no `_acceptYieldNonce` on Remote
 
-Balance check is purely read-only on Remote. Bumping the nonce there would
-desynchronise Master and Remote's nonce streams (Master's nonce didn't advance
-for this op either). The nonce in the envelope is a stale-detection token,
-not a state-advance trigger.
+The report is read-only on Remote — nothing changes there when it is sent.
+Bumping the nonce would desynchronise Master and Remote's nonce streams (Master's
+nonce doesn't advance for this either). The nonce in the envelope is a
+stale-detection token, not a state-advance trigger.
+
+### The reverse coupling, and why it matters
+
+Guard 1 also runs the other way: while a nonce sits unprocessed, **every** report
+is discarded and `remoteStrategyBalance` freezes at its last value. A permanently
+stuck ack therefore freezes the number the OETHb vault rebases against, while real
+yield keeps accruing on Remote. See `DESIGN.md` §4.3 for the recovery path — it is
+the more damaging direction of the coupling and there is no on-chain release valve
+today.
 
 ## 6. Fee model reference
 
@@ -660,13 +665,13 @@ Governor-settable configuration on each adapter. All setters are
 | **Master**                    | Strategy on the chain that hosts the rebasing OToken vault. Registered with that vault. Holds `bridgeAsset` and accounting only — never the OToken.                                                                                                            |
 | **Remote**                    | Strategy on the chain that hosts the wOToken (yield-earning wrapper). Not registered with any vault — custodian for shares.                                                                                                                                    |
 | **wOToken**                   | ERC-4626 wrapper of the OToken (wOETH wraps OETH).                                                                                                                                                                                                            |
-| **Yield channel**             | The single nonce-gated message channel (deposit / withdraw / claim / balance check and their acks). Serialised except the balance check.                                                                                                                       |
+| **Yield channel**             | The single nonce-gated message channel (deposit / withdraw / claim and their acks, plus the balance report). Serialised except the balance report, which does not advance the nonce.                                                                           |
 | **remoteBalance**             | Remote's `_balance()` — its full custody value, reported to Master on every ack. Denominated in OToken (18dp).                                                                                                                                                 |
-| **remoteStrategyBalance**     | Master's cached copy of the last reported `remoteBalance`. Updated by every ack (deposit, withdraw, claim, balance check).                                                                                                                                     |
+| **remoteStrategyBalance**     | Master's cached copy of the last reported `remoteBalance`. Updated by every ack (deposit, withdraw, claim) and by an accepted balance report.                                                                                                                  |
 | **pendingDepositAmount**      | Master's in-flight deposit value. Counts in `checkBalance` so the vault doesn't see backing dip during the bridge round-trip.                                                                                                                                  |
 | **pendingWithdrawalAmount**   | Master's in-flight withdrawal amount. Gates concurrent ops; NOT in `checkBalance` (value is already in `remoteStrategyBalance` until the claim ack).                                                                                                           |
 | **claimed**                   | The bridgeAsset the OToken vault actually paid out on `claimWithdrawal(requestId)` (`RemoteWOTokenStrategy._opportunisticClaim`). `outstandingRequestAmount` is refined to it so leg-2 ships exactly the vault's payout, not the originally-requested amount. |
-| **lastBalanceCheckTimestamp** | Most recently accepted balance check timestamp. Enforces strict monotonic ordering across out-of-order CCIP delivery.                                                                                                                                          |
+| **lastBalanceCheckTimestamp** | Remote's `block.timestamp` from the most recently accepted balance report. Enforces strict monotonic ordering across out-of-order CCIP delivery.                                                                                                               |
 | **REQUEST_ID_EMPTY**          | `type(uint256).max` sentinel in `outstandingRequestId` meaning "no request outstanding", so a real requestId of `0` is unambiguous.                                                                                                                            |
 
 ---

@@ -10,9 +10,9 @@ This directory implements the V3 cross-chain strategy pair (Master + Remote) and
 | Remote | Ethereum (1) | `RemoteWOTokenStrategy` | Not registered with any vault. Custodies wOETH shares; mints/redeems OETH at the mainnet OETH Vault. |
 | Migration | Base | `BridgedWOETHMigrationStrategy` | Upgrade impl for the existing `BridgedWOETHStrategyProxy`; `bridgeToRemote()` CCIP-ships wOETH to Remote. |
 
-**Only the backing asset (WETH) crosses a bridge.** The pair never bridges the OToken or the wOToken — see [`DESIGN.md`](./DESIGN.md) §3.11. Every cross-chain message is nonce-gated and originates at Master.
+**Only the backing asset (WETH) crosses a bridge.** The pair never bridges the OToken or the wOToken — see [`DESIGN.md`](./DESIGN.md) §3.11. Every cross-chain message is nonce-gated and adapter-authenticated.
 
-**For narrative walkthroughs of each flow (deposit, withdraw, balance check) with sequence diagrams, see [`FLOWS.md`](./FLOWS.md).** This README is the reference: file map, message envelope, state-transition table, authorisation surface, adapter knobs.
+**For narrative walkthroughs of each flow (deposit, withdraw, balance report) with sequence diagrams, see [`FLOWS.md`](./FLOWS.md).** This README is the reference: file map, message envelope, state-transition table, authorisation surface, adapter knobs.
 
 ## File map
 
@@ -83,8 +83,7 @@ The protocol uses two nested envelopes:
 | 4 | WITHDRAW_REQUEST_ACK | R→M | `(uint256 remoteBalance, bool success)` | success=false ⇒ leg-1 NACK (nothing queued) |
 | 5 | WITHDRAW_CLAIM | M→R | empty | leg 2 trigger |
 | 6 | WITHDRAW_CLAIM_ACK | R→M | `(uint256 remoteBalance, bool success, uint256 amount)` | tokens carried on success |
-| 7 | BALANCE_CHECK_REQUEST | M→R | `(uint256 timestamp)` | |
-| 8 | BALANCE_CHECK_RESPONSE | R→M | `(uint256 balance, uint256 timestamp)` | |
+| 7 | BALANCE_REPORT | R→M | `(uint256 balance, uint256 timestamp)` | unprompted; `timestamp` is Remote's own |
 
 `remoteBalance` is Remote's `_balance()` — the whole position, denominated in OToken. Because both the OToken and `bridgeAsset` are required to be 18-decimal (asserted in both constructors), the value is directly comparable with Master's local `bridgeAsset` balance with no scaling.
 
@@ -116,8 +115,9 @@ The idle `D` / `A` are re-wrapped into wOETH by the operator `retryDeposit()`; t
 ## Authorisation surface
 
 - **Governor**: sets adapters, operator, bridge configs, sweeps stuck tokens, upgrades.
-- **Operator**: triggers permissioned yield-channel round-trips (`requestBalanceCheck`,
-  `triggerClaim`). Can be a multisig or automation EOA.
+- **Operator**: triggers the permissioned cadences — `triggerClaim` on Master (leg 2 of a
+  withdrawal) and `sendBalanceReport` on Remote (the ~2h balance cadence). Can be a multisig
+  or automation EOA. The operator is set per-strategy, so the two need not be the same key.
 - **Vault**: drives `deposit` / `withdraw` on Master (no user-facing redemption against this strategy in normal ops).
 - **Receiver adapter**: the only address allowed to call `receiveMessage` on the strategy.
 - **Anyone**: `claimRemoteWithdrawal` (idempotent), `processStoredMessage` (split-delivery finaliser).
@@ -171,7 +171,7 @@ Production deploy scripts live at `deploy/base/100-104_*` and `deploy/mainnet/21
 
 Key cadences (production targets):
 
-- **Balance check**: every ~2 hours on a cron, operator-triggered.
+- **Balance report**: every ~2 hours on a cron, operator-triggered — `Remote.sendBalanceReport()` on **Ethereum**.
 - **OETHb Phase 1 migration**: 9 × `bridgeToRemote(1000e18)` over ~9 hours respecting CCIP rate limits. No deposits/withdrawals on the new pair during this window.
 
 **Sequencing constraint:** Base script `102` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `210` + `211` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
@@ -183,7 +183,7 @@ These require real on-chain configuration and were intentionally not authored as
 | # | Item | Status |
 |---|---|---|
 | 1 | **Foundry migration** — port the deploy scripts to `scripts/deploy/{base,mainnet}/` and the test suites to `tests/{unit,fork,smoke}/`, then delete the Hardhat equivalents. | In progress |
-| 2 | **`requestBalanceCheck` automation** — no Talos action exists for the ~2h Base cadence. Because Foundry deploys write only `build/deployments-8453.json` (never `deployments/base/<Name>.json` or `utils/addresses.js`, which Talos reads), whoever writes it must hand-create the deployment entry or pin the address. | Pending |
+| 2 | **`sendBalanceReport` automation** — no Talos action exists for the ~2h cadence. It targets **Remote on Ethereum (chain 1)**, not Base. Because Foundry deploys write only `build/deployments-<chainId>.json` (never `deployments/mainnet/<Name>.json` or `utils/addresses.js`, which Talos reads), whoever writes it must hand-create the deployment entry or pin the address. Remote's ETH fee pool must be funded for the outbound leg. | Pending |
 | 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. | Pending |
 | 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`deploy/base/104`, currently gated by `forceSkip`). | Pending |
 | 5 | **Retire `otokenOethbUpdateWoethPrice`** — once `104` removes the old strategy from the vault, its oracle price no longer feeds anything. | Follow-up |

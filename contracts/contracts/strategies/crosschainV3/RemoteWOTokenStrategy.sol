@@ -78,6 +78,11 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     );
     event WithdrawClaimNack(uint64 nonce, uint256 remoteBalance);
     event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
+    event BalanceReportSent(
+        uint64 nonce,
+        uint256 remoteBalance,
+        uint256 timestamp
+    );
     /// @dev DEPOSIT mint/wrap reverted; bridgeAsset/oToken left idle (recoverable via retryDeposit).
     event DepositUnderlyingFailed(uint64 nonce, uint256 amount, bytes reason);
     /// @dev WITHDRAW_REQUEST unwrap/queue reverted; nothing queued, Master told to clear pending.
@@ -224,32 +229,44 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
             _processWithdrawRequest(nonce, body);
         } else if (msgType == CrossChainV3Helper.WITHDRAW_CLAIM) {
             _processWithdrawClaim(nonce);
-        } else if (msgType == CrossChainV3Helper.BALANCE_CHECK_REQUEST) {
-            _processBalanceCheckRequest(nonce, body);
         } else {
             revert("Remote: unsupported message type");
         }
     }
 
-    /// @dev Reports Remote's full custody value; Master stores it verbatim as
-    ///      `remoteStrategyBalance`.
-    ///
-    ///      DOES NOT call `_acceptYieldNonce`: balance check is non-blocking, read-only,
-    ///      and the nonce is echoed back unchanged so Master can validate it's still in
-    ///      the same yield epoch.
-    function _processBalanceCheckRequest(uint64 nonce, bytes memory payload)
-        internal
+    /**
+     * @notice Report Remote's full custody value to Master, refreshing its
+     *         `remoteStrategyBalance`. Run on a cron (~2h) in production.
+     *
+     * @dev    The only message Remote originates unprompted — everything else it sends is an
+     *         ack. Master needs no request leg: the report carries Remote's own
+     *         `block.timestamp`, and Master accepts it only if that is strictly newer than
+     *         the last one it accepted. Successive Ethereum blocks are strictly increasing,
+     *         so that comparison is an exact ordering on a single clock and out-of-order
+     *         delivery cannot let a stale reading overwrite a fresh one.
+     *
+     *         Stamped with the CURRENT `lastYieldNonce` and does NOT advance it — a report is
+     *         read-only here and non-blocking on Master. The nonce is an epoch marker letting
+     *         Master discard a report that a completed yield op has since invalidated. See
+     *         `MasterWOTokenStrategy._processBalanceReport` for the three guards.
+     *
+     *         `payable` so the operator can top up the fee pool in the same transaction.
+     */
+    function sendBalanceReport()
+        external
+        payable
+        onlyOperatorGovernorOrStrategist
+        nonReentrant
     {
-        uint256 srcTimestamp = CrossChainV3Helper.decodeUint256(payload);
-        bytes memory ackPayload = CrossChainV3Helper
-            .encodeBalanceCheckResponsePayload(_balance(), srcTimestamp);
-        _send(
-            address(0),
-            0,
-            CrossChainV3Helper.BALANCE_CHECK_RESPONSE,
-            nonce,
-            ackPayload
+        require(outboundAdapter != address(0), "Remote: outbound not set");
+        uint64 nonce = lastYieldNonce; // epoch marker; do NOT advance it
+        uint256 balance = _balance();
+        bytes memory payload = CrossChainV3Helper.encodeBalanceReportPayload(
+            balance,
+            block.timestamp
         );
+        _send(address(0), 0, CrossChainV3Helper.BALANCE_REPORT, nonce, payload);
+        emit BalanceReportSent(nonce, balance, block.timestamp);
     }
 
     /**

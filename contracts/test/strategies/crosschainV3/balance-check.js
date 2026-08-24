@@ -1,9 +1,10 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { MSG, encodePackedEnvelope } = require("./_helpers");
 
 /**
- * End-to-end exercise of the operator-driven balance-check round-trip:
- * `requestBalanceCheck` → BALANCE_CHECK_RESPONSE, which refreshes
+ * End-to-end exercise of the operator-driven balance report: Remote pushes
+ * BALANCE_REPORT unprompted via `sendBalanceReport`, refreshing Master's
  * `remoteStrategyBalance` from Remote's `previewRedeem`.
  *
  * Verifies the checkBalance invariant across yield accrual (mocked by sending OToken to
@@ -15,6 +16,7 @@ describe("Unit: V3 balance check", function () {
   let bridgeAsset, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
   let master, remote;
+  let adapterRM;
 
   const SEED = ethers.utils.parseUnits("5000", 18);
   // The pair accounts in a single 18-decimal domain, so no scaling is needed.
@@ -115,7 +117,7 @@ describe("Unit: V3 balance check", function () {
 
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
     const adapterME = await AdapterFactory.deploy();
-    const adapterRM = await AdapterFactory.deploy();
+    adapterRM = await AdapterFactory.deploy();
     await adapterME.setSender(master.address);
     await adapterME.setPeer(remote.address);
     await adapterRM.setSender(remote.address);
@@ -132,7 +134,33 @@ describe("Unit: V3 balance check", function () {
     await mockL2Vault.callDeposit(master.address, bridgeAsset.address, SEED);
   });
 
-  it("requestBalanceCheck picks up yield accrued on the wOToken", async () => {
+  // Deliver a crafted BALANCE_REPORT through Master's inbound-adapter seat. Bypassing the
+  // mock adapter is deliberate: it only keeps one pending message, so it cannot hold a
+  // stale report while a fresh one goes past it.
+  const injectReport = async (nonce, balance, timestamp) => {
+    await master.connect(governor).setInboundAdapter(deployer.address);
+    const envelope = encodePackedEnvelope(
+      MSG.BALANCE_REPORT,
+      nonce,
+      ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [balance, timestamp]
+      )
+    );
+    await master
+      .connect(deployer)
+      .receiveMessage(
+        remote.address,
+        ethers.constants.AddressZero,
+        0,
+        envelope
+      );
+  };
+
+  const currentTime = async () =>
+    (await ethers.provider.getBlock("latest")).timestamp;
+
+  it("sendBalanceReport picks up yield accrued on the wOToken", async () => {
     // Simulate yield: airdrop OToken to the wOToken vault to inflate previewRedeem. Mint
     // YIELD USDC → YIELD*SCALE OToken (18dp), then donate all of it to the vault so the
     // increase is meaningful at the bridgeAsset scale.
@@ -146,36 +174,110 @@ describe("Unit: V3 balance check", function () {
     // Before: Master's cached balance still equals the seeded baseline (18dp).
     expect(await master.remoteStrategyBalance()).to.equal(SEED.mul(SCALE));
 
-    await master.connect(governor).requestBalanceCheck();
+    await remote.connect(governor).sendBalanceReport();
 
     // After: balance reflects the yield.
     expect(await master.remoteStrategyBalance()).to.be.gt(SEED.mul(SCALE));
     expect(await master.checkBalance(bridgeAsset.address)).to.be.gt(SEED);
   });
 
-  it("balance check does NOT advance the yield nonce", async () => {
-    // Locked design: balance check is non-blocking and nonce-echo. It uses
-    // `lastYieldNonce` as an epoch marker without incrementing it.
-    const nonceBefore = await master.lastYieldNonce();
-    await master.connect(governor).requestBalanceCheck();
-    await master.connect(governor).requestBalanceCheck();
-    expect(await master.lastYieldNonce()).to.equal(nonceBefore);
+  it("balance report does NOT advance the yield nonce on either side", async () => {
+    // Locked design: a balance report is non-blocking and stamped with the current nonce
+    // as an epoch marker, without incrementing it.
+    const masterNonceBefore = await master.lastYieldNonce();
+    const remoteNonceBefore = await remote.lastYieldNonce();
+    await remote.connect(governor).sendBalanceReport();
+    await remote.connect(governor).sendBalanceReport();
+    expect(await master.lastYieldNonce()).to.equal(masterNonceBefore);
+    expect(await remote.lastYieldNonce()).to.equal(remoteNonceBefore);
   });
 
-  it("requestBalanceCheck is non-blocking even when a withdrawal is pending", async () => {
-    // Old design rejected with "Master: withdrawal pending"; new design is non-blocking.
-    // The response is filtered at acceptance time (three guards in
-    // _processBalanceCheckResponse) — pending op skips, nonce mismatch skips,
-    // stale timestamp skips.
-    await mockL2Vault.callWithdraw(
-      master.address,
-      mockL2Vault.address,
-      bridgeAsset.address,
-      ethers.utils.parseUnits("100", 18)
+  it("guard 1: a report landing mid-deposit is ignored (would double-count)", async () => {
+    // The dangerous case guard 1 exists for. Hold the ack so Master stays in-flight while
+    // Remote has already processed the deposit: both sides are at N+1, so the nonce guard
+    // passes and only `isYieldOpInFlight()` stands between us and counting the deposit
+    // twice — once in pendingDepositAmount, once in the reported remoteStrategyBalance.
+    await adapterRM.setDeliveryEnabled(false);
+
+    const TOP_UP = ethers.utils.parseUnits("250", 18);
+    await bridgeAsset.mintTo(master.address, TOP_UP);
+    await mockL2Vault.callDeposit(master.address, bridgeAsset.address, TOP_UP);
+
+    expect(await master.isYieldOpInFlight()).to.equal(true);
+    expect(await master.pendingDepositAmount()).to.equal(TOP_UP);
+    const inFlightNonce = await master.lastYieldNonce();
+    expect(await remote.lastYieldNonce()).to.equal(inFlightNonce);
+    const cachedBefore = await master.remoteStrategyBalance();
+
+    // Remote's live balance already includes the deposit — that is precisely what must
+    // not be written to Master while pendingDepositAmount still counts it.
+    await injectReport(
+      inFlightNonce,
+      await remote.checkBalance(bridgeAsset.address),
+      (await currentTime()) + 1000
     );
 
-    await expect(master.connect(governor).requestBalanceCheck()).to.not.be
-      .reverted;
+    expect(await master.remoteStrategyBalance()).to.equal(cachedBefore);
+  });
+
+  it("guard 3: an out-of-order report cannot overwrite a newer one", async () => {
+    // Land a report normally, then deliver one stamped earlier. Both timestamps come from
+    // Remote's own clock, so `>` is an exact ordering and the older reading must lose.
+    await remote.connect(governor).sendBalanceReport();
+    const accepted = await master.remoteStrategyBalance();
+    const acceptedAt = await master.lastBalanceCheckTimestamp();
+    expect(acceptedAt).to.be.gt(0);
+
+    const bogus = ethers.utils.parseUnits("1", 18);
+    await injectReport(await master.lastYieldNonce(), bogus, acceptedAt.sub(1));
+
+    expect(await master.remoteStrategyBalance()).to.equal(accepted);
+    expect(await master.lastBalanceCheckTimestamp()).to.equal(acceptedAt);
+  });
+
+  it("guard 3: an equal timestamp is also rejected (strict monotonic)", async () => {
+    await remote.connect(governor).sendBalanceReport();
+    const accepted = await master.remoteStrategyBalance();
+    const acceptedAt = await master.lastBalanceCheckTimestamp();
+
+    await injectReport(
+      await master.lastYieldNonce(),
+      ethers.utils.parseUnits("1", 18),
+      acceptedAt
+    );
+
+    expect(await master.remoteStrategyBalance()).to.equal(accepted);
+  });
+
+  it("guard 2: a report predating a completed deposit is ignored", async () => {
+    // The tightest case: the report is sent at nonce N, a deposit completes (both sides
+    // advance to N+1, and its ack refreshes remoteStrategyBalance), and only then does the
+    // stale report land. Guard 1 has already cleared by that point — the nonce stamp is
+    // what identifies the report as belonging to a superseded epoch.
+    const staleNonce = await master.lastYieldNonce();
+
+    // Complete a deposit round-trip; its DEPOSIT_ACK moves Master to N+1.
+    const TOP_UP = ethers.utils.parseUnits("250", 18);
+    await bridgeAsset.mintTo(master.address, TOP_UP);
+    await mockL2Vault.callDeposit(master.address, bridgeAsset.address, TOP_UP);
+    expect(await master.lastYieldNonce()).to.be.gt(staleNonce);
+    const afterDeposit = await master.remoteStrategyBalance();
+
+    // Inject the stale report, carrying an obviously-wrong balance and a far-future
+    // timestamp so an accidental acceptance would be unmissable and could not be
+    // attributed to the timestamp guard.
+    await injectReport(
+      staleNonce,
+      ethers.utils.parseUnits("1", 18),
+      (await currentTime()) + 10000
+    );
+
+    // Rejected on the nonce guard, despite carrying a far-future timestamp.
+    expect(await master.remoteStrategyBalance()).to.equal(afterDeposit);
+  });
+
+  it("rejects sendBalanceReport from a non-operator, non-governor", async () => {
+    await expect(remote.connect(alice).sendBalanceReport()).to.be.reverted;
   });
 
   it("governor can sweep native ETH from the strategy via transferNative", async () => {

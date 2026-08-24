@@ -86,38 +86,20 @@ contract MockCrossChainV3HelperHarness {
         return CrossChainV3Helper.decodeWithdrawClaimAckPayload(payload);
     }
 
-    function encodeBalanceCheckRequestPayload(uint256 timestamp)
+    function encodeBalanceReportPayload(uint256 balance, uint256 timestamp)
         external
         pure
         returns (bytes memory)
     {
-        return CrossChainV3Helper.encodeUint256(timestamp);
-    }
-
-    function decodeBalanceCheckRequestPayload(bytes calldata payload)
-        external
-        pure
-        returns (uint256)
-    {
-        return CrossChainV3Helper.decodeUint256(payload);
-    }
-
-    function encodeBalanceCheckResponsePayload(
-        uint256 balance,
-        uint256 timestamp
-    ) external pure returns (bytes memory) {
         return
-            CrossChainV3Helper.encodeBalanceCheckResponsePayload(
-                balance,
-                timestamp
-            );
+            CrossChainV3Helper.encodeBalanceReportPayload(balance, timestamp);
     }
 
-    function decodeBalanceCheckResponsePayload(bytes calldata payload)
+    function decodeBalanceReportPayload(bytes calldata payload)
         external
         pure
         returns (uint256, uint256)
     {
-        return CrossChainV3Helper.decodeBalanceCheckResponsePayload(payload);
+        return CrossChainV3Helper.decodeBalanceReportPayload(payload);
     }
 }

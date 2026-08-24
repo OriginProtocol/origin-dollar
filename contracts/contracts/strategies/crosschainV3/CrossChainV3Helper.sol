@@ -28,10 +28,8 @@ library CrossChainV3Helper {
     uint32 internal constant WITHDRAW_CLAIM = 5;
     /// @notice Remote → Master: leg-2 ack carrying bridgeAsset on success.
     uint32 internal constant WITHDRAW_CLAIM_ACK = 6;
-    /// @notice Master → Remote: read Remote's balance snapshot at a given timestamp.
-    uint32 internal constant BALANCE_CHECK_REQUEST = 7;
-    /// @notice Remote → Master: balance response (balance + originating timestamp).
-    uint32 internal constant BALANCE_CHECK_RESPONSE = 8;
+    /// @notice Remote → Master: unprompted balance report (balance + Remote's timestamp).
+    uint32 internal constant BALANCE_REPORT = 7;
 
     // --- Strategy-level envelope (msgType + nonce + body) -------------------
     //
@@ -74,13 +72,11 @@ library CrossChainV3Helper {
     // WITHDRAW_REQUEST_ACK          : payload = abi.encode(remoteBalance, success)
     // WITHDRAW_CLAIM                : payload empty
     // WITHDRAW_CLAIM_ACK            : payload = abi.encode(remoteBalance, success, amount)
-    // BALANCE_CHECK_REQUEST         : payload = abi.encode(timestamp)
-    // BALANCE_CHECK_RESPONSE        : payload = abi.encode(balance, timestamp)
+    // BALANCE_REPORT                : payload = abi.encode(balance, timestamp)
 
     /**
      * @notice Encode a single-`uint256` payload — shared by every message whose body is one
-     *         uint256: DEPOSIT_ACK (a balance), WITHDRAW_REQUEST (an amount),
-     *         BALANCE_CHECK_REQUEST (a timestamp).
+     *         uint256: DEPOSIT_ACK (a balance) and WITHDRAW_REQUEST (an amount).
      */
     function encodeUint256(uint256 value) internal pure returns (bytes memory) {
         return abi.encode(value);
@@ -148,16 +144,17 @@ library CrossChainV3Helper {
         return abi.decode(payload, (uint256, bool));
     }
 
-    /// @notice Encode the BALANCE_CHECK_RESPONSE payload (balance + originating ts).
-    function encodeBalanceCheckResponsePayload(
-        uint256 balance,
-        uint256 timestamp
-    ) internal pure returns (bytes memory) {
+    /// @notice Encode the BALANCE_REPORT payload (balance + Remote's `block.timestamp`).
+    function encodeBalanceReportPayload(uint256 balance, uint256 timestamp)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(balance, timestamp);
     }
 
-    /// @notice Decode the BALANCE_CHECK_RESPONSE 2-tuple payload.
-    function decodeBalanceCheckResponsePayload(bytes memory payload)
+    /// @notice Decode the BALANCE_REPORT 2-tuple payload.
+    function decodeBalanceReportPayload(bytes memory payload)
         internal
         pure
         returns (uint256 balance, uint256 timestamp)

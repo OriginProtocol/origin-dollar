@@ -20,8 +20,8 @@ Concretely:
 
 - **`MasterWOTokenStrategy`** + **`RemoteWOTokenStrategy`** (with abstract bases
   `AbstractCrossChainV3Strategy` and `AbstractWOTokenStrategy`). A single
-  nonce-gated **yield channel**: deposit / withdraw / balance check and their
-  ACKs, one operation in flight at a time.
+  nonce-gated **yield channel**: deposit / withdraw and their ACKs, one operation
+  in flight at a time, plus an unprompted balance report from Remote.
 - **Adapter family** on a shared `AbstractAdapter` base: `CCIPAdapter` and
   `SuperbridgeAdapter`. Each carries a multi-tenant whitelist, per-lane config,
   and governor-settable `minTransferAmount` / `maxTransferAmount` caps.
@@ -79,10 +79,11 @@ Two strategy contracts, one bridge-agnostic adapter API:
   bridgeAsset ↔ OToken ↔ wOToken pipeline using the local OToken vault for
   mint/redeem.
 
-**One channel.** DEPOSIT / WITHDRAW_REQUEST / WITHDRAW_CLAIM / BALANCE_CHECK
-and their ACKs. Every message carries a yield nonce. Master gates concurrent
-ops via `pendingDepositAmount == 0 && pendingWithdrawalAmount == 0`. The
-balance check is the only non-blocking op (nonce-echo, no advance).
+**One channel.** DEPOSIT / WITHDRAW_REQUEST / WITHDRAW_CLAIM and their ACKs, plus
+BALANCE_REPORT. Every message carries a yield nonce. Master gates concurrent ops
+via `pendingDepositAmount == 0 && pendingWithdrawalAmount == 0`. The balance
+report is the only message that does not advance the nonce, and the only one
+Remote sends unprompted.
 
 **Two adapters, one interface.** The strategy talks to adapters via
 `IBridgeAdapter` (outbound) + `IBridgeReceiver` (inbound). Each adapter
@@ -102,8 +103,9 @@ See [`FLOWS.md`](./FLOWS.md) for sequence diagrams of each flow.
 ### 3.1 A single nonce-gated yield channel
 
 **Decision.** Every cross-chain operation is serialised behind one yield nonce.
-Every message carries that nonce, and every message originates at Master — the
-vault and operator are the only actors who can start one.
+Every message carries that nonce, and every message is authenticated as coming
+from the peer strategy via the governor-set adapter. Only the vault and the
+operator can originate one; there is no user-callable entrypoint on either side.
 
 **Why.** All strategy operations change protocol-level accounting
 (`remoteStrategyBalance`, `pendingDepositAmount`, `pendingWithdrawalAmount`), so
@@ -116,30 +118,48 @@ advance on the receiving side. The sender gate
 `pendingDepositAmount == 0 && pendingWithdrawalAmount == 0` blocks a second
 outbound op while one is in flight.
 
-### 3.2 Non-blocking balance check (nonce-echo + three guards on response)
+### 3.2 Remote pushes the balance report; Master does not ask for it
 
-**Decision.** `requestBalanceCheck` doesn't advance the yield nonce; it
-echoes the current value. The response is accepted only when three
-independent guards pass.
+**Decision.** `Remote.sendBalanceReport()` is operator-triggered on Remote and
+sends BALANCE_REPORT unprompted, stamped with Remote's own `block.timestamp` and
+Remote's own `lastYieldNonce`. It does not advance the nonce. Master accepts the
+report only when three independent guards pass. There is no request leg.
 
-**Why.** Balance check is an oracle-update operation that runs on a cadence
-(every ~2h). Blocking it on yield-nonce serialisation would force the
-operator to choose between fresh balance reads and other yield ops in
-flight. Instead: nonce-echo means a balance check can be in flight
-concurrently with a deposit/withdraw without locking either out.
+**Why not a request/response round-trip.** A request leg would double the message
+count of the cadence for no correctness gain, and — more importantly — it makes
+the reading's freshness relative to the *request* rather than to the *snapshot*.
+That distinction is load-bearing: if Master mints the timestamp and Remote echoes
+it, two readings requested in order can be snapshotted in either order, and the
+ordering guard can then preserve the staler one. Stamping at the source removes
+the failure mode rather than bounding it.
 
-The three guards on the response (`MasterWOTokenStrategy._processBalanceCheckResponse`):
+**Why a push is safe to order.** Successive Ethereum blocks have strictly
+increasing timestamps, so `reportTimestamp > lastBalanceCheckTimestamp` is an
+exact total order over readings — a single-clock comparison, with no cross-chain
+clock skew to slack out.
 
-1. `isYieldOpInFlight()` — if a deposit/withdraw started after the balance
-   check fired, ignore the now-stale reading.
-2. `nonce == lastYieldNonce` — if the nonce advanced between request and
-   response, ignore (a yield op landed in the middle).
-3. `respTimestamp > lastBalanceCheckTimestamp` — out-of-order CCIP delivery
-   of two balance checks in the same nonce window: keep the latest only.
+The three guards (`MasterWOTokenStrategy._processBalanceReport`). A report is a
+snapshot taken at some earlier moment; each guard rejects a snapshot that no
+longer describes what Master is accounting against:
 
-**Trade-off.** Cost: slight extra storage (`lastBalanceCheckTimestamp`).
-Benefit: balance check never blocks the yield channel, and operationally is
-the simplest cadence to automate (run on a cron, ignore failures).
+1. `isYieldOpInFlight()` — a deposit/withdraw is mid-flight. Remote's balance
+   already reflects it while Master still counts it in `pendingDepositAmount`,
+   so accepting would double-count. The op's own ack carries a fresher figure.
+2. `nonce == lastYieldNonce` — the narrower case where the op *completed* in
+   transit, so guard 1 has already cleared. A pre-op snapshot necessarily carries
+   the pre-op nonce, so this rejects it.
+3. `reportTimestamp > lastBalanceCheckTimestamp` — two reports at the same nonce
+   delivered out of order. Strict `>` keeps the newest reading.
+
+**Trade-off.** Cost: `lastBalanceCheckTimestamp` storage, and Remote becomes the
+one place that originates a message unprompted. Benefit: one message per reading
+instead of two, an exact ordering rather than an approximate one, and a cadence
+that is trivial to automate (run on a cron, ignore failures).
+
+**Known limitation.** Guard 1 couples the cadence to the yield channel in the
+other direction: while a nonce is unprocessed, *every* report is discarded and
+`remoteStrategyBalance` freezes. A permanently stuck ack therefore freezes the
+oracle the vault rebases against. See §4.3 for the recovery path.
 
 ### 3.3 `amount <= ackAmount` claim tolerance
 
@@ -158,14 +178,14 @@ tightening to strict equality would turn a future fee-charging transport from sl
 yield drag into a stalled channel.
 
 The shortfall isn't lost — it's yield drag absorbed via the next
-BALANCE_CHECK, which refreshes `remoteStrategyBalance` to Remote's true value.
+BALANCE_REPORT, which refreshes `remoteStrategyBalance` to Remote's true value.
 Master ignores `feePaid` entirely; the older
 `CrossChainMasterStrategy._onTokenReceived` follows the same pattern.
 
 **No lower bound.** Master doesn't enforce `amount >= ackAmount * (1 - X%)`: a
 tolerance threshold is one more knob to tune and one more revert path to handle. If
 Remote ships much less than requested, it shows up as yield drag on the
-next balance check — operationally visible.
+next balance report — operationally visible.
 
 ### 3.4 CreateX / CREATE2 peer parity for both proxies and adapter proxies
 
@@ -429,7 +449,7 @@ pending list. Top of mind for the next PR:
 1. Complete the Foundry migration of the deploy scripts and test suites.
 2. Populate production `proposalId` (4.1) — blocks mainnet deploy.
 3. Decide OETH-vault Remote registration (4.2).
-4. A `requestBalanceCheck` Talos action for the ~2h Base cadence.
+4. A `sendBalanceReport` Talos action for the ~2h cadence (targets Remote on Ethereum).
 5. Governance proposals: deploy + wire (prop 1), post-migration cleanup
    (prop 2).
 6. Operator runbook (cadences, failure modes, alert thresholds).
@@ -442,7 +462,7 @@ pending list. Top of mind for the next PR:
   envelope layout, state-transition table, authorisation surface, adapter
   knobs, pending list.
 - **[`FLOWS.md`](./FLOWS.md)** — narrative walkthroughs of the three core
-  flows (deposit, withdraw, balance check) with Mermaid sequence diagrams +
+  flows (deposit, withdraw, balance report) with Mermaid sequence diagrams +
   fee model and adapter knob references.
 - **`.claude/skills/add-network/SKILL.md`** — checklist for adding a new
   network to the repo.
@@ -458,15 +478,16 @@ For an auditor or on-call engineer reviewing the code quickly:
   clamps to 0 on 4626 rounding dust.
 - **Yield ops are serialised on Master.** `pendingDepositAmount == 0 &&
 pendingWithdrawalAmount == 0` must hold before a new yield op fires.
-- **Balance check is non-blocking** but acceptance requires all three guards
-  (`isYieldOpInFlight()`, nonce match, timestamp monotonic).
+- **The balance report does not advance the nonce**, and acceptance requires all
+  three guards (`isYieldOpInFlight()`, nonce match, timestamp strictly monotonic).
+  It is the only message Remote sends unprompted.
 - **Every inbound message is nonce-gated.** There is no unordered message path
   and no user-callable entrypoint that originates a cross-chain send.
 - **Adapter peer parity** (`transportSender == address(this)`) is enforced
   on every inbound. CreateX/CREATE2 deployment gives byte-identical proxy
   addresses across paired chains.
 - **`remoteStrategyBalance` holds exactly Remote's `_balance()`.** Every R→M
-  report (deposit / withdraw / claim acks and balance check) routes through the
+  report (deposit / withdraw / claim acks and the balance report) routes through the
   same function, so Master's view is either current or knowably stale — never
   partially applied.
 - **Master forwards full local bridgeAsset to vault on claim-ack success.**

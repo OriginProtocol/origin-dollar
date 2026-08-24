@@ -8,8 +8,7 @@ const MSG = {
   WITHDRAW_REQUEST_ACK: 4,
   WITHDRAW_CLAIM: 5,
   WITHDRAW_CLAIM_ACK: 6,
-  BALANCE_CHECK_REQUEST: 7,
-  BALANCE_CHECK_RESPONSE: 8,
+  BALANCE_REPORT: 7,
 };
 
 describe("Unit: CrossChainV3Helper", function () {
@@ -48,11 +47,7 @@ describe("Unit: CrossChainV3Helper", function () {
           ),
         },
         {
-          type: MSG.BALANCE_CHECK_REQUEST,
-          body: ethers.utils.defaultAbiCoder.encode(["uint256"], [1700000000]),
-        },
-        {
-          type: MSG.BALANCE_CHECK_RESPONSE,
+          type: MSG.BALANCE_REPORT,
           body: ethers.utils.defaultAbiCoder.encode(
             ["uint256", "uint256"],
             [99, 1700000001]
@@ -105,21 +100,11 @@ describe("Unit: CrossChainV3Helper", function () {
       }
     });
 
-    it("encodeBalanceCheckRequestPayload round-trips", async () => {
-      const ts = 1718000000;
-      const encoded = await harness.encodeBalanceCheckRequestPayload(ts);
-      expect(await harness.decodeBalanceCheckRequestPayload(encoded)).to.equal(
-        ts
-      );
-    });
-
-    it("encodeBalanceCheckResponsePayload round-trips", async () => {
+    it("encodeBalanceReportPayload round-trips", async () => {
       const bal = ethers.utils.parseEther("42.42");
       const ts = 1718000001;
-      const encoded = await harness.encodeBalanceCheckResponsePayload(bal, ts);
-      const [gotBal, gotTs] = await harness.decodeBalanceCheckResponsePayload(
-        encoded
-      );
+      const encoded = await harness.encodeBalanceReportPayload(bal, ts);
+      const [gotBal, gotTs] = await harness.decodeBalanceReportPayload(encoded);
       expect(gotBal).to.equal(bal);
       expect(gotTs).to.equal(ts);
     });
