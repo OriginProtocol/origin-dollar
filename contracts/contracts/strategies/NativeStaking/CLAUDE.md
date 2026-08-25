@@ -936,8 +936,9 @@ To re-derive: `ethereum/consensus-specs` renamed its default branch from `dev` t
   `TwentyOneValidators.t.sol` (real 21-validator proofs), `SlashedValidatorDeposit.t.sol`,
   `FrontRunAndInvalid.t.sol`, `VerifyDeposit.t.sol`.
 - `tests/fork/mainnet/strategies/CompoundingStakingStrategy/**` — live EIP-4788 balance snapshots,
-  OETH Vault allocation, incremental WETH accounting and BLS-valid validator deposits through
-  Ethereum's beacon deposit contract, including the third-party WETH funding case ported from the
+  OETH Vault allocation, incremental WETH accounting, BLS-valid validator deposits through
+  Ethereum's beacon deposit contract, and partial/full validator withdrawals through the live
+  EIP-7002 withdrawal-request contract. Includes the third-party WETH funding case ported from the
   retired SSV suite.
 - `test/beacon/beaconProofs.js` — hard-coded real mainnet/Hoodi proofs (source of §9).
 
