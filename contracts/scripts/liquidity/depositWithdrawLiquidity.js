@@ -12,7 +12,7 @@ const {
   usdcUnits,
   ousdUnits,
   advanceBlocks,
-} = require("../../utils/hardhat-deploy-helpers");
+} = require("../../utils/hardhat-task-helpers");
 
 async function main() {
   // in a fork env these guys should have a good amount of OGN and USDT/USDC

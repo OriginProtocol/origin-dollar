@@ -1,4 +1,3 @@
-const fetch = require("node-fetch");
 const { resolveContract } = require("../utils/resolvers");
 
 async function tenderlyUpload({ name }) {
