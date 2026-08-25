@@ -82,5 +82,4 @@ contract Unit_Concrete_CurvePoolBooster_RescueETH_Test is Unit_Curve_Shared_Test
 /// @notice Helper contract that rejects ETH transfers
 contract ETHRejecter {
     // No receive() or fallback() - will revert on ETH transfer
-
-    }
+}
