@@ -20,8 +20,8 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
     using GovHelper for GovProposal;
 
     uint64 internal constant BEACON_GENESIS_TIMESTAMP = 1_606_824_023;
-    // Consensus rewards will push the balance over the strategy's strict 32.25 ETH activation threshold.
-    uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 32.25 ether;
+    // Limit exposure while a new validator's withdrawal credentials are still unverified.
+    uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 1 ether;
 
     // ==================== Deployment Logic ==================== //
 
@@ -48,7 +48,7 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
             "strategy registrator. This proposal upgrades the CompoundingStakingStrategy to allow "
             "anyone to call snapBalances() and verifyBalances(). The existing snapshot delay and "
             "beacon proof verification continue to protect the accounting inputs. It also lowers "
-            "the maximum first validator deposit to the minimum balance that the strategy can mark active."
+            "the maximum first validator deposit to 1 ETH."
         );
         address proxy = resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY");
         govProposal.action(

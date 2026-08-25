@@ -714,15 +714,15 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
   are absolutely terminal.
 - `initialDepositAmountWei` is currently **2030 ETH** on mainnet (deployment 199, line 101), not
   the 1 ETH default used in tests and on Hoodi (`deploy/deployActions.js:243-248`). Deployment 005
-  proposes lowering it to **32.25 ETH**. Consensus rewards will then push the balance over the
-  strategy's strict `> 32.25 ETH` transition to `ACTIVE`.
+  proposes lowering it to **1 ETH**. After the validator is verified, the registrator must top it
+  up before it can cross the strategy's strict `> 32.25 ETH` transition to `ACTIVE`.
 - Deployment 202 changed the strategy's registrator from the retired `ConsolidationController` to
   the **Talos relayer**. It can call `stakeEth` and `validatorWithdrawal`, including full exits.
 - In the current source all four proof entrypoints are directly permissionless. The 420-second
   `SNAP_BALANCES_DELAY` bounds re-snapshot griefing; `verifyBalances` accepts only proofs anchored
   to the stored beacon block root. `scripts/deploy/mainnet/005_UpgradeCompoundingStakingStrategy.s.sol`
   deploys and proposes this implementation upgrade and lowers `initialDepositAmountWei` to
-  32.25 ETH. Until that proposal executes on mainnet, the deployed implementation still
+  1 ETH. Until that proposal executes on mainnet, the deployed implementation still
   applies `onlyRegistrator` to `snapBalances` and `verifyBalances`, so the Talos relayer remains
   their only direct caller and the first-deposit cap remains 2030 ETH.
 
@@ -776,9 +776,8 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
   `ACTIVE || EXITING` (`:527-531`), and the only route to `ACTIVE` is `verifyBalances` observing a
   balance strictly above `MIN_ACTIVATION_BALANCE_GWEI` (`:1100-1107`). A validator stuck below that
   can only be freed by a top-up via `stakeEth`, which *is* permitted from `VERIFIED`. Live concern
-  wherever `initialDepositAmountWei` is 1 ETH (Hoodi and tests,
-  `deploy/deployActions.js:243-248`); a non-issue at mainnet's current 2030 ETH and proposed
-  32.25 ETH cap once consensus rewards accrue. Note there is also no `ACTIVE → VERIFIED` demotion,
+  wherever `initialDepositAmountWei` is 1 ETH (Hoodi, tests, and the proposed mainnet setting;
+  `deploy/deployActions.js:243-248`). Note there is also no `ACTIVE → VERIFIED` demotion,
   so a slashed validator that falls back below 32.25 ETH stays exitable — the desired behaviour,
   but nowhere written down.
 - **`resetFirstDeposit` weakens two bounds it is credited with.** It clears `firstDeposit`
@@ -803,7 +802,7 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
 
   Mitigations: `firstDeposit` allows only one unverified new validator at a time (`:483`); the
   first deposit is capped at `initialDepositAmountWei` (`:485-487`) — currently **2030 ETH on
-  mainnet**, with deployment 005 proposing **32.25 ETH** — and `verifyValidator` compares
+  mainnet**, with deployment 005 proposing **1 ETH** — and `verifyValidator` compares
   the proven credentials to `0x02 ‖ bytes11(0) ‖ address(this)`, marking the validator `INVALID`,
   dropping the deposit and *immediately* debiting `lastVerifiedEthBalance` on mismatch (`:621-648`).
   `firstDeposit` stays `true`, so a human must call `resetFirstDeposit` before staking to another
