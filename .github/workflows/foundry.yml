@@ -93,6 +93,8 @@ jobs:
           node-version: "20"
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
       - name: Install deps
         working-directory: contracts
         run: pnpm install --frozen-lockfile
