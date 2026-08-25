@@ -1,49 +1,10 @@
 const ethers = require("ethers");
-const { parseEther, formatUnits } = require("ethers/lib/utils");
-
 const addresses = require("./addresses");
 const { logTxDetails } = require("./txLogger");
 
 const claimRewardsSafeModuleAbi = require("../abi/claim-rewards-module.json");
-const nativeStakingStrategyAbi = require("../abi/native_staking_SSV_strategy.json");
 
 const log = require("./logger")("task:harvest");
-
-const labelsSSV = {
-  [addresses.mainnet.NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
-  [addresses.mainnet.NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
-  [addresses.mainnet.NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
-};
-
-const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
-  const nativeStakingStrategy = new ethers.Contract(
-    strategy,
-    nativeStakingStrategyAbi,
-    signer
-  );
-
-  const consensusRewards = await nativeStakingStrategy.consensusRewards();
-  log(
-    `Consensus rewards for ${labelsSSV[strategy]}: ${formatUnits(
-      consensusRewards
-    )}`
-  );
-
-  const feeAccumulatorAddress =
-    await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-  const executionRewards = await signer.provider.getBalance(
-    feeAccumulatorAddress
-  );
-  log(
-    `Execution rewards for ${labelsSSV[strategy]}: ${formatUnits(
-      executionRewards
-    )}`
-  );
-
-  return (
-    consensusRewards.gt(parseEther("0")) || executionRewards.gt(parseEther("0"))
-  );
-};
 
 const harvestMorphoStrategies = async (signer) => {
   const strategies = [
@@ -90,5 +51,4 @@ const claimStrategyRewards = async (signer) => {
 module.exports = {
   harvestMorphoStrategies,
   claimStrategyRewards,
-  shouldHarvestFromNativeStakingStrategy,
 };

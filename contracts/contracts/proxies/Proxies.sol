@@ -61,20 +61,6 @@ contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHDripperProxy delegates calls to a OETHDripper implementation
- */
-contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice OETHHarvesterProxy delegates calls to a Harvester implementation
- */
-contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
  */
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -114,60 +100,6 @@ contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice NativeStakingSSVStrategyProxy delegates calls to NativeStakingSSVStrategy implementation
- */
-contract NativeStakingSSVStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice NativeStakingFeeAccumulatorProxy delegates calls to FeeAccumulator implementation
- */
-contract NativeStakingFeeAccumulatorProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice NativeStakingSSVStrategy2Proxy delegates calls to NativeStakingSSVStrategy implementation
- */
-contract NativeStakingSSVStrategy2Proxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice NativeStakingFeeAccumulator2Proxy delegates calls to FeeAccumulator implementation
- */
-contract NativeStakingFeeAccumulator2Proxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice NativeStakingSSVStrategy3Proxy delegates calls to NativeStakingSSVStrategy implementation
- */
-contract NativeStakingSSVStrategy3Proxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice NativeStakingFeeAccumulator3Proxy delegates calls to FeeAccumulator implementation
- */
-contract NativeStakingFeeAccumulator3Proxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
  * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -191,20 +123,6 @@ contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHFixedRateDripperProxy delegates calls to a OETHFixedRateDripper implementation
- */
-contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice OETHSimpleHarvesterProxy delegates calls to a OETHSimpleHarvester implementation
- */
-contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice PoolBoostCentralRegistryProxy delegates calls to the PoolBoostCentralRegistry implementation
  */
 contract PoolBoostCentralRegistryProxy is
@@ -224,15 +142,6 @@ contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice OETHCurveAMOProxy delegates calls to a CurveAMOStrategy implementation
  */
 contract OETHCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice CompoundingStakingSSVStrategyProxy delegates calls to a CompoundingStakingSSVStrategy implementation
- */
-contract CompoundingStakingSSVStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
 
 }
 

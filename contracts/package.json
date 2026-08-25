@@ -77,8 +77,6 @@
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
-    "@aws-sdk/client-kms": "^3.675.0",
-    "@aws-sdk/client-s3": "3.600.0",
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
     "@lastdotnet/purrikey": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "1.0.9",
@@ -88,7 +86,6 @@
     "@nomiclabs/hardhat-waffle": "2.0.6",
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/upgrades-core": "1.44.2",
-    "@rigidity/bls-signatures": "2.0.5",
     "@rollup/plugin-commonjs": "29.0.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3 ",
@@ -128,7 +125,6 @@
     "sync-fetch": "0.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
-    "uuid": "9.0.1",
     "viem": "^2.27.0"
   },
   "husky": {

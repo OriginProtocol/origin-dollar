@@ -19,11 +19,11 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | Action                 | Network | Cron             | Description                                                                                                                               |
 | ---------------------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Rebase OUSD on mainnet                                                                                                                    |
-| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Collect the OETH dripper and rebase OETH on mainnet                                                                                       |
+| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Rebase OETH on mainnet                                                                                                                     |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
 | `otokenOsRebase`       | sonic   | `45 11,23 * * *` | Collect the OS dripper and rebase OS on Sonic                                                                                             |
 | `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
-| `permissionedRebase`   | mainnet | `15 10,22 * * *` | Collect fixed-rate drippers, then `permissionedRebase()` every managed vault via the Safe module (unpause → rebase → re-pause atomically) |
+| `permissionedRebase`   | mainnet | `15 10,22 * * *` | `permissionedRebase()` every managed vault via the Safe module (unpause → rebase → re-pause atomically)                                  |
 | `permissionedRebase`   | base    | `15 10,22 * * *` | As above, on Base                                                                                                                         |
 | `permissionedRebase`   | sonic   | `15 10,22 * * *` | As above, on Sonic                                                                                                                        |
 
@@ -45,8 +45,6 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 | Action                     | Network | Cron             | Description                                                                                         |
 | -------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `harvest`                  | mainnet | `25 11,23 * * *` | Harvest all remaining rewards from deprecated Native Staking Strategy 2 and claim strategy rewards  |
-| `doAccounting`             | mainnet | `30 23 * * *`    | Account for consensus rewards and validator exits in the Native Staking Strategy                    |
 | `snapBalances`             | mainnet | `2 0 * * *`      | Take a snapshot of the staking strategy's balance                                                   |
 | `verifyBalances`           | mainnet | `6 0 * * *`      | Verify validator balances on the Beacon chain                                                       |
 | `verifyDeposits`           | mainnet | `11 */4 * * *`   | Verify any processed deposit on the Beacon chain                                                    |
@@ -73,16 +71,16 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 ## Rewards & bribes
 
-| Action                      | Network     | Cron          | Description                                                                                     |
-| --------------------------- | ----------- | ------------- | ----------------------------------------------------------------------------------------------- |
-| `manageMerklBribes`         | mainnet     | `30 13 * * 3` | Call `bribeAll` on the MerklPoolBoosterBribesModule via the Gnosis Safe                         |
-| `manageMerklBribes`         | base        | `35 13 * * 3` | As above, on Base                                                                               |
-| `manageBribes`              | mainnet     | `30 09 * * 5` | `manageBribes` on the CurvePoolBoosterBribesModule; sizes rewards-per-vote by target efficiency |
-| `claimBribes`               | base        | `30 10 * * 4` | Claim bribes from Aerodrome veNFT lockers on Base                                               |
-| `updateVotemarketEpochs`    | arbitrumOne | `0 6 * * 5`   | Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum                       |
-| `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`  | Claim and forward OGN rewards from all modules                                                  |
-| `claimSSVRewards`           | mainnet     | `45 0 1 * *`  | Claim SSV rewards and forward the claimed SSV                                                   |
-| `managePassThrough`         | mainnet     | `30 12 * * 0` | Transfer tokens via the pass-through mechanism                                                  |
+| Action                      | Network     | Cron             | Description                                                                                     |
+| --------------------------- | ----------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `manageMerklBribes`         | mainnet     | `30 13 * * 3`    | Call `bribeAll` on the MerklPoolBoosterBribesModule via the Gnosis Safe                         |
+| `manageMerklBribes`         | base        | `35 13 * * 3`    | As above, on Base                                                                               |
+| `manageBribes`              | mainnet     | `30 09 * * 5`    | `manageBribes` on the CurvePoolBoosterBribesModule; sizes rewards-per-vote by target efficiency |
+| `claimBribes`               | base        | `30 10 * * 4`    | Claim bribes from Aerodrome veNFT lockers on Base                                               |
+| `updateVotemarketEpochs`    | arbitrumOne | `0 6 * * 5`      | Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum                       |
+| `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`     | Claim and forward OGN rewards from all modules                                                  |
+| `managePassThrough`         | mainnet     | `30 12 * * 0`    | Transfer tokens via the pass-through mechanism                                                  |
+| `harvest`                   | mainnet     | `25 11,23 * * *` | Claim strategy rewards through the ClaimStrategyRewards Safe module                             |
 
 ## System
 
