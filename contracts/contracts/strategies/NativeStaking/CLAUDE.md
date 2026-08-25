@@ -935,6 +935,10 @@ To re-derive: `ethereum/consensus-specs` renamed its default branch from `dev` t
 - `tests/unit/strategies/CompoundingStakingStrategy/**` — state machine, including
   `TwentyOneValidators.t.sol` (real 21-validator proofs), `SlashedValidatorDeposit.t.sol`,
   `FrontRunAndInvalid.t.sol`, `VerifyDeposit.t.sol`.
+- `tests/fork/mainnet/strategies/CompoundingStakingStrategy/**` — live EIP-4788 balance snapshots,
+  OETH Vault allocation, incremental WETH accounting and BLS-valid validator deposits through
+  Ethereum's beacon deposit contract, including the third-party WETH funding case ported from the
+  retired SSV suite.
 - `test/beacon/beaconProofs.js` — hard-coded real mainnet/Hoodi proofs (source of §9).
 
 Caveat from `tests/unit/strategies/CompoundingStakingStrategy/README.md`: many strategy unit
