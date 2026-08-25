@@ -1,10 +1,13 @@
-const { isFork, isForkWithLocalNode } = require("../../test/helpers");
+const {
+  isFork,
+  isForkWithLocalNode,
+} = require("../../utils/hardhat-deploy-helpers");
 const { fundAccounts } = require("../../utils/funding");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
-const { hardhatSetBalance } = require("../../test/_fund");
+const { hardhatSetBalance } = require("../../utils/hardhat-funding");
 
-const usdsAbi = require("../../test/abi/usds.json").abi;
+const usdsAbi = require("../../abi/hardhat/usds.json").abi;
 
 const log = require("../../utils/logger")("deploy:999_fork_test_setup");
 

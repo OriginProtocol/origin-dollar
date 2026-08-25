@@ -6,7 +6,7 @@ const {
   isPlumeFork,
   advanceTime,
   advanceBlocks,
-} = require("../test/helpers");
+} = require("./hardhat-deploy-helpers");
 const { isHyperEVMFork } = require("./hardhat-helpers");
 const {
   deployWithConfirmation,

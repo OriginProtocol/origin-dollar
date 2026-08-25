@@ -50,14 +50,12 @@ const {
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomicfoundation/hardhat-verify");
-require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-tracer");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
 
 require("./tasks/tasks");
 
@@ -351,10 +349,6 @@ module.exports = {
       saveDeployments: true,
     },
   },
-  mocha: {
-    bail: process.env.BAIL === "true",
-    timeout: parseInt(process.env.MOCHA_TIMEOUT) || 40000,
-  },
   throwOnTransactionFailures: true,
   namedAccounts: {
     deployerAddr: {
@@ -530,10 +524,6 @@ module.exports = {
         },
       },
     ],
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS ? true : false,
-    reportPureAndViewMethods: true,
   },
   sourcify: {
     enabled: true,

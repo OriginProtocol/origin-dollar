@@ -4,15 +4,15 @@
 const { ethers, getNamedAccounts } = require("hardhat");
 const { utils } = require("ethers");
 const addresses = require("../../utils/addresses");
-const ERC20Abi = require("../../test/abi/erc20.json");
-const USDTAbiContainer = require("../../test/abi/usdt.json");
+const ERC20Abi = require("../../abi/hardhat/erc20.json");
+const USDTAbiContainer = require("../../abi/hardhat/usdt.json");
 
 const {
   usdtUnits,
   usdcUnits,
   ousdUnits,
   advanceBlocks,
-} = require("../../test/helpers");
+} = require("../../utils/hardhat-deploy-helpers");
 
 async function main() {
   // in a fork env these guys should have a good amount of OGN and USDT/USDC

@@ -2,7 +2,11 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
-const { isFork, isSonic, oethUnits } = require("../../test/helpers");
+const {
+  isFork,
+  isSonic,
+  oethUnits,
+} = require("../../utils/hardhat-deploy-helpers");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWS", []);

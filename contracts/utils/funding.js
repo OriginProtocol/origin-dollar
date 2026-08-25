@@ -1,10 +1,10 @@
 const hre = require("hardhat");
 
 const addresses = require("./addresses");
-const usdsAbi = require("../test/abi/usds.json").abi;
-const usdtAbi = require("../test/abi/usdt.json").abi;
-const usdcAbi = require("../test/abi/erc20.json");
-const ognAbi = require("../test/abi/erc20.json");
+const usdsAbi = require("../abi/hardhat/usds.json").abi;
+const usdtAbi = require("../abi/hardhat/usdt.json").abi;
+const usdcAbi = require("../abi/hardhat/erc20.json");
+const ognAbi = require("../abi/hardhat/erc20.json");
 
 const {
   usdtUnits,
@@ -13,8 +13,11 @@ const {
   ognUnits,
   oethUnits,
   isFork,
-} = require("../test/helpers");
-const { hardhatSetBalance, setERC20TokenBalance } = require("../test/_fund");
+} = require("./hardhat-deploy-helpers");
+const {
+  hardhatSetBalance,
+  setERC20TokenBalance,
+} = require("./hardhat-funding");
 
 // const log = require("./logger")("utils:funding");
 

@@ -45,7 +45,7 @@
  */
 const reimbursementsLocation = "./scripts/staking/reimbursements.csv";
 const addresses = require("../utils/addresses");
-const erc20Abi = require("../test/abi/erc20.json");
+const erc20Abi = require("../abi/hardhat/erc20.json");
 
 async function isAdjusterLocked(taskArguments, hre) {
   const compensationClaims = await hre.ethers.getContract("CompensationClaims");

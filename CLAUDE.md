@@ -13,7 +13,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the test suite, and executes deployments. Hardhat is no longer used for building, testing, or new deployments — it remains only to run the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`). The Hardhat test suite (`test/`) and deploy scripts (`deploy/`) are frozen legacy; do not extend either.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, and executes new deployments. Hardhat remains for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`), ABI generation, and historical deployment scripts under `deploy/`.
 
 ## Setup
 
@@ -66,7 +66,7 @@ make build-tests-unit          # also: build-tests, build-tests-fork, build-test
 ```bash
 forge fmt scripts/ tests/      # Foundry-tree Solidity (tests + deploy scripts)
 pnpm prettier:sol              # contracts/**/*.sol (prettier-plugin-solidity)
-pnpm prettier:js               # JS (tasks, scripts, utils, legacy test/)
+pnpm prettier:js               # JS (tasks, scripts, deploy, utils)
 pnpm prettier:ts               # TS (tasks/actions, tasks/lib)
 pnpm lint                      # eslint (JS + TS) and solhint
 make lint-imports              # forge lint: unused imports in scripts/ and tests/
@@ -87,9 +87,9 @@ The `make test-*` targets rebuild the relevant trees first. Bare `forge test` do
 
 Fork and smoke tests fork the chain from the `*_PROVIDER_URL` variables and pin blocks via `FORK_BLOCK_NUMBER_<CHAIN>`. Test conventions (unit vs fork vs smoke, concrete vs fuzz, interface-only testing) are documented in `tests/README.md` — read it before writing tests.
 
-### Legacy Hardhat suite (`test/`, frozen)
+### Hardhat task tests (`tasks/test/`)
 
-`test/**/*.js` and `test/**/*.fork-test.js` are the pre-migration Hardhat tests. They no longer run in CI and must not be extended — write Foundry tests in `tests/` instead. Coverage gaps between the two suites are tracked in `docs/foundry-migration-gap-analysis.md` (per-test inventory: `docs/hardhat-test-inventory.md`).
+`pnpm test:tasks` validates the ops task implementation. Smart-contract tests belong exclusively in the Foundry suite under `tests/`.
 
 ### Hardhat (ops task CLI only)
 ```bash
@@ -215,7 +215,7 @@ tests/                     # Foundry suite (canonical)
   invariant/
   mocks/
   utils/                   # Addresses.sol, shared helpers
-test/                      # legacy Hardhat suite — frozen, not run in CI
+tasks/test/                # Mocha tests for Hardhat ops tasks only
 ```
 
 Layout mirrors `<type>/<chain>/<area>/<Contract>/{concrete,fuzz}/<Behaviour>.t.sol`, with a per-contract `shared/Shared.t.sol` base. Tests interact with contracts **through interfaces** (`IVault`, `IOToken`, `IWOToken`, `IProxy`) and deploy implementations with `vm.deployCode` — never import a concrete contract into a test file; it drags the whole dependency tree into the test's compilation unit and destroys build caching. Full rules and gotchas: `tests/README.md`.

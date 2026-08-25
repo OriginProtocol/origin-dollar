@@ -23,7 +23,7 @@ const {
   isTest,
   isHoodi,
   isHyperEVM,
-} = require("../test/helpers.js");
+} = require("./hardhat-deploy-helpers.js");
 
 const {
   assertUpgradeIsSafe,
@@ -41,7 +41,7 @@ const {
 const governorSixAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
-const { hardhatSetBalance } = require("../test/_fund.js");
+const { hardhatSetBalance } = require("./hardhat-funding.js");
 const {
   setStorageAt,
   getStorageAt,

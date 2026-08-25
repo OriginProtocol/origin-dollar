@@ -13,7 +13,7 @@ import {EnhancedBeaconProofs} from "contracts/mocks/beacon/EnhancedBeaconProofs.
 abstract contract Fork_BeaconProofs_Shared_Test is BaseFork {
     using stdJson for string;
 
-    // Test-only DTOs for the JSON payload returned by test/scripts/beaconProofsFixture.js.
+    // DTOs for the JSON payload returned by scripts/beacon/beaconProofsFixture.js.
     // Each struct mirrors one proof vector shape consumed by BeaconProofs.sol.
     struct ValidatorPubKeyVector {
         uint40 validatorIndex;
@@ -109,7 +109,7 @@ abstract contract Fork_BeaconProofs_Shared_Test is BaseFork {
         } else {
             string[] memory cmd = new string[](3);
             cmd[0] = "node";
-            cmd[1] = string.concat(vm.projectRoot(), "/test/scripts/beaconProofsFixture.js");
+            cmd[1] = string.concat(vm.projectRoot(), "/scripts/beacon/beaconProofsFixture.js");
             cmd[2] = vm.toString(slot);
             json = string(vm.ffi(cmd));
         }

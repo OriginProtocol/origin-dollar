@@ -1,4 +1,4 @@
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 const { deployOnArb } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");

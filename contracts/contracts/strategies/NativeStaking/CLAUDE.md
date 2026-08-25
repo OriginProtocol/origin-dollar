@@ -317,8 +317,7 @@ collision constraint in [§8](#operational-constraint-deposit-root-collisions)).
 because two of them are loss/imprecision cases, not success cases. Summarised in [§8](#8-accepted-imprecisions).
 
 Tests that manipulate this state directly need the slots: `deposits` is mapping base **52** and
-`depositList` is array slot **53** (`test/strategies/compoundingSSVStaking.js:643,663`). These
-depend on the C3 linearization of
+`depositList` is array slot **53**. These depend on the C3 linearization of
 `CompoundingStakingStrategy is CompoundingValidatorStorage, InitializableAbstractStrategy` —
 reordering that inheritance list would silently shift every slot.
 
@@ -843,7 +842,7 @@ bites within a single slot.
 
 ## 9. Worked example (real mainnet data)
 
-From `test/beacon/beaconProofs.js:204-225` — a real balance proof:
+Captured from a real mainnet balance proof:
 
 ```
 balancesContainerRoot = 0xdbdf8b18bb50a2ac84864bf12779da475aca1e2b98854b2a1b02506396250eff
@@ -936,8 +935,6 @@ To re-derive: `ethereum/consensus-specs` renamed its default branch from `dev` t
 - `tests/unit/strategies/CompoundingStakingSSVStrategy/**` — state machine, including
   `TwentyOneValidators.t.sol` (real 21-validator proofs), `SlashedValidatorDeposit.t.sol`,
   `FrontRunAndInvalid.t.sol`, `VerifyDeposit.t.sol`.
-- `test/beacon/beaconProofs.js` — hard-coded real mainnet/Hoodi proofs (source of §9).
-
 Caveat from `tests/unit/strategies/CompoundingStakingSSVStrategy/README.md`: many strategy unit
 tests swap in `MockBeaconProofs`, which **auto-passes all verification**. Those tests exercise the
 accounting state machine, not the proofs. Real-proof coverage lives in the `BeaconProofsLib` unit
