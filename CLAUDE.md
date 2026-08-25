@@ -13,7 +13,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, and executes deployments. Hardhat remains for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`) and for generating the npm ABI package. The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. Hardhat remains only for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`). The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
 
 ## Setup
 
@@ -48,9 +48,9 @@ Keep it that way. Two regressions to avoid:
   fail with `Cannot find module '@oplabs/talos-client'`.
 - Do not import it from `tasks/lib/network.ts`. That used to drag the
   requirement up through `utils/resolvers.js` → `utils/morpho.js` →
-  `tasks/tasks.js` → `hardhat.config.js` and broke Hardhat compilation in the
-  ABI publish workflow, which installs without GitHub Packages auth. #2954
-  replaced it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
+  `tasks/tasks.js` → `hardhat.config.js` and broke the Hardhat ops CLI for
+  installs without GitHub Packages auth. #2954 replaced it with local
+  `CHAIN_IDS` / `RPC_ENV_VARS` maps.
 
 ## Commands (run from `contracts/`)
 
