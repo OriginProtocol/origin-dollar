@@ -22,8 +22,8 @@ import { IVault } from "../interfaces/IVault.sol";
  *         are `pauseCapital()`, `pauseRebase()` and `pause()`, all compiled in
  *         below. That is a property of the bytecode, not of configuration —
  *         there is no allow-list entry or role that could turn an unpause into
- *         a legal call. Unpausing requires the Admin multisig acting directly
- *         on the target.
+ *         a legal call. Unpausing requires the Admin multisig or OGN
+ *         Governance acting directly on the target.
  *      2. Targets are allow-listed by the Safe, so a compromised operator key
  *         cannot aim a pause at an arbitrary contract.
  *      3. Pause failures revert. A pause that silently did not land is worse

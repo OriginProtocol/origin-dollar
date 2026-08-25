@@ -172,9 +172,10 @@ const defaultFixture = async () => {
     // Production vault sits paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    // The Strategist is still the unpauser on the live implementation; this
-    // becomes `admin` once scripts/deploy/base/001_VaultAdminRole executes.
-    await oethbVault.connect(strategist).unpauseRebase();
+    // Unpause as the Governor (`governor` is the Timelock on fork), not the
+    // Strategist: the Governor is the only role that can unpause both before
+    // and after 001_VaultAdminRole lands, so this needs no follow-up edit.
+    await oethbVault.connect(governor).unpauseRebase();
   } else {
     admin = signers[2];
     await oethbVault.connect(governor).setAdminAddr(admin.address);

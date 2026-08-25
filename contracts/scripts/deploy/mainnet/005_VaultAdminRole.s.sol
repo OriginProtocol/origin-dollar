@@ -16,7 +16,7 @@ import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/Initializ
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 /// @title 005_VaultAdminRole
-/// @notice Gives the OUSD and OETH vaults an Admin role that holds the sole right to unpause.
+/// @notice Gives the OUSD and OETH vaults an Admin role that can unpause, alongside the Governor.
 /// @dev Before this upgrade the Strategist could both pause and unpause, so a single compromised
 ///      key could trip a pause and immediately lift it. The new `adminAddr` slot splits the two:
 ///      `pauseCapital`/`pauseRebase` stay open to the Strategist (the 2/8 Guardian Safe), while
@@ -49,7 +49,7 @@ contract $005_VaultAdminRole is AbstractDeployScript("005_VaultAdminRole") {
         address oethVaultProxy = resolver.resolve("OETH_VAULT_PROXY");
 
         govProposal.setDescription(
-            "Upgrade OUSD and OETH vaults: Admin can pause, only Admin can unpause\n\n"
+            "Upgrade OUSD and OETH vaults: Admin can pause, only Admin or Governor can unpause\n\n"
             "Adds an Admin role to both vaults and points it at the 5/8 multisig. Pausing capital "
             "and rebasing stays available to the Strategist, the Admin and the Governor; unpausing "
             "is narrowed to the Admin and the Governor, so the Strategist can no longer lift a "

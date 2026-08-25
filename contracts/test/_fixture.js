@@ -53,7 +53,8 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   });
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  const { governorAddr, multichainStrategistAddr } = await getNamedAccounts();
+  const { governorAddr, multichainStrategistAddr, timelockAddr } =
+    await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const oethProxy = await ethers.getContract("OETHProxy");
@@ -98,12 +99,17 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     admin = await impersonateAndFund(addresses.mainnet.Guardian);
     admin.address = addresses.mainnet.Guardian;
 
+    // The vault's own governor, which is the Timelock rather than the
+    // `governor` signer above (that one is the OldTimelock).
+    const vaultGovernor = await impersonateAndFund(timelockAddr);
+
     // Production vault sits paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    // The Strategist is still the unpauser on the live implementation; this
-    // becomes `admin` once scripts/deploy/mainnet/005_VaultAdminRole executes.
-    await oethVault.connect(strategist).unpauseRebase();
+    // Unpause as the Governor, not the Strategist: the Governor is the only
+    // role that can unpause both before and after 005_VaultAdminRole lands,
+    // so this needs no follow-up edit when the upgrade executes.
+    await oethVault.connect(vaultGovernor).unpauseRebase();
 
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
@@ -645,10 +651,11 @@ const defaultFixture = deployments.createFixture(async () => {
     // Production vaults sit paused-for-rebase between strategist runs.
     // Lift the pause once per fork fixture so tests can exercise rebase
     // without each call site having to unpause/rebase/pause itself.
-    // The Strategist is still the unpauser on the live implementations; this
-    // becomes `admin` once scripts/deploy/mainnet/005_VaultAdminRole executes.
-    await vaultAndTokenContracts.vault.connect(strategist).unpauseRebase();
-    await vaultAndTokenContracts.oethVault.connect(strategist).unpauseRebase();
+    // Unpause as the Governor (the Timelock), not the Strategist: the Governor
+    // is the only role that can unpause both before and after
+    // 005_VaultAdminRole lands, so this needs no follow-up edit.
+    await vaultAndTokenContracts.vault.connect(timelock).unpauseRebase();
+    await vaultAndTokenContracts.oethVault.connect(timelock).unpauseRebase();
   } else {
     timelock = governor;
 
