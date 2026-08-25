@@ -17,7 +17,7 @@ const { loadDefaultFixture } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:curve:amo");
 
-describe("Curve AMO OETH strategy", function () {
+describe("Fork Test: Curve AMO OETH strategy", function () {
   this.timeout(0);
 
   let fixture,

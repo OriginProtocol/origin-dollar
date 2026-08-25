@@ -31,8 +31,8 @@ const FQN = {
   OUSDVault: "contracts/vault/OUSDVault.sol:OUSDVault",
   OUSD: "contracts/token/OUSD.sol:OUSD",
   WOETH: "contracts/token/WOETH.sol:WOETH",
-  CompoundingStakingSSVStrategy:
-    "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:CompoundingStakingSSVStrategy",
+  CompoundingStakingStrategy:
+    "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
 };
 
 const PINS = {
@@ -114,9 +114,9 @@ const PINS = {
     "57|0|__gap|uint256[49]|1568",
   ],
 
-  // Highest-churn contract behind a live mainnet proxy, and the only pin with
-  // three variables packed into one slot (51) — the shape that breaks silently.
-  CompoundingStakingSSVStrategy: [
+  // Three variables share slot 51, so an innocent-looking type change can
+  // silently move every strategy field that follows it.
+  CompoundingStakingStrategy: [
     "0|0|initialized|bool|1",
     "0|1|initializing|bool|1",
     "1|0|__gap|uint256[50]|1600",
@@ -141,7 +141,6 @@ const PINS = {
     "107|0|harvesterAddress|address|20",
     "108|0|rewardTokenAddresses|address[]|32",
     "109|0|_reserved|int256[98]|3136",
-    "207|0|__gap|uint256[50]|1600",
   ],
 };
 
@@ -151,7 +150,7 @@ const GAP_ENDS = {
   OUSDVault: [51, 123],
   OUSD: [154, 200],
   WOETH: [56, 106],
-  CompoundingStakingSSVStrategy: [51, 101, 257],
+  CompoundingStakingStrategy: [51, 101],
 };
 
 describe("pinned storage layouts", () => {

@@ -31,15 +31,9 @@ action({
     );
     t.addOptionalParam(
       "depositMessageRoot",
-      "Deposit message root provided by p2p",
+      "Deposit message root provided by the validator operator",
       undefined,
       types.string
-    );
-    t.addOptionalParam(
-      "consol",
-      "Call the consolidation controller instead of the strategy",
-      false,
-      types.boolean
     );
   },
   run: async ({ signer, args }) => {

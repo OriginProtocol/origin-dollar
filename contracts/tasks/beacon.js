@@ -34,8 +34,8 @@ const {
   address: mainnetCompoundingStakingSSVStrategyProxy,
 } = require("../deployments/mainnet/CompoundingStakingSSVStrategyProxy.json");
 const {
-  address: hoodiNativeStakingSSVStrategyProxy,
-} = require("../deployments/hoodi/NativeStakingSSVStrategyProxy.json");
+  address: mainnetCompoundingStakingStrategyProxy,
+} = require("../deployments/mainnet/CompoundingStakingStrategyProxy.json");
 const {
   address: hoodiCompoundingStakingSSVStrategyProxy,
 } = require("../deployments/hoodi/CompoundingStakingSSVStrategyProxy.json");
@@ -72,15 +72,15 @@ const getKnownWithdrawalStrategies = (networkName) => {
         label: "CompoundingStakingSSVStrategyProxy",
         address: mainnetCompoundingStakingSSVStrategyProxy,
       },
+      {
+        label: "CompoundingStakingStrategyProxy",
+        address: mainnetCompoundingStakingStrategyProxy,
+      },
     ];
   }
 
   if (networkName === "hoodi") {
     return [
-      {
-        label: "NativeStakingSSVStrategyProxy",
-        address: hoodiNativeStakingSSVStrategyProxy,
-      },
       {
         label: "CompoundingStakingSSVStrategyProxy",
         address: hoodiCompoundingStakingSSVStrategyProxy,
@@ -352,14 +352,11 @@ async function getProcessedDeposits(pendingDeposits) {
   return { processedDeposits, depositProcessedSlot };
 }
 
-async function verifyDeposits({ dryrun, signer, consol = false }) {
+async function verifyDeposits({ dryrun, signer }) {
   const stakingStrategy = await resolveContract(
     "CompoundingStakingStrategyProxy",
     "CompoundingStakingStrategy"
   );
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : stakingStrategy;
   const stakingStrategyView = await resolveContract(
     "CompoundingStakingStrategyView"
   );
@@ -382,7 +379,7 @@ async function verifyDeposits({ dryrun, signer, consol = false }) {
   if (processedDeposits.length > 0) {
     log(`About to snap balances before verifying deposits`);
     if (!dryrun) {
-      await contract.connect(signer).snapBalances();
+      await stakingStrategy.connect(signer).snapBalances();
     }
   } else {
     console.log(
@@ -607,7 +604,6 @@ async function verifyBalances({
   test,
   signer,
   slot,
-  consol,
 }) {
   const strategy = test
     ? undefined
@@ -826,11 +822,7 @@ async function verifyBalances({
   log(balanceProofs);
   log(pendingDepositProofsData);
 
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
-
-  const tx = await contract
+  const tx = await strategy
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");

@@ -364,15 +364,11 @@ const getAssetAddresses = async (deployments) => {
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
       uniswapUniversalRouter: addresses.mainnet.uniswapUniversalRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
-      SSV: addresses.mainnet.SSV,
-      SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
     };
   } else if (isHoodiOrFork) {
     return {
       WETH: addresses.hoodi.WETH,
-      SSV: addresses.hoodi.SSV,
-      SSVNetwork: addresses.hoodi.SSVNetwork,
       beaconChainDepositContract: addresses.hoodi.beaconChainDepositContract,
     };
   } else {
@@ -388,8 +384,6 @@ const getAssetAddresses = async (deployments) => {
       uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
         .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
-      SSV: (await deployments.get("MockSSV")).address,
-      SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
       beaconChainDepositContract: (await deployments.get("MockDepositContract"))
         .address,
     };
