@@ -14,6 +14,10 @@ library Strategies {
         "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy";
     string internal constant CROSS_CHAIN_REMOTE_STRATEGY =
         "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy";
+    string internal constant REMOTE_WOTOKEN_STRATEGY =
+        "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy";
+    string internal constant MASTER_WOTOKEN_STRATEGY =
+        "contracts/strategies/crosschainV3/MasterWOTokenStrategy.sol:MasterWOTokenStrategy";
     string internal constant CURVE_AMO_STRATEGY = "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy";
     string internal constant GENERALIZED_4626_STRATEGY =
         "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy";

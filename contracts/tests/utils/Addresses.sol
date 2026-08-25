@@ -14,6 +14,18 @@ library CrossChain {
     address internal constant votemarket = 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9;
     address internal constant CCTPTokenMessengerV2 = 0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d;
     address internal constant CCTPMessageTransmitterV2 = 0x81D40F21F12A8F0E3252Bccb954D722d4c464B64;
+
+    /// @dev Per-receive destination gas limit on the Base -> Ethereum lane: the budget CCIP
+    ///      hands `RemoteWOTokenStrategy.receiveMessage`. Worst case is WITHDRAW_CLAIM at
+    ///      ~1.17M (see the derivation in `deploy/base/101_oethb_v3_master_impl.js`).
+    ///      The lane's CCIP `maxPerMsgGasLimit` is 7,000,000, so this is inside the cap.
+    uint32 internal constant OETHB_V3_DEST_GAS_LIMIT_BASE_TO_MAINNET = 2_000_000;
+
+    /// @dev Ethereum -> Base lane. Master's inbound handlers are terminal (no outbound
+    ///      `_send`), and split delivery moves the expensive leg into a separate
+    ///      `processStoredMessage` transaction outside CCIP's cap, so 500k suffices.
+    ///      CCIP bills the declared limit whether used or not — do not raise without cause.
+    uint32 internal constant OETHB_V3_DEST_GAS_LIMIT_MAINNET_TO_BASE = 500_000;
 }
 
 library Mainnet {
@@ -91,7 +103,14 @@ library Mainnet {
     address internal constant chainlinkcbETH_ETH = 0xF017fcB346A1885194689bA23Eff2fE6fA5C483b;
     address internal constant chainlinkBAL_ETH = 0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b;
 
+    /// @dev CCIP chain selector for Ethereum mainnet.
+    uint64 internal constant CCIPChainSelector = 5009297550715157269;
+
     address internal constant ccipRouterMainnet = 0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D;
+
+    /// @dev OP Stack L1StandardBridge for the Base rollup, deployed on Ethereum. Used by
+    ///      `SuperbridgeAdapter` for the canonical ETH leg of Ethereum -> Base transfers.
+    address internal constant BaseL1StandardBridge = 0x3154Cf16ccdb4C6d922629664174b904d80F2C35;
     address internal constant ccipWoethTokenPool = 0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0;
 
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -245,6 +264,9 @@ library Mainnet {
 }
 
 library Base {
+    /// @dev CCIP chain selector for Base.
+    uint64 internal constant CCIPChainSelector = 15971525489660198786;
+
     address internal constant HarvesterProxy = 0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29;
     address internal constant BridgedWOETH = 0xD8724322f44E5c58D7A815F542036fb17DbbF839;
     address internal constant AERO = 0x940181a94A35A4569E4529A3CDfB74e38FD98631;

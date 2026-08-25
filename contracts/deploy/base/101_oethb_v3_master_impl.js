@@ -5,8 +5,28 @@ const {
   deployProxyWithCreateX,
 } = require("../deployActions");
 
-// Default per-receive destination gas limit for cross-chain message handling.
-const DEFAULT_DEST_GAS_LIMIT = 500000;
+// Per-receive destination gas limit for cross-chain message handling. This is the budget
+// CCIP hands Remote's `receiveMessage` on Ethereum, so it must cover Remote's most expensive
+// inbound handler end-to-end.
+//
+// Worst case is WITHDRAW_CLAIM (~1.17M), measured at the OP-Stack metering floor
+// (`block.basefee <= 1 gwei`, portal `prevBaseFee` at its 1 gwei minimum):
+//
+//   CCIP receive + _validateInbound + _deliver         ~50k
+//   IVault.claimWithdrawal (incl. _totalValue loop)    ~176k
+//   quoteFee -> ccipRouter.getFee                       ~48k
+//   IWETH9.withdraw (unwrap)                            ~15k
+//   L1StandardBridge.bridgeETHTo (metered burn)        ~623k
+//   _sendCCIPMessage -> getFee (second quote)           ~48k
+//   ccipRouter.ccipSend                                ~213k
+//
+// 2M leaves ~830k of headroom, which absorbs either ~9 further OETH-vault strategies at
+// ~85k each in `claimWithdrawal`'s `_totalValue` loop, or a portal `prevBaseFee` up to
+// ~2.7 gwei — not both. The lane's CCIP `maxPerMsgGasLimit` is 7,000,000 (FeeQuoter 2.0.0
+// on Base for the Ethereum selector), so this is well inside the protocol cap.
+//
+// Asserted by tests/fork/mainnet/strategies/RemoteWOTokenStrategy — keep the two in sync.
+const DEFAULT_DEST_GAS_LIMIT = 2000000;
 
 // CreateX/CREATE2 salts for the adapter proxies. MUST match the Ethereum-side salts used
 // in `deploy/mainnet/211_oethb_v3_remote_impl.js` so the proxy addresses are
