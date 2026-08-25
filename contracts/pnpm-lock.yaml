@@ -59,12 +59,6 @@ importers:
         specifier: ^4.23.1
         version: 4.23.1
     devDependencies:
-      '@aws-sdk/client-kms':
-        specifier: ^3.675.0
-        version: 3.1036.0
-      '@aws-sdk/client-s3':
-        specifier: 3.600.0
-        version: 3.600.0
       '@chainsafe/persistent-merkle-tree':
         specifier: ^1.2.1
         version: 1.2.1
@@ -92,9 +86,6 @@ importers:
       '@openzeppelin/upgrades-core':
         specifier: 1.44.2
         version: 1.44.2
-      '@rigidity/bls-signatures':
-        specifier: 2.0.5
-        version: 2.0.5
       '@rollup/plugin-commonjs':
         specifier: 29.0.0
         version: 29.0.0(rollup@4.54.0)
@@ -212,9 +203,6 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
-      uuid:
-        specifier: 9.0.1
-        version: 9.0.1
       viem:
         specifier: ^2.27.0
         version: 2.43.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)

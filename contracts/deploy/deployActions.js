@@ -111,100 +111,9 @@ const configureOETHVault = async () => {
   );
 };
 
-const deploySimpleOETHHarvester = async () => {
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  // Deploy OETHHarvesterSimple implementation
-  const dHarvester = await deployWithConfirmation("OETHHarvesterSimple", [
-    assetAddresses.WETH,
-  ]);
-  await deployWithConfirmation("OETHSimpleHarvesterProxy");
-  const cHarvesterProxy = await ethers.getContract("OETHSimpleHarvesterProxy");
-  await withConfirmation(
-    cHarvesterProxy["initialize(address,address,bytes)"](
-      dHarvester.address,
-      governorAddr,
-      []
-    )
-  );
-  const cHarvester = await ethers.getContractAt(
-    "OETHHarvesterSimple",
-    cHarvesterProxy.address
-  );
-  await withConfirmation(
-    cHarvester.connect(sGovernor).setStrategistAddr(strategistAddr)
-  );
-
-  return cHarvester;
-};
-
-/**
- * upgradeNativeStakingFeeAccumulator
- */
-const upgradeNativeStakingFeeAccumulator = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const strategyProxy = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
-  );
-  const feeAccumulatorProxy = await ethers.getContract(
-    "NativeStakingFeeAccumulatorProxy"
-  );
-
-  log("About to deploy FeeAccumulator implementation");
-  const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
-    strategyProxy.address, // STRATEGY
-  ]);
-  log(`New FeeAccumulator implementation: ${dFeeAccumulatorImpl.address}`);
-
-  await withConfirmation(
-    feeAccumulatorProxy
-      .connect(sDeployer)
-      .upgradeTo(dFeeAccumulatorImpl.address)
-  );
-};
-
 /**
  * Upgrade NativeStakingSSVStrategy
  */
-const upgradeNativeStakingSSVStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-  const strategyProxy = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
-  );
-
-  const cFeeAccumulatorProxy = await ethers.getContract(
-    "NativeStakingFeeAccumulatorProxy"
-  );
-
-  log("About to deploy NativeStakingSSVStrategy implementation");
-  const dStrategyImpl = await deployWithConfirmation(
-    "NativeStakingSSVStrategy",
-    [
-      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
-      assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
-      assetAddresses.SSVNetwork, // ssvNetwork
-      500, // maxValidators
-      cFeeAccumulatorProxy.address, // feeAccumulator
-      assetAddresses.beaconChainDepositContract, // depositContractMock
-    ]
-  );
-  log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
-
-  const networkName = await getNetworkName();
-  if (networkName == "hoodi") {
-    const sGovernor = await getSigner();
-    await withConfirmation(
-      strategyProxy.connect(sGovernor).upgradeTo(dStrategyImpl.address)
-    );
-  }
-};
-
 const upgradeCompoundingStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
 
@@ -263,112 +172,6 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
   console.log(
     `Upgraded CompoundingStakingSSVStrategyProxy to implementation at ${dStrategyImpl.address}`
   );
-};
-
-/**
- * Deploy NativeStakingSSVStrategy
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- * the strategy.
- */
-const deployNativeStakingSSVStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  let { governorAddr, deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-  if (isHoodiOrFork) {
-    governorAddr = deployerAddr;
-  }
-
-  log("Deploy NativeStakingSSVStrategyProxy");
-  const dNativeStakingSSVStrategyProxy = await deployWithConfirmation(
-    "NativeStakingSSVStrategyProxy"
-  );
-  const cNativeStakingSSVStrategyProxy = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
-  );
-
-  log("Deploy FeeAccumulator proxy");
-  const dFeeAccumulatorProxy = await deployWithConfirmation(
-    "NativeStakingFeeAccumulatorProxy"
-  );
-  const cFeeAccumulatorProxy = await ethers.getContractAt(
-    "NativeStakingFeeAccumulatorProxy",
-    dFeeAccumulatorProxy.address
-  );
-
-  log("Deploy NativeStakingSSVStrategy");
-  const dStrategyImpl = await deployWithConfirmation(
-    "NativeStakingSSVStrategy",
-    [
-      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
-      assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
-      assetAddresses.SSVNetwork, // ssvNetwork
-      500, // maxValidators
-      dFeeAccumulatorProxy.address, // feeAccumulator
-      assetAddresses.beaconChainDepositContract, // depositContractMock
-    ]
-  );
-  const cStrategyImpl = await ethers.getContractAt(
-    "NativeStakingSSVStrategy",
-    dStrategyImpl.address
-  );
-
-  log("Deploy encode initialize function of the strategy contract");
-  const initData = cStrategyImpl.interface.encodeFunctionData(
-    "initialize(address[],address[],address[])",
-    [
-      [assetAddresses.WETH], // reward token addresses
-      /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
-       * function on the strategy
-       */
-      [], // asset token addresses
-      [], // platform tokens addresses
-    ]
-  );
-
-  log("Initialize the proxy and execute the initialize strategy function");
-  await withConfirmation(
-    cNativeStakingSSVStrategyProxy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address,address,bytes)"
-    ](
-      cStrategyImpl.address, // implementation address
-      governorAddr, // governance
-      initData // data for call to the initialize function on the strategy
-    )
-  );
-
-  const cStrategy = await ethers.getContractAt(
-    "NativeStakingSSVStrategy",
-    dNativeStakingSSVStrategyProxy.address
-  );
-
-  log("Approve spending of the SSV token");
-  await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
-
-  log("Deploy fee accumulator implementation");
-  const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
-    cNativeStakingSSVStrategyProxy.address, // STRATEGY
-  ]);
-  const cFeeAccumulator = await ethers.getContractAt(
-    "FeeAccumulator",
-    dFeeAccumulator.address
-  );
-
-  log("Init fee accumulator proxy");
-  await withConfirmation(
-    cFeeAccumulatorProxy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address,address,bytes)"
-    ](
-      cFeeAccumulator.address, // implementation address
-      governorAddr, // governance
-      "0x" // do not call any initialize functions
-    )
-  );
-  return cStrategy;
 };
 
 /**
@@ -1308,17 +1111,13 @@ module.exports = {
   deployCore,
   deployOETHCore,
   deployOUSDCore,
-  deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
-  deploySimpleOETHHarvester,
   configureVault,
   configureOETHVault,
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
   deployWOeth,
-  upgradeNativeStakingSSVStrategy,
-  upgradeNativeStakingFeeAccumulator,
   upgradeCompoundingStakingSSVStrategy,
   deployBaseAerodromeAMOStrategyImplementation,
   getPlumeContracts,

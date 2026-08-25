@@ -22,13 +22,7 @@ const { getProvider } = require("./lib/network");
 const { getSigner } = require("../utils/signers");
 const { verifyDepositSignatureAndMessageRoot } = require("../utils/beacon");
 const { resolveContract } = require("../utils/resolvers");
-const { getClusterInfo, splitOperatorIds } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
-const {
-  createValidatorRequest,
-  getValidatorRequestStatus,
-  getValidatorRequestDepositData,
-} = require("../utils/p2pValidatorCompound");
 const { toHex } = require("../utils/units");
 const {
   calcTargetBuffer,
@@ -40,28 +34,12 @@ const {
 const log = require("../utils/logger")("task:validator:compounding");
 
 const VALIDATOR_STATE_NON_REGISTERED = 0;
-const VALIDATOR_STATE_REGISTERED = 1;
-
-const resolveCompoundingStakingContract = async (ssv = false) => {
-  const proxyName = ssv
-    ? "CompoundingStakingSSVStrategyProxy"
-    : "CompoundingStakingStrategyProxy";
-  const implementationName = ssv
-    ? "CompoundingStakingSSVStrategy"
-    : "CompoundingStakingStrategy";
-
-  if (ssv) {
-    return {
-      creatingDepositState: VALIDATOR_STATE_REGISTERED,
-      proxyName,
-      strategy: await resolveContract(proxyName, implementationName),
-    };
-  }
-
+const resolveCompoundingStakingContract = async () => {
+  const proxyName = "CompoundingStakingStrategyProxy";
   return {
     creatingDepositState: VALIDATOR_STATE_NON_REGISTERED,
     proxyName,
-    strategy: await resolveContract(proxyName, implementationName),
+    strategy: await resolveContract(proxyName, "CompoundingStakingStrategy"),
   };
 };
 
@@ -103,24 +81,19 @@ const getPendingDeposits = async (strategy, blockTag = "latest") => {
   return deposits;
 };
 
-async function snapBalances({ consol = false, ssv = false }) {
+async function snapBalances() {
   const signer = await getSigner();
 
   // TODO check the slot of the first pending deposit is not zero
 
-  const { strategy } = await resolveCompoundingStakingContract(ssv);
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
+  const { strategy } = await resolveCompoundingStakingContract();
 
-  log(`About to snap balances on ${contract.address}`);
-  const tx = await contract.connect(signer).snapBalances();
+  log(`About to snap balances on ${strategy.address}`);
+  const tx = await strategy.connect(signer).snapBalances();
   await logTxDetails(tx, "snapBalances");
 
   const receipt = await tx.wait();
 
-  // When called via ConsolidationController the BalancesSnapped event is emitted
-  // by the target strategy, so decode logs against the strategy's interface.
   const eventTopic = strategy.interface.getEventTopic("BalancesSnapped");
   const rawLog = receipt.logs.find(
     (l) =>
@@ -140,68 +113,6 @@ async function snapBalances({ consol = false, ssv = false }) {
   );
 }
 
-async function registerValidatorCreateRequest({ days }) {
-  await createValidatorRequest({
-    validatorSpawnOperationalPeriodInDays: days,
-  });
-}
-
-/**
- * If the UUID is passed to this function then pubkey, shares, operatorIds are
- * ignored and fetched from the P2P
- */
-async function registerValidator({
-  pubkey,
-  shares,
-  operatorids,
-  eth = 0,
-  uuid,
-}) {
-  const signer = await getSigner();
-
-  if (uuid) {
-    const {
-      pubkey: _pubkey,
-      shares: _shares,
-      operatorids: _operatorids,
-    } = await getValidatorRequestStatus({ uuid });
-    pubkey = _pubkey;
-    shares = _shares;
-    // unsorted string of operators
-    operatorids = _operatorids;
-  }
-
-  log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = splitOperatorIds(operatorids);
-
-  const ethAmount = parseUnits(eth.toString(), 18);
-
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
-
-  // Cluster details
-  const { chainId } = await getProvider().getNetwork();
-  const { cluster } = await getClusterInfo({
-    chainId,
-    operatorids,
-    ownerAddress: strategy.address,
-  });
-
-  log(`About to register compounding validator with pubkey ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .registerSsvValidator(pubkey, operatorIds, shares, cluster, {
-      value: ethAmount,
-    });
-  await logTxDetails(tx, "registerValidator");
-}
-
-/**
- * If the UUID is passed to this function then pubkey, sig, amount are
- * ignored and fetched from the P2P
- */
 async function stakeValidator({
   dryrun,
   pubkey,
@@ -210,35 +121,12 @@ async function stakeValidator({
   withdrawalCredentials,
   depositMessageRoot,
   forkVersion,
-  uuid,
-  consol = false,
-  ssv = false,
   signer: taskSigner,
 }) {
   const signer = taskSigner || (await getSigner());
 
-  if (uuid) {
-    const {
-      pubkey: _pubkey,
-      sig: _sig,
-      amount: _amount,
-      depositMessageRoot: _depositMessageRoot,
-      withdrawalCredentials: _withdrawalCredentials,
-      forkVersion: _forkVersion,
-    } = await getValidatorRequestDepositData({ uuid });
-    pubkey = _pubkey;
-    sig = _sig;
-    amount = _amount;
-    withdrawalCredentials = _withdrawalCredentials;
-    depositMessageRoot = _depositMessageRoot;
-    forkVersion = _forkVersion;
-  }
-
   const { creatingDepositState, strategy: depositStrategy } =
-    await resolveCompoundingStakingContract(ssv);
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : depositStrategy;
+    await resolveCompoundingStakingContract();
 
   if (!withdrawalCredentials) {
     withdrawalCredentials = calcWithdrawalCredential(
@@ -300,18 +188,12 @@ async function stakeValidator({
   }
 
   log(
-    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig} via ${
-      consol ? "ConsolidationController" : "strategy"
-    }`
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig}`
   );
   const validatorStakeData = { pubkey, signature: sig, depositDataRoot };
-  const connectedContract = contract.connect(signer);
-  const tx = consol
-    ? await connectedContract["stakeEth((bytes,bytes,bytes32),uint64)"](
-        validatorStakeData,
-        amountGwei
-      )
-    : await connectedContract.stakeEth(validatorStakeData, amountGwei);
+  const tx = await depositStrategy
+    .connect(signer)
+    .stakeEth(validatorStakeData, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
 
   const eventTopic = depositStrategy.interface.getEventTopic("ETHStaked");
@@ -335,12 +217,11 @@ async function autoValidatorDeposits({
   buffer: bufferBps = 100, // 1% buffer
   minStrategyWithdrawAmount = parseUnits("0.1", 18),
   dryrun = false,
-  ssv = false,
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
   const weth = await getContractAt("IERC20", wethAddress);
-  const { strategy } = await resolveCompoundingStakingContract(ssv);
+  const { strategy } = await resolveCompoundingStakingContract();
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
   // 1. Calculate the WETH available in the vault = WETH balance - withdrawals queued + withdrawals claimed
@@ -524,27 +405,13 @@ async function autoValidatorDeposits({
   }
 }
 
-async function withdrawValidator({
-  pubkey,
-  amount,
-  signer,
-  consol = false,
-  ssv = false,
-}) {
-  const { strategy } = await resolveCompoundingStakingContract(ssv);
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
+async function withdrawValidator({ pubkey, amount, signer }) {
+  const { strategy } = await resolveCompoundingStakingContract();
 
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
   const isFullExit = amount === undefined || amount === 0;
-  if (consol && isFullExit) {
-    throw new Error(
-      "The ConsolidationController only supports partial withdrawals. Set a non-zero amount."
-    );
-  }
   const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
@@ -555,13 +422,17 @@ async function withdrawValidator({
     );
   } else {
     log(
-      `About to partially withdraw ${formatUnits(amountGwei, 9)} ETH from ${
-        consol ? "ConsolidationController" : "validator"
-      } with balance ${formatUnits(balance, 9)} ETH and pubkey ${pubkey}`
+      `About to partially withdraw ${formatUnits(
+        amountGwei,
+        9
+      )} ETH from validator with balance ${formatUnits(
+        balance,
+        9
+      )} ETH and pubkey ${pubkey}`
     );
   }
   // Send 1 wei of value to cover the request withdrawal fee
-  const tx = await contract
+  const tx = await strategy
     .connect(signer)
     .validatorWithdrawal(pubkey, amountGwei, { value: 1 });
   await logTxDetails(tx, "validatorWithdrawal");
@@ -574,14 +445,13 @@ async function autoValidatorWithdrawals({
   minValidatorWithdrawAmount = BigInt(10e18),
   minStrategyWithdrawAmount = parseUnits("0.1", 18),
   dryrun = false,
-  ssv = false,
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
   const weth = await getContractAt("IERC20", wethAddress);
   const vaultAddress = addresses[networkName].OETHVaultProxy;
   const vault = await getContractAt("IVault", vaultAddress);
-  const { strategy } = await resolveCompoundingStakingContract(ssv);
+  const { strategy } = await resolveCompoundingStakingContract();
 
   // 1. Calculate the WETH available in the vault = WETH balance - withdrawals queued + withdrawals claimed
 
@@ -725,7 +595,6 @@ async function autoValidatorWithdrawals({
 async function snapStakingStrategy({
   buffer: bufferBps = 100, // 1% buffer
   block,
-  ssv = false,
 }) {
   let blockTag = await getBlock(block);
   // Don't use the latest block as the slot probably won't be available yet
@@ -740,10 +609,7 @@ async function snapStakingStrategy({
 
   const wethAddress = addresses[networkName].WETH;
   const weth = await getContractAt("IERC20", wethAddress);
-  const ssvToken = addresses[networkName].SSV
-    ? await getContractAt("IERC20", addresses[networkName].SSV)
-    : undefined;
-  const { proxyName, strategy } = await resolveCompoundingStakingContract(ssv);
+  const { proxyName, strategy } = await resolveCompoundingStakingContract();
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
   // Pending deposits
@@ -815,10 +681,6 @@ async function snapStakingStrategy({
     strategy.address,
     blockTag
   );
-  const stratSsvBalance =
-    ssvToken && ssv
-      ? await ssvToken.balanceOf(strategy.address, { blockTag })
-      : undefined;
   const stratBalance = await strategy.checkBalance(wethAddress, {
     blockTag,
   });
@@ -879,9 +741,6 @@ async function snapStakingStrategy({
   console.log(
     `Last snap slot     : ${snappedSlot} (${slot - snappedSlot} slots ago)`
   );
-  if (stratSsvBalance !== undefined) {
-    console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
-  }
   console.log(
     `WETH Deposits      : ${formatUnits(depositedWethAccountedFor, 18)}`
   );
@@ -1041,67 +900,17 @@ function validatorStatus(status) {
   }
 }
 
-async function setRegistrator({ account, type, ssv = false }) {
+async function setRegistrator({ account }) {
   const signer = await getSigner();
 
-  const strategy =
-    type === "new"
-      ? (await resolveCompoundingStakingContract(ssv)).strategy
-      : await resolveContract(
-          "NativeStakingSSVStrategyProxy",
-          "NativeStakingSSVStrategy"
-        );
+  const strategy = (await resolveCompoundingStakingContract()).strategy;
 
   const tx = await strategy.connect(signer).setRegistrator(account);
   await logTxDetails(tx, "setRegistrator");
 }
 
-async function removeValidator({
-  pubkey,
-  operatorids,
-  consol = false,
-  signer: taskSigner,
-}) {
-  const signer = taskSigner || (await getSigner());
-
-  log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = splitOperatorIds(operatorids);
-
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
-  const contract = consol
-    ? await resolveContract("ConsolidationController")
-    : strategy;
-
-  // Cluster details
-  const { chainId } = await ethers.provider.getNetwork();
-  const { cluster } = await getClusterInfo({
-    chainId,
-    operatorids,
-    ownerAddress: strategy.address,
-  });
-
-  log(
-    `About to remove compounding validator with pubkey ${pubkey} via ${
-      consol ? "ConsolidationController" : "CompoundingStakingSSVStrategy"
-    }`
-  );
-  const tx = consol
-    ? await contract
-        .connect(signer)
-        .removeSsvValidator(strategy.address, pubkey, operatorIds, cluster)
-    : await contract
-        .connect(signer)
-        .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
-}
-
 module.exports = {
   snapBalances,
-  registerValidatorCreateRequest,
-  registerValidator,
   stakeValidator,
   autoValidatorDeposits,
   snapStakingStrategy,
@@ -1110,5 +919,4 @@ module.exports = {
   validatorStatus,
   withdrawValidator,
   autoValidatorWithdrawals,
-  removeValidator,
 };

@@ -336,27 +336,34 @@ const shouldBehaveLikeStrategy = (context) => {
       });
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
-      const { governor, ssv, strategy } = context();
-      const governorBalanceBefore = await ssv.balanceOf(governor.address);
+      const { governor, unsupportedToken, strategy } = context();
+      const governorBalanceBefore = await unsupportedToken.balanceOf(
+        governor.address
+      );
 
-      // Someone accidentally sends SSV to strategy
+      // Someone accidentally sends an unsupported token to the strategy
       const recoveryAmount = parseUnits("2");
-      await setERC20TokenBalance(strategy.address, ssv, recoveryAmount, hre);
+      await setERC20TokenBalance(
+        strategy.address,
+        unsupportedToken,
+        recoveryAmount,
+        hre
+      );
 
       // Governor recovers the token
       const tx = await strategy
         .connect(governor)
-        .transferToken(ssv.address, recoveryAmount);
+        .transferToken(unsupportedToken.address, recoveryAmount);
 
       await expect(tx)
-        .to.emit(ssv, "Transfer")
+        .to.emit(unsupportedToken, "Transfer")
         .withArgs(strategy.address, governor.address, recoveryAmount);
 
       await expect(governor).has.a.balanceOf(
         governorBalanceBefore.add(recoveryAmount),
-        ssv
+        unsupportedToken
       );
-      await expect(strategy).has.a.balanceOf("0", ssv);
+      await expect(strategy).has.a.balanceOf("0", unsupportedToken);
     });
     it("Should not transfer supported assets from strategy", async () => {
       const { assets, governor, strategy } = context();
