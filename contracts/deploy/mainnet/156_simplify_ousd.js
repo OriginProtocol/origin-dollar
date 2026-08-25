@@ -1,8 +1,8 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 const { impersonateAndFund } = require("../../utils/signers");
-const { setERC20TokenBalance } = require("../../test/_fund");
+const { setERC20TokenBalance } = require("../../utils/hardhat-funding");
 const { parseUnits } = require("ethers").utils;
 
 module.exports = deploymentWithGovernanceProposal(

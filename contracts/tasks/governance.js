@@ -1,7 +1,7 @@
 const { sleep } = require("../utils/time.js");
 
 async function execute(taskArguments, hre) {
-  const { isMainnet, isFork } = require("../test/helpers");
+  const { isMainnet, isFork } = require("../utils/hardhat-deploy-helpers");
   const {
     withConfirmation,
     impersonateGuardian,

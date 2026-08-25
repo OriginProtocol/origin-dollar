@@ -5,8 +5,8 @@ const {
   isMainnet,
   isSmokeTest,
   isForkTest,
-} = require("../../test/helpers");
-const { hardhatSetBalance } = require("../../test/_fund");
+} = require("../../utils/hardhat-deploy-helpers");
+const { hardhatSetBalance } = require("../../utils/hardhat-funding");
 
 const deployName = "175_deploy_pool_booster_merkl_factory";
 

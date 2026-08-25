@@ -1,8 +1,8 @@
 const { parseUnits } = require("ethers").utils;
-const { isMainnetOrFork } = require("../../test/helpers");
+const { isMainnetOrFork } = require("../../utils/hardhat-deploy-helpers");
 const addresses = require("../../utils/addresses");
 const { replaceContractAt } = require("../../utils/hardhat");
-const { hardhatSetBalance } = require("../../test/_fund");
+const { hardhatSetBalance } = require("../../utils/hardhat-funding");
 
 const {
   abi: FACTORY_ABI,

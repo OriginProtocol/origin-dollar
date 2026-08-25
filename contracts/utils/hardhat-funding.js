@@ -12,11 +12,11 @@ const {
   zeroPad,
   solidityKeccak256,
 } = ethrs.utils;
-const { units } = require("../utils/units");
-const erc20Abi = require("./abi/erc20.json");
-const addresses = require("../utils/addresses");
+const { units } = require("./units");
+const erc20Abi = require("../abi/hardhat/erc20.json");
+const addresses = require("./addresses");
 
-const log = require("../utils/logger")("test:_fund");
+const log = require("./logger")("utils:hardhat-funding");
 
 const mappedFundingSlots = {};
 const balancesContractSlotCache = {

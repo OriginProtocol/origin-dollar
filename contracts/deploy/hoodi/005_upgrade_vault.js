@@ -2,7 +2,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
-const { getAssetAddresses } = require("../../test/helpers.js");
+const { getAssetAddresses } = require("../../utils/hardhat-deploy-helpers.js");
 const { resolveContract } = require("../../utils/resolvers");
 const { getSigner } = require("../../utils/signers.js");
 

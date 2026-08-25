@@ -1,6 +1,10 @@
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
-const { isFork, oethUnits, isBase } = require("../../test/helpers");
+const {
+  isFork,
+  oethUnits,
+  isBase,
+} = require("../../utils/hardhat-deploy-helpers");
 const addresses = require("../../utils/addresses");
 
 const deployMocks = async () => {

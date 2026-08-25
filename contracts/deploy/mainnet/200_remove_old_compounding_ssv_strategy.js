@@ -6,7 +6,7 @@ const {
   normalizeCluster,
   splitOperatorIds,
 } = require("../../utils/ssv");
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 const { hashPubKey } = require("../../utils/beacon");
 const {
   getStorageAt,

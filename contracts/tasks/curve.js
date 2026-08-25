@@ -1,7 +1,7 @@
 const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const curveNGPoolAbi = require("../test/abi/curveStableSwapNG.json");
+const curveNGPoolAbi = require("../abi/hardhat/curveStableSwapNG.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getDiffBlocks } = require("./block");

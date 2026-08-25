@@ -4,7 +4,7 @@ const {
   encodeSaltForCreateX,
 } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 
 const createxAbi = require("../../abi/createx.json");
 

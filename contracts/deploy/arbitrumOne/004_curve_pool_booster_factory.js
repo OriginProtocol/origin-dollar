@@ -1,6 +1,6 @@
 const addresses = require("../../utils/addresses");
 const { deployOnArb } = require("../../utils/deploy-l2");
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { encodeSaltForCreateX } = require("../../utils/deploy");
 

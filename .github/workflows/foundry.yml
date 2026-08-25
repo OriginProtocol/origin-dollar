@@ -32,7 +32,7 @@ jobs:
         run: forge fmt --check scripts/ tests/
       - name: Check JS formatting (prettier)
         working-directory: contracts
-        run: npx prettier -c "*.js" "deploy/**/*.js" "scripts/**/*.js" "tasks/**/*.js" "test/**/*.js" "utils/**/*.js"
+        run: npx prettier -c "*.js" "deploy/**/*.js" "scripts/**/*.js" "tasks/**/*.js" "utils/**/*.js"
       - name: Check Solidity formatting (prettier)
         working-directory: contracts
         run: npx prettier -c --plugin=prettier-plugin-solidity "contracts/**/*.sol"
@@ -102,6 +102,9 @@ jobs:
       - name: Run script tests
         working-directory: contracts
         run: pnpm run test:scripts
+      - name: Run Hardhat task tests
+        working-directory: contracts
+        run: pnpm run test:tasks
 
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:

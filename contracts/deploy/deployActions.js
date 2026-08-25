@@ -13,7 +13,7 @@ const {
   isForkTest,
   isCI,
   isHoodiOrFork,
-} = require("../test/helpers.js");
+} = require("../utils/hardhat-deploy-helpers.js");
 const {
   deployWithConfirmation,
   verifyContractOnEtherscan,

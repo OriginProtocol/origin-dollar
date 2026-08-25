@@ -9,7 +9,7 @@ const addresses = require("../../utils/addresses.js");
 
 const { withConfirmation } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
-const { isFork } = require("../../test/helpers");
+const { isFork } = require("../../utils/hardhat-deploy-helpers");
 
 const mainExport = async () => {
   console.log("Running 001_core deployment on Hoodi...");
