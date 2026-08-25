@@ -20,7 +20,8 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
     using GovHelper for GovProposal;
 
     uint64 internal constant BEACON_GENESIS_TIMESTAMP = 1_606_824_023;
-    uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 2030 ether;
+    // Consensus rewards will push the balance over the strategy's strict 32.25 ETH activation threshold.
+    uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 32.25 ether;
 
     // ==================== Deployment Logic ==================== //
 
@@ -46,13 +47,14 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
             "Validator consolidation is complete, so the ConsolidationController is no longer the "
             "strategy registrator. This proposal upgrades the CompoundingStakingStrategy to allow "
             "anyone to call snapBalances() and verifyBalances(). The existing snapshot delay and "
-            "beacon proof verification continue to protect the accounting inputs."
+            "beacon proof verification continue to protect the accounting inputs. It also lowers "
+            "the maximum first validator deposit to the minimum balance that the strategy can mark active."
         );
+        address proxy = resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY");
         govProposal.action(
-            resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY"),
-            "upgradeTo(address)",
-            abi.encode(resolver.resolve("COMPOUNDING_STAKING_STRATEGY_IMPL"))
+            proxy, "upgradeTo(address)", abi.encode(resolver.resolve("COMPOUNDING_STAKING_STRATEGY_IMPL"))
         );
+        govProposal.action(proxy, "setInitialDepositAmount(uint256)", abi.encode(INITIAL_DEPOSIT_AMOUNT));
     }
 
     // ==================== Fork Verification ==================== //
