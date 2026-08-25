@@ -255,13 +255,13 @@ The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@n
 
 ### Auto-verification
 
-When deploying contracts, set `VERIFY_CONTRACTS=true` environment variable to verify contract immediately after deployment with no manual action.
+The Foundry deployment targets verify newly deployed contracts automatically:
 
 ```
-VERIFY_CONTRACTS=true npx hardhat deploy:mainnet
+make deploy-mainnet
 ```
 
-If it reverts for any reason, it'll print out the command that you can use to run manually or debug.
+Equivalent targets exist for the other supported networks; see `scripts/deploy/README.md`.
 
 ### Manual verification
 

@@ -13,7 +13,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, and executes new deployments. Hardhat remains for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`), ABI generation, and historical deployment scripts under `deploy/`.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, and executes deployments. Hardhat remains for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`) and for generating the npm ABI package. The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
 
 ## Setup
 
@@ -48,9 +48,9 @@ Keep it that way. Two regressions to avoid:
   fail with `Cannot find module '@oplabs/talos-client'`.
 - Do not import it from `tasks/lib/network.ts`. That used to drag the
   requirement up through `utils/resolvers.js` → `utils/morpho.js` →
-  `tasks/tasks.js` → `hardhat.config.js` and broke `hardhat deploy` in the ABI
-  publish workflow, which installs without GitHub Packages auth. #2954 replaced
-  it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
+  `tasks/tasks.js` → `hardhat.config.js` and broke Hardhat compilation in the
+  ABI publish workflow, which installs without GitHub Packages auth. #2954
+  replaced it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
 
 ## Commands (run from `contracts/`)
 
@@ -158,7 +158,7 @@ to the 5/8 Admin Safe and hosting a Safe module for the 2/8 and the operator EOA
 ## Architecture
 
 ### Core Pattern: Upgradeable Proxy Contracts
-All major contracts use the OpenZeppelin upgradeable proxy pattern. Each has a `*Proxy` contract (minimal proxy) pointing to an implementation. New deployments and upgrades go through the Foundry deployment framework in `scripts/deploy/`; the `deploy/` hardhat-deploy scripts are the historical ledger.
+All major contracts use the OpenZeppelin upgradeable proxy pattern. Each has a `*Proxy` contract (minimal proxy) pointing to an implementation. Deployments and upgrades go through the Foundry deployment framework in `scripts/deploy/`; committed descriptors in `deployments/` are the machine-readable historical registry.
 
 ### Vaults (Central Component)
 Vaults (`contracts/vault/`) are the core of each OToken. They handle:
@@ -202,7 +202,6 @@ scheduled action is added, removed, or its behaviour changes.
 ### Key Utility Files
 - `utils/addresses.js` - master address registry for all networks/contracts (~32KB)
 - `utils/constants.js` - protocol constants
-- `utils/deploy.js` - legacy Hardhat deployment helpers (only relevant to the frozen `deploy/` scripts)
 
 ## Test Organization
 
@@ -234,7 +233,7 @@ make deploy-local              # against a running pnpm node:anvil
 
 For upgrades, call `_assertStorageSafe(type(X).name)` before `new X()` — see Storage Layout Checks below. After a real deploy the make target regenerates the Hardhat-format descriptors in `deployments/<network>/` (see the Talos section at the bottom). Framework internals: `scripts/deploy/README.md` and `scripts/deploy/ARCHITECTURE.md`.
 
-Do not author new Hardhat deploy scripts in `deploy/`.
+Hardhat deployment scripts are no longer part of the repository. Do not recreate a `deploy/` tree; use the Foundry framework above.
 
 ## Storage Layout Checks
 

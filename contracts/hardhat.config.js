@@ -16,29 +16,12 @@ require("ts-node").register({
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
-  isArbitrum,
-  isArbitrumFork,
-  isArbForkTest,
   isForkTest,
-  isBase,
   isBaseFork,
-  isBaseForkTest,
-  isBaseUnitTest,
-  isSonic,
   isSonicFork,
-  isSonicForkTest,
-  isSonicUnitTest,
-  isPlume,
   isPlumeFork,
-  isPlumeForkTest,
-  isPlumeUnitTest,
-  isHoodi,
   isHoodiFork,
-  isHoodiForkTest,
-  isHyperEVM,
   isHyperEVMFork,
-  isHyperEVMForkTest,
-  isHyperEVMUnitTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
@@ -128,27 +111,6 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 let forkBlockNumber = adjustTheForkBlockNumber();
 
 const paths = {};
-if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
-  paths.deploy = "deploy/base";
-} else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
-  paths.deploy = "deploy/sonic";
-} else if (isArbitrum || isArbitrumFork || isArbForkTest) {
-  paths.deploy = "deploy/arbitrumOne";
-} else if (isPlume || isPlumeFork || isPlumeForkTest || isPlumeUnitTest) {
-  paths.deploy = "deploy/plume";
-} else if (isHoodi || isHoodiFork || isHoodiForkTest) {
-  paths.deploy = "deploy/hoodi";
-} else if (
-  isHyperEVM ||
-  isHyperEVMFork ||
-  isHyperEVMForkTest ||
-  isHyperEVMUnitTest
-) {
-  paths.deploy = "deploy/hyperevm";
-} else {
-  // Mainnet deployment files are in contracts/deploy/mainnet
-  paths.deploy = "deploy/mainnet";
-}
 if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
@@ -158,22 +120,6 @@ const defaultAccounts = [
   process.env.DEPLOYER_PK || privateKeys[0],
   process.env.GOVERNOR_PK || privateKeys[0],
 ];
-
-const getDeployTags = () => {
-  if (isArbitrumFork) {
-    return ["arbitrumOne"];
-  } else if (isBaseFork) {
-    return ["base"];
-  } else if (isSonicFork) {
-    return ["sonic"];
-  } else if (isPlumeFork) {
-    return ["plume"];
-  } else if (isHyperEVMFork) {
-    return ["hyperevm"];
-  }
-
-  return undefined;
-};
 
 /// Config for Fork and unit test environments
 const localEnvDeployer =
@@ -260,7 +206,6 @@ module.exports = {
       blockGasLimit: 1000000000,
       allowUnlimitedContractSize: true,
       chainId,
-      tags: getDeployTags(),
       chains: {
         999: {
           hardforkHistory: {
@@ -292,7 +237,6 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      tags: getDeployTags(),
     },
     mainnet: {
       url: `${process.env.MAINNET_PROVIDER_URL || process.env.PROVIDER_URL}`,
@@ -302,7 +246,6 @@ module.exports = {
       url: arbitrumProviderUrl,
       accounts: defaultAccounts,
       chainId: 42161,
-      tags: ["arbitrumOne"],
       live: true,
       saveDeployments: true,
       // Fails if gas limit is anything less than 20M on Arbitrum One
@@ -313,7 +256,6 @@ module.exports = {
       url: baseProviderUrl,
       accounts: defaultAccounts,
       chainId: 8453,
-      tags: ["base"],
       live: true,
       saveDeployments: true,
     },
@@ -321,7 +263,6 @@ module.exports = {
       url: sonicProviderUrl,
       accounts: defaultAccounts,
       chainId: 146,
-      tags: ["sonic"],
       live: true,
       saveDeployments: true,
     },
@@ -329,7 +270,6 @@ module.exports = {
       url: plumeProviderUrl,
       accounts: defaultAccounts,
       chainId: 98866,
-      tags: ["plume"],
       live: true,
       saveDeployments: true,
     },
@@ -344,7 +284,6 @@ module.exports = {
       url: hyperEVMProviderUrl,
       accounts: defaultAccounts,
       chainId: 999,
-      tags: ["hyperevm"],
       live: true,
       saveDeployments: true,
     },

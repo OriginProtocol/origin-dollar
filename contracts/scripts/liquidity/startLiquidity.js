@@ -6,7 +6,7 @@ const { utils } = require("ethers");
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../abi/hardhat/erc20.json");
 
-const { ognUnits } = require("../../utils/hardhat-deploy-helpers");
+const { ognUnits } = require("../../utils/hardhat-task-helpers");
 
 async function main() {
   const { governorAddr } = await getNamedAccounts();

@@ -703,18 +703,16 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
 
 ### What is actually deployed on mainnet
 
-`deploy/mainnet/199_deploy_compounding_staking_strategy.js` is the current wiring, and several
-things about it change how the above reads:
+The mainnet rollout has several configuration choices that change how the above reads:
 
 - The live strategy behind `CompoundingStakingStrategyProxy` is the **vanilla
-  `CompoundingStakingStrategy`** (lines 78-89), not the SSV subclass. So `registerSsvValidator` /
+  `CompoundingStakingStrategy`**, not the SSV subclass. So `registerSsvValidator` /
   `removeSsvValidator` do not exist there: `REGISTERED` and `REMOVED` are unreachable states, entry
   is `NON_REGISTERED → STAKED` via the base `_admitStake` (`:462-473`), and `INVALID` / `EXITED`
   are absolutely terminal.
-- `initialDepositAmountWei` is initialised to **2030 ETH** (line 101), not the 1 ETH default used
-  in tests and on Hoodi (`deploy/deployActions.js:243-248`). Read the front-running section with
-  that number in mind.
-- The strategy's registrator is the **`ConsolidationController`** (lines 167-171), whose own
+- `initialDepositAmountWei` is initialised to **2030 ETH**, not the 1 ETH default used in tests and
+  on Hoodi. Read the front-running section with that number in mind.
+- The strategy's registrator is the **`ConsolidationController`**, whose own
   `snapBalances()` and `verifyBalances()` are permissionless whenever no consolidation is in
   progress (`ConsolidationController.sol:383-436`). So in production **all four proof entrypoints
   are effectively permissionless** — which is what makes the `SNAP_BALANCES_DELAY` griefing
@@ -777,8 +775,8 @@ things about it change how the above reads:
   `ACTIVE || EXITING` (`:527-531`), and the only route to `ACTIVE` is `verifyBalances` observing a
   balance strictly above `MIN_ACTIVATION_BALANCE_GWEI` (`:1096-1105`). A validator stuck below that
   can only be freed by a top-up via `stakeEth`, which *is* permitted from `VERIFIED`. Live concern
-  wherever `initialDepositAmountWei` is 1 ETH (Hoodi and tests,
-  `deploy/deployActions.js:243-248`); a non-issue at mainnet's 2030 ETH. Note there is also no
+  wherever `initialDepositAmountWei` is 1 ETH (Hoodi and tests); a non-issue at mainnet's 2030 ETH.
+  Note there is also no
   `ACTIVE → VERIFIED` demotion, so a slashed validator that falls back below 32.25 ETH stays
   exitable — the desired behaviour, but nowhere written down.
 - **`resetFirstDeposit` weakens two bounds it is credited with.** It clears `firstDeposit`
