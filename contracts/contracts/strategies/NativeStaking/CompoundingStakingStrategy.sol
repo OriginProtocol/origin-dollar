@@ -166,9 +166,11 @@ abstract contract CompoundingValidatorStorage is Governable, Pausable {
     uint256 public depositedWethAccountedFor;
     /// @notice The amount of ETH in wei that is required for the first deposit to a new validator.
     uint256 public initialDepositAmountWei;
+    /// @notice Timestamp of the last balance snapshot successfully verified against beacon chain data.
+    uint64 public lastVerifiedBalanceTimestamp;
 
     // For future use
-    uint256[40] private __gap;
+    uint256[39] private __gap;
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
@@ -1164,6 +1166,8 @@ contract CompoundingStakingStrategy is
             totalDepositsWei +
             totalValidatorBalance +
             balancesMem.ethBalance;
+        // Store the timestamp of the snapshot whose beacon chain data was successfully verified.
+        lastVerifiedBalanceTimestamp = balancesMem.timestamp;
         // Reset the last snap timestamp so a new snapBalances has to be made
         snappedBalance.timestamp = 0;
 

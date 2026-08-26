@@ -575,11 +575,14 @@ deposit loop (`:1115-1124`).
 
 ```solidity
 lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
+lastVerifiedBalanceTimestamp = balancesMem.timestamp;
 snappedBalance.timestamp = 0;   // force a fresh snap next time
 ```
 
 Units: `validatorBalanceGwei` and `amountGwei` are gwei, converted with `* 1 gwei` at `:1111` and
 `:1155-1158`; `ethBalance` is already wei. `lastVerifiedEthBalance` is wei.
+`lastVerifiedBalanceTimestamp` records the timestamp of the successfully verified snapshot rather
+than the later transaction timestamp of `verifyBalances`.
 
 ---
 
