@@ -939,7 +939,9 @@ contract CompoundingStakingStrategy is
     /// This behaviour is correct.
     ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
-    function snapBalances() external onlyRegistrator {
+    /// This function is permissionless. The delay prevents callers from continually replacing
+    /// snapshots before their balance proofs can be submitted.
+    function snapBalances() external {
         uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
         require(
             snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp,
@@ -979,6 +981,7 @@ contract CompoundingStakingStrategy is
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks each of the strategy's deposits are still to be processed by the beacon chain.
+    /// @dev This function is permissionless; all supplied balances are verified against the snapped beacon block root.
     /// @param balanceProofs a `BalanceProofs` struct containing the following:
     /// - balancesContainerRoot: The merkle root of the balances container
     /// - balancesContainerProof: The merkle proof for the balances container to the beacon block root.
@@ -1000,7 +1003,7 @@ contract CompoundingStakingStrategy is
     function verifyBalances(
         BalanceProofs calldata balanceProofs,
         PendingDepositProofs calldata pendingDepositProofs
-    ) external onlyRegistrator {
+    ) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest
