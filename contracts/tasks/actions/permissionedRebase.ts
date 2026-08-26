@@ -1,6 +1,5 @@
-import { ethers as ethersLib } from "ethers";
+import { ethers } from "ethers";
 import { action } from "../lib/action";
-import { getContract } from "../lib/contracts";
 import { logTxDetails } from "../../utils/txLogger";
 
 // PermissionedRebase Safe module addresses, keyed by chain id. The contract
@@ -12,14 +11,12 @@ const MODULES_BY_CHAIN_ID: Record<number, string> = {
   146: "0x77121911A387c9e4Eae46345E0f831A6da8a1364", // Sonic
 };
 
-const MAINNET_OETH_DRIPPER_DEPLOYMENT = "OETHFixedRateDripperProxy";
-const DRIPPER_ABI = ["function collect() external"];
 const PERMISSIONED_REBASE_ABI = ["function permissionedRebase() external"];
 
 action({
   name: "permissionedRebase",
   description:
-    "Collect fixed-rate drippers, then call permissionedRebase() on the PermissionedRebase Safe module on the current chain (Ethereum / Base / Sonic). The module unpauses, rebases, and re-pauses every vault it manages atomically.",
+    "Call permissionedRebase() on the PermissionedRebase Safe module on the current chain (Ethereum / Base / Sonic). The module unpauses, rebases, and re-pauses every vault it manages atomically.",
   chains: [1, 8453, 146],
   run: async ({ signer, chainId, networkName, log }) => {
     const moduleAddress = MODULES_BY_CHAIN_ID[chainId];
@@ -29,29 +26,11 @@ action({
       );
     }
 
-    if (chainId === 1) {
-      const dripperProxy = await getContract(MAINNET_OETH_DRIPPER_DEPLOYMENT);
-      log.info(
-        `Calling collect on ${networkName} fixed-rate dripper ${MAINNET_OETH_DRIPPER_DEPLOYMENT} at ${dripperProxy.address}`
-      );
-
-      const dripper = new ethersLib.Contract(
-        dripperProxy.address,
-        DRIPPER_ABI,
-        signer
-      );
-      const collectTx = await dripper.collect();
-      await logTxDetails(
-        collectTx,
-        `${MAINNET_OETH_DRIPPER_DEPLOYMENT}.collect`
-      );
-    }
-
     log.info(
       `Calling permissionedRebase on ${networkName} module at ${moduleAddress}`
     );
 
-    const module = new ethersLib.Contract(
+    const module = new ethers.Contract(
       moduleAddress,
       PERMISSIONED_REBASE_ABI,
       signer

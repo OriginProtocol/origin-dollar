@@ -311,58 +311,6 @@ Actions that propose transactions through the Safe Transaction Service require
 chain as a delegate for the target Safe. A delegate can submit a proposal but
 does not provide an owner confirmation or reduce the Safe threshold.
 
-### Encrypting / decrypting validator private keys
-
-When handling secrets, it is important they can not be compromised. For that reason, we have put security in place to make sure that private keys of validators are encrypted at rest and can be securely decrypted.
-
-P2P's API uses a Elliptic-curve Diffie–Hellman (ECDH) protocol to encrypt the validator private keys.
-
-The process is as follows:
-
-1. Origin creates an Elliptic-curve key using the secp256r1 (prime256v1) curve.
-2. The public key is encoded to P2P's required format.
-3. The encoded public key is included in the `ecdhPublicKey` field of P2P's Create SSV API requests.
-4. P2P includes the encrypted validator private key in the response to Check Status API requests. Specifically, the `ecdhEncryptedPrivateKey` field of the `encryptedShares` array of validators.
-5. Origin stores the encrypted validator private key in an AWS S3 bucket.
-6. Origin uses the private key to decrypt the encrypted validator private keys if ever needed.
-
-#### Storing encrypted validator private keys
-
-The validator automation requests validators with encrypted private keys and
-stores those encrypted keys in the `validator-keys` S3 bucket. Each validator
-private key is one S3 object and the name of the object is the pubkey (schema:
-`[pubkey].json`). The S3 bucket has versioning enabled so overwritten or deleted
-objects can be recovered.
-
-#### Storing the master private key
-
-The master private key is used to decrypt the validator private keys. It is encrypted using AWS KMS
-
-1. The master private key is generated locally using the `genECDHKey` Hardhat task
-2. The master private key is encrypted using AWS KMS using the `encryptMasterPrivateKey` Hardhat task
-3. The encrypted master private key is kept out of the repo and securely shared with the team members who need it.
-
-#### Decrypting validator private keys
-
-The process is as follows:
-
-1. The encrypted master private key is decrypted using AWS KMS
-2. The master private key is used to decrypt the encrypted validator private key
-
-In order to obtain the private key (for decrypting validator private keys), one needs to obtain the AWS KMS encrypted private key and store it in an `VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY` environment variable (ask around in smart contract engineering to get it).
-
-Fetch the API keys for AWS IAM user `validator_key_manager` and set them in the `AWS_ACCESS_KEY_ID` & `AWS_SECRET_ACCESS_KEY` environment variables.
-Now you should be able to decrypt validator private keys that are stored in the `validator-keys` S3 bucket by running `npx hardhat masterDecrypt --message [ENCRYPTED_PRIVATE_KEY_FROM_BUCKET]`
-
-**Example**: to test that the decryption works correctly and master key is setup right run the following
-
-```
-npx hardhat masterDecrypt --message BC8uniIOqEqqdt6/5MFtZRFpw9jCvVQsGpl893hQTo/MAMDefyyjGkngH39qBHPClDDdUFa9sEPJcS0qUrHJc9SXatYRvINprXTEPSUqbTAAUpBfiuX0gHyAW5cLJp5SAYsgU4rMxZAjtSof56oHQ0c3PGzz/9CBhEeSbFiboz7a/CDYm4adDUt1CbQdN0tKaQ==
-
-#should produce
-Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a973fc1d9d9b400cd38a2bfa337cc594cf060437
-```
-
 ## Contract Verification
 
 The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.

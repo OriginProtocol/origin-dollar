@@ -65,13 +65,13 @@ contract $003_DeployOUSD is AbstractDeployScript("003_DeployOUSD") {
 
         VaultValueChecker vaultValueChecker = new VaultValueChecker(address(vaultProxy), address(ousdProxy));
 
-        _recordDeployment("OUSD_IMPL", address(ousdImpl));
-        _recordDeployment("OUSD_PROXY", address(ousdProxy));
-        _recordDeployment("OUSD_VAULT_IMPL", address(vaultImpl));
-        _recordDeployment("OUSD_VAULT_PROXY", address(vaultProxy));
-        _recordDeployment("WRAPPED_OUSD_IMPL", address(wrappedOusdImpl));
-        _recordDeployment("WRAPPED_OUSD_PROXY", address(wrappedOusdProxy));
-        _recordDeployment("OUSD_VAULT_VALUE_CHECKER", address(vaultValueChecker));
+        _recordDeployment("OUSD_IMPL", address(ousdImpl), type(OUSD).name);
+        _recordDeployment("OUSD_PROXY", address(ousdProxy), type(OUSDProxy).name);
+        _recordDeployment("OUSD_VAULT_IMPL", address(vaultImpl), type(OUSDVault).name);
+        _recordDeployment("OUSD_VAULT_PROXY", address(vaultProxy), type(VaultProxy).name);
+        _recordDeployment("WRAPPED_OUSD_IMPL", address(wrappedOusdImpl), type(WrappedOusd).name);
+        _recordDeployment("WRAPPED_OUSD_PROXY", address(wrappedOusdProxy), type(WrappedOUSDProxy).name);
+        _recordDeployment("OUSD_VAULT_VALUE_CHECKER", address(vaultValueChecker), type(VaultValueChecker).name);
     }
 
     // ==================== Governance Proposal ==================== //

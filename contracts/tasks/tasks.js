@@ -8,17 +8,8 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
-const {
-  genECDHKey,
-  decryptValidatorKey,
-  decryptValidatorKeyWithMasterKey,
-  signMessage,
-} = require("./crypto");
+const { signMessage } = require("./crypto");
 const { advanceBlocks } = require("./block");
-const {
-  encryptMasterPrivateKey,
-  decryptMasterPrivateKey,
-} = require("./amazon");
 const { getSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
@@ -68,13 +59,6 @@ const {
 const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
-  depositCluster,
-  migrateClusterToETH,
-  printClusterInfo,
-  removeValidator: removeOldValidator,
-} = require("./ssv");
-const { getSSVRewardsStatus } = require("./ssvRewards");
-const {
   amoStrategyTask,
   mintAndAddOTokensTask,
   removeAndBurnOTokensTask,
@@ -93,33 +77,17 @@ const {
   transferToken,
 } = require("./strategy");
 const {
-  exitValidator,
-  manuallyFixAccounting,
-  resetStakeETHTally,
-  setStakeETHThreshold,
-  setStakingMonitor,
-  fixAccounting,
-  pauseStaking,
-  snapStaking,
-  resolveNativeStakingStrategyProxy,
-  snapValidators,
-} = require("./validator");
-const {
   autoValidatorDeposits,
   autoValidatorWithdrawals,
   snapBalances,
   snapStakingStrategy,
-  registerValidatorCreateRequest,
-  registerValidator,
   stakeValidator,
   withdrawValidator,
-  removeValidator,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const { deployForceEtherSender, forceSend } = require("./simulation");
-const { sleep } = require("../utils/time");
 const {
   requestValidatorWithdraw,
   beaconRoot,
@@ -135,12 +103,6 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
-const {
-  requestConsolidation,
-  failConsolidation,
-  confirmConsolidation,
-  getConsolidationFee,
-} = require("./consolidation");
 
 const {
   withTaskSignerContext,
@@ -1079,131 +1041,6 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
 
 // Harvester
 
-// SSV
-
-subtask("getClusterInfo", "Print out information regarding SSV cluster")
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    "",
-    types.string
-  )
-  .addParam(
-    "owner",
-    "Address of the cluster owner which is the native staking strategy",
-    undefined,
-    types.string
-  )
-  .setAction(async (taskArgs) => {
-    const { chainId } = await ethers.provider.getNetwork();
-    const networkName = await getNetworkName();
-    const ssvNetwork = addresses[networkName].SSVNetwork;
-
-    log(
-      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${networkName} network using ssvNetworkContract ${ssvNetwork}`
-    );
-    await printClusterInfo({
-      ...taskArgs,
-      ownerAddress: taskArgs.owner,
-      chainId: chainId,
-      ssvNetwork,
-    });
-  });
-task("getClusterInfo").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "depositCluster",
-  "Deposit ETH into an SSV cluster for a native staking strategy"
-)
-  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .setAction(depositCluster);
-task("depositCluster").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "migrateCluster",
-  "Migrate the SSV Cluster to ETH used by the CompoundingStakingSSVStrategy"
-)
-  .addParam(
-    "type",
-    "new for compounding staking strategy. old for old Native Staking Strategy",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "amount",
-    "Initial amount of ETH to add to the cluster",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed. Default to none for Hoodi",
-    undefined,
-    types.int
-  )
-  .setAction(migrateClusterToETH);
-task("migrateCluster").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "ssvRewards",
-  "Display claimable SSV rewards from the Incentivized Mainnet Program"
-).setAction(async () => {
-  const status = await getSSVRewardsStatus(ethers.provider);
-
-  console.log(`\nSSV Rewards Status for ${status.account}`);
-  console.log(
-    `  Cumulative entitlement: ${ethers.utils.formatUnits(
-      status.cumulativeEntitlement,
-      18
-    )} SSV`
-  );
-  console.log(
-    `  Already claimed:        ${ethers.utils.formatUnits(
-      status.cumulativeClaimed,
-      18
-    )} SSV`
-  );
-  console.log(
-    `  Unclaimed:              ${ethers.utils.formatUnits(
-      status.unclaimed,
-      18
-    )} SSV`
-  );
-
-  if (status.rootMatches === false) {
-    console.log(`\n  WARNING: On-chain root does not match latest proof root`);
-    console.log(`    On-chain: ${status.onChainRoot}`);
-    console.log(`    Proof:    ${status.proofRoot}`);
-  }
-});
-task("ssvRewards").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask("deployStakingProxy", "Deploy the compounding staking proxy").setAction(
   async () => {
     const signer = await getSigner();
@@ -1222,323 +1059,6 @@ task("deployStakingProxy").setAction(async (_, __, runSuper) => {
 });
 
 // Validator Operations
-
-subtask("exitValidator", "Starts the exit process from a validator")
-  .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await exitValidator({ ...taskArgs, signer });
-  });
-task("exitValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("exitValidators", "Starts the exit process from a list of validators")
-  .addParam(
-    "pubkeys",
-    "Comma separated list of validator public keys",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    // Split the comma separated list of public keys
-    const pubKeys = taskArgs.pubkeys.split(",");
-    // For each public key
-    for (const pubkey of pubKeys) {
-      log(`About to exit validator with pubkey: ${pubkey}`);
-      await exitValidator({ ...taskArgs, pubkey, signer });
-
-      // wait for the SSV API can be updated
-      await sleep(taskArgs.sleep * 1000);
-    }
-  });
-task("exitValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "removeValidators",
-  "Removes validators from the SSV cluster after they have exited the beacon chain"
-)
-  .addParam(
-    "pubkeys",
-    "Comma separated list of validator public keys",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    // Split the comma separated list of public keys
-    const pubKeys = taskArgs.pubkeys.split(",");
-    // For each public key
-    for (const pubkey of pubKeys) {
-      log(`About to remove validator with pubkey: ${pubkey}`);
-      await removeOldValidator({ ...taskArgs, pubkey, signer });
-
-      // wait for the SSV API can be updated
-      await sleep(taskArgs.sleep * 1000);
-    }
-  });
-task("removeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "manuallyFixAccounting",
-  "Fix an accounting failure in a Native Staking Strategy"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "validators",
-    "The delta of validators. Can be positive or negative.",
-    0,
-    types.int
-  )
-  .addOptionalParam(
-    "rewards",
-    "The delta of consensus rewards. Can be positive or negative.",
-    "0",
-    types.string
-  )
-  .addOptionalParam(
-    "vault",
-    "The amount of Ether to convert to WETH and send to the Vault.",
-    "0",
-    types.string
-  )
-  .setAction(async ({ index, rewards, validators, vault }) => {
-    const signer = await getSigner();
-
-    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
-      index
-    );
-
-    await manuallyFixAccounting({
-      signer,
-      nativeStakingStrategy,
-      validatorsDelta: validators,
-      consensusRewardsDelta: rewards,
-      ethToVaultAmount: vault,
-    });
-  });
-task("manuallyFixAccounting").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "resetStakeETHTally",
-  "Resets the amount of Ether staked back to zero"
-).addOptionalParam(
-  "index",
-  "The number of the Native Staking Contract deployed.",
-  undefined,
-  types.int
-);
-subtask(
-  "resetStakeETHTally",
-  "Resets the amount of Ether staked back to zero"
-).setAction(async () => {
-  const signer = await getSigner();
-  await resetStakeETHTally({ signer });
-});
-task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("setStakingMonitor", "Resets the amount of Ether staked back to zero")
-  .addOptionalParam(
-    "account",
-    "The account to set as the staking monitor.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await setStakingMonitor({ ...taskArgs, signer });
-  });
-task("setStakingMonitor").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "setStakeETHThreshold",
-  "Sets the amount of Ether than can be staked before needing a reset"
-)
-  .addParam("amount", "Amount in ether", undefined, types.int)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await setStakeETHThreshold({ ...taskArgs, signer });
-  });
-task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
-  .addOptionalParam(
-    "validators",
-    "The number of validators to adjust up or down (negative)",
-    0,
-    types.int
-  )
-  .addOptionalParam(
-    "rewards",
-    "The number of consensus rewards to adjust up or down (negative) in ether",
-    0,
-    types.float
-  )
-  .addOptionalParam(
-    "ether",
-    "amount of ether that gets wrapped into WETH and sent to the Vault",
-    0,
-    types.float
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await fixAccounting({ ...taskArgs, signer });
-  });
-task("fixAccounting").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "pauseStaking",
-  "Pause the staking of the Native Staking Strategy"
-).addOptionalParam(
-  "index",
-  "The number of the Native Staking Contract deployed.",
-  undefined,
-  types.int
-);
-subtask(
-  "pauseStaking",
-  "Pause the staking of the Native Staking Strategy"
-).setAction(async () => {
-  const signer = await getSigner();
-  await pauseStaking({ signer });
-});
-task("pauseStaking").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "snapStaking",
-  "Takes a snapshot of the key Native Staking Strategy data at a block"
-)
-  .addOptionalParam(
-    "block",
-    "Block number. (default: latest)",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "admin",
-    "Include addresses of admin accounts",
-    true,
-    types.boolean
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    await snapStaking(taskArgs);
-  });
-task("snapStaking").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
 
 subtask("snapAero", "Takes a snapshot of the Aerodrome Strategy at a block")
   .addOptionalParam(
@@ -1567,24 +1087,6 @@ subtask("snapVault", "Takes a snapshot of a OETH Vault")
   )
   .setAction(snapVault);
 task("snapVault").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("snapValidators", "Takes a snapshot of a validator")
-  .addOptionalParam(
-    "block",
-    "Block number. (default: latest)",
-    undefined,
-    types.int
-  )
-  .addParam(
-    "pubkeys",
-    "Comma separated list of validator public keys",
-    undefined,
-    types.string
-  )
-  .setAction(snapValidators);
-task("snapValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1634,101 +1136,6 @@ subtask(
     console.log(`Deposit data root: ${root}`);
   });
 task("depositRoot").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-// Encryption
-subtask(
-  "encryptMasterPrivateKey",
-  "Encrypt the master validator private key whose public key pair is used " +
-    "by the P2P service to encrypt each validator private key."
-)
-  .addParam(
-    "privateKey",
-    "Private key to be encrypted and if needed used for validator private key decryption",
-    undefined,
-    types.string
-  )
-  .setAction(encryptMasterPrivateKey);
-task("encryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-/* only needed in critical situation where we need access to the master private key to decrypt
- * the P2P encoded validator private keys.
- */
-subtask(
-  "decryptMasterPrivateKey",
-  "Decrypt the master validator private key."
-).setAction(decryptMasterPrivateKey);
-task("decryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair")
-  .addOptionalParam(
-    "privateKey",
-    "Private key to encrypt the message with in base64 format",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "displayPk",
-    "Display the private key in hex format in the console",
-    false,
-    types.boolean
-  )
-  .setAction(genECDHKey);
-task("genECDHKey").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "decrypt",
-  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
-)
-  .addOptionalParam(
-    "privateKey",
-    "Private key to decrypt the message with in hex format without the 0x prefix. If not provided, the encrypted private key in VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY will be used.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "encryptedKey",
-    "Used if pubkey is not provided. The encrypted validator private key returned from P2P API in base64 format.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "pubkey",
-    "Public key of the validator whose private key is to be fetched in hex format. If not provided, the encryptedKey option must be used.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "displayPk",
-    "Display the private key in hex format in the console",
-    false,
-    types.boolean
-  )
-  .setAction(decryptValidatorKey);
-task("decrypt").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "masterDecrypt",
-  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair by using the " +
-    "master validator encoding key decrypted by AWS KMS service."
-)
-  .addParam(
-    "message",
-    "Encrypted validator key returned form P2P API",
-    undefined,
-    types.string
-  )
-  .setAction(decryptValidatorKeyWithMasterKey);
-task("masterDecrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1831,18 +1238,6 @@ subtask(
   "Set the registrator of the compounding staking strategy"
 )
   .addParam("account", "Address of the registrator", undefined, types.string)
-  .addOptionalParam(
-    "type",
-    "new for compounding staking strategy. old for old Native Staking Strategy",
-    "new",
-    types.string
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2029,77 +1424,12 @@ task("verifyDeposit").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "requestNewValidator",
-  "Calls P2P's Create SSV Request to prepare a new SSV compounding (0x02) validator"
-)
-  .addOptionalParam(
-    "days",
-    "SSV Cluster operational time in days",
-    1,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    await registerValidatorCreateRequest(taskArgs);
-    console.log("Once the validator is created run: registerValidatorUuid");
-  });
-task("requestNewValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "registerValidator",
-  "Registers a new compounding validator in a SSV cluster"
-)
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "uuid",
-    "The uuid that has been used to create the request using requestNewValidator",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "pubkey",
-    "If no uuid, the validator's public key in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "shares",
-    "If no uuid, SSV shares data",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "eth",
-    "Amount of ETH to deposit to the cluster.",
-    0,
-    types.float
-  )
-  .setAction(async (taskArgs) => {
-    await registerValidator(taskArgs);
-  });
-task("registerValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "autoValidatorDeposits",
   "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
 )
   .addParam(
     "dryrun",
     "Do not send any txs to the staking strategy contract",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
     false,
     types.boolean
   )
@@ -2133,25 +1463,8 @@ subtask(
     false,
     types.boolean
   )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    if (taskArgs.direct && taskArgs.consol) {
-      throw new Error(
-        "The consol option can not be used with direct withdrawals"
-      );
-    }
     if (taskArgs.direct) {
       await requestValidatorWithdraw({ ...taskArgs, signer });
     } else {
@@ -2159,36 +1472,6 @@ subtask(
     }
   });
 task("withdrawValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "removeValidator",
-  "Removes a registered or exited compounding validator from the SSV cluster"
-)
-  .addParam(
-    "pubkey",
-    "The validator's public key in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await removeValidator({ ...taskArgs, signer });
-  });
-task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2208,44 +1491,11 @@ subtask(
     false,
     types.boolean
   )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await autoValidatorWithdrawals({ ...taskArgs, signer });
   });
 task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "stakeValidatorUuid",
-  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
-)
-  .addParam(
-    "uuid",
-    "The P2P uuid used to create the Create SSV validators request",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "dryrun",
-    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
-  .setAction(stakeValidator);
-task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2279,7 +1529,7 @@ subtask(
   )
   .addOptionalParam(
     "depositMessageRoot",
-    "Deposit message root provided by p2p",
+    "Deposit message root provided by the validator operator",
     undefined,
     types.string
   )
@@ -2288,18 +1538,6 @@ subtask(
     "Fork version of the beacon chain. Required for validating the BLS signature",
     "00000000",
     types.string
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
   )
   .addOptionalParam(
     "dryrun",
@@ -2312,20 +1550,10 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
-  )
-  .setAction(snapBalances);
+subtask(
+  "snapBalances",
+  "Takes a snapshot of the staking strategy's balance"
+).setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -2342,12 +1570,6 @@ subtask("snapStakingStrat", "Dumps the staking strategy's data")
     "Withdrawal buffer in basis points. 100 = 1%",
     100,
     types.int
-  )
-  .addOptionalParam(
-    "ssv",
-    "Use the SSV compounding staking strategy instead of the non-SSV compounding staking strategy.",
-    false,
-    types.boolean
   )
   .setAction(snapStakingStrategy);
 task("snapStakingStrat").setAction(async (_, __, runSuper) => {
@@ -2435,69 +1657,4 @@ subtask(
   .setAction(rebalancerTask);
 task("planRebalance").setAction(async (taskArgs, _, runSuper) => {
   return runSuper(taskArgs);
-});
-
-// Consolidation Tasks
-
-subtask("requestConsol", "Request validator consolidation")
-  .addOptionalParam(
-    "source",
-    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "cluster",
-    "An integer for the second or third cluster SSV cluster. Default none for Hoodi",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "target",
-    "Public key of the validator to consolidate to in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .setAction(requestConsolidation);
-task("requestConsol").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("failConsol", "Fail a validator consolidation")
-  .addOptionalParam(
-    "source",
-    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .setAction(failConsolidation);
-task("failConsol").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("confirmConsol", "Confirm a validator consolidation")
-  .addOptionalParam(
-    "safe",
-    "Generate a Safe Transaction Builder file instead of sending the transaction",
-    false,
-    types.boolean
-  )
-  .setAction(confirmConsolidation);
-task("confirmConsol").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "consolFee",
-  "Display the current consolidation request fee from the EIP-7251 precompile"
-)
-  .addOptionalParam(
-    "block",
-    "Block number to query the fee at",
-    undefined,
-    types.int
-  )
-  .setAction(getConsolidationFee);
-task("consolFee").setAction(async (_, __, runSuper) => {
-  return runSuper();
 });

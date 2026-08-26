@@ -9,9 +9,7 @@ const {
   createFixtureLoader,
   compoundingStakingStrategyFixture,
 } = require("../_fixture");
-const {
-  testValidators,
-} = require("./compoundingSSVStaking-validatorsData.json");
+const { testValidators } = require("./compoundingStaking-validatorsData.json");
 
 const loadFixture = createFixtureLoader(compoundingStakingStrategyFixture);
 
@@ -62,7 +60,7 @@ describe("Unit test: Compounding Staking Strategy", function () {
     );
   };
 
-  it("allows the first deposit to a vanilla validator without SSV registration", async () => {
+  it("allows the first deposit to a vanilla validator without prior registration", async () => {
     const { compoundingStakingStrategy } = fixture;
     const validator = testValidators[0];
     const pubKeyHash = hashPubKey(validator.publicKey);

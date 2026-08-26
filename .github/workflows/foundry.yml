@@ -71,6 +71,38 @@ jobs:
         working-directory: contracts
         run: make test-unit
 
+      # `make test-unit` has just rebuilt contracts/, so out/ carries a current
+      # storageLayout for every pinned contract.
+      - name: Pinned storage layouts
+        working-directory: contracts
+        run: pnpm run test:layouts
+
+  # ── Script Tests (JS) ───────────────────────────────────────
+  script-tests:
+    name: Script Tests (JS)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm-lock.yaml
+      - name: Install deps
+        working-directory: contracts
+        run: pnpm install --frozen-lockfile
+      # No foundry-setup on purpose: these tests fake `forge` on PATH and must
+      # never need a toolchain or a build. If that changes, this job breaks
+      # loudly rather than quietly absorbing a multi-minute build.
+      - name: Run script tests
+        working-directory: contracts
+        run: pnpm run test:scripts
+
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:
     name: Fork Tests (Mainnet)

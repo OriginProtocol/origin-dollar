@@ -18,9 +18,14 @@ export const CHAIN_NAMES: Record<number, string> = {
   98866: "plume",
 };
 
-const CHAIN_IDS: Record<string, number> = Object.fromEntries(
-  Object.entries(CHAIN_NAMES).map(([id, name]) => [name, Number(id)])
-);
+const CHAIN_IDS: Record<string, number> = {
+  ...Object.fromEntries(
+    Object.entries(CHAIN_NAMES).map(([id, name]) => [name, Number(id)])
+  ),
+  // Hardhat's name for 42161, still used by Talos schedules, deployments/ and
+  // addresses.js.
+  arbitrumone: 42161,
+};
 
 const RPC_ENV_VARS: Record<number, string> = {
   1: "MAINNET_PROVIDER_URL",
@@ -67,8 +72,20 @@ export function rpcUrlFor(nameOrId: string | number): {
     throw new Error(`Unsupported chain: ${nameOrId}`);
   }
   let url: string | undefined;
-  if (process.env.FORK === "true" && process.env.LOCAL_PROVIDER_URL) {
-    url = process.env.LOCAL_PROVIDER_URL;
+  // On a fork, prefer a per-chain URL so a multi-chain fork stack works — one
+  // anvil per chain, since anvil serves a single chain id. Falling back to the
+  // shared LOCAL_PROVIDER_URL keeps single-chain forks working unchanged.
+  // Without the per-chain form, every chain resolves to the same fork and a
+  // non-mainnet action fails in initNetwork(): the provider is constructed for
+  // its real chain id while the node reports the fork's, and ethers throws
+  // "underlying network changed".
+  const forkUrl =
+    process.env.FORK === "true"
+      ? process.env[`LOCAL_PROVIDER_URL_${chainId}`] ||
+        process.env.LOCAL_PROVIDER_URL
+      : undefined;
+  if (forkUrl) {
+    url = forkUrl;
   } else {
     const envVar = RPC_ENV_VARS[chainId];
     url = process.env[envVar];

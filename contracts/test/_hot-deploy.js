@@ -10,44 +10,6 @@ const { replaceContractAt } = require("../utils/hardhat");
 
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
-// based on a contract name create new implementation
-async function constructNewContract(
-  fixture,
-  fixtureStrategyVarName,
-  implContractName
-) {
-  const { deploy } = deployments;
-
-  const getConstructorArguments = async () => {
-    if (implContractName === "NativeStakingSSVStrategy") {
-      const feeAccumulatorAddress = await fixture[
-        fixtureStrategyVarName
-      ].FEE_ACCUMULATOR_ADDRESS();
-      return [
-        [addresses.zero, addresses.mainnet.OETHVaultProxy],
-        addresses.mainnet.WETH,
-        addresses.mainnet.SSV,
-        addresses.mainnet.SSVNetwork,
-        500,
-        feeAccumulatorAddress,
-        addresses.mainnet.beaconChainDepositContract,
-      ];
-    }
-  };
-
-  log(`Deploying new "${implContractName}" contract implementation.`);
-
-  // deploy this contract that exposes internal function
-  await deploy(implContractName, {
-    from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
-    contract: implContractName,
-    args: await getConstructorArguments(),
-  });
-
-  log(`Deployed`);
-  return await ethers.getContract(implContractName);
-}
-
 /* Hot deploy a fixture if the environment vars demand so
  */
 async function hotDeployOption(
@@ -71,15 +33,7 @@ async function hotDeployOption(
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vault:${!!deployVault}`);
 
-  if (deployStrat) {
-    if (fixtureName === "nativeStakingSSVStrategyFixture") {
-      await hotDeployFixture(
-        fixture, // fixture
-        "nativeStakingSSVStrategy", // fixtureStrategyVarName
-        "NativeStakingSSVStrategy" // implContractName
-      );
-    }
-  }
+  if (deployStrat) throw new Error(`No hot-deploy strategy for ${fixtureName}`);
 
   if (deployVault) {
     await hotDeployVault(fixture, isOethFixture);
@@ -113,45 +67,6 @@ async function hotDeployVault(fixture, isOeth) {
   );
 
   await replaceContractAt(liveImplContractAddress, implementation);
-}
-
-/* Run the fixture and replace the main strategy contract(s) of the fixture
- * with the freshly compiled implementation.
- */
-async function hotDeployFixture(
-  fixture,
-  fixtureStrategyVarName,
-  implContractName
-) {
-  /* Because of the way hardhat fixture caching works it is vital that
-   * the fixtures are loaded before the hot-deployment of contracts. If the
-   * contracts are hot-deployed and fixture load happens afterwards the deployed
-   * contract is not visible in deployments.
-   */
-  const strategyProxy = fixture[fixtureStrategyVarName];
-
-  const newlyCompiledImplContract = await constructNewContract(
-    fixture,
-    fixtureStrategyVarName,
-    implContractName
-  );
-  log(`New contract deployed at ${newlyCompiledImplContract.address}`);
-
-  // fetch the contract with proxy ABI
-  const proxyContract = await ethers.getContractAt(
-    "InitializeGovernedUpgradeabilityProxy",
-    strategyProxy.address
-  );
-
-  const liveImplContractAddress = await proxyContract.implementation();
-
-  log(
-    `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
-  );
-  // replace current implementation
-  await replaceContractAt(liveImplContractAddress, newlyCompiledImplContract);
-
-  return fixture;
 }
 
 module.exports = {

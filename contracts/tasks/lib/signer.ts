@@ -83,7 +83,10 @@ export async function getSigner(): Promise<ethers.Signer> {
         "0x56bc75e2d63100000",
       ]);
     }
-    return provider.getSigner(address);
+    // Wrapped like the KMS and private-key branches: without it the
+    // transaction bypasses the nonce queue, so Talos never records it and the
+    // run shows no transactions. ethers v5 getSigner() is synchronous.
+    return maybeWrap(provider.getSigner(address));
   }
 
   throw new Error(

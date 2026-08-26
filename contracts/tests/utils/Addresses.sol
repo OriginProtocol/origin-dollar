@@ -197,10 +197,6 @@ library Mainnet {
     address internal constant CurvePoolBoosterBribesModule = 0x6320Db7a3c1B95fD5684DC725C2cda9B82Fa20Fa;
     address internal constant MerklPoolBoosterBribesModule = 0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369;
 
-    // SSV network
-    address internal constant SSV = 0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54;
-    address internal constant SSVNetwork = 0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1;
-
     // Beacon chain
     address internal constant beaconChainDepositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
     address internal constant mockBeaconRoots = 0xC033785181372379dB2BF9dD32178a7FDf495AcD;
@@ -208,14 +204,8 @@ library Mainnet {
     address internal constant beaconChainWithdrawRequest = 0x00000961Ef480Eb55e80D19ad83579A64c007002;
 
     // Native Staking Strategy
-    address internal constant NativeStakingSSVStrategyProxy = 0x34eDb2ee25751eE67F68A45813B22811687C0238;
-    address internal constant NativeStakingSSVStrategy2Proxy = 0x4685dB8bF2Df743c861d71E6cFb5347222992076;
-    address internal constant NativeStakingSSVStrategy3Proxy = 0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63;
-    address internal constant NativeStakingFeeAccumulator2Proxy = 0xfEE31c09fA5E9cdbC1f80C90b42B58640be91DDF;
-    address internal constant NativeStakingFeeAccumulator3Proxy = 0x49674fBce040D95366604d1db3392E9bDEa14d48;
-    address internal constant CompoundingStakingSSVStrategyProxy = 0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d;
     address internal constant BeaconProofs = 0xc4444C5D9e7C1a5A0a01c5E4b11692d589DcAF22;
-    address internal constant ConsolidationController = 0x7e57a2AF9F41aF41D6bCf53cc3C299fB7e7A51B4;
+    address internal constant CompoundingStakingStrategyProxy = 0x25e1d468B14005716111d5e8464573e5135275f4;
 
     address internal constant validatorRegistrator = 0x4b91827516f79d6F6a1F292eD99671663b09169a;
     address internal constant LidoWithdrawalQueue = 0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1;
@@ -408,8 +398,6 @@ library Sonic {
 
 library Holesky {
     address internal constant WETH = 0x94373a4919B3240D86eA41593D5eBa789FEF3848;
-    address internal constant SSV = 0xad45A78180961079BFaeEe349704F411dfF947C6;
-    address internal constant SSVNetwork = 0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA;
     address internal constant beaconChainDepositContract = 0x4242424242424242424242424242424242424242;
     address internal constant NativeStakingSSVStrategyProxy = 0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E;
     address internal constant OETHVaultProxy = 0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9;
@@ -421,8 +409,6 @@ library Holesky {
 library Hoodi {
     address internal constant OETHVaultProxy = 0xD0cC28bc8F4666286F3211e465ecF1fe5c72AC8B;
     address internal constant WETH = 0x2387fD72C1DA19f6486B843F5da562679FbB4057;
-    address internal constant SSV = 0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e;
-    address internal constant SSVNetwork = 0x58410Bef803ECd7E63B23664C586A6DB72DAf59c;
     address internal constant beaconChainDepositContract = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
     address internal constant mockBeaconRoots = 0xdCfcAE4A084AA843eE446f400B23aA7B6340484b;
 }

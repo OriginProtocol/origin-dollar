@@ -498,7 +498,7 @@ const calcEpoch = (blockTimestamp, networkName = "mainnet") => {
   return calcSlot(blockTimestamp, networkName) / slotsPerEpoch;
 };
 
-// verifies the deposit signature so we can confirm P2P has not generated a faulty one
+// Verifies a validator deposit signature and message root.
 // and a the deposit message root. The latter should also be verified by the Beacon chain
 // deposit contract
 const verifyDepositSignatureAndMessageRoot = async ({
@@ -506,7 +506,7 @@ const verifyDepositSignatureAndMessageRoot = async ({
   withdrawalCredentials, // withdrawal credentials with or without 0x
   amount, // amount in eth units
   signature, // signature without 0x
-  depositMessageRoot, // p2p supplied deposit message root with or without 0x
+  depositMessageRoot, // supplied deposit message root with or without 0x
   forkVersion, // fork version
 }) => {
   // Can not import via require since these packages support only ESM mode
