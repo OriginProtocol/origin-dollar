@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Base } from "tests/Base.t.sol";
-import { Oracles } from "tests/utils/artifacts/Oracles.sol";
+import {Base} from "tests/Base.t.sol";
+import {Oracles} from "tests/utils/artifacts/Oracles.sol";
 
-import { IOTokenVaultOracle } from "contracts/interfaces/IOTokenVaultOracle.sol";
+import {IOTokenVaultOracle} from "contracts/interfaces/IOTokenVaultOracle.sol";
 import {
     MockOTokenVaultOracleToken,
     MockOTokenVaultOracleVault
@@ -33,13 +33,7 @@ abstract contract Unit_OTokenVaultOracle_Shared_Test is Base {
 
     function _deployContracts() internal {
         oracle = IOTokenVaultOracle(
-            vm.deployCode(
-                Oracles.O_TOKEN_VAULT_ORACLE,
-                abi.encode(
-                    address(mockVault),
-                    "OToken / underlying asset"
-                )
-            )
+            vm.deployCode(Oracles.O_TOKEN_VAULT_ORACLE, abi.encode(address(mockVault), "OToken / underlying asset"))
         );
     }
 

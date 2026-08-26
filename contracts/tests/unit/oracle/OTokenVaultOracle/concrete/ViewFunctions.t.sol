@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Unit_OTokenVaultOracle_Shared_Test } from "../shared/Shared.t.sol";
+import {Unit_OTokenVaultOracle_Shared_Test} from "../shared/Shared.t.sol";
 
-contract Unit_Concrete_OTokenVaultOracle_ViewFunctions_Test is
-    Unit_OTokenVaultOracle_Shared_Test
-{
+contract Unit_Concrete_OTokenVaultOracle_ViewFunctions_Test is Unit_OTokenVaultOracle_Shared_Test {
     function test_constructor_setsConfiguration() public view {
         assertEq(address(oracle.vault()), address(mockVault));
         assertEq(address(oracle.oToken()), address(mockOToken));
@@ -40,13 +38,8 @@ contract Unit_Concrete_OTokenVaultOracle_ViewFunctions_Test is
     }
 
     function test_latestRoundData_returnsCurrentPrice() public view {
-        (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = oracle.latestRoundData();
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+            oracle.latestRoundData();
 
         assertEq(roundId, 1);
         assertEq(answer, int256(1e18));
@@ -55,12 +48,8 @@ contract Unit_Concrete_OTokenVaultOracle_ViewFunctions_Test is
         assertEq(answeredInRound, 1);
     }
 
-    function test_getRoundData_returnsCurrentPriceForSyntheticRound()
-        public
-        view
-    {
-        (uint80 roundId, int256 answer, , , uint80 answeredInRound) = oracle
-            .getRoundData(1);
+    function test_getRoundData_returnsCurrentPriceForSyntheticRound() public view {
+        (uint80 roundId, int256 answer,,, uint80 answeredInRound) = oracle.getRoundData(1);
 
         assertEq(roundId, 1);
         assertEq(answer, int256(1e18));

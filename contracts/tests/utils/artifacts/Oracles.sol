@@ -2,6 +2,5 @@
 pragma solidity ^0.8.0;
 
 library Oracles {
-    string internal constant O_TOKEN_VAULT_ORACLE =
-        "contracts/oracle/OTokenVaultOracle.sol:OTokenVaultOracle";
+    string internal constant O_TOKEN_VAULT_ORACLE = "contracts/oracle/OTokenVaultOracle.sol:OTokenVaultOracle";
 }
