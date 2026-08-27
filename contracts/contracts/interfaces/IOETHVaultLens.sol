@@ -23,7 +23,7 @@ interface IOETHVaultLens {
 
     /**
      * @notice Returns the staking strategy whose verified balance freshness gates getRate.
-     * @return The staking strategy address. address(0) disables the staleness check.
+     * @return The staking strategy address.
      */
     function stakingStrategy() external view returns (address);
 

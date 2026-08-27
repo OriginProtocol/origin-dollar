@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IOETHVaultLens} from "contracts/interfaces/IOETHVaultLens.sol";
-import {Unit_OTokenVaultLens_Shared_Test} from "../shared/Shared.t.sol";
+import {Unit_OETHVaultLens_Shared_Test} from "../shared/Shared.t.sol";
 
-contract Unit_Concrete_OTokenVaultLens_GetRate_Test is Unit_OTokenVaultLens_Shared_Test {
+contract Unit_Concrete_OETHVaultLens_GetRate_Test is Unit_OETHVaultLens_Shared_Test {
     function test_getRate_isOneAtRebase() public view {
         assertEq(lens.getRate(), 1e18);
     }
@@ -22,11 +21,6 @@ contract Unit_Concrete_OTokenVaultLens_GetRate_Test is Unit_OTokenVaultLens_Shar
     function test_getRate_atExactMaxVerifiedBalanceAge() public {
         vm.warp(uint256(mockStrategy.lastVerifiedBalanceTimestamp()) + lens.MAX_VERIFIED_BALANCE_AGE());
         assertEq(lens.getRate(), 1e18);
-    }
-
-    function test_getRate_skipsStalenessCheck_whenStrategyIsZero() public {
-        (IOETHVaultLens strategylessLens,,) = _deployLens(address(0));
-        assertEq(strategylessLens.getRate(), 1e18);
     }
 
     function test_getRate_RevertWhen_oneSecondPastMaxVerifiedBalanceAge() public {

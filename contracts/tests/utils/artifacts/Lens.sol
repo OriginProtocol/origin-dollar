@@ -2,5 +2,5 @@
 pragma solidity ^0.8.0;
 
 library Lens {
-    string internal constant O_TOKEN_VAULT_LENS = "contracts/lens/OTokenVaultLens.sol:OTokenVaultLens";
+    string internal constant OETH_VAULT_LENS = "contracts/lens/OETHVaultLens.sol:OETHVaultLens";
 }

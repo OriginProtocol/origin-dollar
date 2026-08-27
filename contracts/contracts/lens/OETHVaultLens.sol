@@ -7,17 +7,16 @@ import { IOToken } from "../interfaces/IOToken.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 /**
- * @title OToken Vault Lens
+ * @title OETH Vault Lens
  * @notice Reports the value of one OToken in the Vault's underlying asset (the NAV rate).
  * @dev The rate has 18 decimals and is calculated from the Vault's total value
  *      divided by the OToken's total supply.
- *      When a staking strategy is configured, getRate reverts if the strategy's
- *      balances have not been verified against the beacon chain within the last
- *      MAX_VERIFIED_BALANCE_AGE seconds, so a stale beacon chain state can not be
- *      reported as a current rate.
+ *      getRate reverts if the staking strategy's balances have not been verified
+ *      against the beacon chain within the last MAX_VERIFIED_BALANCE_AGE seconds,
+ *      so a stale beacon chain state can not be reported as a current rate.
  * @author Origin Protocol Inc
  */
-contract OTokenVaultLens is IOETHVaultLens {
+contract OETHVaultLens is IOETHVaultLens {
     /// @notice The maximum age of the staking strategy's last verified balance
     ///         before getRate reverts.
     uint256 public constant override MAX_VERIFIED_BALANCE_AGE = 24 hours;
@@ -29,18 +28,17 @@ contract OTokenVaultLens is IOETHVaultLens {
     IOToken public immutable oToken;
 
     /// @notice The staking strategy whose verified balance freshness gates getRate.
-    /// @dev address(0) disables the staleness check, for vaults without a
-    ///      compounding staking strategy.
     address public immutable stakingStrategy;
 
     /**
-     * @notice Constructs an OToken Vault Lens.
+     * @notice Constructs an OETH Vault Lens.
      * @param _vault The Vault used to calculate the rate and resolve the OToken.
      * @param _stakingStrategy The staking strategy whose verified balance freshness
-     *        gates getRate. Pass address(0) to disable the staleness check.
+     *        gates getRate.
      */
     constructor(address _vault, address _stakingStrategy) {
         require(_vault != address(0), "Vault is zero address");
+        require(_stakingStrategy != address(0), "Strategy is zero address");
 
         vault = IVault(_vault);
         address _oToken = vault.oToken();
@@ -57,17 +55,15 @@ contract OTokenVaultLens is IOETHVaultLens {
      * @return rate The rate with 18 decimals.
      */
     function getRate() external view override returns (uint256 rate) {
-        if (stakingStrategy != address(0)) {
-            // The uint64 timestamp is promoted to uint256 by the constant,
-            // so the comparison can neither overflow nor underflow.
-            require(
-                ICompoundingStakingStrategy(stakingStrategy)
-                    .lastVerifiedBalanceTimestamp() +
-                    MAX_VERIFIED_BALANCE_AGE >=
-                    block.timestamp,
-                "Stale verified balance"
-            );
-        }
+        // The uint64 timestamp is promoted to uint256 by the constant,
+        // so the comparison can neither overflow nor underflow.
+        require(
+            ICompoundingStakingStrategy(stakingStrategy)
+                .lastVerifiedBalanceTimestamp() +
+                MAX_VERIFIED_BALANCE_AGE >=
+                block.timestamp,
+            "Stale verified balance"
+        );
 
         uint256 supply = oToken.totalSupply();
         require(supply > 0, "No oToken supply");

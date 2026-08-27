@@ -14,18 +14,18 @@ import {IOETHVaultLens} from "contracts/interfaces/IOETHVaultLens.sol";
 
 // Mocks
 import {
-    MockOTokenVaultLensStrategy,
-    MockOTokenVaultLensToken,
-    MockOTokenVaultLensVault
-} from "tests/mocks/MockOTokenVaultLensDependencies.sol";
+    MockOETHVaultLensStrategy,
+    MockOETHVaultLensToken,
+    MockOETHVaultLensVault
+} from "tests/mocks/MockOETHVaultLensDependencies.sol";
 
-abstract contract Unit_OTokenVaultLens_Shared_Test is Base {
+abstract contract Unit_OETHVaultLens_Shared_Test is Base {
     IOETHVaultLens internal lens;
     IProxy internal lensProxy;
     address internal lensImpl;
-    MockOTokenVaultLensVault internal mockVault;
-    MockOTokenVaultLensToken internal mockOToken;
-    MockOTokenVaultLensStrategy internal mockStrategy;
+    MockOETHVaultLensVault internal mockVault;
+    MockOETHVaultLensToken internal mockOToken;
+    MockOETHVaultLensStrategy internal mockStrategy;
 
     function setUp() public virtual override {
         super.setUp();
@@ -39,24 +39,19 @@ abstract contract Unit_OTokenVaultLens_Shared_Test is Base {
     }
 
     function _deployMockContracts() internal {
-        mockVault = new MockOTokenVaultLensVault();
-        mockOToken = new MockOTokenVaultLensToken();
-        mockStrategy = new MockOTokenVaultLensStrategy();
+        mockVault = new MockOETHVaultLensVault();
+        mockOToken = new MockOETHVaultLensToken();
+        mockStrategy = new MockOETHVaultLensStrategy();
         mockVault.setOToken(address(mockOToken));
     }
 
     function _deployContracts() internal {
-        (lens, lensProxy, lensImpl) = _deployLens(address(mockStrategy));
-    }
-
-    /// @dev Deploys an OTokenVaultLens implementation behind a fresh governed proxy.
-    function _deployLens(address strategy) internal returns (IOETHVaultLens lens_, IProxy proxy_, address impl_) {
         vm.startPrank(deployer);
-        impl_ = vm.deployCode(Lens.O_TOKEN_VAULT_LENS, abi.encode(address(mockVault), strategy));
-        proxy_ = IProxy(vm.deployCode(Proxies.IG_PROXY));
-        proxy_.initialize(impl_, governor, "");
+        lensImpl = vm.deployCode(Lens.OETH_VAULT_LENS, abi.encode(address(mockVault), address(mockStrategy)));
+        lensProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        lensProxy.initialize(lensImpl, governor, "");
         vm.stopPrank();
-        lens_ = IOETHVaultLens(address(proxy_));
+        lens = IOETHVaultLens(address(lensProxy));
     }
 
     function _configureContracts() internal {
@@ -66,7 +61,7 @@ abstract contract Unit_OTokenVaultLens_Shared_Test is Base {
     }
 
     function label() public {
-        vm.label(address(lens), "OTokenVaultLens");
+        vm.label(address(lens), "OETHVaultLens");
         vm.label(address(mockVault), "MockVault");
         vm.label(address(mockOToken), "MockOToken");
         vm.label(address(mockStrategy), "MockStakingStrategy");

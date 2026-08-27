@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-contract MockOTokenVaultLensVault {
+contract MockOETHVaultLensVault {
     uint256 public totalValue;
     address public oToken;
 
@@ -14,7 +14,7 @@ contract MockOTokenVaultLensVault {
     }
 }
 
-contract MockOTokenVaultLensToken {
+contract MockOETHVaultLensToken {
     uint256 public totalSupply;
 
     function setTotalSupply(uint256 _totalSupply) external {
@@ -22,7 +22,7 @@ contract MockOTokenVaultLensToken {
     }
 }
 
-contract MockOTokenVaultLensStrategy {
+contract MockOETHVaultLensStrategy {
     uint64 public lastVerifiedBalanceTimestamp;
 
     function setLastVerifiedBalanceTimestamp(uint64 _timestamp) external {

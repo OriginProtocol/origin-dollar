@@ -9,7 +9,7 @@ import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 // Contracts
 import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 import {OETHVaultLensProxy} from "contracts/proxies/Proxies.sol";
-import {OTokenVaultLens} from "contracts/lens/OTokenVaultLens.sol";
+import {OETHVaultLens} from "contracts/lens/OETHVaultLens.sol";
 import {CompoundingStakingStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
@@ -47,12 +47,12 @@ contract $005_DeployOETHVaultLens is AbstractDeployScript("005_DeployOETHVaultLe
 
         // 2. OETH Vault Lens implementation and proxy, governed by the Timelock.
         OETHVaultLensProxy lensProxy = new OETHVaultLensProxy();
-        OTokenVaultLens lensImpl = new OTokenVaultLens(
+        OETHVaultLens lensImpl = new OETHVaultLens(
             resolver.resolve("OETH_VAULT_PROXY"), resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY")
         );
         lensProxy.initialize(address(lensImpl), GOVERNOR, "");
 
-        _recordDeployment("OETH_VAULT_LENS_IMPL", address(lensImpl), type(OTokenVaultLens).name);
+        _recordDeployment("OETH_VAULT_LENS_IMPL", address(lensImpl), type(OETHVaultLens).name);
         _recordDeployment("OETH_VAULT_LENS_PROXY", address(lensProxy), type(OETHVaultLensProxy).name);
     }
 
@@ -105,7 +105,7 @@ contract $005_DeployOETHVaultLens is AbstractDeployScript("005_DeployOETHVaultLe
         require(lensProxy.implementation() == resolver.resolve("OETH_VAULT_LENS_IMPL"), "Unexpected lens impl");
         require(lensProxy.governor() == GOVERNOR, "Unexpected lens governor");
 
-        OTokenVaultLens lens = OTokenVaultLens(lensProxyAddr);
+        OETHVaultLens lens = OETHVaultLens(lensProxyAddr);
         require(address(lens.vault()) == resolver.resolve("OETH_VAULT_PROXY"), "Unexpected lens vault");
         require(address(lens.oToken()) == resolver.resolve("OETH_PROXY"), "Unexpected lens oToken");
         require(lens.stakingStrategy() == strategyProxy, "Unexpected lens strategy");
@@ -116,7 +116,7 @@ contract $005_DeployOETHVaultLens is AbstractDeployScript("005_DeployOETHVaultLe
         // verifications happen on-chain, as _fork() re-runs on every fork and smoke run.
         uint256 lastVerified = ICompoundingStakingStrategy(strategyProxy).lastVerifiedBalanceTimestamp();
         if (lastVerified + lens.MAX_VERIFIED_BALANCE_AGE() < block.timestamp) {
-            (bool success,) = lensProxyAddr.staticcall(abi.encodeCall(OTokenVaultLens.getRate, ()));
+            (bool success,) = lensProxyAddr.staticcall(abi.encodeCall(OETHVaultLens.getRate, ()));
             require(!success, "getRate should revert while stale");
         }
 

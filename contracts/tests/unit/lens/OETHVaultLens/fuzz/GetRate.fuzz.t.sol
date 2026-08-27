@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_OTokenVaultLens_Shared_Test} from "../shared/Shared.t.sol";
+import {Unit_OETHVaultLens_Shared_Test} from "../shared/Shared.t.sol";
 
-contract Unit_Fuzz_OTokenVaultLens_GetRate_Test is Unit_OTokenVaultLens_Shared_Test {
+contract Unit_Fuzz_OETHVaultLens_GetRate_Test is Unit_OETHVaultLens_Shared_Test {
     /// @notice The lens always reports total value divided by total supply with 18 decimals,
     ///         or reverts when the computed rate would be zero.
     function testFuzz_getRate_reportsAssetValuePerOToken(uint256 totalValue, uint256 totalSupply) public {

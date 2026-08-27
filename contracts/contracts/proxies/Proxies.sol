@@ -169,7 +169,7 @@ contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHVaultLensProxy delegates calls to an OTokenVaultLens implementation
+ * @notice OETHVaultLensProxy delegates calls to an OETHVaultLens implementation
  */
 contract OETHVaultLensProxy is InitializeGovernedUpgradeabilityProxy {
 
