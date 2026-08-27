@@ -8,24 +8,31 @@ import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Contracts
 import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {OETHVaultLensProxy} from "contracts/proxies/Proxies.sol";
+import {OTokenVaultLens} from "contracts/lens/OTokenVaultLens.sol";
 import {CompoundingStakingStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 
 // Mainnet addresses
 import {Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 005_UpgradeCompoundingStakingStrategy
-/// @notice Makes snapBalances() and verifyBalances() permissionless now that validator consolidation is complete.
-contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_UpgradeCompoundingStakingStrategy") {
+/// @title 005_DeployOETHVaultLens
+/// @notice Upgrades the Compounding Staking Strategy (permissionless balance proofs,
+///         lastVerifiedBalanceTimestamp, 1 ETH initial deposit) and deploys the
+///         OETH Vault Lens that reports the OETH/WETH NAV rate gated on that timestamp.
+contract $005_DeployOETHVaultLens is AbstractDeployScript("005_DeployOETHVaultLens") {
     using GovHelper for GovProposal;
 
     uint64 internal constant BEACON_GENESIS_TIMESTAMP = 1_606_824_023;
     // Limit exposure while a new validator's withdrawal credentials are still unverified.
     uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 1 ether;
+    address internal constant GOVERNOR = Mainnet.Timelock;
 
     // ==================== Deployment Logic ==================== //
 
     function _execute() internal override {
+        // 1. New CompoundingStakingStrategy implementation.
         CompoundingStakingStrategy newImpl = new CompoundingStakingStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
                 platformAddress: address(0), vaultAddress: resolver.resolve("OETH_VAULT_PROXY")
@@ -37,18 +44,31 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
         );
 
         _recordDeployment("COMPOUNDING_STAKING_STRATEGY_IMPL", address(newImpl), type(CompoundingStakingStrategy).name);
+
+        // 2. OETH Vault Lens implementation and proxy, governed by the Timelock.
+        OETHVaultLensProxy lensProxy = new OETHVaultLensProxy();
+        OTokenVaultLens lensImpl = new OTokenVaultLens(
+            resolver.resolve("OETH_VAULT_PROXY"), resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY")
+        );
+        lensProxy.initialize(address(lensImpl), GOVERNOR, "");
+
+        _recordDeployment("OETH_VAULT_LENS_IMPL", address(lensImpl), type(OTokenVaultLens).name);
+        _recordDeployment("OETH_VAULT_LENS_PROXY", address(lensProxy), type(OETHVaultLensProxy).name);
     }
 
     // ==================== Governance Proposal ==================== //
 
     function _buildGovernanceProposal() internal override {
         govProposal.setDescription(
-            "Make Compounding Staking Strategy balance proofs permissionless\n\n"
+            "Upgrade the Compounding Staking Strategy and enable the OETH Vault Lens\n\n"
             "Validator consolidation is complete, so the ConsolidationController is no longer the "
             "strategy registrator. This proposal upgrades the CompoundingStakingStrategy to allow "
             "anyone to call snapBalances() and verifyBalances(). The existing snapshot delay and "
             "beacon proof verification continue to protect the accounting inputs. It also lowers "
-            "the maximum first validator deposit to 1 ETH."
+            "the maximum first validator deposit to 1 ETH. The new implementation additionally "
+            "exposes lastVerifiedBalanceTimestamp, the timestamp of the last balance snapshot "
+            "verified against beacon chain data, which the newly deployed OETH Vault Lens reads "
+            "to refuse reporting an OETH/WETH rate when balance verification is more than 24 " "hours old."
         );
         address proxy = resolver.resolve("COMPOUNDING_STAKING_STRATEGY_PROXY");
         govProposal.action(
@@ -75,6 +95,43 @@ contract $005_UpgradeCompoundingStakingStrategy is AbstractDeployScript("005_Upg
         require(strategy.validatorRegistrator() != address(0), "Registrator cleared");
 
         _verifyPermissionlessBalanceCalls(proxy);
+        _verifyLens(proxy);
+    }
+
+    function _verifyLens(address strategyProxy) internal {
+        address lensProxyAddr = resolver.resolve("OETH_VAULT_LENS_PROXY");
+        InitializeGovernedUpgradeabilityProxy lensProxy = InitializeGovernedUpgradeabilityProxy(payable(lensProxyAddr));
+
+        require(lensProxy.implementation() == resolver.resolve("OETH_VAULT_LENS_IMPL"), "Unexpected lens impl");
+        require(lensProxy.governor() == GOVERNOR, "Unexpected lens governor");
+
+        OTokenVaultLens lens = OTokenVaultLens(lensProxyAddr);
+        require(address(lens.vault()) == resolver.resolve("OETH_VAULT_PROXY"), "Unexpected lens vault");
+        require(address(lens.oToken()) == resolver.resolve("OETH_PROXY"), "Unexpected lens oToken");
+        require(lens.stakingStrategy() == strategyProxy, "Unexpected lens strategy");
+
+        // Right after the upgrade no verifyBalances() has run against the new implementation,
+        // so lastVerifiedBalanceTimestamp is 0 and the lens must refuse to report a rate.
+        // Guarded on actual staleness so the check stays valid once real balance
+        // verifications happen on-chain, as _fork() re-runs on every fork and smoke run.
+        uint256 lastVerified = ICompoundingStakingStrategy(strategyProxy).lastVerifiedBalanceTimestamp();
+        if (lastVerified + lens.MAX_VERIFIED_BALANCE_AGE() < block.timestamp) {
+            (bool success,) = lensProxyAddr.staticcall(abi.encodeCall(OTokenVaultLens.getRate, ()));
+            require(!success, "getRate should revert while stale");
+        }
+
+        // With a fresh verified balance the lens reports the Vault's value per OToken.
+        vm.mockCall(
+            strategyProxy,
+            ICompoundingStakingStrategy.lastVerifiedBalanceTimestamp.selector,
+            abi.encode(uint64(block.timestamp))
+        );
+        uint256 rate = lens.getRate();
+        require(rate > 0, "Invalid rate");
+        require(rate == (lens.vault().totalValue() * 1e18) / lens.oToken().totalSupply(), "Unexpected rate");
+        // Clears all mocked calls so the mock can not leak into smoke tests,
+        // which run this script as part of their setUp.
+        vm.clearMockedCalls();
     }
 
     function _verifyPermissionlessBalanceCalls(address proxy) internal {

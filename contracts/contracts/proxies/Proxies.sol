@@ -167,3 +167,10 @@ contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHVaultLensProxy delegates calls to an OTokenVaultLens implementation
+ */
+contract OETHVaultLensProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

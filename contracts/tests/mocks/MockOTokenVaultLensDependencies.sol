@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-contract MockOTokenVaultOracleVault {
+contract MockOTokenVaultLensVault {
     uint256 public totalValue;
     address public oToken;
 
@@ -14,10 +14,18 @@ contract MockOTokenVaultOracleVault {
     }
 }
 
-contract MockOTokenVaultOracleToken {
+contract MockOTokenVaultLensToken {
     uint256 public totalSupply;
 
     function setTotalSupply(uint256 _totalSupply) external {
         totalSupply = _totalSupply;
+    }
+}
+
+contract MockOTokenVaultLensStrategy {
+    uint64 public lastVerifiedBalanceTimestamp;
+
+    function setLastVerifiedBalanceTimestamp(uint64 _timestamp) external {
+        lastVerifiedBalanceTimestamp = _timestamp;
     }
 }
