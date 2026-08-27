@@ -17,9 +17,7 @@ containers and match the constants in `BeaconProofsLib.sol` exactly.
 | File | Role |
 |---|---|
 | `CompoundingStakingStrategy.sol` | storage model, deposit/balance state machine, both proof entrypoints |
-| `CompoundingStakingSSVStrategy.sol` | adds SSV registration; overrides `_admitStake` |
 | `CompoundingStakingView.sol` | off-chain read helper: `getVerifiedValidators()`, `getPendingDeposits()` |
-| `ConsolidationController.sol` | is the strategy's `validatorRegistrator` on mainnet — see [Access control](#access-control) |
 | `../../beacon/BeaconProofsLib.sol` | all gindices, proof lengths, SSZ merkleization |
 | `../../beacon/BeaconProofs.sol` | thin external wrapper (the deployed `BEACON_PROOFS` contract) |
 | `../../beacon/Merkle.sol` | sha256 inclusion-proof walk + `merkleizeSha256` |
@@ -122,7 +120,7 @@ Composing with `gindex(child) = (gindex(parent) << height) | index`:
   `require(pendingDepositIndex < 2**(28-1))` (`:283-286`) — indices must stay in the data half.
 - `Validator` has 8 fields ⇒ height 3. `pubkey` at index 0, `withdrawable_epoch` at index 7
   (`:69`, `:72`). `pubkey` is `Bytes48`, i.e. 2 chunks, so its hash-tree-root is
-  `sha256(pubkey ‖ 16 zero bytes)` — exactly `_hashPubKey` (`CompoundingStakingStrategy.sol:1204-1207`).
+  `sha256(pubkey ‖ 16 zero bytes)` — exactly `_hashPubKey` (`CompoundingStakingStrategy.sol:1207-1210`).
 - `PendingDeposit` has 5 fields (`pubkey`, `withdrawal_credentials`, `amount`, `signature`,
   `slot`) ⇒ height 3, `slot` at index 4. `merkleizePendingDeposit` pads to 8 leaves with three
   `bytes32(0)` (`BeaconProofsLib.sol:370-381`) and merkleizes the 96-byte BLS signature as 4
@@ -246,8 +244,7 @@ or consolidates. Such an entry can sit at the head of the queue with slot 0, whi
   confirmation of anything.
 - Withdrawal latency: `exit_queue_epoch >= current_epoch + MAX_SEED_LOOKAHEAD + 1 (5)` and
   `withdrawable_epoch = exit_queue_epoch + 256`, so **≥ 261 epochs ≈ 27.8 h** minimum from request
-  to eligibility, before queue backlog. That is exactly `ConsolidationController`'s
-  `MIN_CONSOLIDATION_PERIOD = 261 * 32 * 12` (`ConsolidationController.sol:17-23`).
+  to eligibility, before queue backlog.
 - The validator registry only ever grows (`add_validator_to_registry` appends). Validator
   indices are stable forever, so proving by index is safe. A fully-swept validator keeps its
   entry with `balances[i] == 0`.
@@ -255,7 +252,7 @@ or consolidates. Such an entry can sit at the head of the queue with slot 0, whi
   `UPWARD_THRESHOLD = 5 × 0.25 = 1.25 ETH`, and the bump fires when
   `effective_balance + UPWARD_THRESHOLD < balance`. From `effective_balance = 31 ETH` that needs
   `balance > 32.25 ETH` — exactly `MIN_ACTIVATION_BALANCE_GWEI = 32.25 ether / 1e9`
-  (`CompoundingStakingStrategy.sol:24-28`), tested with a strict `>` at `:1098`.
+  (`CompoundingStakingStrategy.sol:24-28`), tested with a strict `>` at `:1101`.
 
 ---
 
@@ -307,7 +304,7 @@ There is exactly one `depositList.push` (`:435`), one `.status =` write (`:823`)
 `depositList.pop()` (`:829`) in the whole contract, and the latter two are the same function — so
 `depositList` holds *only* `PENDING` deposits, and `status` is monotone
 `UNKNOWN → PENDING → VERIFIED`, never reset. Two natspec comments claim otherwise and are stale:
-`:111-113` and `:1268-1270` both say the list can also hold "deposits that have been verified to
+`:111-113` and `:1271-1273` both say the list can also hold "deposits that have been verified to
 an exiting validator and is now waiting for the validator's balance to be swept". It cannot.
 
 Monotone `status` is what makes a `pendingDepositRoot` a permanent single-use ID (see the
@@ -317,7 +314,8 @@ collision constraint in [§8](#operational-constraint-deposit-root-collisions)).
 because two of them are loss/imprecision cases, not success cases. Summarised in [§8](#8-accepted-imprecisions).
 
 Tests that manipulate this state directly need the slots: `deposits` is mapping base **52** and
-`depositList` is array slot **53**. These depend on the C3 linearization of
+`depositList` is array slot **53** (`test/strategies/compoundingSSVStaking.js:643,663`). These
+depend on the C3 linearization of
 `CompoundingStakingStrategy is CompoundingValidatorStorage, InitializableAbstractStrategy` —
 reordering that inheritance list would silently shift every slot.
 
@@ -334,17 +332,18 @@ Transitions:
 
 | From → To | Where |
 |---|---|
-| `NON_REGISTERED → REGISTERED` | `registerSsvValidator` (SSV subclass only) |
-| `NON_REGISTERED`/`REGISTERED` → `STAKED` | `_recordFirstDeposit` (`:497`) |
+| `NON_REGISTERED → STAKED` | `_recordFirstDeposit` (`:497`) |
 | `STAKED → VERIFIED` | `verifyValidator` (`:610-613`) + push to `verifiedValidators` |
 | `STAKED → INVALID` | `verifyValidator`, credentials mismatch (`:623`) |
-| `VERIFIED → ACTIVE` | `verifyBalances`, balance > 32.25 ETH (`:1096-1105`) |
+| `VERIFIED → ACTIVE` | `verifyBalances`, balance > 32.25 ETH (`:1100-1107`) |
 | `ACTIVE → EXITING` | `validatorWithdrawal(pubkey, 0)` (`:549`) |
-| any → `EXITED` | `verifyBalances`, proven zero balance, no pending deposit (`:1076-1077`) |
-| `REGISTERED`/`EXITED`/`INVALID` → `REMOVED` | `removeSsvValidator` |
+| any → `EXITED` | `verifyBalances`, proven zero balance, no pending deposit (`:1076-1080`) |
+
+`REGISTERED` and `REMOVED` remain in the enum for storage compatibility with the retired SSV
+strategy, but the current vanilla strategy cannot enter either state.
 
 `ACTIVE` is a local claim ("has enough balance that it *can* activate"), not the CL's
-`is_active_validator` — the natspec says so at `:1100-1102`.
+`is_active_validator` — the natspec says so at `:1103-1105`.
 
 ### Balance snapshot and reported value
 
@@ -353,10 +352,10 @@ struct Balances { bytes32 blockRoot; uint64 timestamp; uint128 ethBalance; }
 Balances public snappedBalance;
 uint256 public lastVerifiedEthBalance;
 uint256 public depositedWethAccountedFor;
-uint256[40] private __gap;   // + uint256[50] in CompoundingStakingSSVStrategy
+uint256[40] private __gap;
 ```
 
-`checkBalance(WETH) = lastVerifiedEthBalance + WETH.balanceOf(this)` (`:1374-1389`).
+`checkBalance(WETH) = lastVerifiedEthBalance + WETH.balanceOf(this)` (`:1372-1391`).
 Note what `lastVerifiedEthBalance` covers: pending deposits + validator balances + the strategy's
 raw ETH **as of the last verified snapshot**, adjusted synchronously for WETH↔ETH movements.
 There is **no staleness guard** — see [§8](#8-accepted-imprecisions).
@@ -461,24 +460,24 @@ On success `_removeDeposit` marks the deposit `VERIFIED` and swap-pops it out of
 >
 > 1. The comment at `:717` says "when `verifyDeposit` is called for the first deposit it sets the
 >    Validator state to EXITING". **`verifyDeposit` writes no validator state at all.** Every
->    `validator[...].state =` write in the system is at `:497`, `:549`, `:611`, `:623`, `:1076`,
->    `:1103`, plus `CompoundingStakingSSVStrategy.sol:77`/`:114`. The only path to `EXITING` is
+>    `validator[...].state =` write in the system is at `:497`, `:549`, `:611`, `:623`, `:1079`,
+>    and `:1106`. The only path to `EXITING` is
 >    `validatorWithdrawal(pubkey, 0)` at `:549`.
 > 2. Consequently the `EXITING` arm of `:719-724` is **unreachable**. `validatorWithdrawal` with
 >    `amountGwei == 0` reverts `"Pending deposit"` if *any* `depositList` entry targets that pubkey
 >    (`:534-544`), so `EXITING` can only be entered with zero pending deposits for that validator;
->    and `_admitStake` rejects `EXITING` (`:462-468`, SSV `:148-155`), so no deposit can be added
+>    and `_admitStake` rejects `EXITING` (`:462-468`), so no deposit can be added
 >    afterwards. `status == PENDING` and `state == EXITING` are therefore jointly unsatisfiable.
 >    The slashed-validator scenario the comment describes is real, but it plays out with the
 >    validator still in `ACTIVE` — which is how
->    `tests/unit/strategies/CompoundingStakingSSVStrategy/concrete/SlashedValidatorDeposit.t.sol`
+>    `tests/unit/strategies/CompoundingStakingStrategy/concrete/SlashedValidatorDeposit.t.sol`
 >    actually drives it. Harmless dead code, but do not reason from that comment.
 
 ---
 
 ## 5. The balance proof — `snapBalances` → `verifyBalances`
 
-### 5.1 `snapBalances` (`:942-961`)
+### 5.1 `snapBalances` (`:944-963`)
 
 ```solidity
 require(snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp, "Snap too soon");
@@ -504,15 +503,18 @@ Because the delay check compares against `snappedBalance.timestamp`, and `verify
 that to 0, a fresh snap is allowed immediately after a successful verify. The 420 s only throttles
 *re-snapping over an unverified snap*.
 
-### 5.2 `verifyBalances` (`:1000-1173`)
+### 5.2 `verifyBalances` (`:1003-1176`)
 
 ```solidity
 function verifyBalances(BalanceProofs calldata balanceProofs,
-                        PendingDepositProofs calldata pendingDepositProofs) external onlyRegistrator
+                        PendingDepositProofs calldata pendingDepositProofs) external
 ```
 
+The function is permissionless. Callers cannot choose an unverified balance: every supplied leaf
+and proof is anchored to the beacon block root stored by `snapBalances`.
+
 **Step 1 — validator balances.** Requires `validatorBalanceProofs.length == validatorBalanceLeaves.length
-== verifiedValidators.length` (`:1015-1024`): every verified validator must be accounted for, no
+== verifiedValidators.length` (`:1018-1026`): every verified validator must be accounted for, no
 more, no fewer. Then one `verifyBalancesContainer` against the snapped root (9 witnesses), and per
 validator a `verifyValidatorBalance` against that container root (39 witnesses).
 
@@ -530,15 +532,15 @@ return Endian.fromLittleEndianUint64(bytes32(uint256(validatorBalanceLeaf) << bi
 Left-shifting by `64 · (i mod 4)` moves the target 8-byte slot into the top bytes, then
 `fromLittleEndianUint64` takes `>> 192` and reverses byte order.
 
-The loop runs **in reverse** (`:1038`) so that swap-and-pop of exited validators only ever moves an
-already-processed entry down into the current slot (`:1084-1091`). The proof arrays are indexed by
+The loop runs **in reverse** (`:1040-1042`) so that swap-and-pop of exited validators only ever moves an
+already-processed entry down into the current slot (`:1084-1094`). The proof arrays are indexed by
 the *original* position `i`, so the off-chain arrays must be in the same order as the on-chain
 `verifiedValidators` array — which is what `CompoundingStakingStrategyView.getVerifiedValidators()`
 returns.
 
 Per validator:
 - `balance == 0` → treated as exited. Remove from `verifiedValidators` and set `EXITED`,
-  **unless** the validator still has an entry in `depositList` (`:1055-1073`).
+  **unless** the validator still has an entry in `depositList` (`:1056-1080`).
 - `VERIFIED` and `balance > 32.25 ETH` → `ACTIVE`.
 - otherwise accumulate `totalValidatorBalance += validatorBalanceGwei * 1 gwei`.
 
@@ -549,7 +551,7 @@ Per validator:
 > length* verifies against the container root and `balanceAtIndex` returns 0. A validator that did
 > not yet exist at the snapped root therefore proves as balance 0.
 >
-> The `depositPending` retention at `:1055-1073` is what makes this safe, and it is load-bearing
+> The `depositPending` retention at `:1056-1080` is what makes this safe, and it is load-bearing
 > well beyond the slashed-validator case its comment describes. `verifyValidator` accepts *any*
 > beacon block root the caller supplies — including one newer than the outstanding snapshot — so a
 > validator can be pushed onto `verifiedValidators` while not existing at the snapped root. But in
@@ -561,23 +563,26 @@ Per validator:
 > irreversibly (`_admitStake` rejects `EXITED`; `verifyValidator` requires `STAKED`).
 
 **Step 2 — pending deposits.** Requires `pendingDepositProofs.length == pendingDepositIndexes.length
-== depositList.length` (`:1122-1131`), one `verifyPendingDepositsContainer` (9 witnesses) and then
+== depositList.length` (`:1125-1133`), one `verifyPendingDepositsContainer` (9 witnesses) and then
 for each entry a `verifyPendingDeposit` (28 witnesses) showing the stored root is **still present**
 in `state.pending_deposits` at the snapped root. Only then is its `amountGwei` added to
 `totalDepositsWei`.
 
 Deposits are verified *after* validators so an exited validator is marked `EXITED` before the
-deposit loop (`:1115-1117`).
+deposit loop (`:1115-1124`).
 
 **Step 3 — settle.**
 
 ```solidity
 lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
+lastVerifiedBalanceTimestamp = balancesMem.timestamp;
 snappedBalance.timestamp = 0;   // force a fresh snap next time
 ```
 
-Units: `validatorBalanceGwei` and `amountGwei` are gwei, converted with `* 1 gwei` at `:1108` and
-`:1153-1155`; `ethBalance` is already wei. `lastVerifiedEthBalance` is wei.
+Units: `validatorBalanceGwei` and `amountGwei` are gwei, converted with `* 1 gwei` at `:1111` and
+`:1155-1158`; `ethBalance` is already wei. `lastVerifiedEthBalance` is wei.
+`lastVerifiedBalanceTimestamp` records the timestamp of the successfully verified snapshot rather
+than the later transaction timestamp of `verifyBalances`.
 
 ---
 
@@ -624,9 +629,9 @@ under-reports because the ETH is in neither bucket.
 **Snapshot invalidation.** Any EL-side ETH movement between snap and verify would break the
 `ethBalance` term, so both conversion helpers zero the snapshot:
 
-- `_convertWethToEth` (`:1249-1260`) — called by `stakeEth`; `lastVerifiedEthBalance += amount`,
+- `_convertWethToEth` (`:1250-1263`) — called by `stakeEth`; `lastVerifiedEthBalance += amount`,
   `snappedBalance.timestamp = 0`.
-- `_convertEthToWeth` (`:1231-1245`) — called by `_withdraw`; `lastVerifiedEthBalance -= min(...)`,
+- `_convertEthToWeth` (`:1232-1248`) — called by `_withdraw`; `lastVerifiedEthBalance -= min(...)`,
   `snappedBalance.timestamp = 0`.
 
 The `min` clamp in `_convertEthToWeth` means `checkBalance` is **not continuous across a
@@ -637,7 +642,7 @@ strategy's reported value. It is conservative in aggregate (unproven ETH is only
 it is physically WETH), but `totalValue()` is path-dependent and `VaultCore` consumes
 `checkBalance` directly for rebase.
 
-A bare `receive()` (`:1405`) — MEV/execution rewards, validator sweeps, donations — does *not*
+A bare `receive()` (`:1408`) — MEV/execution rewards, validator sweeps, donations — does *not*
 invalidate. That is safe because it only makes the snapshot an undercount.
 
 ---
@@ -695,8 +700,8 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
 
 | Function | Guard |
 |---|---|
-| `stakeEth`, `validatorWithdrawal`, `snapBalances`, `verifyBalances` | `onlyRegistrator` |
-| `verifyValidator`, `verifyDeposit` | **permissionless** |
+| `stakeEth`, `validatorWithdrawal` | `onlyRegistrator` |
+| `snapBalances`, `verifyBalances`, `verifyValidator`, `verifyDeposit` | **permissionless** |
 | `setRegistrator`, `setInitialDepositAmount`, `unPause` | `onlyGovernor` |
 | `resetFirstDeposit` | `onlyGovernorOrStrategist` |
 | `pause` | `onlyRegistratorOrGovernor` |
@@ -706,28 +711,26 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
 The mainnet rollout has several configuration choices that change how the above reads:
 
 - The live strategy behind `CompoundingStakingStrategyProxy` is the **vanilla
-  `CompoundingStakingStrategy`**, not the SSV subclass. So `registerSsvValidator` /
-  `removeSsvValidator` do not exist there: `REGISTERED` and `REMOVED` are unreachable states, entry
+  `CompoundingStakingStrategy`**. `REGISTERED` and `REMOVED` are unreachable states, entry
   is `NON_REGISTERED → STAKED` via the base `_admitStake` (`:462-473`), and `INVALID` / `EXITED`
   are absolutely terminal.
-- `initialDepositAmountWei` is initialised to **2030 ETH**, not the 1 ETH default used in tests and
-  on Hoodi. Read the front-running section with that number in mind.
-- The strategy's registrator is the **`ConsolidationController`**, whose own
-  `snapBalances()` and `verifyBalances()` are permissionless whenever no consolidation is in
-  progress (`ConsolidationController.sol:383-436`). So in production **all four proof entrypoints
-  are effectively permissionless** — which is what makes the `SNAP_BALANCES_DELAY` griefing
-  discussion real rather than theoretical. `ConsolidationController.sol:131-140` even guards its
-  own snap against being front-run by a permissionless one.
-- The controller rejects `amountGwei == 0` in `validatorWithdrawal`
-  (`ConsolidationController.sol:446-459`) and exposes no other route to the strategy's
-  `validatorWithdrawal`. While the controller is registrator, **no validator can be fully exited**,
-  so `EXITING` is unreachable in the live deployment and `EXITED` can only arise from a slashing
-  sweep. This is deliberate and temporary — the natspec at `:438-443` says full exits are
-  disallowed "during the migration period".
+- `initialDepositAmountWei` is currently **2030 ETH** on mainnet, not the 1 ETH default used in
+  tests and on Hoodi. The current Foundry deployment proposal lowers it to **1 ETH**. After the
+  validator is verified, the registrator must top it
+  up before it can cross the strategy's strict `> 32.25 ETH` transition to `ACTIVE`.
+- The strategy's registrator is the **Talos relayer**. It can call `stakeEth` and
+  `validatorWithdrawal`, including full exits.
+- In the current source all four proof entrypoints are directly permissionless. The 420-second
+  `SNAP_BALANCES_DELAY` bounds re-snapshot griefing; `verifyBalances` accepts only proofs anchored
+  to the stored beacon block root. `scripts/deploy/mainnet/005_UpgradeCompoundingStakingStrategy.s.sol`
+  deploys and proposes this implementation upgrade and lowers `initialDepositAmountWei` to
+  1 ETH. Until that proposal executes on mainnet, the deployed implementation still
+  applies `onlyRegistrator` to `snapBalances` and `verifyBalances`, so the Talos relayer remains
+  their only direct caller and the first-deposit cap remains 2030 ETH.
 
 ### Known accounting errors
 
-1. **Postponed deposit to a slashed validator** — *undercount* (`:66-81`, `:1118-1120`). Once
+1. **Postponed deposit to a slashed validator** — *undercount* (`:66-81`, `:1121-1123`). Once
    `W <= H`, `verifyDeposit` succeeds and the deposit leaves `depositList` — but the beacon chain
    may not have credited it yet. The contract believes the ETH is in a balance while it is still
    queued, so `checkBalance` shows a deficit for days or weeks (bounded by the 36.4-day slashing
@@ -766,19 +769,19 @@ The mainnet rollout has several configuration choices that change how the above 
   deposit** (`tasks/validatorCompound.js:255-271`) — which is exactly the deposit that can trigger
   this, since top-ups go to an already-registered pubkey where the CL ignores the signature.
 - **Proof-set invalidation between snap and verify.** `verifyBalances` requires the proof array
-  lengths to equal `verifiedValidators.length` and `depositList.length` *exactly* (`:1015-1024`,
-  `:1122-1131`), while `verifyValidator` and `verifyDeposit` are permissionless. Anyone holding
+  lengths to equal `verifiedValidators.length` and `depositList.length` *exactly* (`:1018-1026`,
+  `:1125-1133`), while `verifyValidator` and `verifyDeposit` are permissionless. Anyone holding
   valid proofs can therefore push or pop an entry between the snap and the verify and invalidate an
   in-flight proof set. Narrow in practice (only the registrator can create a `STAKED` validator to
   verify) but it is a second griefing vector alongside re-snapping.
 - **A `VERIFIED` validator below 32.25 ETH cannot be exited.** `validatorWithdrawal` requires
   `ACTIVE || EXITING` (`:527-531`), and the only route to `ACTIVE` is `verifyBalances` observing a
-  balance strictly above `MIN_ACTIVATION_BALANCE_GWEI` (`:1096-1105`). A validator stuck below that
+  balance strictly above `MIN_ACTIVATION_BALANCE_GWEI` (`:1100-1107`). A validator stuck below that
   can only be freed by a top-up via `stakeEth`, which *is* permitted from `VERIFIED`. Live concern
-  wherever `initialDepositAmountWei` is 1 ETH (Hoodi and tests); a non-issue at mainnet's 2030 ETH.
-  Note there is also no
-  `ACTIVE → VERIFIED` demotion, so a slashed validator that falls back below 32.25 ETH stays
-  exitable — the desired behaviour, but nowhere written down.
+  wherever `initialDepositAmountWei` is 1 ETH (Hoodi, tests, and the proposed mainnet setting).
+  Note there is also no `ACTIVE → VERIFIED` demotion,
+  so a slashed validator that falls back below 32.25 ETH stays exitable — the desired behaviour,
+  but nowhere written down.
 - **`resetFirstDeposit` weakens two bounds it is credited with.** It clears `firstDeposit`
   (`:326-334`) without touching the outstanding validator, which stays `STAKED` and can still be
   verified later by the permissionless `verifyValidator`. So `verifiedValidators.length <= 48` is
@@ -800,10 +803,10 @@ The mainnet rollout has several configuration choices that change how the above 
   credentials can no longer be hijacked.
 
   Mitigations: `firstDeposit` allows only one unverified new validator at a time (`:483`); the
-  first deposit is capped at `initialDepositAmountWei` (`:485-487`) — **2030 ETH on mainnet**, so
-  the cap bounds but does not trivialise the exposure; and `verifyValidator` compares the proven
-  credentials to `0x02 ‖ bytes11(0) ‖ address(this)`, marking the validator `INVALID`, dropping the
-  deposit and *immediately* debiting `lastVerifiedEthBalance` on mismatch (`:621-648`).
+  first deposit is capped at `initialDepositAmountWei` (`:485-487`) — currently **2030 ETH on
+  mainnet**, with deployment 005 proposing **1 ETH** — and `verifyValidator` compares
+  the proven credentials to `0x02 ‖ bytes11(0) ‖ address(this)`, marking the validator `INVALID`,
+  dropping the deposit and *immediately* debiting `lastVerifiedEthBalance` on mismatch (`:621-648`).
   `firstDeposit` stays `true`, so a human must call `resetFirstDeposit` before staking to another
   new validator. `stakeEth` goes through the public mempool
   (`tasks/validatorCompound.js:300-306`); there is no private-relay submission in-repo.
@@ -840,7 +843,7 @@ bites within a single slot.
 
 ## 9. Worked example (real mainnet data)
 
-Captured from a real mainnet balance proof:
+From `test/beacon/beaconProofs.js:204-225` — a real balance proof:
 
 ```
 balancesContainerRoot = 0xdbdf8b18bb50a2ac84864bf12779da475aca1e2b98854b2a1b02506396250eff
@@ -930,10 +933,17 @@ To re-derive: `ethereum/consensus-specs` renamed its default branch from `dev` t
   `balanceAtIndex` packing, `concatGenIndices` arithmetic, fuzz.
 - `tests/unit/beacon/{Merkle,Endian}/**` — primitives.
 - `tests/fork/mainnet/beacon/**` — real proofs and the live EIP-4788 ring buffer.
-- `tests/unit/strategies/CompoundingStakingSSVStrategy/**` — state machine, including
+- `tests/unit/strategies/CompoundingStakingStrategy/**` — state machine, including
   `TwentyOneValidators.t.sol` (real 21-validator proofs), `SlashedValidatorDeposit.t.sol`,
   `FrontRunAndInvalid.t.sol`, `VerifyDeposit.t.sol`.
-Caveat from `tests/unit/strategies/CompoundingStakingSSVStrategy/README.md`: many strategy unit
+- `tests/fork/mainnet/strategies/CompoundingStakingStrategy/**` — live EIP-4788 balance snapshots,
+  OETH Vault allocation, incremental WETH accounting, BLS-valid validator deposits through
+  Ethereum's beacon deposit contract, and partial/full validator withdrawals through the live
+  EIP-7002 withdrawal-request contract. Includes the third-party WETH funding case ported from the
+  retired SSV suite.
+- `test/beacon/beaconProofs.js` — hard-coded real mainnet/Hoodi proofs (source of §9).
+
+Caveat from `tests/unit/strategies/CompoundingStakingStrategy/README.md`: many strategy unit
 tests swap in `MockBeaconProofs`, which **auto-passes all verification**. Those tests exercise the
 accounting state machine, not the proofs. Real-proof coverage lives in the `BeaconProofsLib` unit
 tests, the fork tests, and `TwentyOneValidators.t.sol`.
