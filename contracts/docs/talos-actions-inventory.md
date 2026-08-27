@@ -6,7 +6,7 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, snapBalances, stakeValidator, verifyBalances, verifyDeposits |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | sonic | manageBribeOnSonic, otokenOsCollectAndRelease, otokenOsRebase, otokenOsSonicRestakeRewards, sonicClaimWithdrawals, sonicUndelegate |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
