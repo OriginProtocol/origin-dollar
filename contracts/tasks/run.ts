@@ -26,6 +26,10 @@ function kebabToCamel(s: string): string {
   return s.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 }
 
+function camelToKebab(s: string): string {
+  return s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+}
+
 function parseCli(argv: string[]): {
   name?: string;
   network?: string;
@@ -60,13 +64,34 @@ function coerceParams(
     if (raw === undefined) {
       if (spec.hasDefault) out[spec.name] = spec.defaultValue;
       else if (spec.isFlag) out[spec.name] = false;
+      else if (!spec.isOptional) {
+        throw new Error(`--${camelToKebab(spec.name)} is required`);
+      }
       continue;
     }
-    if (spec.type === "int") out[spec.name] = parseInt(String(raw), 10);
-    else if (spec.type === "float") out[spec.name] = parseFloat(String(raw));
-    else if (spec.type === "boolean")
+
+    const cliFlag = `--${camelToKebab(spec.name)}`;
+    if (raw === true && !spec.isFlag) {
+      throw new Error(`${cliFlag} requires a value`);
+    }
+
+    if (spec.type === "int" || spec.type === "float") {
+      if (String(raw).trim() === "") {
+        throw new Error(`${cliFlag} must be a valid ${spec.type}`);
+      }
+      const value = Number(raw);
+      const isValid =
+        Number.isFinite(value) &&
+        (spec.type !== "int" || Number.isInteger(value));
+      if (!isValid) {
+        throw new Error(`${cliFlag} must be a valid ${spec.type}`);
+      }
+      out[spec.name] = value;
+    } else if (spec.type === "boolean") {
       out[spec.name] = raw === true || raw === "true";
-    else out[spec.name] = String(raw);
+    } else {
+      out[spec.name] = String(raw);
+    }
   }
   return out;
 }
@@ -126,9 +151,15 @@ async function main(): Promise<void> {
     fail(`${name} only supports ${valid}, not ${networkName} (${chainId})`, 1);
   }
 
+  let args: Record<string, unknown>;
+  try {
+    args = coerceParams(entry.params, flags);
+  } catch (err) {
+    fail((err as Error).message);
+  }
+
   const signer = await getSigner();
   setSigner(signer);
-  const args = coerceParams(entry.params, flags);
   const start = Date.now();
   log.info(`Running on ${networkName} (${chainId})`);
 

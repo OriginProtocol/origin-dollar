@@ -8,7 +8,6 @@ import {
 
 // --- Project imports
 import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
-import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
 
 contract Unit_Concrete_CompoundingStakingStrategy_Configuration_Test is Unit_CompoundingStakingStrategy_Shared_Test {
     function test_setRegistrator() public {
@@ -34,13 +33,16 @@ contract Unit_Concrete_CompoundingStakingStrategy_Configuration_Test is Unit_Com
         assertFalse(compoundingStakingStrategy.supportsAsset(address(unsupportedToken)));
     }
 
-    /// @dev `resetFirstDeposit` is callable by the Governor or the Strategist.
-    ///      Reaching the NoFirstDeposit revert proves the Strategist passed the
-    ///      authorization check.
     function test_resetFirstDeposit_allowsStrategist() public {
+        _stakeNewValidator(0);
+        assertTrue(compoundingStakingStrategy.firstDeposit());
+
         vm.prank(strategist);
-        vm.expectRevert(ICompoundingStakingStrategy.NoFirstDeposit.selector);
+        vm.expectEmit(false, false, false, false);
+        emit ICompoundingStakingStrategy.FirstDepositReset();
         compoundingStakingStrategy.resetFirstDeposit();
+
+        assertFalse(compoundingStakingStrategy.firstDeposit());
     }
 
     function test_resetFirstDeposit_RevertWhen_notGovernorOrStrategist() public {

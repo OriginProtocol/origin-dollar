@@ -29,6 +29,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_StrategyBalances_Test is Unit_
         assertEq(timestamp, snapTs);
         assertEq(uint256(ethBalance), address(compoundingStakingStrategy).balance);
         assertTrue(blockRoot != bytes32(0));
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), 0);
     }
 
     function test_snapBalances_RevertWhen_tooSoon() public {
@@ -43,12 +44,16 @@ contract Unit_Concrete_CompoundingStakingStrategy_StrategyBalances_Test is Unit_
 
     function test_verifyBalances_noValidators() public {
         vm.warp(block.timestamp + 500);
-        _snapBalances();
+        uint64 snapTimestamp = _snapBalances();
+
+        vm.warp(block.timestamp + 123);
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
         // lastVerifiedEthBalance should be the snapped ETH balance
         assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), 0);
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), snapTimestamp);
+        assertNotEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), block.timestamp);
     }
 
     function test_verifyBalances_withWethDeposit() public {
@@ -104,13 +109,38 @@ contract Unit_Concrete_CompoundingStakingStrategy_StrategyBalances_Test is Unit_
 
     function test_verifyBalances_resetsSnapTimestamp() public {
         vm.warp(block.timestamp + 500);
-        _snapBalances();
+        uint64 snapTimestamp = _snapBalances();
 
         _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
 
         // Snap timestamp should be reset to 0
         (, uint64 timestamp,) = compoundingStakingStrategy.snappedBalance();
         assertEq(timestamp, 0);
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), snapTimestamp);
+    }
+
+    function test_verifyBalances_failedVerificationDoesNotUpdateLastVerifiedBalanceTimestamp() public {
+        _processValidator(0, 100);
+
+        vm.warp(block.timestamp + 500);
+        uint64 firstSnapTimestamp = _snapBalances();
+        _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
+
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), firstSnapTimestamp);
+
+        vm.warp(block.timestamp + 500);
+        uint64 secondSnapTimestamp = _snapBalances();
+
+        vm.expectRevert("Invalid balance proofs");
+        _verifyBalances(_emptyBalanceProofs(0), _emptyPendingDepositProofs(0));
+
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), firstSnapTimestamp);
+
+        vm.warp(block.timestamp + 123);
+        _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
+
+        assertEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), secondSnapTimestamp);
+        assertNotEq(compoundingStakingStrategy.lastVerifiedBalanceTimestamp(), block.timestamp);
     }
 
     function test_depositListLength() public {
