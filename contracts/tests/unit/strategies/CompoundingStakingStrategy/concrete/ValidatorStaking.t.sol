@@ -8,6 +8,7 @@ import {
 
 // --- Project imports
 import {ICompoundingStakingStrategy} from "contracts/interfaces/strategies/ICompoundingStakingStrategy.sol";
+import {Endian} from "contracts/beacon/Endian.sol";
 import {
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState
@@ -22,15 +23,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_ValidatorStaking_Test is Unit_
         _depositToStrategy(1 ether);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-
-        ValidatorStakeData memory stakeData = ValidatorStakeData({
-            pubkey: testValidators[0].publicKey,
-            signature: testValidators[0].signature,
-            depositDataRoot: testValidators[0].depositDataRoot
-        });
-
-        vm.prank(governor);
-        compoundingStakingStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
+        bytes32 pendingDepositRoot = _stakeWithExpectedEvent(0, 1 ether);
 
         // State should be STAKED (2)
         (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
@@ -41,6 +34,44 @@ contract Unit_Concrete_CompoundingStakingStrategy_ValidatorStaking_Test is Unit_
 
         // Should have 1 pending deposit
         assertEq(compoundingStakingStrategy.depositListLength(), 1);
+        assertEq(compoundingStakingStrategy.depositList(0), pendingDepositRoot);
+    }
+
+    function test_stakeEth_firstDepositBelowConfiguredAmount() public {
+        vm.prank(governor);
+        compoundingStakingStrategy.setInitialDepositAmount(2 ether);
+        _depositToStrategy(1 ether);
+
+        _stakeWithExpectedEvent(0, 1 ether);
+
+        assertTrue(compoundingStakingStrategy.firstDeposit());
+        assertEq(compoundingStakingStrategy.depositListLength(), 1);
+    }
+
+    function test_stakeEth_largeFirstDeposit() public {
+        vm.prank(governor);
+        compoundingStakingStrategy.setInitialDepositAmount(2030 ether);
+        _depositToStrategy(2030 ether);
+
+        _stakeWithExpectedEvent(0, 2030 ether);
+
+        bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
+        assertEq(uint8(state), uint8(ValidatorState.STAKED));
+        assertTrue(compoundingStakingStrategy.firstDeposit());
+    }
+
+    function test_stakeEth_32Point25EtherBelowConfiguredAmount() public {
+        vm.prank(governor);
+        compoundingStakingStrategy.setInitialDepositAmount(2040 ether);
+        _depositToStrategy(32.25 ether);
+
+        _stakeWithExpectedEvent(0, 32.25 ether);
+
+        bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
+        (ValidatorState state,) = compoundingStakingStrategy.validator(pubKeyHash);
+        assertEq(uint8(state), uint8(ValidatorState.STAKED));
+        assertTrue(compoundingStakingStrategy.firstDeposit());
     }
 
     function test_stakeEth_RevertWhen_aboveInitialDepositAmount() public {
@@ -73,6 +104,16 @@ contract Unit_Concrete_CompoundingStakingStrategy_ValidatorStaking_Test is Unit_
 
         vm.prank(governor);
         vm.expectRevert("Existing first deposit");
+        compoundingStakingStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
+    }
+
+    function test_stakeEth_RevertWhen_sameValidatorNotVerified() public {
+        _stakeNewValidator(0);
+        _depositToStrategy(1 ether);
+        ValidatorStakeData memory stakeData = _validatorStakeData(0, 1 ether);
+
+        vm.prank(governor);
+        vm.expectRevert("Not registered or verified");
         compoundingStakingStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
     }
 
@@ -227,6 +268,72 @@ contract Unit_Concrete_CompoundingStakingStrategy_ValidatorStaking_Test is Unit_
             checkBalanceAfter,
             checkBalanceAfterFirstDeposit + 31 ether,
             "checkBalance should include both first deposit and top-up on beacon chain"
+        );
+    }
+
+    function _stakeWithExpectedEvent(uint256 validatorIndex, uint256 amountWei)
+        internal
+        returns (bytes32 pendingDepositRoot)
+    {
+        TestValidator storage validatorData = testValidators[validatorIndex];
+        bytes32 pubKeyHash = _hashPubKey(validatorData.publicKey);
+        uint64 amountGwei = uint64(amountWei / 1 gwei);
+        pendingDepositRoot = mockBeaconProofs.merkleizePendingDeposit(
+            pubKeyHash,
+            abi.encodePacked(_withdrawalCredentialsBytes32()),
+            amountGwei,
+            validatorData.signature,
+            _calcSlot(block.timestamp)
+        );
+        ValidatorStakeData memory stakeData = _validatorStakeData(validatorIndex, amountWei);
+
+        vm.expectEmit(true, true, false, true, address(compoundingStakingStrategy));
+        emit ICompoundingStakingStrategy.ETHStaked(pubKeyHash, pendingDepositRoot, validatorData.publicKey, amountWei);
+        vm.prank(governor);
+        compoundingStakingStrategy.stakeEth(stakeData, amountGwei);
+    }
+
+    function _validatorStakeData(uint256 validatorIndex, uint256 amountWei)
+        internal
+        view
+        returns (ValidatorStakeData memory)
+    {
+        TestValidator storage validatorData = testValidators[validatorIndex];
+        return ValidatorStakeData({
+            pubkey: validatorData.publicKey,
+            signature: validatorData.signature,
+            depositDataRoot: _depositDataRoot(
+                validatorData.publicKey, validatorData.signature, uint64(amountWei / 1 gwei)
+            )
+        });
+    }
+
+    function _depositDataRoot(bytes memory pubkey, bytes memory signature, uint64 amountGwei)
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes32 signaturePart0;
+        bytes32 signaturePart1;
+        bytes32 signaturePart2;
+        assembly {
+            signaturePart0 := mload(add(signature, 0x20))
+            signaturePart1 := mload(add(signature, 0x40))
+            signaturePart2 := mload(add(signature, 0x60))
+        }
+
+        bytes32 pubkeyRoot = sha256(abi.encodePacked(pubkey, bytes16(0)));
+        bytes32 signatureRoot = sha256(
+            abi.encodePacked(
+                sha256(abi.encodePacked(signaturePart0, signaturePart1)),
+                sha256(abi.encodePacked(signaturePart2, bytes32(0)))
+            )
+        );
+        return sha256(
+            abi.encodePacked(
+                sha256(abi.encodePacked(pubkeyRoot, _withdrawalCredentialsBytes32())),
+                sha256(abi.encodePacked(Endian.toLittleEndianUint64(amountGwei), signatureRoot))
+            )
         );
     }
 }

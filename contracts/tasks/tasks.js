@@ -5,7 +5,6 @@ const {
 } = require("hardhat/config");
 const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
-const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { signMessage } = require("./crypto");
@@ -587,26 +586,6 @@ task(
   "claimOGN",
   "Claims the OGN part of the compensation plan for all eligible users"
 ).setAction(claimOGN);
-
-// Smoke tests
-task(
-  "smokeTest",
-  "Execute smoke test before and after parts when applying the deployment script on the mainnet:fork network"
-)
-  .addOptionalParam(
-    "deployid",
-    "Optional deployment id to run smoke tests against"
-  )
-  .setAction(smokeTest);
-task(
-  "smokeTestCheck",
-  "Execute necessary smoke test environment / deploy script checks before the node is initialized"
-)
-  .addOptionalParam(
-    "deployid",
-    "Optional deployment id to run smoke tests against"
-  )
-  .setAction(smokeTestCheck);
 
 // Storage slots
 task(
