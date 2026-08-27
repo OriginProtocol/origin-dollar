@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IOTokenVaultLens} from "contracts/interfaces/IOTokenVaultLens.sol";
+import {IOETHVaultLens} from "contracts/interfaces/IOETHVaultLens.sol";
 import {Unit_OTokenVaultLens_Shared_Test} from "../shared/Shared.t.sol";
 
 contract Unit_Concrete_OTokenVaultLens_GetRate_Test is Unit_OTokenVaultLens_Shared_Test {
@@ -25,7 +25,7 @@ contract Unit_Concrete_OTokenVaultLens_GetRate_Test is Unit_OTokenVaultLens_Shar
     }
 
     function test_getRate_skipsStalenessCheck_whenStrategyIsZero() public {
-        (IOTokenVaultLens strategylessLens,,) = _deployLens(address(0));
+        (IOETHVaultLens strategylessLens,,) = _deployLens(address(0));
         assertEq(strategylessLens.getRate(), 1e18);
     }
 

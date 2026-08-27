@@ -10,7 +10,7 @@ import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 
 // Interfaces
 import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOTokenVaultLens} from "contracts/interfaces/IOTokenVaultLens.sol";
+import {IOETHVaultLens} from "contracts/interfaces/IOETHVaultLens.sol";
 
 // Mocks
 import {
@@ -20,7 +20,7 @@ import {
 } from "tests/mocks/MockOTokenVaultLensDependencies.sol";
 
 abstract contract Unit_OTokenVaultLens_Shared_Test is Base {
-    IOTokenVaultLens internal lens;
+    IOETHVaultLens internal lens;
     IProxy internal lensProxy;
     address internal lensImpl;
     MockOTokenVaultLensVault internal mockVault;
@@ -50,13 +50,13 @@ abstract contract Unit_OTokenVaultLens_Shared_Test is Base {
     }
 
     /// @dev Deploys an OTokenVaultLens implementation behind a fresh governed proxy.
-    function _deployLens(address strategy) internal returns (IOTokenVaultLens lens_, IProxy proxy_, address impl_) {
+    function _deployLens(address strategy) internal returns (IOETHVaultLens lens_, IProxy proxy_, address impl_) {
         vm.startPrank(deployer);
         impl_ = vm.deployCode(Lens.O_TOKEN_VAULT_LENS, abi.encode(address(mockVault), strategy));
         proxy_ = IProxy(vm.deployCode(Proxies.IG_PROXY));
         proxy_.initialize(impl_, governor, "");
         vm.stopPrank();
-        lens_ = IOTokenVaultLens(address(proxy_));
+        lens_ = IOETHVaultLens(address(proxy_));
     }
 
     function _configureContracts() internal {

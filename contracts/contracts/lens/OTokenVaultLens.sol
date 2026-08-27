@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import { ICompoundingStakingStrategy } from "../interfaces/strategies/ICompoundingStakingStrategy.sol";
+import { IOETHVaultLens } from "../interfaces/IOETHVaultLens.sol";
 import { IOToken } from "../interfaces/IOToken.sol";
-import { IOTokenVaultLens } from "../interfaces/IOTokenVaultLens.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 /**
@@ -17,7 +17,7 @@ import { IVault } from "../interfaces/IVault.sol";
  *      reported as a current rate.
  * @author Origin Protocol Inc
  */
-contract OTokenVaultLens is IOTokenVaultLens {
+contract OTokenVaultLens is IOETHVaultLens {
     /// @notice The maximum age of the staking strategy's last verified balance
     ///         before getRate reverts.
     uint256 public constant override MAX_VERIFIED_BALANCE_AGE = 24 hours;

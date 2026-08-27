@@ -5,10 +5,10 @@ import { IOToken } from "./IOToken.sol";
 import { IVault } from "./IVault.sol";
 
 /**
- * @title OToken Vault Lens Interface
+ * @title OETH Vault Lens Interface
  * @author Origin Protocol Inc
  */
-interface IOTokenVaultLens {
+interface IOETHVaultLens {
     /**
      * @notice Returns the Vault used to calculate the OToken rate.
      * @return The Vault contract.
