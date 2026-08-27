@@ -406,12 +406,21 @@ async function autoValidatorDeposits({
 }
 
 async function withdrawValidator({ pubkey, amount, signer }) {
+  if (amount === undefined) {
+    throw new Error(
+      "Withdrawal amount is required. Use an explicit amount of 0 only for a full validator exit."
+    );
+  }
+  if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) {
+    throw new Error("Withdrawal amount must be a non-negative number.");
+  }
+
   const { strategy } = await resolveCompoundingStakingContract();
 
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
-  const isFullExit = amount === undefined || amount === 0;
+  const isFullExit = amount === 0;
   const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
