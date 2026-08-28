@@ -103,6 +103,18 @@
         {
             "implementation": "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e",
             "name": "MORPHO_OUSD_V2_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0x689Dd7a91cC353de2b8B1b09Cd9DBd57f7546dCe",
+            "name": "COMPOUNDING_STAKING_STRATEGY_IMPL"
+        },
+        {
+            "implementation": "0x24c811d39F453f035cC28Be5ce8012A8653894Dc",
+            "name": "OETH_VAULT_LENS_IMPL"
+        },
+        {
+            "implementation": "0xad2b1657E2c3243750B32Cb9A51169575945b05B",
+            "name": "OETH_VAULT_LENS_PROXY"
         }
     ],
     "executions": [
@@ -122,6 +134,12 @@
             "name": "004_CurvePoolBoosterRemoteManager",
             "proposalId": 0,
             "tsDeployment": 1785929915,
+            "tsGovernance": 0
+        },
+        {
+            "name": "005_DeployOETHVaultLens",
+            "proposalId": 0,
+            "tsDeployment": 1787914607,
             "tsGovernance": 0
         }
     ]
