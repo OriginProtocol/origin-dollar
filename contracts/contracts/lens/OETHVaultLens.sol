@@ -49,7 +49,10 @@ contract OETHVaultLens is IOETHVaultLens {
 
     /**
      * @notice Returns the value of one OToken in the Vault's underlying asset.
-     * @dev Reverts if the staking strategy's last verified balance is older than
+     * @dev This is the NAV rate, not the redeemable rate. The NAV rate can be
+     *      above 1e18 when the Vault holds yield that has not been realized
+     *      through a rebase yet, while the redeemable rate is capped at 1e18.
+     *      Reverts if the staking strategy's last verified balance is older than
      *      MAX_VERIFIED_BALANCE_AGE, if the OToken supply is zero, or if the
      *      calculated rate is zero.
      * @return rate The rate with 18 decimals.
