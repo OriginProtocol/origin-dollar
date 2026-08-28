@@ -8,13 +8,13 @@ import {CreateXHelper} from "scripts/deploy/helpers/CreateXHelper.sol";
 // Contracts
 import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrategyProxy.sol";
 
-/// @title 005_OETHbV3RemoteProxy
+/// @title 006_OETHbV3RemoteProxy
 /// @notice Deploys the OETHb V3 Remote strategy proxy on Ethereum at a CreateX-deterministic address.
 /// @dev Same salt, same proxy source and same deployer as `base/002_OETHbV3MasterProxy`, which is
 ///      what puts Remote on Ethereum at the same address as Master on Base. The adapters accept an
 ///      inbound message only when `transportSender == address(this)`, so that parity is load
 ///      bearing rather than cosmetic — `_fork` re-derives the address to prove it holds.
-contract $005_OETHbV3RemoteProxy is AbstractDeployScript("005_OETHbV3RemoteProxy") {
+contract $006_OETHbV3RemoteProxy is AbstractDeployScript("006_OETHbV3RemoteProxy") {
     /// @notice MUST match `base/002_OETHbV3MasterProxy`.
     string internal constant SALT = "OETHb wOETH V3 Strategy 1";
 

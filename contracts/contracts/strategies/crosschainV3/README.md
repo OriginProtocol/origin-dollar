@@ -167,14 +167,14 @@ Current total: **76 unit tests** + the per-network `*.fork-test.js` files.
 
 ## Operational runbook
 
-Production deploy scripts live at `scripts/deploy/base/002-006_*` and `scripts/deploy/mainnet/005-006_*`, run through the Foundry `DeployManager` (`make simulate NETWORK=base`, `make deploy-base`, `make deploy-mainnet`). They deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses), with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, OP Stack L1StandardBridge addresses, governance multisigs).
+Production deploy scripts live at `scripts/deploy/base/002-006_*` and `scripts/deploy/mainnet/006-007_*`, run through the Foundry `DeployManager` (`make simulate NETWORK=base`, `make deploy-base`, `make deploy-mainnet`). They deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses), with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, OP Stack L1StandardBridge addresses, governance multisigs).
 
 Key cadences (production targets):
 
 - **Balance report**: every ~2 hours on a cron, operator-triggered — `Remote.sendBalanceReport()` on **Ethereum**.
 - **OETHb Phase 1 migration**: 9 × `bridgeToRemote(1000e18)` over ~9 hours respecting CCIP rate limits. No deposits/withdrawals on the new pair during this window.
 
-**Sequencing constraint:** Base script `004` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `005` + `006` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
+**Sequencing constraint:** Base script `004` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `006` + `007` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
 
 ## Open items for follow-up
 

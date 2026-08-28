@@ -36,7 +36,7 @@ Concretely:
   `maxTransferAmount` view so a vault sweep larger than the bridge per-tx
   limit becomes a partial fill rather than reverting.
 - **Production OETHb deploys** at `scripts/deploy/base/002-006_*` and
-  `scripts/deploy/mainnet/005-006_*`. Master/Remote proxies via CreateX/CREATE2;
+  `scripts/deploy/mainnet/006-007_*`. Master/Remote proxies via CreateX/CREATE2;
   adapters behind `BridgeAdapterProxy` (also CreateX/CREATE2) for paired-chain
   address matching.
 - **Docs** — `FLOWS.md` (sequence diagrams), `README.md` (reference).
@@ -404,10 +404,10 @@ the new Master/Remote pair via 9 × `bridgeToRemote(1000e18)`. **CCIP rate
 limits this to ~1000 WETH/hour**, so the migration takes ~9 hours. No
 deposits / withdrawals on the new pair during this window.
 
-**Sequencing:** mainnet `005` + `006` must execute before the first
+**Sequencing:** mainnet `006` + `007` must execute before the first
 `bridgeToRemote` call. `bridgeToRemote` ships wOETH to the Remote **proxy
 address**, which is known ahead of time via CREATE2 but has no code until
-`005` runs. No script can enforce this ordering — it belongs in the runbook.
+`006` runs. No script can enforce this ordering — it belongs in the runbook.
 
 ### 4.5 Cleanup script (`006`) is gated by `skip`
 

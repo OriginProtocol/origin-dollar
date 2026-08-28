@@ -21,7 +21,7 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 // Addresses
 import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 006_OETHbV3RemoteImpl
+/// @title 007_OETHbV3RemoteImpl
 /// @notice Deploys the OETHb V3 Remote strategy implementation and its two bridge adapters on Ethereum.
 /// @dev Remote has no vault. It custodies wOETH, mints and redeems OETH through the OETH vault, and
 ///      reports its balance back to Master on Base. The adapters mirror the Base side, with the
@@ -29,7 +29,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///        * outbound Ethereum -> Base via `SuperbridgeAdapter` (split delivery — WETH is unwrapped
 ///          and sent as native ETH over the canonical bridge, the message goes over CCIP);
 ///        * inbound  Base -> Ethereum via `CCIPAdapter` (atomic message + token).
-contract $006_OETHbV3RemoteImpl is AbstractDeployScript("006_OETHbV3RemoteImpl") {
+contract $007_OETHbV3RemoteImpl is AbstractDeployScript("007_OETHbV3RemoteImpl") {
     using GovHelper for GovProposal;
 
     /// @notice CreateX salts for the adapter proxies.

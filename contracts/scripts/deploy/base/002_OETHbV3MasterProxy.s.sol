@@ -13,14 +13,14 @@ import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrat
 /// @dev Deployed on its own, ahead of the implementation, because the address is an input to
 ///      several later steps: `003` initialises it and wires the adapters, `004` bakes it into
 ///      `BridgedWOETHMigrationStrategy` as an immutable, and the Ethereum side deploys Remote at
-///      the identical address from the same salt (`mainnet/005_OETHbV3RemoteProxy`).
+///      the identical address from the same salt (`mainnet/006_OETHbV3RemoteProxy`).
 ///
 ///      That last point is the reason for CreateX rather than a plain `new`: the adapters accept
 ///      an inbound message only when `transportSender == address(this)`, so Master on Base and
 ///      Remote on Ethereum must share one address.
 contract $002_OETHbV3MasterProxy is AbstractDeployScript("002_OETHbV3MasterProxy") {
     /// @notice Salt for the OETHb wOETH V3 strategy pair.
-    /// @dev MUST match `mainnet/005_OETHbV3RemoteProxy`. Convention for V3 salts:
+    /// @dev MUST match `mainnet/006_OETHbV3RemoteProxy`. Convention for V3 salts:
     ///        * identical on PAIRED chains — peer parity depends on it;
     ///        * version suffix (`1`, `2`, …) increments only when deploying a fresh pair while
     ///          keeping a previous one live.
