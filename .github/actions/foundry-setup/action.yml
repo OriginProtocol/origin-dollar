@@ -6,6 +6,11 @@ runs:
   steps:
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
+      with:
+        # Pinned: forge 1.8.0 (released 2026-08-27) fails every vm.createFork
+        # against Alchemy endpoints (anvil_nodeInfo probe returns HTTP 400) and
+        # its forge fmt disagrees with the repo's committed formatting.
+        version: v1.7.1
 
     - name: Cache dependencies
       uses: actions/cache@v4
