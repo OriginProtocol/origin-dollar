@@ -23,12 +23,15 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///      single `master` immutable serves both as the local read target for in-flight
 ///      reconciliation and as the cross-chain CCIP recipient.
 ///
-///      Storage note: the deploy-time gate keys on the contract NAME, and
-///      `BridgedWOETHMigrationStrategy` has no descriptor on Base, so it is treated as a new
-///      contract and is not compared against the deployed `BridgedWOETHStrategy` layout. The
-///      fork check below stands in for that: it reads V1 state back through the proxy after the
-///      upgrade. The migration only appends `totalBridged` and `maxPerBridge`; everything the
-///      constructor takes is immutable.
+///      Storage note: the deploy-time gate keys on the contract NAME, and this contract's name
+///      differs from the `BridgedWOETHStrategy` implementation the proxy runs today. So
+///      `deployments/base/BridgedWOETHMigrationStrategy.json` is pre-seeded with the live
+///      `BridgedWOETHStrategy` storage layout, making the gate compare this implementation
+///      against what is actually deployed behind the proxy (instead of passing it as a brand-new
+///      contract). The descriptor refresh overwrites the seed after the real deploy. The fork
+///      check below complements that with a live read-back of V1 state through the proxy. The
+///      migration only appends `totalBridged` and `maxPerBridge`; everything the constructor
+///      takes is immutable.
 contract $004_OETHbV3WOETHMigration is AbstractDeployScript("004_OETHbV3WOETHMigration") {
     using GovHelper for GovProposal;
 
