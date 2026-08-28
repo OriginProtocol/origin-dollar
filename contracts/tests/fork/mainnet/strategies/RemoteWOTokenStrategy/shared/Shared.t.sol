@@ -39,7 +39,7 @@ abstract contract Fork_RemoteWOTokenStrategy_Shared_Test is BaseFork {
     uint32 internal constant WITHDRAW_CLAIM = 5;
     uint32 internal constant BALANCE_REPORT = 7;
 
-    /// @dev Matches CANONICAL_MIN_GAS in deploy/mainnet/211_oethb_v3_remote_impl.js. Drives the
+    /// @dev Matches CANONICAL_MIN_GAS in scripts/deploy/mainnet/006_OETHbV3RemoteImpl.s.sol. Drives the
     ///      OP-Stack deposit burn: baseGas = 285_000 + 16*len + minGas*64/63.
     uint32 internal constant CANONICAL_MIN_GAS = 200_000;
 

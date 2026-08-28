@@ -8,6 +8,8 @@ library Strategies {
         "contracts/strategies/BaseCurveAMOStrategy.sol:BaseCurveAMOStrategy";
     string internal constant BRIDGED_WOETH_STRATEGY =
         "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy";
+    string internal constant BRIDGED_WOETH_MIGRATION_STRATEGY =
+        "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy";
     string internal constant COMPOUNDING_STAKING_STRATEGY =
         "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy";
     string internal constant CROSS_CHAIN_MASTER_STRATEGY =

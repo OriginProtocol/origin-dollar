@@ -167,14 +167,14 @@ Current total: **76 unit tests** + the per-network `*.fork-test.js` files.
 
 ## Operational runbook
 
-Production deploy scripts live at `deploy/base/100-104_*` and `deploy/mainnet/210-211_*`. They deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses), with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, OP Stack L1StandardBridge addresses, governance multisigs).
+Production deploy scripts live at `scripts/deploy/base/002-006_*` and `scripts/deploy/mainnet/005-006_*`, run through the Foundry `DeployManager` (`make simulate NETWORK=base`, `make deploy-base`, `make deploy-mainnet`). They deploy both the strategy proxies and the adapter proxies via CreateX/CREATE2 (deterministic peer-parity addresses), with impls deployed plain on each chain. The contracts are deploy-ready against any chain pair given the right addresses (CCIP routers, OP Stack L1StandardBridge addresses, governance multisigs).
 
 Key cadences (production targets):
 
 - **Balance report**: every ~2 hours on a cron, operator-triggered — `Remote.sendBalanceReport()` on **Ethereum**.
 - **OETHb Phase 1 migration**: 9 × `bridgeToRemote(1000e18)` over ~9 hours respecting CCIP rate limits. No deposits/withdrawals on the new pair during this window.
 
-**Sequencing constraint:** Base script `102` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `210` + `211` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
+**Sequencing constraint:** Base script `004` bakes the mainnet Remote address into an immutable, and `bridgeToRemote` CCIP-ships wOETH there. Mainnet `005` + `006` must execute **before** the first `bridgeToRemote` call, or funds land at an address with no code. No script can enforce this.
 
 ## Open items for follow-up
 
@@ -182,9 +182,9 @@ These require real on-chain configuration and were intentionally not authored as
 
 | # | Item | Status |
 |---|---|---|
-| 1 | **Foundry migration** — port the deploy scripts to `scripts/deploy/{base,mainnet}/` and the test suites to `tests/{unit,fork,smoke}/`, then delete the Hardhat equivalents. | In progress |
+| 1 | **Foundry migration** — the deploy scripts now live at `scripts/deploy/{base,mainnet}/`; the test suites still need porting to `tests/{unit,fork,smoke}/` before the Hardhat ones can be deleted. | In progress |
 | 2 | **`sendBalanceReport` automation** — no Talos action exists for the ~2h cadence. It targets **Remote on Ethereum (chain 1)**, not Base. Because Foundry deploys write only `build/deployments-<chainId>.json` (never `deployments/mainnet/<Name>.json` or `utils/addresses.js`, which Talos reads), whoever writes it must hand-create the deployment entry or pin the address. Remote's ETH fee pool must be funded for the outbound leg. | Pending |
 | 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. | Pending |
-| 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`deploy/base/104`, currently gated by `forceSkip`). | Pending |
-| 5 | **Retire `otokenOethbUpdateWoethPrice`** — once `104` removes the old strategy from the vault, its oracle price no longer feeds anything. | Follow-up |
+| 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`scripts/deploy/base/006`, currently gated by `skip`). | Pending |
+| 5 | **Retire `otokenOethbUpdateWoethPrice`** — once `006` removes the old strategy from the vault, its oracle price no longer feeds anything. | Follow-up |
 | 6 | **Operator runbook** — formal cadence + failure-mode runbook (balance-check ~2h, what to do on a stuck nonce); cadences exist in inline comments but there is no operator-facing doc. | Pending |

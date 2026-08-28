@@ -35,10 +35,10 @@ Concretely:
 - **`Master.depositAll` / `withdrawAll`** clamp by the relevant adapter's
   `maxTransferAmount` view so a vault sweep larger than the bridge per-tx
   limit becomes a partial fill rather than reverting.
-- **Production OETHb deploys** at `deploy/base/100-104_*` and
-  `deploy/mainnet/210-211_*`. Master/Remote proxies via CreateX/CREATE2; adapters
-  behind `BridgeAdapterProxy` (also CreateX/CREATE2) for paired-chain address
-  matching. These are being ported to Foundry (`scripts/deploy/**`).
+- **Production OETHb deploys** at `scripts/deploy/base/002-006_*` and
+  `scripts/deploy/mainnet/005-006_*`. Master/Remote proxies via CreateX/CREATE2;
+  adapters behind `BridgeAdapterProxy` (also CreateX/CREATE2) for paired-chain
+  address matching.
 - **Docs** — `FLOWS.md` (sequence diagrams), `README.md` (reference).
 - **76 unit tests** + mainnet/Base fork tests.
 
@@ -355,16 +355,19 @@ https://app.notion.com/p/originprotocol/OUSD-V3-Spec-33c84d46f53c807c80c2c187e0c
 
 These are NOT bugs — they're things an operator should know.
 
-### 4.1 Production deploy `proposalId` is empty
+### 4.1 Governance metadata must be recorded after the real deploy
 
-`deploy/mainnet/210_oethb_v3_remote_proxy.js:14` and `211_oethb_v3_remote_impl.js:27`
-both have `proposalId: ""`. Fine for fork simulation; blocks the on-chain
-governance executor. **Populate the Snapshot UUID before mainnet.**
+A real deploy broadcasts the deployment transactions but only *prints* the
+governance calldata — submitting it is a manual step. Until the resulting
+proposal id and its execution timestamp are written back into
+`build/deployments-<chainId>.json`, every later fork run re-enters
+`handleGovernanceProposal()` for that script. **Record both once the proposal
+has executed on chain.**
 
 ### 4.2 OETH-vault Remote registration is undefined
 
 Base side registers Master with the OETHb vault via
-`103_oethb_v3_vault_wiring.js` — `approveStrategy` only; Master needs no mint
+`scripts/deploy/base/005_OETHbV3VaultWiring.s.sol` — `approveStrategy` only; Master needs no mint
 permission because it never touches OETHb. Mainnet side has no equivalent
 governance action touching the OETH vault. **Verify with the team:** does
 the OETH vault need Remote registered as a strategy? Remote is a custodian, not
@@ -401,14 +404,14 @@ the new Master/Remote pair via 9 × `bridgeToRemote(1000e18)`. **CCIP rate
 limits this to ~1000 WETH/hour**, so the migration takes ~9 hours. No
 deposits / withdrawals on the new pair during this window.
 
-**Sequencing:** mainnet `210` + `211` must execute before the first
+**Sequencing:** mainnet `005` + `006` must execute before the first
 `bridgeToRemote` call. `bridgeToRemote` ships wOETH to the Remote **proxy
-address**, which is known ahead of time via CREATE2 but has no code until `210`
-runs. No script can enforce this ordering — it belongs in the runbook.
+address**, which is known ahead of time via CREATE2 but has no code until
+`005` runs. No script can enforce this ordering — it belongs in the runbook.
 
-### 4.5 Cleanup script (`104`) is gated by `forceSkip`
+### 4.5 Cleanup script (`006`) is gated by `skip`
 
-`deploy/base/104_oethb_v3_remove_old_strategy.js` has `forceSkip: true` so
+`scripts/deploy/base/006_OETHbV3RemoveOldStrategy.s.sol` has `skip = true` so
 it never auto-fires. **The operator must manually flip this to `false`**
 after the 9-batch migration completes and `BridgedWOETHStrategy.checkBalance`
 is at dust.

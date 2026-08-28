@@ -16,9 +16,28 @@ library CrossChain {
     address internal constant CCTPMessageTransmitterV2 = 0x81D40F21F12A8F0E3252Bccb954D722d4c464B64;
 
     /// @dev Per-receive destination gas limit on the Base -> Ethereum lane: the budget CCIP
-    ///      hands `RemoteWOTokenStrategy.receiveMessage`. Worst case is WITHDRAW_CLAIM at
-    ///      ~1.17M (see the derivation in `deploy/base/101_oethb_v3_master_impl.js`).
-    ///      The lane's CCIP `maxPerMsgGasLimit` is 7,000,000, so this is inside the cap.
+    ///      hands `RemoteWOTokenStrategy.receiveMessage`, so it must cover Remote's most
+    ///      expensive inbound handler end-to-end.
+    ///
+    ///      Worst case is WITHDRAW_CLAIM (~1.17M), measured at the OP-Stack metering floor
+    ///      (`block.basefee <= 1 gwei`, portal `prevBaseFee` at its 1 gwei minimum):
+    ///
+    ///        CCIP receive + _validateInbound + _deliver         ~50k
+    ///        IVault.claimWithdrawal (incl. _totalValue loop)    ~176k
+    ///        quoteFee -> ccipRouter.getFee                       ~48k
+    ///        IWETH9.withdraw (unwrap)                            ~15k
+    ///        L1StandardBridge.bridgeETHTo (metered burn)        ~623k
+    ///        _sendCCIPMessage -> getFee (second quote)           ~48k
+    ///        ccipRouter.ccipSend                                ~213k
+    ///
+    ///      2M leaves ~830k of headroom, which absorbs either ~9 further OETH-vault strategies
+    ///      at ~85k each in `claimWithdrawal`'s `_totalValue` loop, or a portal `prevBaseFee`
+    ///      up to ~2.7 gwei — not both. The lane's CCIP `maxPerMsgGasLimit` is 7,000,000
+    ///      (FeeQuoter 2.0.0 on Base for the Ethereum selector), so this is well inside the
+    ///      protocol cap.
+    ///
+    ///      Asserted by tests/fork/mainnet/strategies/RemoteWOTokenStrategy — keep the two in
+    ///      sync. Applied to the lane by `scripts/deploy/base/003_OETHbV3MasterImpl.s.sol`.
     uint32 internal constant OETHB_V3_DEST_GAS_LIMIT_BASE_TO_MAINNET = 2_000_000;
 
     /// @dev Ethereum -> Base lane. Master's inbound handlers are terminal (no outbound
@@ -295,6 +314,7 @@ library Base {
     address internal constant OETHBaseVaultProxy = 0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93;
     address internal constant OETHBaseProxy = 0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3;
     address internal constant BridgedWOETHStrategyProxy = 0x80c864704DD06C3693ed5179190786EE38ACf835;
+    address internal constant OETHBaseOracleRouter = 0xbc80dA22601EAe8720ed8AB117EB88c92b97C75b;
     address internal constant CCIPRouter = 0x881e3A65B4d4a04dD529061dd0071cf975F58bCD;
     address internal constant MerklDistributor = 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd;
     address internal constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
