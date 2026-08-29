@@ -162,6 +162,15 @@ contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice OUSDCreditMarketAMOStrategyProxy delegates calls to a CreditMarketAMOStrategy implementation
+ */
+contract OUSDCreditMarketAMOStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
  * @notice Legacy Supernova AMO proxy
  */
 contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
