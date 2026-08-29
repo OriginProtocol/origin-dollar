@@ -58,7 +58,7 @@ contract FixedRateDripper is Dripper {
      * @param _perSecond Rate of WETH to drip per second
      */
     function setDripRate(uint192 _perSecond) external onlyGovernorOrStrategist {
-        emit DripRateUpdated(_perSecond, drip.perSecond);
+        emit DripRateUpdated(drip.perSecond, _perSecond);
 
         /**
          * Note: It's important to call `_collect` before updating
