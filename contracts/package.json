@@ -2,7 +2,6 @@
   "name": "origin-defi-contracts",
   "version": "0.1.0",
   "description": "Origin DeFi Contracts",
-  "main": "index.js",
   "packageManager": "pnpm@10.18.3",
   "scripts": {
     "check:storage": "node scripts/check-storage-layout.js",
@@ -35,7 +34,6 @@
     "prettier:sol": "prettier --write --plugin=prettier-plugin-solidity \"contracts/**/*.sol\"",
     "prettier:ts": "prettier --write \"tasks/actions/**/*.ts\" \"tasks/lib/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "echidna": "pnpm run clean && rm -rf echidna-corpus && echidna . --contract Echidna --config echidna-config.yaml",
     "slither": "pnpm run clean && slither . --config-file slither.config.json",
     "slither:triage": "pnpm run clean && slither . --triage --config-file slither.config.json",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*",
@@ -93,8 +91,5 @@
     "@oplabs/talos-client": {
       "optional": true
     }
-  },
-  "resolutions": {
-    "@openzeppelin/contracts": "4.4.2"
   }
 }

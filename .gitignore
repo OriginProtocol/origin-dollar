@@ -72,7 +72,6 @@ todo.txt
 brownie/env-brownie/
 
 crytic-export
-contracts/echidna-corpus
 
 contracts/.certora_*
 contracts/.last_confs
