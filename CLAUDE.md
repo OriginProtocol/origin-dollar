@@ -20,7 +20,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 ```bash
 cd contracts
 cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoint
-make install             # foundryup (stable), forge soldeer install, install-deps.sh, pnpm i
+make install             # foundryup (v1.8.1), forge soldeer install, install-deps.sh, pnpm i
 ```
 
 Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The Hardhat task CLI resolves its mainnet RPC from `MAINNET_PROVIDER_URL` as well (legacy fallback: `PROVIDER_URL`).
