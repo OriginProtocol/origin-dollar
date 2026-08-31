@@ -68,7 +68,8 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     uint64 internal constant SLOTS_PER_EPOCH = 32;
 
     // Path to JSON test data (relative to project root)
-    string internal constant VALIDATORS_JSON_PATH = "test/strategies/compoundingStaking-validatorsData.json";
+    string internal constant VALIDATORS_JSON_PATH =
+        "tests/unit/strategies/CompoundingStakingStrategy/fixtures/validators.json";
 
     //////////////////////////////////////////////////////
     /// --- VALIDATOR DATA (loaded from JSON)
@@ -343,10 +344,10 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
         _verifyDeposit(pendingDepositRoot);
     }
 
-    /// @dev Snap balances (calls snapBalances as registrator)
+    /// @dev Snap balances as an arbitrary caller
     function _snapBalances() internal returns (uint64 snapTimestamp) {
         snapTimestamp = uint64(block.timestamp);
-        vm.prank(governor);
+        vm.prank(alice);
         compoundingStakingStrategy.snapBalances();
     }
 
@@ -382,11 +383,11 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
         });
     }
 
-    /// @dev Verify balances as registrator (governor)
+    /// @dev Verify balances as an arbitrary caller
     function _verifyBalances(BalanceProofs memory balanceProofs, PendingDepositProofs memory pendingDepositProofs)
         internal
     {
-        vm.prank(governor);
+        vm.prank(alice);
         compoundingStakingStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
     }
 

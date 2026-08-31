@@ -1,31 +1,11 @@
 ---
 name: unit-test
-description: Generate Foundry unit tests for a contract using this repository's conventions, structure, and naming. Use when the user asks for unit tests, Foundry tests, concrete tests, fuzz tests, or to port Hardhat tests into Foundry unit tests.
+description: Generate Foundry unit tests for a contract using this repository's conventions, structure, and naming. Use when the user asks for unit tests, Foundry tests, concrete tests, or fuzz tests.
 ---
 
 # Unit Test
 
 Generate Foundry unit tests for a specific contract following this repository's established directory layout, inheritance chain, setup order, and test naming rules.
-
-## 0. Check for existing Hardhat tests first
-
-Before writing a Foundry unit test, inspect `contracts/test/` for related Hardhat tests.
-
-Look for:
-
-- matching contract or feature files under `contracts/test/<category>/`
-- fork files such as `*.mainnet.fork-test.js`, `*.base.fork-test.js`, `*.sonic.fork-test.js`
-- fixture patterns in `contracts/test/_fixture.js` and related helpers
-
-Extract:
-
-- scenario coverage and edge cases
-- exact revert messages
-- deployment and fixture patterns
-- important numeric bounds and thresholds
-- access control expectations
-
-Adapt them to Foundry conventions; do not copy them mechanically.
 
 ## 1. Directory layout
 
