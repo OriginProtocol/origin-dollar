@@ -53,12 +53,10 @@ COPY . .
 
 # Dump the action catalog to /app/actions-catalog.json at build time from the
 # in-process registry (tsx, no hardhat). The runner reads this file at boot and
-# passes it to runContainer's `actionsCatalog`. A dump failure is non-fatal:
-# empty catalog ⇒ admin UI shows zero editable flags per action (fail-closed).
+# passes it to runContainer's `actionsCatalog`. Fail the image build if an action
+# cannot be loaded so a broken or incomplete catalog is never deployed.
 RUN cd /app \
-    && pnpm exec tsx dump-actions-catalog.ts > /app/actions-catalog.json \
-    || (echo "[build] action catalog dump failed; shipping empty catalog" \
-        && echo "{}" > /app/actions-catalog.json)
+    && pnpm exec tsx dump-actions-catalog.ts > /app/actions-catalog.json
 
 # Hand /app over to the runtime user. After this, all reads/writes by
 # the runner process are as `runner`, not root. Closes security/M-012.

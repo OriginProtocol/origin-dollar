@@ -70,8 +70,6 @@
     "prettier-plugin-solidity": "1.0.0-beta.17",
     "solhint": "3.4.1",
     "solidity-bytes-utils": "0.8.4",
-    "ssv-keys": "1.1.0",
-    "ssv-scanner": "github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
     "viem": "^2.27.0"
@@ -88,9 +86,7 @@
     "@safe-global/api-kit": "^5.0.1",
     "@safe-global/protocol-kit": "^8.0.3",
     "@safe-global/types-kit": "^4.0.1",
-    "@types/pg": "^8.20.0",
     "origin-morpho-utils": "^0.1.1",
-    "pg": "^8.20.0",
     "tsx": "^4.23.1"
   },
   "peerDependencies": {

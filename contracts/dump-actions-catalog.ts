@@ -7,7 +7,7 @@
 import "dotenv/config";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { ActionParam, ActionsCatalog } from "@talos/client";
+import type { ActionParam, ActionsCatalog } from "@oplabs/talos-client";
 import { registry } from "./tasks/lib/action";
 
 // Per-task parameter allow-lists — only these params are editable from the
