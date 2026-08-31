@@ -13,12 +13,6 @@ const { getSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
-  storeStorageLayoutForAllContracts,
-  assertStorageLayoutChangeSafe,
-  assertStorageLayoutChangeSafeForAll,
-  showStorageLayout,
-} = require("./storageSlots");
-const {
   isAdjusterLocked,
   fundCompAccountsWithEth,
   claimOGN,
@@ -586,28 +580,6 @@ task(
   "claimOGN",
   "Claims the OGN part of the compensation plan for all eligible users"
 ).setAction(claimOGN);
-
-// Storage slots
-task(
-  "saveStorageSlotLayout",
-  "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts."
-).setAction(storeStorageLayoutForAllContracts);
-
-task(
-  "checkUpgradability",
-  "Checks storage slots of a contract to see if it is safe to upgrade it."
-)
-  .addParam("name", "Name of the contract.")
-  .setAction(assertStorageLayoutChangeSafe);
-
-task(
-  "checkUpgradabilityAll",
-  "Checks storage slot upgradability for all contracts"
-).setAction(assertStorageLayoutChangeSafeForAll);
-
-task("showStorageLayout", "Visually show the storage layout of the contract")
-  .addParam("name", "Name of the contract.")
-  .setAction(showStorageLayout);
 
 // Curve Pools
 subtask("curvePool", "Dumps the current state of a Curve pool")

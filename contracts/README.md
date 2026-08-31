@@ -70,27 +70,24 @@ The [Slither installation](https://github.com/crytic/slither#how-to-install) ins
 pnpm slither
 ```
 
-## Hardhat
+## Toolchains
 
-[Hardhat](https://hardhat.org/) is used to compile, test, and deploy contracts. The configuration for Hardhat is in [hardhat.config.js](./hardhat.config.js).
+[Foundry](https://book.getfoundry.sh/) is the contract toolchain. It builds,
+tests, and deploys contracts:
 
-```
-# Compile changed contracts
-pnpm hardhat compile
-
-# Recompile all contracts
-pnpm clean
-pnpm hardhat compile
+```sh
+make build
+make test-unit
+make simulate
 ```
 
-Alternatively, the Hardhat companion npm package [hardhat-shorthand](https://www.npmjs.com/package/hardhat-shorthand) can be used as a shorthand for npx hardhat. Installation instructions can be found [here](https://hardhat.org/hardhat-runner/docs/guides/command-line-completion#installation).
+[Hardhat](https://hardhat.org/) remains available for operational tasks, the
+local forked node, and manual verification of legacy deployments. Its task
+configuration is in [hardhat.config.js](./hardhat.config.js):
 
-```
-## Compile
-hh compile
-
-## Tasks
-hh task
+```sh
+pnpm hardhat <task> --network <network>
+pnpm run node
 ```
 
 ## Testing
@@ -223,19 +220,21 @@ unset IMPERSONATE
 
 ### Automated Actions (Talos)
 
-The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@oplabs/talos-client`](https://github.com/oplabs/talos):
+The standalone actions under `contracts/tasks/actions/` are driven in
+production by a container that imports
+[`@oplabs/talos-client`](https://github.com/oplabs/talos):
 
-- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
-- **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
-- **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
+- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and runs the command stored with each schedule.
+- **`contracts/migrations/seed_schedules.sql`** seeds those commands using `pnpm exec tsx tasks/run.ts <name> --network <chain>`.
+- **`contracts/tasks/lib/signer.ts`** wraps the standalone signer with `wrapSignerWithNonceQueueV5` when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
 
 Every scheduled action — its cadence and one-line purpose — is catalogued in [`docs/ACTIONS.md`](docs/ACTIONS.md).
 
-Every action remains directly executable as a hardhat task on your dev machine — nothing about the local workflow changed:
+Run an action locally through the standalone CLI:
 
 ```
-pnpm hardhat harvest --network mainnet
-pnpm hardhat healthcheck --network mainnet
+pnpm action harvest --network mainnet
+pnpm action healthcheck --network mainnet
 ```
 
 **No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.

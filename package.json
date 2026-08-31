@@ -3,7 +3,7 @@
   "license": "MIT",
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "scripts": {
-    "build": "(cd contracts && NODE_ENV=development pnpm install && npx hardhat compile)",
+    "build": "(cd contracts && NODE_ENV=development pnpm install && make build)",
     "start": "(cd contracts && pnpm run node)",
     "test": "exit 0",
     "prepare": "husky"

@@ -34,7 +34,7 @@ The `origin-dollar` project is a repo that hosts the smart contracts of some Ori
 
 ### Eth Node
 
-The `smart contracts` and all of their associated code are located in the `<project-root>/contracts` directory. The Ethereum tests and the local Ethereum EVM node are managed by [Hardhat](https://hardhat.org/).
+The smart contracts and their associated code are located in the `<project-root>/contracts` directory. [Foundry](https://book.getfoundry.sh/) builds, tests, and deploys the contracts. [Hardhat](https://hardhat.org/) remains available for operational tasks and the local forked EVM node.
 
 A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
 <br/><br/>
@@ -73,23 +73,19 @@ This is an option, but a simpler way is to use the `ACCOUNTS_TO_FUND` setting de
 npx hardhat fund --amount 1000 --network localhost
 ```
 
-## Running Smoke Tests
+## Running Contract Tests
 
-Smoke tests can be run in 2 modes:
+The contract test suite uses Foundry. From the `contracts/` directory:
 
-- Run `scripts/test/smokeTest.sh` to launch interactive mode. All the "before contract changes" parts of tests
-  will execute and wait for the user to manually using a console performs contract changes. Once those are done,
-  hit "Enter" in the smoke test console and the second part of the tests shall be run that validate that contract
-  changes haven't broken basic functionality.
-- Run `scripts/test/smokeTest.sh --deployid [numeric_id_of_deploy]` will run smoke tests against a specific
-  deployment validating that basic functionality didn't break.
-  <br/><br/>
+```bash
+make test-unit
+make test-fork-mainnet
+make test-smoke-mainnet
+```
 
----
-
-## Fork Tests
-
-Head over to [contracts/fork-test.md](contracts/fork-test.md)
+Equivalent fork and smoke targets exist for the other supported networks. See
+[contracts/tests/README.md](contracts/tests/README.md) for the test conventions
+and complete command list.
 
 ---
 
