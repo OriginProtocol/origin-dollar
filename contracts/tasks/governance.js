@@ -1,12 +1,32 @@
 const { sleep } = require("../utils/time.js");
+const { BigNumber } = require("ethers");
+const { getTxOpts } = require("../utils/tx");
+const { impersonateAndFund } = require("../utils/signers");
+
+async function withConfirmation(transactionPromise) {
+  const transaction = await transactionPromise;
+  transaction.receipt = await transaction.wait();
+  return transaction;
+}
+
+async function impersonateGuardian(hre) {
+  const { guardianAddr } = await hre.getNamedAccounts();
+  await impersonateAndFund(guardianAddr);
+}
+
+async function getProposalExecutionValue(governor, proposalId) {
+  const actions = await governor.getActions(proposalId);
+  const rawValues =
+    actions[1] || (typeof actions.values === "function" ? [] : actions.values);
+
+  return Array.from(rawValues || []).reduce(
+    (sum, value) => sum.add(BigNumber.from(value)),
+    BigNumber.from(0)
+  );
+}
 
 async function execute(taskArguments, hre) {
-  const { isMainnet, isFork } = require("../utils/hardhat-deploy-helpers");
-  const {
-    withConfirmation,
-    impersonateGuardian,
-    getProposalExecutionValue,
-  } = require("../utils/deploy");
+  const { isMainnet, isFork } = require("../utils/hardhat-task-helpers");
 
   if (isMainnet) {
     throw new Error("The execute task can not be used on mainnet");
@@ -18,7 +38,7 @@ async function execute(taskArguments, hre) {
   const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
 
   if (isFork) {
-    await impersonateGuardian();
+    await impersonateGuardian(hre);
   }
 
   let governor;
@@ -57,7 +77,7 @@ async function execute(taskArguments, hre) {
   // Execute the proposal.
   if (isFork) {
     // On the fork, impersonate the guardian and execute the proposal.
-    await impersonateGuardian();
+    await impersonateGuardian(hre);
     const executionValue = await getProposalExecutionValue(governor, propId);
     await withConfirmation(
       governor.connect(sGuardian).execute(propId, {
@@ -75,15 +95,34 @@ async function execute(taskArguments, hre) {
   console.log("New proposal state:", proposalState);
 }
 
-async function executeOnFork(taskArguments) {
-  const { executeProposalOnFork } = require("../utils/deploy");
-
+async function executeOnFork(taskArguments, hre) {
   const proposalId = Number(taskArguments.id);
   const gasLimit = taskArguments.gaslimit
     ? Number(taskArguments.gaslimit)
     : null;
   console.log("Enqueueing and executing proposal", proposalId);
-  await executeProposalOnFork({ proposalId, executeGasLimit: gasLimit });
+
+  const { isFork } = require("../utils/hardhat-task-helpers");
+  if (!isFork) throw new Error("Can only be used on Fork");
+
+  const { guardianAddr } = await hre.getNamedAccounts();
+  await impersonateGuardian(hre);
+  const guardian = hre.ethers.provider.getSigner(guardianAddr);
+  const governor = await hre.ethers.getContract("Governor");
+
+  await withConfirmation(
+    governor.connect(guardian).queue(proposalId, await getTxOpts())
+  );
+
+  console.log(`Proposal ${proposalId} queued`);
+  console.log("Advancing time by 3 days for TimeLock delay.");
+  await hre.network.provider.send("evm_increaseTime", [259200]);
+  await hre.network.provider.send("evm_mine");
+
+  await withConfirmation(
+    governor.connect(guardian).execute(proposalId, await getTxOpts(gasLimit))
+  );
+  console.log(`Proposal ${proposalId} executed`);
 }
 
 async function proposal(taskArguments, hre) {

@@ -1,5 +1,5 @@
 name: DeFi
-on: 
+on:
   push:
     tags:
       - v*
@@ -24,30 +24,32 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Cache Foundry dependencies
+        uses: actions/cache@v4
+        with:
+          path: contracts/dependencies/
+          key: deps-${{ hashFiles('contracts/soldeer.lock', 'contracts/install-deps.sh') }}
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
-          
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "pnpm"
-          cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - name: Configure Git to use HTTPS for GitHub
-        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
-
-      - name: Install deps
+      - name: Install Foundry dependencies
         working-directory: ./contracts
-        run: pnpm install --frozen-lockfile
+        run: bash install-deps.sh
 
       - name: "Generate ABI files"
         run: (pnpm run abi:generate) && (pnpm run abi:dist)
-        env:
-          CONTRACT_SIZE: true
         working-directory: ./contracts
 
       - name: Update version from tag

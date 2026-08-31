@@ -5,7 +5,7 @@ description: >-
   PR for this repo: confirms every deployed contract is listed in the PR
   description, that the on-chain verified source (and its dependencies) matches the
   codebase via `sol2uml diff`, that constructor args and the initialize tx match the
-  deploy file, and that the on-chain governance proposal matches the deploy script's
+  Foundry script, and that the on-chain governance proposal matches the script's
   actions. Use when asked to review, verify, audit, or sign off on an executed
   deployment PR. Invoke explicitly with /verify-deployment-pr <PR#>.
 argument-hint: <PR#>
@@ -44,19 +44,27 @@ block explorer (via `sol2uml`/Etherscan) or a read-only RPC.
 ## Step 1 — Gather PR context
 
 1. `PR=$1`. `gh pr view "$PR" --json title,body,files,baseRefName,headRefName,state,url`.
-2. Find the changed deploy script(s): `git diff --name-only origin/master...HEAD -- 'contracts/deploy/'`
-   (or read the PR `files`). The folder under `deploy/<network>/` gives the **network**
-   (mainnet, base, sonic, arbitrumOne, …) — use it for `sol2uml --network <net>` and the
-   `deployments/<network>/` artifact folder.
-3. From each deploy script, parse the deployed contracts: every
-   `deployWithConfirmation("<Name>", [args])` call (and any `*Proxy` deploys). Resolve
-   each `<Name>` → address + recorded args via `deployments/<network>/<Name>.json`
-   (`.address`, `.args`, `.transactionHash`).
-4. Extract `proposalId` and `deployName` from the script's
-   `deploymentWithGovernanceProposal({ ... })` options block, and the `actions` array.
-   If `proposalId` is `""`/absent, mark check 5 ⚠️ ("no proposalId recorded — resolve
-   from on-chain Governor events or ask the deployer").
-5. Working set: `[{name, address, recordedArgs, proposalId, network, deployScript}]`.
+2. Find the changed Foundry deploy script(s):
+   `git diff --name-only origin/master...HEAD -- 'contracts/scripts/deploy/**/*.s.sol'`
+   (or read the PR `files`). Ignore `000_Example.s.sol`. The folder under
+   `scripts/deploy/<network>/` gives the **network** (mainnet, base, sonic, hyperevm,
+   …) — use it for `sol2uml --network <net>` and map it to the chain deployment file
+   (`build/deployments-1.json`, `-8453.json`, `-146.json`, `-999.json`, etc.).
+3. From each script's `_execute()`, enumerate every contract creation (`new <Contract>(args)`)
+   and every `_recordDeployment("<KEY>", address(...), type(<Contract>).name)` call.
+   Resolve `<KEY>` → address from the matching entry in the chain deployment JSON's
+   `contracts` array (`.name`, `.implementation`). The JSON field is named
+   `implementation` even for proxies and non-implementation contracts. If a newly
+   recorded key is absent from the committed JSON, mark checks 1/3/4 ❌.
+4. The script identifier is the string passed to `AbstractDeployScript("<ID>")`.
+   Resolve its `proposalId`, `tsDeployment`, and `tsGovernance` from the matching entry
+   in the chain deployment JSON's `executions` array. Build expected governance actions
+   from `_buildGovernanceProposal()` calls to
+   `govProposal.action(target, "signature(types)", abi.encode(args))`.
+   If `proposalId` is `0`/absent while governance is expected, mark check 5 ⚠️
+   ("no proposalId recorded — resolve from on-chain Governor events or ask the deployer").
+5. Working set:
+   `[{key, contractType, address, constructorArgs, proposalId, network, deployScript}]`.
 
 ## Step 2 — Run the checks
 
@@ -81,19 +89,20 @@ details block, and a confidence (High/Med/Low). Absence of evidence is ⚠️/�
 - Confidence High when the diff is clean/empty.
 
 **3 — Constructor arguments are correct**
-- Read the args passed to `deployWithConfirmation("<Name>", [args])` in the deploy file.
-- Compare them to the recorded `deployments/<network>/<Name>.json` `.args` AND to the
-  on-chain "Constructor Arguments" on the explorer (Etherscan contract page, or decode
-  the tail of the creation tx input). They must match positionally.
-- ✅ all args match; ❌ any positional mismatch (show deploy-file value vs on-chain).
+- Read the constructor expression (`new <Contract>(args)`) corresponding to each
+  `_recordDeployment` in `_execute()` and resolve constants/addresses used by it.
+- Compare those arguments to the on-chain "Constructor Arguments" on the explorer
+  (Etherscan contract page, or decode the tail of the creation tx input). Foundry's
+  chain deployment JSON does not store constructor args or transaction hashes, so do
+  not treat it as evidence for this check. They must match positionally.
+- ✅ all args match; ❌ any positional mismatch (show Foundry-script value vs on-chain).
   Proxies typically have no constructor args — note `[]`.
 
 **4 — The initialize / interaction tx matches the deploy script**
-- If the deploy script performs a post-deploy call — typically a proxy
-  `initialize(...)`/`_initialize(...)` (often `withConfirmation(cProxy.connect(...).initialize(...))`
-  or a proxy `*Proxy` deploy followed by initialize) — locate the corresponding on-chain
+- If `_execute()` performs a post-deploy call — typically a proxy
+  `initialize(...)`/`_initialize(...)` — locate the corresponding on-chain
   tx (explorer tx list for the proxy address, or the proxy's deployment receipt) and
-  confirm the **arguments match the deploy file**.
+  confirm the **arguments match the Foundry script**.
 - ✅ the initialize tx args match the script; ⚠️ the script has no init/interaction call
   (nothing to check); ❌ args differ (show the diff).
 
@@ -103,9 +112,10 @@ details block, and a confidence (High/Med/Low). Absence of evidence is ⚠️/�
   GovernorSix (`addresses.mainnet.GovernorSix`) ABI with the id as a `BigNumber`:
   `g.state(id)` and `g.getActions(id) -> (targets, values, signatures, calldatas)`
   (calldatas are selector-stripped — the signature is a separate string).
-- Build the expected actions from the deploy script's `actions` array: resolve each
-  `action.contract` → target address, keep `signature`, and encode `args` with
-  `defaultAbiCoder.encode(<param types>, args)` to compare against each on-chain calldata.
+- Build expected actions from `_buildGovernanceProposal()`: resolve every target through
+  constants or `resolver.resolve("<KEY>")` and the chain deployment JSON, keep the
+  signature passed to `govProposal.action`, and evaluate the corresponding `abi.encode`
+  arguments to compare against each on-chain calldata.
 - ✅ identical (same count, targets, signatures, calldatas); ❌ any divergence (show it).
   Report the proposal `state`: `Executed` for a fully-executed deploy; `Pending`/`Active`/
   `Queued` is normal when reviewing before execution — flag it but it is not a failure.
@@ -121,7 +131,7 @@ Any ❌ in 2–5, or an unresolved ⚠️, → **BLOCKERS FOUND**. Emit the repo
 ```
 # Deployment PR Verification — #<PR> (<title>)
 Verified against: <branch>@<short-sha>
-Deploy script(s): <list>   |   Network: <net>   |   Proposal: <proposalId>
+Foundry script(s): <list>   |   Network: <net>   |   Proposal: <proposalId>
 Verdict: <VERIFIED | BLOCKERS FOUND>
 
 - [<✅|⚠️|❌>] 1. All deployed contracts listed in PR description — <evidence> (conf)
@@ -133,12 +143,12 @@ Verdict: <VERIFIED | BLOCKERS FOUND>
 
 ## Details
 ### 2. sol2uml diff   <per-address: address, clean/diff, differing files>
-### 3. Constructor args   <per-address: deploy-file args vs on-chain args>
-### 4. Initialize tx   <tx hash, decoded args vs deploy-file args>
+### 3. Constructor args   <per-address: Foundry-script args vs on-chain args>
+### 4. Initialize tx   <tx hash, decoded args vs Foundry-script args>
 ### 5. Proposal diff   <on-chain getActions vs script actions, or "identical">
 
 ## Human still owes (manual)
-- Off-chain Safe/multisig follow-ups noted in the deploy script (e.g. enableModule).
+- Off-chain Safe/multisig follow-ups noted in the Foundry script.
 - That the PR's stated intent matches the on-chain effect (judgment).
 - Anything marked ⚠️ above.
 ```
@@ -151,7 +161,10 @@ Verdict: <VERIFIED | BLOCKERS FOUND>
   the proxy contract, not the impl.
 - A clean `sol2uml diff` (no file differences) is the pass signal for check 2; treat any
   reported file difference as ❌ pending human review, not a warning.
-- If `proposalId` is empty, do not fabricate one — mark checks 5 ⚠️ and ask the deployer.
+- If `proposalId` is `0`/absent, do not fabricate one — mark check 5 ⚠️ and ask the deployer.
+- `deployments/<network>/*.json` remains a Talos compatibility registry, not the source
+  of truth for Foundry deployment execution. Use `build/deployments-<chainId>.json` for
+  Foundry-recorded names, addresses, and execution metadata.
 - If a helper command errors/rate-limits, retry once, then mark that check ⚠️ "tool
   error" with the stderr tail and continue the others. Never silently pass.
 
