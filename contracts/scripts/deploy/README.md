@@ -27,8 +27,7 @@ Foundry RPC aliases use these variables:
 | Arbitrum | `ARBITRUM_PROVIDER_URL` |
 | HyperEVM | `HYPEREVM_PROVIDER_URL` |
 
-Hardhat tooling still uses `PROVIDER_URL` for Ethereum. Set both
-`PROVIDER_URL` and `MAINNET_PROVIDER_URL` when using both toolchains.
+The ops CLI uses `MAINNET_PROVIDER_URL` for Ethereum.
 
 Real Foundry deployments also require `DEPLOYER_ADDRESS` and the encrypted
 `deployerKey` keystore:
@@ -139,7 +138,7 @@ deployment process.
 ### Talos compatibility check
 
 Talos does not resolve addresses from Foundry’s
-`build/deployments-<chainId>.json`. Actions use Hardhat deployment files,
+`build/deployments-<chainId>.json`. Actions use committed deployment descriptors,
 `utils/addresses.js`, and action-local address maps.
 
 For every Foundry deployment or upgrade:

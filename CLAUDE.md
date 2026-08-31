@@ -13,7 +13,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. Hardhat remains only for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`) and the local fork node. The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. `pnpm ops` runs operational commands and Anvil provides local forks. The committed `deployments/` descriptors are the shared address/ABI registry.
 
 ## Setup
 
@@ -23,7 +23,7 @@ cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoin
 make install             # foundryup (stable), forge soldeer install, install-deps.sh, pnpm i
 ```
 
-Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The Hardhat task CLI resolves its mainnet RPC from `MAINNET_PROVIDER_URL` as well (legacy fallback: `PROVIDER_URL`).
+Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The ops CLI also resolves Ethereum from `MAINNET_PROVIDER_URL`.
 
 Real deployments additionally need `DEPLOYER_ADDRESS` and the encrypted `deployerKey` keystore (`cast wallet import deployerKey --interactive`).
 
@@ -33,7 +33,7 @@ Real deployments additionally need `DEPLOYER_ADDRESS` and the encrypted `deploye
 as an *optional peer dependency* so that CI and external contributors can install
 this repo without GitHub Packages credentials.
 
-**Nothing local needs it.** `hardhat`, `tsx tasks/run.ts <action>` and the tests
+**Nothing local needs it.** `pnpm ops`, `tsx tasks/run.ts <action>` and the tests
 all load and run without it. Only the runner image does: `runner.ts` (container
 entrypoint) imports it statically, and `tasks/lib/signer.ts` `require()`s it
 lazily for the Postgres nonce queue, which is gated on `DATABASE_URL` — unset
@@ -48,7 +48,7 @@ Keep it that way. Two regressions to avoid:
   fail with `Cannot find module '@oplabs/talos-client'`.
 - Do not import it from `tasks/lib/network.ts`. That used to drag the
   requirement up through `utils/resolvers.js` → `utils/morpho.js` →
-  `tasks/tasks.js` → `hardhat.config.js` and broke the Hardhat ops CLI for
+  `tasks/tasks.js` and broke the ops CLI for
   installs without GitHub Packages auth. #2954 replaced it with local
   `CHAIN_IDS` / `RPC_ENV_VARS` maps.
 
@@ -87,16 +87,16 @@ The `make test-*` targets rebuild the relevant trees first. Bare `forge test` do
 
 Fork and smoke tests fork the chain from the `*_PROVIDER_URL` variables and pin blocks via `FORK_BLOCK_NUMBER_<CHAIN>`. Test conventions (unit vs fork vs smoke, concrete vs fuzz, interface-only testing) are documented in `tests/README.md` — read it before writing tests.
 
-### Hardhat task tests (`tasks/test/`)
+### Ops task tests (`tasks/test/`)
 
 `pnpm test:tasks` validates the ops task implementation. Smart-contract tests belong exclusively in the Foundry suite under `tests/`.
 
-### Hardhat (ops task CLI only)
+### Ops CLI and local forks
 ```bash
-npx hardhat <task> --network mainnet   # ops tasks from tasks/*.js
-pnpm run node                          # Hardhat fork node, for running tasks against a local fork
-pnpm node:anvil                        # anvil mainnet fork (used by make deploy-local); node:anvil:base etc.
-pnpm action <name>                     # Talos actions runner (tsx tasks/run.ts — viem, not Hardhat)
+pnpm ops <task> --network mainnet      # ops tasks from tasks/*.js
+pnpm run node                          # Anvil mainnet fork
+pnpm node:base                         # equivalent per-network fork commands
+pnpm action <name>                     # Talos actions runner
 ```
 
 ### Useful Options
@@ -214,7 +214,7 @@ tests/                     # Foundry suite (canonical)
   invariant/
   mocks/
   utils/                   # Addresses.sol, shared helpers
-tasks/test/                # Mocha tests for Hardhat ops tasks only
+tasks/test/                # Mocha tests for standalone ops tasks
 ```
 
 Layout mirrors `<type>/<chain>/<area>/<Contract>/{concrete,fuzz}/<Behaviour>.t.sol`, with a per-contract `shared/Shared.t.sol` base. Tests interact with contracts **through interfaces** (`IVault`, `IOToken`, `IWOToken`, `IProxy`) and deploy implementations with `vm.deployCode` — never import a concrete contract into a test file; it drags the whole dependency tree into the test's compilation unit and destroys build caching. Full rules and gotchas: `tests/README.md`.
@@ -231,15 +231,15 @@ make deploy-mainnet            # real deploy + Etherscan verify; also: deploy-ba
 make deploy-local              # against a running pnpm node:anvil
 ```
 
-For upgrades, call `_assertStorageSafe(type(X).name)` before `new X()` — see Storage Layout Checks below. After a real deploy the make target regenerates the Hardhat-format descriptors in `deployments/<network>/` (see the Talos section at the bottom). Framework internals: `scripts/deploy/README.md` and `scripts/deploy/ARCHITECTURE.md`.
+For upgrades, call `_assertStorageSafe(type(X).name)` before `new X()` — see Storage Layout Checks below. After a real deploy the make target regenerates the descriptors in `deployments/<network>/` (see the Talos section at the bottom). Framework internals: `scripts/deploy/README.md` and `scripts/deploy/ARCHITECTURE.md`.
 
-Hardhat deployment scripts are no longer part of the repository. Do not recreate a `deploy/` tree; use the Foundry framework above.
+JavaScript deployment scripts are no longer part of the repository. Do not recreate a `deploy/` tree; use the Foundry framework above.
 
 ## Storage Layout Checks
 
 **The baseline is the descriptor.** `deployments/<network>/<Name>.json` holds
 `{address, abi, storageLayout}` — the layout is what is deployed at that address
-right now, written by `scripts/create-hardhat-format-descriptors.js` in the same
+right now, written by `scripts/create-deployment-descriptors.js` in the same
 step that records the address, so the write side cannot silently stop.
 
 **The gate runs per deployed contract, before broadcast.** Call
@@ -311,12 +311,12 @@ tests nothing.
 ## Roles & Access Control
 
 Four key roles used across all contracts:
-- **Deployer** - deploys contracts. Foundry deploys sign with the `deployerKey` keystore + `DEPLOYER_ADDRESS`; the legacy Hardhat CLI reads `DEPLOYER_PK`
+- **Deployer** - deploys contracts. Foundry deploys sign with the `deployerKey` keystore + `DEPLOYER_ADDRESS`; the ops CLI reads `DEPLOYER_PK`
 - **Governor** - timelock-controlled governance address
 - **Strategist** - multisig for day-to-day operations
 - **Guardian** - emergency pause capability
 
-Foundry fork and smoke tests impersonate these with `vm.prank`. For Hardhat tasks against a running fork node, set `IMPERSONATE=0x...` to run as any account.
+Foundry fork and smoke tests impersonate these with `vm.prank`. For ops tasks against a running Anvil fork, set `IMPERSONATE=0x...` to run as any account.
 
 ## Contract Verification
 
@@ -338,7 +338,7 @@ log("something happened");
 
 The Talos ops automation (`contracts/tasks/actions/**` — harvest, rebases, `doAccounting`, validator ops, cross-chain relays, etc.) resolves the contracts it operates on from the descriptors in `contracts/deployments/<network>/<Name>.json` (addresses) and pinned entries in `contracts/utils/addresses.js` / action-local `*_BY_CHAIN_ID` maps. Foundry's own broadcast state lives in `contracts/build/deployments-<chainId>.json`.
 
-The `make deploy-mainnet|base|hyperevm` targets close most of this gap automatically: after the broadcast they run `scripts/create-hardhat-format-descriptors.js`, which rewrites `deployments/<network>/<Name>.json` for whatever was just deployed (even when verification fails; `make deploy-local` deliberately skips it). What is **not** automatic — and can silently point a live Talos action at a stale address or ABI:
+The `make deploy-mainnet|base|hyperevm` targets close most of this gap automatically: after the broadcast they run `scripts/create-deployment-descriptors.js`, which rewrites `deployments/<network>/<Name>.json` for whatever was just deployed (even when verification fails; `make deploy-local` deliberately skips it). What is **not** automatic — and can silently point a live Talos action at a stale address or ABI:
 - a raw `forge script` run outside the make targets never updates descriptors;
 - pinned addresses in `utils/addresses.js` and action-local `*_BY_CHAIN_ID` maps;
 - the curated `abi/<Interface>.json` files when a callable interface changes.

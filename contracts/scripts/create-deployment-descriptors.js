@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Rewrites the Hardhat-format deployment descriptors for the contracts that the
- * Foundry broadcast which just ran actually deployed.
+ * Rewrites deployment descriptors for the contracts that the Foundry broadcast
+ * which just ran actually deployed.
  *
- * Named for the format rather than for Hardhat: once `hardhat.config.js` is
- * deleted these are simply the descriptors the ops runtime reads.
  * `tasks/lib/contracts.ts` resolves every Talos cron's contract from
- * `deployments/<network>/<Name>.json`, and the Hardhat task CLI reads the same
- * files through hardhat-deploy. Foundry writes only addresses, to
+ * `deployments/<network>/<Name>.json`, and the standalone ops CLI reads the same
+ * files directly. Foundry writes only addresses, to
  * `build/deployments-<chainId>.json`, so without this step a Foundry redeploy
  * leaves those descriptors pointing at the previous contract.
  *
@@ -32,15 +30,15 @@
  * the guarantee — check what run-latest.json holds first.
  *
  * Per deployed contract it writes `{address, abi, storageLayout}` and drops every other
- * key the Hardhat artifact used to carry (receipt, args, solcInputHash, metadata,
+ * key the previous descriptor format used to carry (receipt, args, solcInputHash, metadata,
  * bytecode, deployedBytecode, devdoc, userdoc, gasEstimates, linkReferences).
  * Keeping them would pair a fresh address with bytecode and metadata from the
- * superseded Hardhat deploy, which is worse than their absence. Nothing reads
+ * superseded deploy, which is worse than their absence. Nothing reads
  * them: `tasks/lib/contracts.ts` destructures `{address, abi}` only.
  *
  * Usage:
- *   node scripts/create-hardhat-format-descriptors.js --chain-id 1
- *   node scripts/create-hardhat-format-descriptors.js --chain-id 1 --dry-run
+ *   node scripts/create-deployment-descriptors.js --chain-id 1
+ *   node scripts/create-deployment-descriptors.js --chain-id 1 --dry-run
  */
 
 const fs = require("fs");
@@ -79,7 +77,7 @@ function parseArgs(argv) {
       case "--help":
       case "-h":
         console.log(
-          "Usage: create-hardhat-format-descriptors.js --chain-id <id> [--dry-run]"
+          "Usage: create-deployment-descriptors.js --chain-id <id> [--dry-run]"
         );
         process.exit(0);
         break;
@@ -278,7 +276,7 @@ function main() {
 
   for (const { name, address, abi, storageLayout, file } of planned) {
     const existed = fs.existsSync(file);
-    // Matches hardhat-deploy's on-disk shape: address first, 2-space indent,
+    // Matches the committed on-disk shape: address first, 2-space indent,
     // no trailing newline. storageLayout is the upgrade-safety baseline for the
     // NEXT deploy of this contract (scripts/check-storage-upgrade.js), recorded
     // here so the write side can never silently stop.

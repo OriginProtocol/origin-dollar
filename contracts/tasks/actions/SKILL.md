@@ -9,8 +9,7 @@ description: Develop, modify, review, and maintain standalone Talos actions in c
 
 - Author actions in `tasks/actions/<actionName>.ts` with the `action({...})`
   wrapper from `tasks/lib/action.ts`.
-- Actions self-register and run through `tasks/run.ts`; do not import Hardhat or
-  register Hardhat tasks.
+- Actions self-register and run through `tasks/run.ts`; do not register ops tasks.
 - Run an action locally with `pnpm exec tsx tasks/run.ts <actionName> --network
   <network>`. Treat a transaction-writing invocation as production-affecting.
 - Production schedules are defined in `migrations/seed_schedules.sql`; the
@@ -45,7 +44,7 @@ description: Develop, modify, review, and maintain standalone Talos actions in c
   address, but its ABI may not expose an implementation method. Prefer curated
   `abi/*.json` interfaces for stable proxy calls.
 - When a Foundry deployment changes an action target, update the corresponding
-  Hardhat deployment address or pinned action address in the same change.
+  deployment descriptor address or pinned action address in the same change.
 - Preserve idempotency and useful action-specific logging. Do not turn a
   manual-only or proposal action into an enabled schedule without explicit
   authorization.

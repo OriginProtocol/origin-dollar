@@ -10,7 +10,7 @@ const { getSigner } = require("../utils/signers");
 const log = require("../utils/logger")("task:curve");
 
 /**
- * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
+ * Task to dump the current state of a Curve Metapool pool used for AMO
  */
 async function curvePoolTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;

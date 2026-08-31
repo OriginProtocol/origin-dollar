@@ -195,7 +195,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_ValidatorStaking_Test is Unit_
         compoundingStakingStrategy.stakeEth(stakeData, uint64(0.5 ether / 1 gwei));
     }
 
-    /// @dev Mirrors Hardhat line 799: "Should stake 1 ETH then 2047 ETH to a validator"
+    /// @dev Mirrors the legacy case: "Should stake 1 ETH then 2047 ETH to a validator"
     function test_stakeEth_firstDepositThenTopUp() public {
         // 1. Stake validator 0
 

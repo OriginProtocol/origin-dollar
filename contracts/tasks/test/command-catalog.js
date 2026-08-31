@@ -13,6 +13,8 @@ describe("standalone ops command catalogue", function () {
       )
     );
     const { commands } = require("../commands");
+    require("../tasks");
+    const { registeredTasks } = require("../lib/task-registry");
     const registrations = readFileSync(
       join(__dirname, "..", "tasks.js"),
       "utf8"
@@ -49,6 +51,16 @@ describe("standalone ops command catalogue", function () {
     );
     assert.equal(
       commands.every(({ handler }) => typeof handler === "function"),
+      true
+    );
+    const runtimeEntries = registeredTasks();
+    assert.equal(runtimeEntries.size, 74);
+    assert.equal(
+      fixture
+        .filter(({ name }) => name !== "accounts")
+        .every(
+          ({ name }) => typeof runtimeEntries.get(name)?.action === "function"
+        ),
       true
     );
   });
