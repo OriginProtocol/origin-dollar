@@ -16,7 +16,6 @@ require("ts-node").register({
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
-  isForkTest,
   isBaseFork,
   isSonicFork,
   isPlumeFork,
@@ -28,8 +27,7 @@ const {
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
-  adjustTheForkBlockNumber,
-  getHardhatNetworkProperties,
+  getHardhatNetworkChainId,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-ethers");
@@ -104,20 +102,14 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-let forkBlockNumber = adjustTheForkBlockNumber();
-
-const paths = {};
-if (process.env.HARDHAT_CACHE_DIR) {
-  paths.cache = process.env.HARDHAT_CACHE_DIR;
-}
-const { provider, chainId } = getHardhatNetworkProperties();
+const chainId = getHardhatNetworkChainId();
 
 const defaultAccounts = [
   process.env.DEPLOYER_PK || privateKeys[0],
   process.env.GOVERNOR_PK || privateKeys[0],
 ];
 
-/// Config for Fork and unit test environments
+/// Config for local and forked node environments
 const localEnvDeployer =
   process.env.FORK === "true"
     ? isBaseFork
@@ -206,24 +198,9 @@ module.exports = {
           },
         },
       },
-      ...(isForkTest
-        ? {
-            timeout: 0,
-            initialBaseFeePerGas: 0,
-            forking: {
-              enabled: true,
-              url: provider,
-              blockNumber: forkBlockNumber
-                ? parseInt(forkBlockNumber)
-                : undefined,
-              timeout: 0,
-            },
-          }
-        : {
-            initialBaseFeePerGas: 0,
-            gas: 7000000,
-            gasPrice: 1000,
-          }),
+      initialBaseFeePerGas: 0,
+      gas: 7000000,
+      gasPrice: 1000,
     },
     localhost: {
       timeout: 0,
@@ -389,5 +366,4 @@ module.exports = {
       hoodi: HOODI_RELAYER,
     },
   },
-  paths,
 };

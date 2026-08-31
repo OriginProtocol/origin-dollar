@@ -50,9 +50,6 @@
     "@nomiclabs/hardhat-ethers": "2.2.3",
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/upgrades-core": "1.44.2",
-    "@rollup/plugin-commonjs": "29.0.0",
-    "@rollup/plugin-json": "6.1.0",
-    "@rollup/plugin-node-resolve": "16.0.3 ",
     "@types/node": "25.0.3",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
@@ -68,27 +65,16 @@
     "hardhat": "2.26.2",
     "hardhat-deploy": "0.11.30",
     "hardhat-deploy-ethers": "0.3.0-beta.13",
-    "husky": "7.0.4",
-    "lodash": "4.17.21",
     "mocha": "10.2.0",
-    "papaparse": "5.4.1",
     "prettier": "2.8.8",
     "prettier-plugin-solidity": "1.0.0-beta.17",
-    "rollup": "4.54.0",
-    "rollup-plugin-visualizer": "5.12.0",
     "solhint": "3.4.1",
     "solidity-bytes-utils": "0.8.4",
     "ssv-keys": "1.1.0",
     "ssv-scanner": "github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f",
-    "sync-fetch": "0.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
     "viem": "^2.27.0"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "pnpm run prettier:check"
-    }
   },
   "dependencies": {
     "@chainlink/contracts-ccip": "1.2.1",

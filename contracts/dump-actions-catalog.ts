@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * Dump the action registry as the Talos admin catalog JSON. Replaces the
- * hardhat-based dump-actions-catalog.cjs. Run at image-build time under tsx:
+ * Dump the action registry as the Talos admin catalog JSON. Run at image-build
+ * time under tsx:
  *   tsx dump-actions-catalog.ts > /app/actions-catalog.json
  */
 import "dotenv/config";
@@ -11,7 +11,7 @@ import type { ActionParam, ActionsCatalog } from "@talos/client";
 import { registry } from "./tasks/lib/action";
 
 // Per-task parameter allow-lists — only these params are editable from the
-// Talos admin UI. Copied verbatim from the old dump-actions-catalog.cjs.
+// Talos admin UI.
 const TALOS_PARAM_ALLOWLISTS: Record<string, Set<string>> = {
   removeValidator: new Set(["pubkey"]),
   stakeValidator: new Set(["amount", "depositMessageRoot", "pubkey", "sig"]),
@@ -26,15 +26,7 @@ async function loadActions(): Promise<void> {
   const actionsDir = join(__dirname, "tasks", "actions");
   for (const file of readdirSync(actionsDir).sort()) {
     if (!file.endsWith(".ts") || file.startsWith("_")) continue;
-    try {
-      await import(join(actionsDir, file));
-    } catch (err) {
-      console.error(
-        `[dump-catalog] skipped ${file}: ${
-          (err as Error).message?.split("\n")[0] ?? err
-        }`
-      );
-    }
+    await import(join(actionsDir, file));
   }
 }
 
