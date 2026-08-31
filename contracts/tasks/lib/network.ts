@@ -13,7 +13,7 @@ export const CHAIN_NAMES: Record<number, string> = {
   146: "sonic",
   560048: "hoodi",
   999: "hyperevm",
-  42161: "arbitrum",
+  42161: "arbitrumOne",
   98866: "plume",
 };
 
@@ -21,9 +21,10 @@ const CHAIN_IDS: Record<string, number> = {
   ...Object.fromEntries(
     Object.entries(CHAIN_NAMES).map(([id, name]) => [name, Number(id)])
   ),
-  // Hardhat's name for 42161, still used by Talos schedules, deployments/ and
-  // addresses.js.
+  // Short alias accepted by the node wrapper; the canonical name remains
+  // arbitrumOne because Talos schedules and deployments/ use it.
   arbitrumone: 42161,
+  arbitrum: 42161,
 };
 
 const RPC_ENV_VARS: Record<number, string> = {

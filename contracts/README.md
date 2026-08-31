@@ -81,14 +81,15 @@ make test-unit
 make simulate
 ```
 
-[Hardhat](https://hardhat.org/) remains available for operational tasks and the
-local forked node. Its task configuration is in
-[hardhat.config.js](./hardhat.config.js):
+Operational commands use the standalone TypeScript CLI. Local forks use Anvil:
 
 ```sh
-pnpm hardhat <task> --network <network>
-pnpm run node
+pnpm ops <command> --network <network>
+pnpm node:mainnet
 ```
+
+Run `pnpm ops help` for the full command catalogue. The legacy runtime remains
+available only as a temporary A/B oracle during this migration.
 
 ## Testing
 
@@ -102,7 +103,7 @@ make test-fork-base
 
 Tests live under [`tests/`](./tests). Contract mocks live under [`contracts/mocks/`](./contracts/mocks) and Foundry-specific mocks under [`tests/mocks/`](./tests/mocks).
 
-The remaining Mocha suite validates the Hardhat ops task implementation, not smart contracts:
+The remaining Mocha suite validates the standalone ops implementation, not smart contracts:
 
 ```sh
 pnpm test:tasks
@@ -149,7 +150,7 @@ forge build --sizes
 
 ## Signers
 
-When using Hardhat tasks, there are a few options for specifying the wallet to send transactions from.
+When using standalone ops commands, there are a few options for specifying the wallet to send transactions from.
 
 1. Primary key
 2. AWS KMS signer
@@ -170,14 +171,14 @@ unset GOVERNOR_PK
 
 ### AWS KMS Signer
 
-Hardhat tasks can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
+Standalone ops commands can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY` are set.
 
 The default `relayer-id` is `origin-relayer-production-evm`. Some tasks can be mapped
 to different defaults in code, and a user-provided task parameter always wins:
 
 ```
-npx hardhat <task> --network <network> --relayer-id <kms-key-id-or-alias>
+pnpm ops <command> --network <network> --relayer-id <kms-key-id-or-alias>
 ```
 
 The relayer resolution precedence is:
