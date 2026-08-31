@@ -2,12 +2,6 @@
 
 For more details about the product, checkout [our docs](https://docs.oeth.com).
 
----
-
-| Branch   | CI/CD Status                                                                                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `master` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml) |
-
 ## Requirements
 
 - Node Version

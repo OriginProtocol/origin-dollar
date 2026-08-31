@@ -2,17 +2,16 @@
   "name": "origin-dollar",
   "license": "MIT",
   "homepage": "https://github.com/originprotocol/origin-dollar",
+  "packageManager": "pnpm@10.18.3",
   "scripts": {
     "build": "(cd contracts && NODE_ENV=development pnpm install && make build)",
     "start": "(cd contracts && pnpm run node)",
-    "test": "exit 0",
     "prepare": "husky"
   },
   "engines": {
     "node": "22"
   },
   "devDependencies": {
-    "danger": "^11.2.8",
     "husky": "^9.0.11"
   }
 }

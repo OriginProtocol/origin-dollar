@@ -10,11 +10,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   ca-certificates \
-  curl \
-  git \
   build-essential \
   python3 \
-  bsdutils \
   nodejs \
   npm \
   && rm -rf /var/lib/apt/lists/*
@@ -37,7 +34,6 @@ RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true
       '@oplabs:registry=https://npm.pkg.github.com' \
       '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' \
       > /tmp/talos.npmrc \
-    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc pnpm install --frozen-lockfile \
     && TALOS_CLIENT_VERSION="$(node -p 'require("./package.json").peerDependencies["@oplabs/talos-client"]')" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc \
