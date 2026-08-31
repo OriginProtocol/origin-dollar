@@ -13,7 +13,7 @@ Reorganize an existing Foundry test file (`*.t.sol`) so that imports, state vari
 
 These rules are absolute. If any rule would be violated by a proposed change, **skip that change entirely**.
 
-1. **Scope**: Only modify files matching `*.t.sol` inside `contracts/tests/`. NEVER touch production contracts, deploy scripts, or Hardhat test files.
+1. **Scope**: Only modify files matching `*.t.sol` inside `contracts/tests/`. NEVER touch production contracts or deploy scripts.
 2. **No semantic changes**: Never modify function bodies, assertions, require/revert strings, call arguments, numeric values, or conditional logic.
 3. **No renames**: Never rename functions, variables, contracts, structs, enums, events, or errors.
 4. **No additions or removals**: Never add or remove imports, functions, state variables, or modifiers. Only reorder existing ones.

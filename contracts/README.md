@@ -95,44 +95,21 @@ hh task
 
 ## Testing
 
-### Unit Tests
+Foundry is the contract test runner. From this directory:
 
-Hardhat tests are used for contract unit tests which are under the [test](./test) folder. Contract mocks are under the [contracts/mocks](./contracts/mocks) folder.
-
-```
-# Run all unit tests
-pnpm test
-```
-
-### Fork Tests
-
-Set your `PROVIDER_URL` and desired `BLOCK_NUMBER` in your [.env](./.env) file. The can be copied from [dev.env](./dev.env).
-
-```
-# in one terminal
-pnpm run node
-
-# in another terminal
-pnpm test:fork
+```sh
+make test-unit
+make test-fork-mainnet
+make test-fork-base
 ```
 
-See [Fork Tests](./fork-test.md) for more information.
+Tests live under [`tests/`](./tests). Contract mocks live under [`contracts/mocks/`](./contracts/mocks) and Foundry-specific mocks under [`tests/mocks/`](./tests/mocks).
 
-### Hot Deploys
+The remaining Mocha suite validates the Hardhat ops task implementation, not smart contracts:
 
-You can enable the "hot deploy" mode when doing fork testing development. The mode enables updating the contract code much faster and more conveniently comparing to running deploy scripts. Each time a fork test suite is ran, the configured contracts are updated
-
-To enable Hot Deploys set the HOT_DEPLOY variable in the contracts/.env file. Enable various modes using comma separated flags to direct which contracts need source updated (in the node runtime):
-
-- strategy -> strategy contract associated to fixture
-- vault -> OUSDVault or OETHVault depending on the nature of the fixture
-- harvester -> harvester or oethHarvester (not yet supported)
-
-example: HOT_DEPLOY=strategy,vault,harvester
-
-#### Supporting new fixtures / contracts
-
-Each fixture from the `_fixture.js` file needs to have custom support added for hot deploys. Usually that consists of creating constructor arguments for the associated strategy contract and mapping the fixture to strategy contracts needing the update. See how things work in "contracts/test/\_hot-deploy.js"
+```sh
+pnpm test:tasks
+```
 
 ## Logger
 
@@ -161,9 +138,8 @@ Example module names
 
 - utils:1inch
 - utils:curve
-- test:unit:vault
-- test:fork:vault
-- test:fork:oeth:metapool
+- task:token
+- utils:deploy
 
 ## Contract Sizes
 
@@ -191,44 +167,6 @@ Compiled 155 Solidity files successfully
  |  Address                                ·                      0.084 ()  ·                      0.138 ()  │
 ```
 
-## Gas Usage
-
-The Hardhat plug-in [hardhat-gas-reporter](https://github.com/cgewecke/hardhat-gas-reporter#hardhat-gas-reporter) is used to report gas usage of unit and fork tests.
-
-This is not enabled by default. To enable, export the `REPORT_GAS` environment variable.
-
-```
-export REPORT_GAS=true
-```
-
-If enabled, the gas usage will be output in a table after the tests have executed. For example
-
-```
-·--------------------------------|---------------------------|-------------|-----------------------------·
-|      Solc version: 0.8.7       ·  Optimizer enabled: true  ·  Runs: 200  ·  Block limit: 30000000 gas  │
-·································|···························|·············|······························
-|  Methods                                                                                               │
-··············|··················|·············|·············|·············|···············|··············
-|  Contract   ·  Method          ·  Min        ·  Max        ·  Avg        ·  # calls      ·  eur (avg)  │
-··············|··················|·············|·············|·············|···············|··············
-|  ERC20      ·  approve         ·      26080  ·      65406  ·      39783  ·           96  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  ERC20      ·  transfer        ·      51427  ·      88327  ·      61066  ·           90  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  MockVault  ·  mint            ·     554883  ·     576124  ·     564880  ·            4  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  MockWETH   ·  deposit         ·          -  ·          -  ·      27938  ·           10  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  OETHVault  ·  setVaultBuffer  ·      34984  ·      56956  ·      45970  ·            2  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  OETHVault  ·  swapCollateral  ·     482418  ·    1018400  ·     705017  ·           57  ·          -  │
-··············|··················|·············|·············|·············|···············|··············
-|  Deployments                   ·                                         ·  % of limit   ·             │
-·································|·············|·············|·············|···············|··············
-|  MockOETHOracleRouterNoStale   ·          -  ·          -  ·     529194  ·        1.8 %  ·          -  │
-·································|·············|·············|·············|···············|··············
-|  MockOracleRouterNoStale       ·          -  ·          -  ·     743016  ·        2.5 %  ·          -  │
-```
 
 ## Signers
 
@@ -317,13 +255,13 @@ The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@n
 
 ### Auto-verification
 
-When deploying contracts, set `VERIFY_CONTRACTS=true` environment variable to verify contract immediately after deployment with no manual action.
+The Foundry deployment targets verify newly deployed contracts automatically:
 
 ```
-VERIFY_CONTRACTS=true npx hardhat deploy:mainnet
+make deploy-mainnet
 ```
 
-If it reverts for any reason, it'll print out the command that you can use to run manually or debug.
+Equivalent targets exist for the other supported networks; see `scripts/deploy/README.md`.
 
 ### Manual verification
 

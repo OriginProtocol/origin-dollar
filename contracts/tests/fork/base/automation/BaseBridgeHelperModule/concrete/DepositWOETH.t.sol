@@ -15,9 +15,8 @@ contract Fork_Concrete_BaseBridgeHelperModule_DepositWOETH_Test is Fork_BaseBrid
     /// "Caller not authorized". The deployed module is broken for this path; the
     /// rebase needs to be routed through the Safe.
     ///
-    /// The equivalent Hardhat test is skipped for the same reason — see
-    /// test/safe-modules/bridge-helper.base.fork-test.js.
-    ///
+    /// This scenario is skipped because the supported route depends on
+    /// off-chain infrastructure that a fork cannot reproduce.
     /// This is NOT worked around with a prank: the revert is the module calling
     /// the vault, not the test calling the vault, so a prank would not reach it
     /// and would only hide the defect.

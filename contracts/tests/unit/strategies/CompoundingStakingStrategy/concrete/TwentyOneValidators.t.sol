@@ -9,7 +9,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_TwentyOneValidators_Test is
     Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Test
 {
     function test_verifyBalances_21ValidatorsNoPendingDeposits() public {
-        _assertHistoricalBalances(0);
+        _assertHistoricalBalances(5, 0);
 
         assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 16);
         assertFalse(_containsVerifiedValidator(testValidators[3].publicKeyHash));
@@ -24,7 +24,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_TwentyOneValidators_Test is
         this.topUpHistoricalValidator(3, 1 ether / 1 gwei);
         this.topUpHistoricalValidator(3, 2 ether / 1 gwei);
 
-        _assertHistoricalBalances(3 ether);
+        _assertHistoricalBalances(5, 3 ether);
 
         assertEq(compoundingStakingStrategy.depositListLength(), 2);
         assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 17);
@@ -38,7 +38,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_TwentyOneValidators_Test is
         this.topUpHistoricalValidator(3, 5 ether / 1 gwei);
         this.topUpHistoricalValidator(3, 6 ether / 1 gwei);
 
-        _assertHistoricalBalances(20 ether);
+        _assertHistoricalBalances(5, 20 ether);
 
         assertEq(compoundingStakingStrategy.depositListLength(), 5);
         assertEq(compoundingStakingStrategy.verifiedValidatorsLength(), 17);
@@ -48,7 +48,7 @@ contract Unit_Concrete_CompoundingStakingStrategy_TwentyOneValidators_Test is
     }
 
     function _validatorTotal() internal view returns (uint256 total) {
-        HistoricalSnapshot memory snapshot = _loadHistoricalSnapshot();
+        HistoricalSnapshot memory snapshot = _loadHistoricalSnapshot(5);
         for (uint256 i = 0; i < snapshot.validatorBalances.length; ++i) {
             total += _parseDecimal(snapshot.validatorBalances[i], 18);
         }

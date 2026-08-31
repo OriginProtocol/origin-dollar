@@ -708,19 +708,18 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
 
 ### What is actually deployed on mainnet
 
-`deploy/mainnet/199_deploy_compounding_staking_strategy.js` deployed the current strategy, and
-`deploy/mainnet/202_remove_2nd_native_staking_strategy.js` applied its post-consolidation wiring:
+The mainnet rollout has several configuration choices that change how the above reads:
 
 - The live strategy behind `CompoundingStakingStrategyProxy` is the **vanilla
   `CompoundingStakingStrategy`**. `REGISTERED` and `REMOVED` are unreachable states, entry
   is `NON_REGISTERED → STAKED` via the base `_admitStake` (`:462-473`), and `INVALID` / `EXITED`
   are absolutely terminal.
-- `initialDepositAmountWei` is currently **2030 ETH** on mainnet (deployment 199, line 101), not
-  the 1 ETH default used in tests and on Hoodi (`deploy/deployActions.js:243-248`). Deployment 005
-  proposes lowering it to **1 ETH**. After the validator is verified, the registrator must top it
+- `initialDepositAmountWei` is currently **2030 ETH** on mainnet, not the 1 ETH default used in
+  tests and on Hoodi. The current Foundry deployment proposal lowers it to **1 ETH**. After the
+  validator is verified, the registrator must top it
   up before it can cross the strategy's strict `> 32.25 ETH` transition to `ACTIVE`.
-- Deployment 202 changed the strategy's registrator from the retired `ConsolidationController` to
-  the **Talos relayer**. It can call `stakeEth` and `validatorWithdrawal`, including full exits.
+- The strategy's registrator is the **Talos relayer**. It can call `stakeEth` and
+  `validatorWithdrawal`, including full exits.
 - In the current source all four proof entrypoints are directly permissionless. The 420-second
   `SNAP_BALANCES_DELAY` bounds re-snapshot griefing; `verifyBalances` accepts only proofs anchored
   to the stored beacon block root. `scripts/deploy/mainnet/005_UpgradeCompoundingStakingStrategy.s.sol`
@@ -779,8 +778,8 @@ mis-decodes an SSZ body served with a JSON content-type (`utils/beacon.js:158-16
   `ACTIVE || EXITING` (`:527-531`), and the only route to `ACTIVE` is `verifyBalances` observing a
   balance strictly above `MIN_ACTIVATION_BALANCE_GWEI` (`:1100-1107`). A validator stuck below that
   can only be freed by a top-up via `stakeEth`, which *is* permitted from `VERIFIED`. Live concern
-  wherever `initialDepositAmountWei` is 1 ETH (Hoodi, tests, and the proposed mainnet setting;
-  `deploy/deployActions.js:243-248`). Note there is also no `ACTIVE → VERIFIED` demotion,
+  wherever `initialDepositAmountWei` is 1 ETH (Hoodi, tests, and the proposed mainnet setting).
+  Note there is also no `ACTIVE → VERIFIED` demotion,
   so a slashed validator that falls back below 32.25 ETH stays exitable — the desired behaviour,
   but nowhere written down.
 - **`resetFirstDeposit` weakens two bounds it is credited with.** It clears `firstDeposit`
