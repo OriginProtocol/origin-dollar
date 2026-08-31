@@ -39,6 +39,7 @@ Benefits:
 - `PoolBoosters.sol`
 - `Automation.sol`
 - `Zappers.sol`
+- `Lens.sol`
 - `Mocks.sol`
 
 ## Usage
