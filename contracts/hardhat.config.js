@@ -30,7 +30,6 @@ const {
   getHardhatNetworkChainId,
 } = require("./utils/hardhat-helpers.js");
 
-require("@nomiclabs/hardhat-ethers");
 require("hardhat-deploy");
 require("hardhat-deploy-ethers");
 

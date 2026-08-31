@@ -45,7 +45,6 @@
   "devDependencies": {
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
     "@lastdotnet/purrikey": "^1.0.0",
-    "@nomiclabs/hardhat-ethers": "2.2.3",
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/upgrades-core": "1.44.2",
     "@types/node": "25.0.3",

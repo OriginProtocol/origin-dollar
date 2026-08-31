@@ -56,9 +56,6 @@ importers:
       '@lastdotnet/purrikey':
         specifier: ^1.0.0
         version: 1.0.0(ethers@5.7.2)
-      '@nomiclabs/hardhat-ethers':
-        specifier: 2.2.3
-        version: 2.2.3(ethers@5.7.2)(hardhat@2.26.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3))
       '@openzeppelin/contracts':
         specifier: 4.4.2
         version: 4.4.2
@@ -1049,12 +1046,6 @@ packages:
   '@nomicfoundation/solidity-analyzer@0.1.2':
     resolution: {integrity: sha512-q4n32/FNKIhQ3zQGGw5CvPF6GTvDCpYwIf7bEY/dZTZbgfDsHyjJwURxUJf3VQuuJj+fDIFl4+KkBVbw4Ef6jA==}
     engines: {node: '>= 12'}
-
-  '@nomiclabs/hardhat-ethers@2.2.3':
-    resolution: {integrity: sha512-YhzPdzb612X591FOe68q+qXVXGG2ANZRvDo0RRUtimev85rCrAlv/TLMEZw5c+kq9AbzocLTVX/h2jVIFPL9Xg==}
-    peerDependencies:
-      ethers: ^5.0.0
-      hardhat: ^2.0.0
 
   '@openzeppelin/contracts-upgradeable@4.7.3':
     resolution: {integrity: sha512-+wuegAMaLcZnLCJIvrVUDzA9z/Wp93f0Dla/4jJvIhijRrPabjQbZe6fWiECLaJyfn5ci9fqf9vTw3xpQOad2A==}
@@ -4450,11 +4441,6 @@ snapshots:
       '@nomicfoundation/solidity-analyzer-linux-x64-gnu': 0.1.2
       '@nomicfoundation/solidity-analyzer-linux-x64-musl': 0.1.2
       '@nomicfoundation/solidity-analyzer-win32-x64-msvc': 0.1.2
-
-  '@nomiclabs/hardhat-ethers@2.2.3(ethers@5.7.2)(hardhat@2.26.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3))':
-    dependencies:
-      ethers: 5.7.2
-      hardhat: 2.26.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
 
   '@openzeppelin/contracts-upgradeable@4.7.3': {}
 
