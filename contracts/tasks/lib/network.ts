@@ -13,7 +13,6 @@ export const CHAIN_NAMES: Record<number, string> = {
   146: "sonic",
   560048: "hoodi",
   999: "hyperevm",
-  17000: "holesky",
   42161: "arbitrum",
   98866: "plume",
 };
@@ -33,7 +32,6 @@ const RPC_ENV_VARS: Record<number, string> = {
   146: "SONIC_PROVIDER_URL",
   560048: "HOODI_PROVIDER_URL",
   999: "HYPEREVM_PROVIDER_URL",
-  17000: "HOLESKY_PROVIDER_URL",
   42161: "ARBITRUM_PROVIDER_URL",
   98866: "PLUME_PROVIDER_URL",
 };

@@ -17,7 +17,6 @@ const CONTRACTS_ROOT = join(__dirname, "..", "..");
 // chainId -> deployments/ sub-directory (mirrors utils/hardhat-helpers.js networkMap).
 const DIR_BY_CHAIN: Record<number, string> = {
   1: "mainnet",
-  17000: "holesky",
   42161: "arbitrumOne",
   8453: "base",
   146: "sonic",

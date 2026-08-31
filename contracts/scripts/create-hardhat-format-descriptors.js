@@ -53,7 +53,6 @@ const NETWORK_BY_CHAIN = {
   146: "sonic",
   999: "hyperevm",
   8453: "base",
-  17000: "holesky",
   42161: "arbitrumOne",
   98866: "plume",
   560048: "hoodi",
