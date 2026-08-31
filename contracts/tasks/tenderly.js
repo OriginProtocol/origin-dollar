@@ -10,12 +10,12 @@ async function tenderlyUpload({ name }) {
 
 async function tenderlySync(taskArguments, hre) {
   const allDeployments = await hre.deployments.all();
-  const deployedContracts = Object.entries(allDeployments).map(
-    ([name, deployment]) => ({
+  const deployedContracts = Object.entries(allDeployments)
+    .filter(([, deployment]) => typeof deployment.address === "string")
+    .map(([name, deployment]) => ({
       name,
       address: deployment.address,
-    })
-  );
+    }));
   const { chainId } = await hre.ethers.provider.getNetwork();
   const allTenderlyContracts = await fetchAllContractsFromTenderly(chainId);
 
