@@ -7,23 +7,6 @@ user_invocable: true
 
 Generate Foundry fork tests for a specific contract, validating behavior against real on-chain state. Fork tests complement unit tests for paths that mocks cannot faithfully reproduce — AMO pool interactions, real router swaps, oracle reads, gauge rewards, and cross-chain flows. Follow the guidelines below to ensure consistency and maintainability across our fork test suite.
 
-## 0. Check for Existing Hardhat Fork Tests First
-
-**Before writing any Foundry fork test**, check if corresponding Hardhat fork tests already exist in `contracts/test/`. Fork tests follow the naming pattern `*.<chain>.fork-test.js`.
-
-**How to find them:**
-1. Search `contracts/test/<category>/` for files matching `*.<chain>.fork-test.js` (e.g. `contracts/test/strategies/sonic/swapx-amo.sonic.fork-test.js`)
-2. Check `contracts/test/_fixture.js` and related fixture files for deployment/setup patterns on forked networks
-
-**What to extract from Hardhat fork tests:**
-- **Integration scenarios**: Multi-step flows that exercise real protocol interactions (deposit → swap → withdraw)
-- **Real parameter values**: Actual on-chain addresses, pool parameters, slippage tolerances
-- **Multi-step flows**: Sequences that reveal how the contract interacts with external protocols end-to-end
-- **Expected behaviors on fork**: How the contract behaves with real pool liquidity, oracle prices, and gauge states
-- **Whale addresses**: Accounts used for `deal`-ing tokens or impersonation
-
-**Do NOT blindly copy Hardhat tests.** Adapt them to Foundry conventions (naming, structure, assertions). The Hardhat fork tests are a **starting point and inspiration**, not a ceiling.
-
 ## 1. Directory Layout
 
 ```
@@ -405,7 +388,7 @@ After writing fork tests, re-run coverage to see if previously uncovered integra
 
 ## 10. Checklist Before Submitting Tests
 
-- [ ] Checked `contracts/test/` for existing Hardhat fork tests (`*.<chain>.fork-test.js`) and drew inspiration from them
+
 - [ ] `shared/Shared.t.sol` is `abstract` and inherits `BaseFork`
 - [ ] All typed contract/proxy/mock state variables are declared in `Shared.t.sol` using interface types (not in `Base.t.sol`)
 - [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IProxy`, strategy interfaces) and mocks

@@ -229,7 +229,7 @@ async function rebase({ symbol }, hre) {
  * Call the Vault's admin pauseCapital method.
  */
 async function capital({ symbol, pause }, hre) {
-  const { isMainnet } = require("../test/helpers");
+  const { isMainnet } = require("../utils/hardhat-task-helpers");
   const { proposeArgs } = require("../utils/governor");
 
   log("Setting Vault capitalPause to", pause);
