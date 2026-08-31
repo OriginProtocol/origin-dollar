@@ -11,9 +11,11 @@ const TX_HASH_REGEX = /^0x([A-Fa-f0-9]{64})$/;
 // Ref: contracts/strategies/crosschain/CrossChainStrategyHelper.sol
 //      and AbstractCCTPIntegrator.sol
 const ORIGIN_MESSAGE_VERSION = 1010; // CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION
+const BALANCE_CHECK_MESSAGE = 3; // CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE
 const CCTP_MESSAGE_BODY_INDEX = 148; // CrossChainStrategyHelper.MESSAGE_BODY_INDEX
 const BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228; // AbstractCCTPIntegrator.BURN_MESSAGE_V2_HOOK_DATA_INDEX
 // Origin message: 4 bytes version + 4 bytes type, then the abi-encoded payload
+const ORIGIN_MESSAGE_TYPE_INDEX = 4;
 const ORIGIN_PAYLOAD_INDEX = 8;
 
 // Read a big-endian uint32 from a Uint8Array at the given byte offset.
@@ -24,17 +26,18 @@ const readUint32 = (bytes, start) =>
   bytes[start + 3];
 
 /**
- * Decode the Origin transfer nonce from a raw CCTP message, mirroring the
- * on-chain relay decoding. Returns the nonce as an ethers BigNumber, or null
- * if the message is not one of our Origin messages (deposit / withdraw /
- * balance check).
+ * Decode an Origin message out of a raw CCTP message, mirroring the on-chain
+ * relay decoding. Returns `{ messageType, nonce, transferConfirmation }`, or
+ * null if the message is not one of our Origin messages (deposit / withdraw /
+ * balance check). `transferConfirmation` is null for anything but a balance
+ * check.
  *
  * The Origin message is either:
  *  - the CCTP message body directly (plain message: withdraw / balance check), or
  *  - the burn message hook data (deposit), located at byte 228 of the body.
  * The nonce is the first abi-encoded word of the Origin payload.
  */
-const decodeOriginNonce = (messageHex) => {
+const decodeOriginMessage = (messageHex) => {
   if (!messageHex) {
     return null;
   }
@@ -62,13 +65,39 @@ const decodeOriginNonce = (messageHex) => {
     return null;
   }
 
+  const messageType = readUint32(originMessage, ORIGIN_MESSAGE_TYPE_INDEX);
+  const payloadWord = (index) =>
+    ethers.BigNumber.from(
+      originMessage.slice(
+        ORIGIN_PAYLOAD_INDEX + index * 32,
+        ORIGIN_PAYLOAD_INDEX + (index + 1) * 32
+      )
+    );
+
   // Nonce is the first 32-byte abi word of the payload (a left-padded uint64)
-  const nonceWord = originMessage.slice(
-    ORIGIN_PAYLOAD_INDEX,
-    ORIGIN_PAYLOAD_INDEX + 32
-  );
-  return ethers.BigNumber.from(nonceWord);
+  const nonce = payloadWord(0);
+
+  if (messageType !== BALANCE_CHECK_MESSAGE) {
+    return { messageType, nonce, transferConfirmation: null };
+  }
+
+  // Balance check payload is abi.encode(nonce, balance, transferConfirmation, timestamp)
+  if (originMessage.length < ORIGIN_PAYLOAD_INDEX + 96) {
+    return null;
+  }
+  return { messageType, nonce, transferConfirmation: !payloadWord(2).isZero() };
 };
+
+/**
+ * Whether the message's nonce is a single-use replay key, which is what makes
+ * the destination's `isNonceProcessed` proof that the message was already
+ * relayed. True for deposits, withdrawals and the balance check that confirms
+ * one. A periodic balance update instead carries the already-settled
+ * `lastTransferNonce`, so `isNonceProcessed` reports it as processed every time
+ * and would suppress the relay forever.
+ */
+const nonceIsReplayKey = ({ messageType, transferConfirmation }) =>
+  messageType !== BALANCE_CHECK_MESSAGE || transferConfirmation === true;
 
 const cctpOperationsConfig = async ({
   destinationChainSigner,
@@ -338,15 +367,16 @@ const processCctpBridgeTransactions = async ({
       // Check on-chain whether this transfer nonce was already processed on the
       // destination strategy. If so, relaying would revert, so skip it and
       // reconcile the local store.
-      const originNonce = decodeOriginNonce(cctpMessage.message);
+      const originMessage = decodeOriginMessage(cctpMessage.message);
       if (
-        originNonce !== null &&
+        originMessage !== null &&
+        nonceIsReplayKey(originMessage) &&
         (await config.cctpIntegrationContractDestination.isNonceProcessed(
-          originNonce
+          originMessage.nonce
         ))
       ) {
         log(
-          `Nonce ${originNonce.toString()} for message ${messageId} from tx ${txHash} is already processed on-chain. Skipping relay...`
+          `Nonce ${originMessage.nonce.toString()} for message ${messageId} from tx ${txHash} is already processed on-chain. Skipping relay...`
         );
         if (storedValue !== "processed") {
           await store.put(storeKey, "processed");
@@ -409,6 +439,7 @@ const processCctpBridgeTransactions = async ({
 
 module.exports = {
   processCctpBridgeTransactions,
-  decodeOriginNonce,
+  decodeOriginMessage,
+  nonceIsReplayKey,
   TX_HASH_REGEX,
 };

@@ -26,7 +26,6 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
     uint256 internal constant DEPOSIT_LIST_DATA_SLOT =
         0xcfa4bec1d3298408bb5afcfcd9c430549c5b31f8aa5c5848151c0a55f473c34d;
     uint256 internal constant VALIDATOR_COUNT = 21;
-    uint256 internal constant SNAPSHOT_INDEX = 5;
 
     EnhancedBeaconProofs internal enhancedBeaconProofs;
     string internal validatorsJson;
@@ -80,7 +79,7 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
         strategyAddress = HISTORICAL_STRATEGY_ADDRESS;
     }
 
-    function _prepareTwentyOneValidators() internal {
+    function _prepareTwentyOneValidators() internal virtual {
         for (uint256 i = 0; i < VALIDATOR_COUNT; ++i) {
             this.processHistoricalValidator(i);
         }
@@ -100,19 +99,34 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
     }
 
     function _verifyHistoricalValidator(uint256 validatorPosition) internal {
-        string memory base = string.concat(".testValidators[", vm.toString(validatorPosition), "].validatorProof");
-        uint64 nextBlockTimestamp = uint64(validatorsJson.readUint(string.concat(base, ".nextBlockTimestamp")));
-        bytes32 beaconBlockRoot = validatorsJson.readBytes32(string.concat(base, ".root"));
-        bytes memory proof = validatorsJson.readBytes(string.concat(base, ".bytes"));
+        _verifyHistoricalValidatorProof(
+            validatorPosition, bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), HISTORICAL_STRATEGY_ADDRESS))
+        );
+    }
+
+    function _verifyHistoricalValidatorProof(uint256 validatorPosition, bytes32 withdrawalCredentials) internal {
+        (uint64 nextBlockTimestamp, bytes32 beaconBlockRoot, bytes memory proof) =
+            _loadHistoricalValidatorProof(validatorPosition);
 
         mockBeaconRootsContract.setBeaconRoot(nextBlockTimestamp, beaconBlockRoot);
         compoundingStakingStrategy.verifyValidator(
             nextBlockTimestamp,
             uint40(testValidators[validatorPosition].index),
             testValidators[validatorPosition].publicKeyHash,
-            bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), HISTORICAL_STRATEGY_ADDRESS)),
+            withdrawalCredentials,
             proof
         );
+    }
+
+    function _loadHistoricalValidatorProof(uint256 validatorPosition)
+        internal
+        view
+        returns (uint64 nextBlockTimestamp, bytes32 beaconBlockRoot, bytes memory proof)
+    {
+        string memory base = string.concat(".testValidators[", vm.toString(validatorPosition), "].validatorProof");
+        nextBlockTimestamp = uint64(validatorsJson.readUint(string.concat(base, ".nextBlockTimestamp")));
+        beaconBlockRoot = validatorsJson.readBytes32(string.concat(base, ".root"));
+        proof = validatorsJson.readBytes(string.concat(base, ".bytes"));
     }
 
     function _verifyHistoricalDeposit(uint256 validatorPosition, bytes32 pendingDepositRoot) internal {
@@ -167,8 +181,8 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
         _topUpValidator(validatorPosition, amountGwei, false);
     }
 
-    function _loadHistoricalSnapshot() internal view returns (HistoricalSnapshot memory snapshot) {
-        string memory base = string.concat(".testBalancesProofs[", vm.toString(SNAPSHOT_INDEX), "]");
+    function _loadHistoricalSnapshot(uint256 snapshotIndex) internal view returns (HistoricalSnapshot memory snapshot) {
+        string memory base = string.concat(".testBalancesProofs[", vm.toString(snapshotIndex), "]");
         string memory balancesBase = string.concat(base, ".balanceProofs");
         string memory depositsBase = string.concat(base, ".pendingDepositProofsData");
 
@@ -194,7 +208,7 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
             validatorsJson.readBytesArray(string.concat(depositsBase, ".pendingDepositProofs"));
     }
 
-    function _assertHistoricalBalances(uint256 expectedPendingDepositsWei)
+    function _assertHistoricalBalances(uint256 snapshotIndex, uint256 expectedPendingDepositsWei)
         internal
         returns (BalanceTotals memory totals)
     {
@@ -206,7 +220,7 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
             this.replaceHistoricalPendingDepositRoot(i);
         }
 
-        HistoricalSnapshot memory snapshot = _loadHistoricalSnapshot();
+        HistoricalSnapshot memory snapshot = _loadHistoricalSnapshot(snapshotIndex);
         PendingDepositProofs memory pendingDepositProofs = _pendingDepositProofs(snapshot, depositCount);
         totals = _expectedTotals(snapshot.validatorBalances, expectedPendingDepositsWei);
 
@@ -230,6 +244,51 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
             totals.totalDepositsWei + totals.totalValidatorBalance + totals.ethBalance
         );
         assertEq(compoundingStakingStrategy.checkBalance(address(mockWeth)), totals.totalBalance);
+    }
+
+    function _applyHistoricalSnapshot(
+        uint256 snapshotIndex,
+        uint256[] memory validatorPositions,
+        uint256 expectedPendingDepositsWei,
+        uint256 ethBalance
+    ) internal returns (uint256 verifiedBalance) {
+        HistoricalSnapshot memory snapshot = _loadHistoricalSnapshot(snapshotIndex);
+        uint256 validatorCount = validatorPositions.length;
+        bytes32[] memory leaves = new bytes32[](validatorCount);
+        bytes[] memory balanceProofs = new bytes[](validatorCount);
+        string[] memory balances = new string[](validatorCount);
+        for (uint256 i = 0; i < validatorCount; ++i) {
+            uint256 position = validatorPositions[i];
+            leaves[i] = snapshot.balanceProofs.validatorBalanceLeaves[position];
+            balanceProofs[i] = snapshot.balanceProofs.validatorBalanceProofs[position];
+            balances[i] = snapshot.validatorBalances[position];
+        }
+        snapshot.balanceProofs.validatorBalanceLeaves = leaves;
+        snapshot.balanceProofs.validatorBalanceProofs = balanceProofs;
+
+        uint256 depositCount = compoundingStakingStrategy.depositListLength();
+        historicalPendingDepositRoots = validatorsJson.readBytes32Array(
+            string.concat(
+                ".testBalancesProofs[", vm.toString(snapshotIndex), "].pendingDepositProofsData.pendingDepositRoots"
+            )
+        );
+        for (uint256 i = 0; i < depositCount; ++i) {
+            this.replaceHistoricalPendingDepositRoot(i);
+        }
+
+        BalanceTotals memory totals = _expectedTotals(balances, expectedPendingDepositsWei);
+        assertEq(totals.ethBalance, 0.345 ether);
+        totals.ethBalance = ethBalance;
+        vm.deal(address(compoundingStakingStrategy), ethBalance);
+        mockBeaconRootsContract.setBeaconRoot(block.timestamp, snapshot.blockRoot);
+
+        vm.prank(governor);
+        compoundingStakingStrategy.snapBalances();
+        vm.prank(governor);
+        compoundingStakingStrategy.verifyBalances(snapshot.balanceProofs, _pendingDepositProofs(snapshot, depositCount));
+
+        verifiedBalance = expectedPendingDepositsWei + totals.totalValidatorBalance + ethBalance;
+        assertEq(compoundingStakingStrategy.lastVerifiedEthBalance(), verifiedBalance);
     }
 
     function _pendingDepositProofs(HistoricalSnapshot memory snapshot, uint256 depositCount)

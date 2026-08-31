@@ -208,4 +208,6 @@ interface ICompoundingStakingStrategy {
         );
 
     function lastVerifiedEthBalance() external view returns (uint256);
+
+    function lastVerifiedBalanceTimestamp() external view returns (uint64);
 }

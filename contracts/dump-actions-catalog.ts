@@ -15,6 +15,7 @@ import { registry } from "./tasks/lib/action";
 const TALOS_PARAM_ALLOWLISTS: Record<string, Set<string>> = {
   removeValidator: new Set(["pubkey"]),
   stakeValidator: new Set(["amount", "depositMessageRoot", "pubkey", "sig"]),
+  withdrawValidator: new Set(["amount", "pubkey"]),
 };
 
 function camelToKebab(s: string): string {
