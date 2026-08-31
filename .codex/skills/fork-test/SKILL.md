@@ -1,24 +1,11 @@
 ---
 name: fork-test
-description: Generate Foundry fork tests for contracts that need real on-chain integration coverage. Use when the user asks for fork tests, mainnet or chain fork coverage, integration tests against live protocol state, or to port Hardhat fork tests into Foundry.
+description: Generate Foundry fork tests for contracts that need real on-chain integration coverage. Use when the user asks for fork tests, mainnet or chain fork coverage, or integration tests against live protocol state.
 ---
 
 # Fork Test
 
 Generate Foundry fork tests for contracts whose behavior depends on real on-chain state, live liquidity, routers, gauges, or oracle reads.
-
-## 0. Check for existing Hardhat fork tests first
-
-Before writing a Foundry fork test, inspect `contracts/test/` for related `*.<chain>.fork-test.js` files and supporting fixtures.
-
-Extract:
-
-- multi-step integration scenarios
-- real addresses and parameter values
-- expected end-to-end behavior
-- whale or impersonation patterns
-
-Adapt them to Foundry; do not copy them blindly.
 
 ## 1. Directory layout
 

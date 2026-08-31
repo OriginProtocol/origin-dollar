@@ -68,7 +68,8 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     uint64 internal constant SLOTS_PER_EPOCH = 32;
 
     // Path to JSON test data (relative to project root)
-    string internal constant VALIDATORS_JSON_PATH = "test/strategies/compoundingStaking-validatorsData.json";
+    string internal constant VALIDATORS_JSON_PATH =
+        "tests/unit/strategies/CompoundingStakingStrategy/fixtures/validators.json";
 
     //////////////////////////////////////////////////////
     /// --- VALIDATOR DATA (loaded from JSON)

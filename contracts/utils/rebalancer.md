@@ -202,4 +202,3 @@ The before/after/Δ are shown in the table header and returned from
 - `utils/morpho-apy.js` - Morpho APY fetching
 - `tasks/rebalancer.js` - Hardhat task entry point
 - `tasks/actions/ousdRebalancer.ts` - Talos execution automation
-- `test/rebalancer/rebalancer.js` - unit tests
