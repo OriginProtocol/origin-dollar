@@ -13,14 +13,14 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the test suite, and executes deployments. Hardhat is no longer used for building, testing, or new deployments — it remains only to run the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`). The Hardhat test suite (`test/`) and deploy scripts (`deploy/`) are frozen legacy; do not extend either.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. Hardhat remains only for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`). The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
 
 ## Setup
 
 ```bash
 cd contracts
 cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoint
-make install             # foundryup (stable), forge soldeer install, install-deps.sh, pnpm i
+make install             # foundryup (v1.8.1), forge soldeer install, install-deps.sh, pnpm i
 ```
 
 Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The Hardhat task CLI resolves its mainnet RPC from `MAINNET_PROVIDER_URL` as well (legacy fallback: `PROVIDER_URL`).
@@ -48,9 +48,9 @@ Keep it that way. Two regressions to avoid:
   fail with `Cannot find module '@oplabs/talos-client'`.
 - Do not import it from `tasks/lib/network.ts`. That used to drag the
   requirement up through `utils/resolvers.js` → `utils/morpho.js` →
-  `tasks/tasks.js` → `hardhat.config.js` and broke `hardhat deploy` in the ABI
-  publish workflow, which installs without GitHub Packages auth. #2954 replaced
-  it with local `CHAIN_IDS` / `RPC_ENV_VARS` maps.
+  `tasks/tasks.js` → `hardhat.config.js` and broke the Hardhat ops CLI for
+  installs without GitHub Packages auth. #2954 replaced it with local
+  `CHAIN_IDS` / `RPC_ENV_VARS` maps.
 
 ## Commands (run from `contracts/`)
 
@@ -66,7 +66,7 @@ make build-tests-unit          # also: build-tests, build-tests-fork, build-test
 ```bash
 forge fmt scripts/ tests/      # Foundry-tree Solidity (tests + deploy scripts)
 pnpm prettier:sol              # contracts/**/*.sol (prettier-plugin-solidity)
-pnpm prettier:js               # JS (tasks, scripts, utils, legacy test/)
+pnpm prettier:js               # JS (tasks, scripts, deploy, utils)
 pnpm prettier:ts               # TS (tasks/actions, tasks/lib)
 pnpm lint                      # eslint (JS + TS) and solhint
 make lint-imports              # forge lint: unused imports in scripts/ and tests/
@@ -87,9 +87,9 @@ The `make test-*` targets rebuild the relevant trees first. Bare `forge test` do
 
 Fork and smoke tests fork the chain from the `*_PROVIDER_URL` variables and pin blocks via `FORK_BLOCK_NUMBER_<CHAIN>`. Test conventions (unit vs fork vs smoke, concrete vs fuzz, interface-only testing) are documented in `tests/README.md` — read it before writing tests.
 
-### Legacy Hardhat suite (`test/`, frozen)
+### Hardhat task tests (`tasks/test/`)
 
-`test/**/*.js` and `test/**/*.fork-test.js` are the pre-migration Hardhat tests. They no longer run in CI and must not be extended — write Foundry tests in `tests/` instead. Coverage gaps between the two suites are tracked in `docs/foundry-migration-gap-analysis.md` (per-test inventory: `docs/hardhat-test-inventory.md`).
+`pnpm test:tasks` validates the ops task implementation. Smart-contract tests belong exclusively in the Foundry suite under `tests/`.
 
 ### Hardhat (ops task CLI only)
 ```bash
@@ -158,7 +158,7 @@ to the 5/8 Admin Safe and hosting a Safe module for the 2/8 and the operator EOA
 ## Architecture
 
 ### Core Pattern: Upgradeable Proxy Contracts
-All major contracts use the OpenZeppelin upgradeable proxy pattern. Each has a `*Proxy` contract (minimal proxy) pointing to an implementation. New deployments and upgrades go through the Foundry deployment framework in `scripts/deploy/`; the `deploy/` hardhat-deploy scripts are the historical ledger.
+All major contracts use the OpenZeppelin upgradeable proxy pattern. Each has a `*Proxy` contract (minimal proxy) pointing to an implementation. Deployments and upgrades go through the Foundry deployment framework in `scripts/deploy/`; committed descriptors in `deployments/` are the machine-readable historical registry.
 
 ### Vaults (Central Component)
 Vaults (`contracts/vault/`) are the core of each OToken. They handle:
@@ -202,7 +202,6 @@ scheduled action is added, removed, or its behaviour changes.
 ### Key Utility Files
 - `utils/addresses.js` - master address registry for all networks/contracts (~32KB)
 - `utils/constants.js` - protocol constants
-- `utils/deploy.js` - legacy Hardhat deployment helpers (only relevant to the frozen `deploy/` scripts)
 
 ## Test Organization
 
@@ -215,7 +214,7 @@ tests/                     # Foundry suite (canonical)
   invariant/
   mocks/
   utils/                   # Addresses.sol, shared helpers
-test/                      # legacy Hardhat suite — frozen, not run in CI
+tasks/test/                # Mocha tests for Hardhat ops tasks only
 ```
 
 Layout mirrors `<type>/<chain>/<area>/<Contract>/{concrete,fuzz}/<Behaviour>.t.sol`, with a per-contract `shared/Shared.t.sol` base. Tests interact with contracts **through interfaces** (`IVault`, `IOToken`, `IWOToken`, `IProxy`) and deploy implementations with `vm.deployCode` — never import a concrete contract into a test file; it drags the whole dependency tree into the test's compilation unit and destroys build caching. Full rules and gotchas: `tests/README.md`.
@@ -234,7 +233,7 @@ make deploy-local              # against a running pnpm node:anvil
 
 For upgrades, call `_assertStorageSafe(type(X).name)` before `new X()` — see Storage Layout Checks below. After a real deploy the make target regenerates the Hardhat-format descriptors in `deployments/<network>/` (see the Talos section at the bottom). Framework internals: `scripts/deploy/README.md` and `scripts/deploy/ARCHITECTURE.md`.
 
-Do not author new Hardhat deploy scripts in `deploy/`.
+Hardhat deployment scripts are no longer part of the repository. Do not recreate a `deploy/` tree; use the Foundry framework above.
 
 ## Storage Layout Checks
 

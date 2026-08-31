@@ -205,6 +205,7 @@ library Mainnet {
 
     // Native Staking Strategy
     address internal constant BeaconProofs = 0xc4444C5D9e7C1a5A0a01c5E4b11692d589DcAF22;
+    address internal constant CompoundingStakingStrategyProxy = 0x25e1d468B14005716111d5e8464573e5135275f4;
 
     address internal constant validatorRegistrator = 0x4b91827516f79d6F6a1F292eD99671663b09169a;
     address internal constant LidoWithdrawalQueue = 0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1;

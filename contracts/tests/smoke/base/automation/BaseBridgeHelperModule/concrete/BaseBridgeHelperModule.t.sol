@@ -53,8 +53,7 @@ contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperMod
     /// `vault.rebase()` directly, so the deployed module's own address reverts with
     /// "Caller not authorized". Every test below routes through `depositWOETH`.
     ///
-    /// The equivalent Hardhat test is skipped for the same reason — see
-    /// test/safe-modules/bridge-helper.base.fork-test.js — as is the fork test at
+    /// This scenario is skipped for the same reason as the fork test at
     /// tests/fork/base/automation/BaseBridgeHelperModule/concrete/DepositWOETH.t.sol.
     ///
     /// Not worked around with a prank: the revert is the module calling the vault,
@@ -85,8 +84,7 @@ contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperMod
     /// `vault.rebase()` directly, so the deployed module's own address reverts with
     /// "Caller not authorized". Every test below routes through `depositWOETH`.
     ///
-    /// The equivalent Hardhat test is skipped for the same reason — see
-    /// test/safe-modules/bridge-helper.base.fork-test.js — as is the fork test at
+    /// This scenario is skipped for the same reason as the fork test at
     /// tests/fork/base/automation/BaseBridgeHelperModule/concrete/DepositWOETH.t.sol.
     ///
     /// Not worked around with a prank: the revert is the module calling the vault,
@@ -191,8 +189,7 @@ contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperMod
     /// `vault.rebase()` directly, so the deployed module's own address reverts with
     /// "Caller not authorized". Every test below routes through `depositWOETH`.
     ///
-    /// The equivalent Hardhat test is skipped for the same reason — see
-    /// test/safe-modules/bridge-helper.base.fork-test.js — as is the fork test at
+    /// This scenario is skipped for the same reason as the fork test at
     /// tests/fork/base/automation/BaseBridgeHelperModule/concrete/DepositWOETH.t.sol.
     ///
     /// Not worked around with a prank: the revert is the module calling the vault,
