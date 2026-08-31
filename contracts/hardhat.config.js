@@ -32,12 +32,8 @@ const {
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
 
-require("@nomicfoundation/hardhat-verify");
 require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
-require("hardhat-tracer");
-require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
 require("./tasks/tasks");
@@ -398,74 +394,6 @@ module.exports = {
       mainnet: MAINNET_RELAYER,
       hoodi: HOODI_RELAYER,
     },
-  },
-  contractSizer: {
-    alphaSort: true,
-    runOnCompile: process.env.CONTRACT_SIZE ? true : false,
-  },
-  etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ETHERSCAN_API_KEY,
-      base: process.env.ETHERSCAN_API_KEY,
-      sonic: process.env.ETHERSCAN_API_KEY,
-      hoodi: process.env.ETHERSCAN_API_KEY,
-      plume: "empty", // this works for: npx hardhat verify...
-      hyperevm: process.env.ETHERSCAN_API_KEY,
-    },
-    customChains: [
-      {
-        network: "mainnet",
-        chainId: 1,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=1",
-          browserURL: "https://etherscan.io",
-        },
-      },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=8453",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "sonic",
-        chainId: 146,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=146",
-          browserURL: "https://sonicscan.org",
-        },
-      },
-      {
-        network: "plume",
-        chainId: 98866,
-        urls: {
-          apiURL: "https://explorer.plume.org/api",
-          browserURL: "https://explorer.plume.org",
-        },
-      },
-      {
-        network: "hoodi",
-        chainId: 560048,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=560048",
-          browserURL: "https://hoodi.etherscan.io",
-        },
-      },
-      {
-        network: "hyperevm",
-        chainId: 999,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=999",
-          browserURL: "https://hyperevmscan.io",
-        },
-      },
-    ],
-  },
-  sourcify: {
-    enabled: true,
   },
   paths,
 };

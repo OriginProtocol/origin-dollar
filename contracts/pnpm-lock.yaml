@@ -65,18 +65,9 @@ importers:
       '@lastdotnet/purrikey':
         specifier: ^1.0.0
         version: 1.0.0(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))
-      '@nomicfoundation/hardhat-network-helpers':
-        specifier: 1.0.9
-        version: 1.0.9(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@nomicfoundation/hardhat-verify':
-        specifier: 2.1.1
-        version: 2.1.1(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@nomiclabs/hardhat-ethers':
         specifier: 2.2.3
         version: 2.2.3(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@nomiclabs/hardhat-solhint':
-        specifier: 2.0.1
-        version: 2.0.1(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@openzeppelin/contracts':
         specifier: 4.4.2
         version: 4.4.2
@@ -131,18 +122,12 @@ importers:
       hardhat:
         specifier: 2.26.2
         version: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-      hardhat-contract-sizer:
-        specifier: 2.10.0
-        version: 2.10.0(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
       hardhat-deploy:
         specifier: 0.11.30
         version: 0.11.30(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       hardhat-deploy-ethers:
         specifier: 0.3.0-beta.13
         version: 0.3.0-beta.13(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
-      hardhat-tracer:
-        specifier: 3.2.1
-        version: 3.2.1(bufferutil@4.1.0)(chai@4.3.7)(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
       husky:
         specifier: 7.0.4
         version: 7.0.4
@@ -1110,16 +1095,6 @@ packages:
     resolution: {integrity: sha512-kqILRkAd455Sd6v8mfP3C1/0tCOynJWY+Ir+k/9Boocu2kObCrsFgG+ZWB7fSBVdd9cPVSNrnhWS+V+PEo637g==}
     engines: {node: '>= 18'}
 
-  '@nomicfoundation/hardhat-network-helpers@1.0.9':
-    resolution: {integrity: sha512-OXWCv0cHpwLUO2u7bFxBna6dQtCC2Gg/aN/KtJLO7gmuuA28vgmVKYFRCDUqrbjujzgfwQ2aKyZ9Y3vSmDqS7Q==}
-    peerDependencies:
-      hardhat: ^2.9.5
-
-  '@nomicfoundation/hardhat-verify@2.1.1':
-    resolution: {integrity: sha512-K1plXIS42xSHDJZRkrE2TZikqxp9T4y6jUMUNI/imLgN5uCcEQokmfU0DlyP9zzHncYK92HlT5IWP35UVCLrPw==}
-    peerDependencies:
-      hardhat: ^2.26.0
-
   '@nomicfoundation/slang@0.18.3':
     resolution: {integrity: sha512-YqAWgckqbHM0/CZxi9Nlf4hjk9wUNLC9ngWCWBiqMxPIZmzsVKYuChdlrfeBPQyvQQBoOhbx+7C1005kLVQDZQ==}
 
@@ -1159,11 +1134,6 @@ packages:
     resolution: {integrity: sha512-YhzPdzb612X591FOe68q+qXVXGG2ANZRvDo0RRUtimev85rCrAlv/TLMEZw5c+kq9AbzocLTVX/h2jVIFPL9Xg==}
     peerDependencies:
       ethers: ^5.0.0
-      hardhat: ^2.0.0
-
-  '@nomiclabs/hardhat-solhint@2.0.1':
-    resolution: {integrity: sha512-SrTLufY21t78KLpJL5fS6gHIsCwVv0yWsHp1aQOPL1qwRWpe0Mnh5wb2YzBHd3Dbr/KzUYys+j2ui0PsSVU9pg==}
-    peerDependencies:
       hardhat: ^2.0.0
 
   '@openzeppelin/contracts-upgradeable@4.7.3':
@@ -2996,11 +2966,6 @@ packages:
     engines: {node: '>=6'}
     deprecated: this library is no longer supported
 
-  hardhat-contract-sizer@2.10.0:
-    resolution: {integrity: sha512-QiinUgBD5MqJZJh1hl1jc9dNnpJg7eE/w4/4GEnrcmZJJTDbVFNe3+/3Ep24XqISSkYxRz36czcPHKHd/a0dwA==}
-    peerDependencies:
-      hardhat: ^2.0.0
-
   hardhat-deploy-ethers@0.3.0-beta.13:
     resolution: {integrity: sha512-PdWVcKB9coqWV1L7JTpfXRCI91Cgwsm7KLmBcwZ8f0COSm1xtABHZTyz3fvF6p42cTnz1VM0QnfDvMFlIRkSNw==}
     peerDependencies:
@@ -3009,12 +2974,6 @@ packages:
 
   hardhat-deploy@0.11.30:
     resolution: {integrity: sha512-FpMP1zSa24NEARVh/vwFCJJa9Gws3SBRZbVIDYMIvleoH3yOwFcdWY68zfGoxrm4kRHNcaiVNAXVFTm0enKR0A==}
-
-  hardhat-tracer@3.2.1:
-    resolution: {integrity: sha512-nCRCi8zQYDkNw9xDngokbmBmBDNuX9BadgvoRNVgpVpFkriRirdBVinYfBc7P+vufZhNNOjxyIDOPQs+ViRN9Q==}
-    peerDependencies:
-      chai: 4.x
-      hardhat: '>=2.22.5 <3.x'
 
   hardhat@2.26.2:
     resolution: {integrity: sha512-uIETdC1MAWSnu+48B+583r3b8JqHtkBGEiXoAPV5hcXYGkCW5Fnnpn7SIgPa8owhObm9oUqIqMXMJ6H92N7Pyg==}
@@ -6322,26 +6281,6 @@ snapshots:
       '@nomicfoundation/edr-linux-x64-musl': 0.11.3
       '@nomicfoundation/edr-win32-x64-msvc': 0.11.3
 
-  '@nomicfoundation/hardhat-network-helpers@1.0.9(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))':
-    dependencies:
-      ethereumjs-util: 7.1.5
-      hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-
-  '@nomicfoundation/hardhat-verify@2.1.1(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))':
-    dependencies:
-      '@ethersproject/abi': 5.8.0
-      '@ethersproject/address': 5.8.0
-      cbor: 8.1.0
-      debug: 4.3.4(supports-color@8.1.1)
-      hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-      lodash.clonedeep: 4.5.0
-      picocolors: 1.1.1
-      semver: 6.3.1
-      table: 6.9.0
-      undici: 5.29.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@nomicfoundation/slang@0.18.3':
     dependencies:
       '@bytecodealliance/preview2-shim': 0.17.0
@@ -6381,13 +6320,6 @@ snapshots:
     dependencies:
       ethers: 5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-
-  '@nomiclabs/hardhat-solhint@2.0.1(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))':
-    dependencies:
-      hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-      solhint: 2.3.1
-    transitivePeerDependencies:
-      - supports-color
 
   '@openzeppelin/contracts-upgradeable@4.7.3': {}
 
@@ -8653,13 +8585,6 @@ snapshots:
       ajv: 6.12.6
       har-schema: 2.0.0
 
-  hardhat-contract-sizer@2.10.0(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)):
-    dependencies:
-      chalk: 4.1.2
-      cli-table3: 0.6.5
-      hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-      strip-ansi: 6.0.1
-
   hardhat-deploy-ethers@0.3.0-beta.13(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)):
     dependencies:
       ethers: 5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -8691,19 +8616,6 @@ snapshots:
       murmur-128: 0.2.1
       qs: 6.14.0
       zksync-web3: 0.14.4(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  hardhat-tracer@3.2.1(bufferutil@4.1.0)(chai@4.3.7)(hardhat@2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10):
-    dependencies:
-      chai: 4.3.7
-      chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
-      ethers: 5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      hardhat: 2.26.2(bufferutil@4.1.0)(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
-      semver: 7.7.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color

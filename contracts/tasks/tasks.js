@@ -13,14 +13,6 @@ const { getSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
-  isAdjusterLocked,
-  fundCompAccountsWithEth,
-  claimOGN,
-  claimOUSD,
-  checkOUSDBalances,
-  supplyStakingContractWithOGN,
-} = require("./compensation");
-const {
   tokenAllowance,
   tokenBalance,
   tokenApprove,
@@ -555,31 +547,6 @@ subtask("governors", "Get list of governors for all contracts").setAction(
 task("governors").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
-
-// Compensation tasks
-task("isAdjusterLocked", "Is adjuster on Compensation claims locked").setAction(
-  isAdjusterLocked
-);
-task(
-  "fundCompAccountsWithEth",
-  "Fund compensation accounts with minimal eth"
-).setAction(fundCompAccountsWithEth);
-task(
-  "claimOUSD",
-  "Claim the OUSD part of the compensation plan for all eligible users"
-).setAction(claimOUSD);
-task(
-  "checkOUSDBalances",
-  "Check ousd balances of contract and accounts"
-).setAction(checkOUSDBalances);
-task(
-  "supplyStakingWithOGN",
-  "Supplies a great amount of ogn to staking contract"
-).setAction(supplyStakingContractWithOGN);
-task(
-  "claimOGN",
-  "Claims the OGN part of the compensation plan for all eligible users"
-).setAction(claimOGN);
 
 // Curve Pools
 subtask("curvePool", "Dumps the current state of a Curve pool")

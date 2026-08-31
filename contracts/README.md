@@ -81,9 +81,9 @@ make test-unit
 make simulate
 ```
 
-[Hardhat](https://hardhat.org/) remains available for operational tasks, the
-local forked node, and manual verification of legacy deployments. Its task
-configuration is in [hardhat.config.js](./hardhat.config.js):
+[Hardhat](https://hardhat.org/) remains available for operational tasks and the
+local forked node. Its task configuration is in
+[hardhat.config.js](./hardhat.config.js):
 
 ```sh
 pnpm hardhat <task> --network <network>
@@ -140,28 +140,10 @@ Example module names
 
 ## Contract Sizes
 
-The Hardhat plug-in [hardhat-contract-sizer](https://www.npmjs.com/package/hardhat-contract-sizer) is used to report the size of contracts.
+Foundry reports deployed and init code sizes during compilation:
 
-This is not enabled by default. To enable, export the `CONTRACT_SIZE` environment variable.
-
-```
-export CONTRACT_SIZE=true
-```
-
-The contract sizes will be output after the contracts are compiled. Here's a sample of the first few.
-
-```
-Compiled 155 Solidity files successfully
- ·-----------------------------------------|--------------------------------|--------------------------------·
- |  Solc version: 0.8.7                    ·  Optimizer enabled: true       ·  Runs: 200                     │
- ··········································|································|·································
- |  Contract Name                          ·  Deployed size (KiB) (change)  ·  Initcode size (KiB) (change)  │
- ··········································|································|·································
- |  AaveStrategy                           ·                     11.427 ()  ·                     11.583 ()  │
- ··········································|································|·································
- |  AaveStrategyProxy                      ·                      2.438 ()  ·                      2.591 ()  │
- ··········································|································|·································
- |  Address                                ·                      0.084 ()  ·                      0.138 ()  │
+```sh
+forge build --sizes
 ```
 
 
@@ -250,8 +232,6 @@ does not provide an owner confirmation or reduce the Safe threshold.
 
 ## Contract Verification
 
-The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.
-
 ### Auto-verification
 
 The Foundry deployment targets verify newly deployed contracts automatically:
@@ -264,55 +244,7 @@ Equivalent targets exist for the other supported networks; see `scripts/deploy/R
 
 ### Manual verification
 
-**IMPORTANT:**
-
-- Currently only yarn works. Do not use npx/pnpm
-- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode mismatch errors
-
-There's an example
-
-```
-yarn hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
-```
-
-Example with constructor parameters passed as command params
-
-```
-yarn hardhat verify --network mainnet 0x0FC66355B681503eFeE7741BD848080d809FD6db --contract contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 0xAA8af8Db4B6a827B51786334d26349eb03569731 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd
-```
-
-Example with constructor parameters saved to file and file path passed to the command
-
-```
-echo "module.exports = [[
-  \"0x0000000000000000000000000000000000000001\",
-  \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\"
-}]" > flux-args.js
-npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrategy.sol:FluxStrategy --constructor-args flux-args.js 0x57d49c28Cf9A0f65B1279a97eD01C3e49a5A173f
-```
-
-`hardhat-deploy` package offers a secondary way to verify contracts, where constructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
-
-```
-yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
-```
-
-#### Addressing verification slowdowns
-
-Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter
-it can take up to 4-5 minutes to gather the necessary contract information.
-Use `--contract` e.g. `--contract contracts/vault/VaultAdmin.sol:VaultAdmin` to mitigate the issue.
-
-#### Migration to full support of Etherscan V2 api
-
-Migrating to Etherscan V2 has been attempted with no success.
-Resources:
-
-- migration guid by Etherscan: https://docs.etherscan.io/v2-migration
-- guide for Hardhat setup: https://docs.etherscan.io/contract-verification/verify-with-hardhat. (note upgrading @nomicfoundation/hardhat-verify to 2.0.14 didn't resolve the issue last time)
-- openzeppelin-upgrades claims to have solved the issue in 3.9.1 version of the package: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/1165 Not only does this not solve the verification issue, it is also a breaking change for our repo.
-
-Good luck when attempting to solve this.
+Use Foundry's `forge verify-contract`; see the [Foundry verification documentation](https://getfoundry.sh/forge/reference/verify-contract/) for supported explorers and constructor arguments.
 
 ### Deployed contract code verification
 
