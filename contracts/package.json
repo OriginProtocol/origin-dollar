@@ -39,7 +39,6 @@
     "slither": "pnpm run clean && slither . --config-file slither.config.json",
     "slither:triage": "pnpm run clean && slither . --triage --config-file slither.config.json",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*",
-    "cache-clean:light": "rm -rf cache/hardhat-network-fork/network-1337/",
     "action": "tsx tasks/run.ts",
     "dump-catalog": "tsx dump-actions-catalog.ts"
   },
@@ -77,9 +76,7 @@
     "prettier-plugin-solidity": "1.0.0-beta.17",
     "rollup": "4.54.0",
     "rollup-plugin-visualizer": "5.12.0",
-    "solc": "0.8.6",
     "solhint": "3.4.1",
-    "solidifier": "2.2.3",
     "solidity-bytes-utils": "0.8.4",
     "ssv-keys": "1.1.0",
     "ssv-scanner": "github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f",

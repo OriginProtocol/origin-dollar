@@ -46,7 +46,7 @@ A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are av
 The dapp interacts with many 3rd party contracts (Uniswap, Curve, Sushiswap) and it would be too cumbersome to initialize all those contracts in a fresh node environment and set them to a state that mimics the Mainnet. For that reason we are using Hardhat's forked mode. By setting the `BLOCK_NUMBER` environment variable, the node will download part of the mainnet state that it requires to fulfill the requests. It is less reliable since the node isn't as stable in forked mode (and sometimes requires restarts), but mimicking the mainnet is a huge benefit. We used to develop with fresh state node, but the behavior discrepancies between fresh node and mainnet have started to become too large. For that reason, we have deprecated the fresh state development.
 <br/><br/>
 
-Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one (Sign up for a free Alchemy or Infura account, create a new API key, and use the URL they provide). If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER` to a more recent Ethereum block. Also add your mainnet testing account(s) (if more than one, comma separate them) under the `ACCOUNTS_TO_FUND`. After the node starts up, the script will transfer 100k of USDT, OUSD and DAI to those accounts. Open a separate terminal to run the hardhat node in.
+Rename `contracts/dev.env` to `.env` and set `PROVIDER_URL` to a valid one (sign up for an Alchemy or Infura account, create an API key, and use the URL they provide). To pin the fork to a specific mainnet block, set `BLOCK_NUMBER`. Open a separate terminal to run the Hardhat node.
 <br/><br/>
 
 Run the node:
@@ -62,15 +62,6 @@ pnpm i
 
 # Run the node in forked mode
 pnpm run node
-```
-
-### Minting Stablecoins via hardhat task
-
-This is an option, but a simpler way is to use the `ACCOUNTS_TO_FUND` setting described above.
-
-```bash
-# Mint 1000 worth of each supported stablecoin to each account defined in the mnemonic
-npx hardhat fund --amount 1000 --network localhost
 ```
 
 ## Running Contract Tests
