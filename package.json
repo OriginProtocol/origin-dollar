@@ -2,7 +2,6 @@
   "name": "origin-dollar",
   "license": "MIT",
   "homepage": "https://github.com/originprotocol/origin-dollar",
-  "packageManager": "pnpm@10.18.3",
   "scripts": {
     "build": "(cd contracts && NODE_ENV=development pnpm install && make build)",
     "start": "(cd contracts && pnpm run node)",
