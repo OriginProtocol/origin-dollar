@@ -16,7 +16,6 @@ require("ts-node").register({
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
-  isForkTest,
   isBaseFork,
   isSonicFork,
   isPlumeFork,
@@ -28,16 +27,10 @@ const {
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
-  adjustTheForkBlockNumber,
-  getHardhatNetworkProperties,
+  getHardhatNetworkChainId,
 } = require("./utils/hardhat-helpers.js");
 
-require("@nomicfoundation/hardhat-verify");
-require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
-require("hardhat-tracer");
-require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
 require("./tasks/tasks");
@@ -108,20 +101,14 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-let forkBlockNumber = adjustTheForkBlockNumber();
-
-const paths = {};
-if (process.env.HARDHAT_CACHE_DIR) {
-  paths.cache = process.env.HARDHAT_CACHE_DIR;
-}
-const { provider, chainId } = getHardhatNetworkProperties();
+const chainId = getHardhatNetworkChainId();
 
 const defaultAccounts = [
   process.env.DEPLOYER_PK || privateKeys[0],
   process.env.GOVERNOR_PK || privateKeys[0],
 ];
 
-/// Config for Fork and unit test environments
+/// Config for local and forked node environments
 const localEnvDeployer =
   process.env.FORK === "true"
     ? isBaseFork
@@ -192,12 +179,6 @@ module.exports = {
       },
     },
   },
-  tracer: {
-    nameTags: {
-      "0xba12222222228d8ba445958a75a0704d566bf2c8": "Balancer Vault",
-      "0xef1c6e67703c7bd7107eed8303fbe6ec2554bf6b": "Uniswap Universal Router",
-    },
-  },
   networks: {
     hardhat: {
       accounts: {
@@ -216,24 +197,9 @@ module.exports = {
           },
         },
       },
-      ...(isForkTest
-        ? {
-            timeout: 0,
-            initialBaseFeePerGas: 0,
-            forking: {
-              enabled: true,
-              url: provider,
-              blockNumber: forkBlockNumber
-                ? parseInt(forkBlockNumber)
-                : undefined,
-              timeout: 0,
-            },
-          }
-        : {
-            initialBaseFeePerGas: 0,
-            gas: 7000000,
-            gasPrice: 1000,
-          }),
+      initialBaseFeePerGas: 0,
+      gas: 7000000,
+      gasPrice: 1000,
     },
     localhost: {
       timeout: 0,
@@ -399,73 +365,4 @@ module.exports = {
       hoodi: HOODI_RELAYER,
     },
   },
-  contractSizer: {
-    alphaSort: true,
-    runOnCompile: process.env.CONTRACT_SIZE ? true : false,
-  },
-  etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ETHERSCAN_API_KEY,
-      base: process.env.ETHERSCAN_API_KEY,
-      sonic: process.env.ETHERSCAN_API_KEY,
-      hoodi: process.env.ETHERSCAN_API_KEY,
-      plume: "empty", // this works for: npx hardhat verify...
-      hyperevm: process.env.ETHERSCAN_API_KEY,
-    },
-    customChains: [
-      {
-        network: "mainnet",
-        chainId: 1,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=1",
-          browserURL: "https://etherscan.io",
-        },
-      },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=8453",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "sonic",
-        chainId: 146,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=146",
-          browserURL: "https://sonicscan.org",
-        },
-      },
-      {
-        network: "plume",
-        chainId: 98866,
-        urls: {
-          apiURL: "https://explorer.plume.org/api",
-          browserURL: "https://explorer.plume.org",
-        },
-      },
-      {
-        network: "hoodi",
-        chainId: 560048,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=560048",
-          browserURL: "https://hoodi.etherscan.io",
-        },
-      },
-      {
-        network: "hyperevm",
-        chainId: 999,
-        urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=999",
-          browserURL: "https://hyperevmscan.io",
-        },
-      },
-    ],
-  },
-  sourcify: {
-    enabled: true,
-  },
-  paths,
 };

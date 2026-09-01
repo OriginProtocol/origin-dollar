@@ -1,0 +1,2605 @@
+[
+  {
+    "name": "env",
+    "description": "Check env vars are properly set for a Mainnet deployment",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:env"
+  },
+  {
+    "name": "allowance",
+    "description": "Get the token allowance an owner has given to a spender",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg OETH, WETH, USDC or OGV",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "spender",
+        "description": "The address of the account or contract that can spend the tokens",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "owner",
+        "description": "The address of the account or contract allowing the spending. Default to the signer",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:allowance"
+  },
+  {
+    "name": "balance",
+    "description": "Get the token balance of an account or contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg OETH, WETH, USDC or OGV",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "account",
+        "description": "The address of the account or contract. Default to the signer",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:balance"
+  },
+  {
+    "name": "approve",
+    "description": "Approve an account or contract to spend tokens",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg OETH, WETH, USDC or OGV",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of tokens that can be spent",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "spender",
+        "description": "Address of the account or contract that can spend the tokens",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:approve"
+  },
+  {
+    "name": "transfer",
+    "description": "Transfer tokens to an account or contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg OETH, WETH, USDC or OGV",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of tokens to transfer",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "to",
+        "description": "Destination address",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:transfer"
+  },
+  {
+    "name": "transferFrom",
+    "description": "Transfer tokens from an account or contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg OETH, WETH, USDC or OGV",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of tokens to transfer",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "from",
+        "description": "Source address",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "to",
+        "description": "Destination address. Default to signer",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:transferFrom"
+  },
+  {
+    "name": "depositWETH",
+    "description": "Deposit ETH into WETH",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "amount",
+        "description": "Amount of ETH to deposit",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:depositWETH"
+  },
+  {
+    "name": "withdrawWETH",
+    "description": "Withdraw ETH from WETH",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "amount",
+        "description": "Amount of ETH to withdraw",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:withdrawWETH"
+  },
+  {
+    "name": "queueLiquidity",
+    "description": "Call addWithdrawalQueueLiquidity() on the Vault to add assets to the withdrawal queue",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:queueLiquidity"
+  },
+  {
+    "name": "allocate",
+    "description": "Call allocate() on the Vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:allocate"
+  },
+  {
+    "name": "capital",
+    "description": "Set the Vault's pauseCapital flag",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "pause",
+        "description": "Whether to pause or unpause the capital allocation",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      }
+    ],
+    "destination": "ops:capital"
+  },
+  {
+    "name": "rebase",
+    "description": "Call rebase() on the Vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:rebase"
+  },
+  {
+    "name": "mint",
+    "description": "Mint OTokens from the Vault using collateral assets",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "asset",
+        "description": "Symbol of the collateral asset to deposit. eg WETH, wS or USDC",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of collateral assets to deposit",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "min",
+        "description": "Minimum amount of OTokens to mint",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "approve",
+        "description": "Approve the asset to the OETH Vault before the mint",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      }
+    ],
+    "destination": "ops:mint"
+  },
+  {
+    "name": "depositToStrategy",
+    "description": "Deposits vault collateral assets to a vault strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "strategy",
+        "description": "Address or contract name of the strategy",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "assets",
+        "description": "Comma separated list of token symbols with no spaces. eg DAI,USDT,USDC or WETH",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amounts",
+        "description": "Comma separated list of token amounts with no spaces. eg 1000.123456789,2000.89,5000.123456 or 23.987",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:depositToStrategy"
+  },
+  {
+    "name": "withdrawFromStrategy",
+    "description": "Withdraw assets from a vault strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "strategy",
+        "description": "Address or contract name of the strategy",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "assets",
+        "description": "Comma separated list of token symbols with no spaces. eg DAI,USDT,USDC or WETH",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amounts",
+        "description": "Comma separated list of token amounts with no spaces. eg 1000.123456789,2000.89,5000.123456 or 23.987",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:withdrawFromStrategy"
+  },
+  {
+    "name": "withdrawAllFromStrategy",
+    "description": "Withdraw all assets from a vault strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "strategy",
+        "description": "Address or contract name of the strategy",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:withdrawAllFromStrategy"
+  },
+  {
+    "name": "withdrawAllFromStrategies",
+    "description": "Withdraw all assets from all of a vault's strategies",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      }
+    ],
+    "destination": "ops:withdrawAllFromStrategies"
+  },
+  {
+    "name": "requestWithdrawal",
+    "description": "Request a withdrawal from a vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "amount",
+        "description": "The amount of oTokens to withdraw",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:requestWithdrawal"
+  },
+  {
+    "name": "claimWithdrawal",
+    "description": "Claim a previously requested withdrawal from a vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "requestId",
+        "description": "The id from the previous withdrawal request",
+        "type": "int",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:claimWithdrawal"
+  },
+  {
+    "name": "execute",
+    "description": "Execute a governance proposal",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "id",
+        "description": "Proposal ID",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "governor",
+        "description": "Override Governor address",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:execute"
+  },
+  {
+    "name": "executeOnFork",
+    "description": "Enqueue and execute a proposal on the Fork",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "id",
+        "description": "Id of the proposal",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "gaslimit",
+        "description": "Execute proposal gas limit",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:executeOnFork"
+  },
+  {
+    "name": "proposal",
+    "description": "Dumps the state of a proposal",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "id",
+        "description": "Id of the proposal",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:proposal"
+  },
+  {
+    "name": "governors",
+    "description": "Get list of governors for all contracts",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:governors"
+  },
+  {
+    "name": "curvePool",
+    "description": "Dumps the current state of a Curve pool",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pool",
+        "description": "Symbol of the curve Metapool. OUSD or OETH",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "fromBlock",
+        "description": "Block number to compare back to. (default: no diff)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "user",
+        "description": "Address of user adding, removing or swapping tokens. (default: no user)",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "output",
+        "description": "true will output to the console. false will use debug logs.",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      }
+    ],
+    "destination": "ops:curvePool"
+  },
+  {
+    "name": "calculateMaxPricePerVote",
+    "description": "Calculates the MaxPricePerVote for Curve Pool Booster",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "efficiency",
+        "description": "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "1"
+      },
+      {
+        "name": "skip",
+        "description": "Skip setting RewardPerVote (pass array of zeros)",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      },
+      {
+        "name": "output",
+        "description": "true will output to the console. false will use debug logs.",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      }
+    ],
+    "destination": "ops:calculateMaxPricePerVote"
+  },
+  {
+    "name": "manageMerklPoolBoosterBribes",
+    "description": "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "exclusionList",
+        "description": "Comma-separated list of pool booster addresses to exclude",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": ""
+      },
+      {
+        "name": "moduleAddress",
+        "description": "Override module address (default: resolved from chain)",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:manageMerklPoolBoosterBribes"
+  },
+  {
+    "name": "amoStrat",
+    "description": "Dumps the current state of an AMO strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pool",
+        "description": "Symbol of the curve Metapool. OUSD or OETH",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "fromBlock",
+        "description": "Block number to compare back to. (default: no diff)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "output",
+        "description": "true will output to the console. false will use debug logs.",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      },
+      {
+        "name": "amm",
+        "description": "Type of pool. eg curve, balancer or swapx",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "curve"
+      }
+    ],
+    "destination": "ops:amoStrat"
+  },
+  {
+    "name": "curveAdd",
+    "description": "Add liquidity to Curve Metapool",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "otokens",
+        "description": "Amount of OTokens. eg OETH or OUSD",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "assets",
+        "description": "Amount of assets. eg ETH",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "slippage",
+        "description": "Max allowed slippage as a percentage to 2 decimal places.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 1
+      },
+      {
+        "name": "min",
+        "description": "Min Curve pool LP tokens to be minted.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:curveAdd"
+  },
+  {
+    "name": "curveRemove",
+    "description": "Remove liquidity from Curve Metapool",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "otokens",
+        "description": "Amount of OTokens. eg OETH or OUSD",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "assets",
+        "description": "Amount of assets. eg ETH",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "slippage",
+        "description": "Max allowed slippage as a percentage to 2 decimal places.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 1
+      }
+    ],
+    "destination": "ops:curveRemove"
+  },
+  {
+    "name": "curveSwap",
+    "description": "Swap Metapool tokens",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "from",
+        "description": "Symbol of the from token. eg OETH, ETH, OUSD",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of from tokens.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "min",
+        "description": "Min tokens out.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      }
+    ],
+    "destination": "ops:curveSwap"
+  },
+  {
+    "name": "amoMint",
+    "description": "AMO strategy mints OTokens and one-sided add to the Metapool",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "amount",
+        "description": "Amount of OTokens to mint",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      }
+    ],
+    "destination": "ops:amoMint"
+  },
+  {
+    "name": "amoBurn",
+    "description": "AMO strategy does a one-sided remove of OTokens from the Metapool which are then burned.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "amount",
+        "description": "Amount of Curve LP tokens to burn for removed OTokens",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      }
+    ],
+    "destination": "ops:amoBurn"
+  },
+  {
+    "name": "amoRemove",
+    "description": "AMO strategy does a one-sided remove of ETH from the Metapool and adds the asset to the vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "amount",
+        "description": "Amount of Curve pool LP tokens to burn for removed assets",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      }
+    ],
+    "destination": "ops:amoRemove"
+  },
+  {
+    "name": "vaultDelta",
+    "description": "Get a vaults's delta values",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:vaultDelta"
+  },
+  {
+    "name": "takeSnapshot",
+    "description": "Takes a snapshot of a vault's values",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      }
+    ],
+    "destination": "ops:takeSnapshot"
+  },
+  {
+    "name": "checkDelta",
+    "description": "Checks a vault's delta values",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH or OUSD",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "OETH"
+      },
+      {
+        "name": "profit",
+        "description": "Expected profit",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "profitVariance",
+        "description": "Allowed profit variance",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "vaultChange",
+        "description": "Expected change in total supply ",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "vaultChangeVariance",
+        "description": "Allowed total supply variance",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:checkDelta"
+  },
+  {
+    "name": "proxyUpgrades",
+    "description": "Lists all proxy implementation changes",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "contract",
+        "description": "Name, eg OETHVaultProxy, or address of the proxy contract",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "from",
+        "description": "Block to query transaction events from. (default: deployment block)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 10884563
+      },
+      {
+        "name": "to",
+        "description": "Block to query transaction events to. (default: current block)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      }
+    ],
+    "destination": "ops:proxyUpgrades"
+  },
+  {
+    "name": "governor",
+    "description": "Gets the governor of a Governable contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:governor"
+  },
+  {
+    "name": "transferGovernance",
+    "description": "Start transfer of governance for a Governable contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "governor",
+        "description": "Address of the new governor",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:transferGovernance"
+  },
+  {
+    "name": "claimGovernance",
+    "description": "Complete the transfer of governance for a Governable contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:claimGovernance"
+  },
+  {
+    "name": "transferToken",
+    "description": "Transfer tokens in a contract to the governor",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "The amount of tokens to transfer. (default: balance)",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:transferToken"
+  },
+  {
+    "name": "checkBalance",
+    "description": "Gets the asset balance of a strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:checkBalance"
+  },
+  {
+    "name": "getRewardTokenAddresses",
+    "description": "Gets the reward tokens of a strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:getRewardTokenAddresses"
+  },
+  {
+    "name": "setRewardTokenAddresses",
+    "description": "Sets the reward token of a strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "proxy",
+        "description": "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:setRewardTokenAddresses"
+  },
+  {
+    "name": "deployStakingProxy",
+    "description": "Deploy the compounding staking proxy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:deployStakingProxy"
+  },
+  {
+    "name": "snapAero",
+    "description": "Takes a snapshot of the Aerodrome Strategy at a block",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:snapAero"
+  },
+  {
+    "name": "snapVault",
+    "description": "Takes a snapshot of a OETH Vault",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "symbol",
+        "description": "Symbol of the OToken. eg OETH, OUSD or OS",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:snapVault"
+  },
+  {
+    "name": "depositRoot",
+    "description": "Calculates the Beacon chain deposit root for a validator",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pubkey",
+        "description": "The validator's public key in hex format",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "sig",
+        "description": "The validator's signature in hex format",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "owner",
+        "description": "The withdrawal address of the validator in hex format",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "index",
+        "description": "The number of the Native Staking Contract deployed.",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "type",
+        "description": "Validator type. 0x00, 0x01 or 0x02",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "0x02"
+      },
+      {
+        "name": "amount",
+        "description": "The deposit amount.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 32
+      }
+    ],
+    "destination": "ops:depositRoot"
+  },
+  {
+    "name": "signMessage",
+    "description": "Sign a message using a Elliptic-curve Diffie–Hellman (ECDH) private key",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "message",
+        "description": "Message to be signed",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:signMessage"
+  },
+  {
+    "name": "deployForceEtherSender",
+    "description": "Deploy a ForceEtherSender contract for simulating hacks",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:deployForceEtherSender"
+  },
+  {
+    "name": "forceSend",
+    "description": "Force send ETH to a recipient using self destruct",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "sender",
+        "description": "Address of the deployed ForceEtherSender contract",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "recipient",
+        "description": "Address of the contract to receive the Ether",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:forceSend"
+  },
+  {
+    "name": "mine",
+    "description": "Mines a number of blocks",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "blocks",
+        "description": "The number of blocks to mine",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 1
+      }
+    ],
+    "destination": "ops:mine"
+  },
+  {
+    "name": "sonicDefaultValidator",
+    "description": "Set the default validator for the Sonic Staking Strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "id",
+        "description": "Validator identifier. eg 18",
+        "type": "int",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:sonicDefaultValidator"
+  },
+  {
+    "name": "sonicStaking",
+    "description": "Snap of the Sonic Staking Strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:sonicStaking"
+  },
+  {
+    "name": "depositValidator",
+    "description": "Deposits ETH to a validator on the Beacon chain",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pubkey",
+        "description": "Validator public key in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "sig",
+        "description": "Validator signature in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "cred",
+        "description": "Validator withdrawal credentials in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "root",
+        "description": "Beacon chain deposit data root in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount to deposit",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 32
+      }
+    ],
+    "destination": "ops:depositValidator"
+  },
+  {
+    "name": "setRegistrator",
+    "description": "Set the registrator of the compounding staking strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "account",
+        "description": "Address of the registrator",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:setRegistrator"
+  },
+  {
+    "name": "beaconRoot",
+    "description": "Gets the parent beacon block root for an execution layer block from the BeaconRoot contract",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Execution layer block number to get the parent beacon block root for",
+        "type": "int",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "live",
+        "description": "Use live chain (mainnet or testnet) to get block timestamp. Not the local fork",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": true
+      }
+    ],
+    "destination": "ops:beaconRoot"
+  },
+  {
+    "name": "copyBeaconRoot",
+    "description": "Copies a parent beacon block root from mainnet to a local BeaconRoot contract (EIP-4788)",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Execution layer block number to set the parent root for",
+        "type": "int",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:copyBeaconRoot"
+  },
+  {
+    "name": "mockBeaconRoot",
+    "description": "Replaces the BeaconRoot contract (EIP-4788) with a mocked one for testing purposes",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:mockBeaconRoot"
+  },
+  {
+    "name": "getValidator",
+    "description": "Gets the details of a validator",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "index",
+        "description": "Index of the validator on the Beacon chain",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "pubkey",
+        "description": "Validator public key in hex format with a 0x prefix",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "slot",
+        "description": "Beacon chain slot. Default head",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "epoch",
+        "description": "Beacon chain epoch. Uses the first slot of the epoch",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:getValidator"
+  },
+  {
+    "name": "getValidators",
+    "description": "Gets the details of multiple validators",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pubkeys",
+        "description": "Comma separated list of validator public keys in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "slot",
+        "description": "Beacon chain slot. Default head",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "epoch",
+        "description": "Beacon chain epoch. Uses the first slot of the epoch",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:getValidators"
+  },
+  {
+    "name": "verifyValidator",
+    "description": "Verify a validator on the Beacon chain",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "index",
+        "description": "Index of the validator on the Beacon chain",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "ids",
+        "description": "Comma-separated validator indexes to verify using one beacon state",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "slot",
+        "description": "Any slot after the validator was registered on the Beacon chain. Default latest",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "dryrun",
+        "description": "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      },
+      {
+        "name": "cred",
+        "description": "Override the withdrawal credential. Used when generating proofs for unit tests or the deposit was front-run.",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:verifyValidator"
+  },
+  {
+    "name": "verifyDeposit",
+    "description": "Verify a deposit on the Beacon chain",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "root",
+        "description": "The pending deposit root emitted in the `ETHStaked` event from the `stakeETH` function",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "slot",
+        "description": "The slot on or after the deposit was process on the beacon chain. Default deposit processed slot",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "dryrun",
+        "description": "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      },
+      {
+        "name": "test",
+        "description": "Used for generating unit test data.",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      },
+      {
+        "name": "index",
+        "description": "Override the validator with the index of a test validator. Used when generating proofs for unit tests.",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:verifyDeposit"
+  },
+  {
+    "name": "autoValidatorDeposits",
+    "description": "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "dryrun",
+        "description": "Do not send any txs to the staking strategy contract",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      }
+    ],
+    "destination": "ops:autoValidatorDeposits"
+  },
+  {
+    "name": "withdrawValidator",
+    "description": "Requests a partial or full withdrawal from a compounding validator",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pubkey",
+        "description": "The validator's public key in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of ETH to withdraw from the validator. A zero amount is a full exit.",
+        "type": "float",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 0
+      },
+      {
+        "name": "direct",
+        "description": "Withdraw via the staking contract or directly to the request withdrawal contract",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      }
+    ],
+    "destination": "ops:withdrawValidator"
+  },
+  {
+    "name": "autoValidatorWithdrawals",
+    "description": "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "buffer",
+        "description": "Withdrawal buffer in basis points. 100 = 1%",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 100
+      },
+      {
+        "name": "dryrun",
+        "description": "Do not send any txs to the staking strategy contract",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      }
+    ],
+    "destination": "ops:autoValidatorWithdrawals"
+  },
+  {
+    "name": "stakeValidator",
+    "description": "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "pubkey",
+        "description": "The validator's public key in hex format with a 0x prefix",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "sig",
+        "description": "The validator's deposit signature in hex format with a 0x prefix",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "amount",
+        "description": "Amount of ETH to deposit to the validator.",
+        "type": "float",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "withdrawalCredentials",
+        "description": "Withdrawal credentials of the validator",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "depositMessageRoot",
+        "description": "Deposit message root provided by the validator operator",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "forkVersion",
+        "description": "Fork version of the beacon chain. Required for validating the BLS signature",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "00000000"
+      },
+      {
+        "name": "dryrun",
+        "description": "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+        "type": "boolean",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": false
+      }
+    ],
+    "destination": "ops:stakeValidator"
+  },
+  {
+    "name": "snapBalances",
+    "description": "Takes a snapshot of the staking strategy's balance",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:snapBalances"
+  },
+  {
+    "name": "snapStakingStrat",
+    "description": "Dumps the staking strategy's data",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "buffer",
+        "description": "Withdrawal buffer in basis points. 100 = 1%",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": 100
+      }
+    ],
+    "destination": "ops:snapStakingStrat"
+  },
+  {
+    "name": "tenderlySync",
+    "description": "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      }
+    ],
+    "destination": "ops:tenderlySync"
+  },
+  {
+    "name": "tenderlyUpload",
+    "description": "Uploads a contract to Tenderly.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "name",
+        "description": "The contract's name",
+        "type": "string",
+        "optional": false,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:tenderlyUpload"
+  },
+  {
+    "name": "claimMorphoRewards",
+    "description": "Claim MORPHO rewards from the Morpho Vaults.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "strategy",
+        "description": "The address of the strategy. Default is the Morpho OUSD v2 Strategy.",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e"
+      }
+    ],
+    "destination": "ops:claimMorphoRewards"
+  },
+  {
+    "name": "snapMorpho",
+    "description": "Get a snapshot of the Morpho OUSD v2 strategy.",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "block",
+        "description": "Block number. (default: latest)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:snapMorpho"
+  },
+  {
+    "name": "planRebalance",
+    "description": "Show current vs recommended OUSD strategy allocations",
+    "params": [
+      {
+        "name": "relayerId",
+        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false,
+        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
+      },
+      {
+        "name": "simVault",
+        "description": "Simulate additional USDC in vault (whole dollars, negative to remove)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "simEth",
+        "description": "Simulate additional USDC in Ethereum Morpho (whole dollars)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "simBase",
+        "description": "Simulate additional USDC in Base Morpho (whole dollars)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "simHyper",
+        "description": "Simulate additional USDC in HyperEVM Morpho (whole dollars)",
+        "type": "int",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      },
+      {
+        "name": "json",
+        "description": "Write structured JSON output to this file path",
+        "type": "string",
+        "optional": true,
+        "flag": false,
+        "variadic": false
+      }
+    ],
+    "destination": "ops:planRebalance"
+  },
+  {
+    "name": "accounts",
+    "description": "Prints the list of configured accounts",
+    "params": [],
+    "destination": "ops:accounts"
+  }
+]

@@ -13,7 +13,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 
 ## Toolchain
 
-**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. Hardhat remains only for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`). The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. Hardhat remains only for the ops task CLI (`tasks/*.js`, wired up in `hardhat.config.js`) and the local fork node. The committed `deployments/` descriptors are the address/ABI registry consumed by both toolchains; there are no Hardhat deployment scripts.
 
 ## Setup
 
@@ -324,7 +324,7 @@ Foundry fork and smoke tests impersonate these with `vm.prank`. For Hardhat task
 ```bash
 make match file=contracts/vault/VaultCore.sol addr=0xADDRESS
 ```
-For manually verifying legacy Hardhat-deployed contracts, use `yarn hardhat verify` with an explicit `--contract` flag (see README.md).
+For manual contract verification, use Foundry's `forge verify-contract` (see README.md).
 
 ## Logger Pattern
 
