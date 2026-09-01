@@ -9,7 +9,7 @@
  *   1. build/storage-onchain/<network>/<Name>.json — the layout of the contract
  *      ACTUALLY deployed, read from its verified source
  *      (scripts/fetch-onchain-storage-layouts.js). Ground truth.
- *   2. storageLayout/<network>/<Name>.json — the legacy Hardhat-era snapshot.
+ *   2. storageLayout/<network>/<Name>.json — the legacy snapshot.
  *      Used only where the chain fetch could not run: contracts compiled with
  *      solc 0.5.x that the current toolchain cannot rebuild, and stateless
  *      contracts whose layout is empty anyway.
@@ -117,7 +117,7 @@ function main() {
     // No layout source is legitimate for proxies (they declare no storage, and
     // the legacy gate excluded them) and for deprecated contracts whose source
     // has left the repo. Still normalise the file to the descriptor format, so
-    // the whole tree matches what create-hardhat-format-descriptors.js writes.
+    // the whole tree matches what create-deployment-descriptors.js writes.
     if (!layout) {
       stats.none++;
       noSource.push(name);

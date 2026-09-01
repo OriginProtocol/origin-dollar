@@ -200,5 +200,5 @@ The before/after/Δ are shown in the table header and returned from
 - `utils/rebalancer.js` - core logic (allocation, filtering, formatting)
 - `utils/rebalancer-config.js` - strategy configs and constraints
 - `utils/morpho-apy.js` - Morpho APY fetching
-- `tasks/rebalancer.js` - Hardhat task entry point
+- `tasks/rebalancer.js` - ops task entry point
 - `tasks/actions/ousdRebalancer.ts` - Talos execution automation

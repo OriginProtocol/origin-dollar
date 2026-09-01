@@ -44,11 +44,10 @@ RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true
 COPY . .
 
 # No contract compilation needed: the Talos actions resolve addresses/ABIs from
-# the committed deployments/ artifacts and curated abi/ interfaces — hardhat and
-# artifacts/ are no longer on the action runtime path.
+# the committed deployments/ artifacts and curated abi/ interfaces.
 
 # Dump the action catalog to /app/actions-catalog.json at build time from the
-# in-process registry (tsx, no hardhat). The runner reads this file at boot and
+# in-process registry. The runner reads this file at boot and
 # passes it to runContainer's `actionsCatalog`. Fail the image build if an action
 # cannot be loaded so a broken or incomplete catalog is never deployed.
 RUN cd /app \

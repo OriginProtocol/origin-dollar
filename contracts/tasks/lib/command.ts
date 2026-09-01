@@ -3,6 +3,11 @@ import * as contracts from "./contracts";
 import * as deployments from "./deployments";
 import { getChainId, getNetworkName, getProvider } from "./network";
 import { rolesFor } from "./roles";
+import {
+  registeredTasks,
+  type TaskAction,
+  type TaskEntry,
+} from "./task-registry";
 
 export type ParamType = "string" | "int" | "float" | "boolean" | "json";
 export type CommandParam = {
@@ -130,88 +135,24 @@ export function createCommandContext(): CommandContext {
   };
 }
 
-type LegacyAction = (
-  args: Record<string, unknown>,
-  context: CommandContext,
-  runSuper: () => Promise<unknown>
-) => Promise<unknown>;
-type LegacyEntry = { action?: LegacyAction; superAction?: LegacyAction };
-let legacyActions: Map<string, LegacyEntry> | undefined;
+let taskEntries: Map<string, TaskEntry> | undefined;
 
-/**
- * Temporary PR-A adapter: loads the existing task declarations through a tiny,
- * registration-only shim. It never imports or starts Hardhat; the captured
- * business handlers receive the explicit standalone CommandContext above.
- * tasks/tasks.js remains unchanged as the A/B oracle until PR B.
- */
-function loadLegacyActions(): Map<string, LegacyEntry> {
-  if (legacyActions) return legacyActions;
-  const entries = new Map<string, LegacyEntry>();
-  const types = Object.fromEntries(
-    ["string", "int", "float", "boolean", "json", "any"].map((name) => [
-      name,
-      { name },
-    ])
-  );
-  const makeDefinition = (name: string) => {
-    const prior = entries.get(name);
-    const entry: LegacyEntry = prior
-      ? { action: undefined, superAction: prior.action ?? prior.superAction }
-      : {};
-    entries.set(name, entry);
-    const definition: Record<string, unknown> = {
-      paramDefinitions: {},
-      addParam() {
-        return definition;
-      },
-      addOptionalParam() {
-        return definition;
-      },
-      addFlag() {
-        return definition;
-      },
-      addVariadicParam() {
-        return definition;
-      },
-      addOptionalVariadicParam() {
-        return definition;
-      },
-      setAction(action: LegacyAction) {
-        entry.action = action;
-        return definition;
-      },
-    };
-    return definition;
-  };
-  const registration = {
-    task: (name: string) => makeDefinition(name),
-    subtask: (name: string) => makeDefinition(name),
-    types,
-  };
-  const moduleApi = require("node:module") as {
-    _load: (request: string, parent: unknown, isMain: boolean) => unknown;
-  };
-  const originalLoad = moduleApi._load;
-  moduleApi._load = (request, parent, isMain) =>
-    request === "hardhat/config"
-      ? registration
-      : originalLoad(request, parent, isMain);
-  try {
-    require("../tasks.js");
-  } finally {
-    moduleApi._load = originalLoad;
-  }
-  legacyActions = entries;
-  return entries;
+function loadTaskEntries(): Map<string, TaskEntry> {
+  if (taskEntries) return taskEntries;
+  require("../tasks.js");
+  taskEntries = registeredTasks();
+  return taskEntries;
 }
 
-export function legacyHandler(name: string): CommandHandler {
+export function taskHandler(name: string): CommandHandler {
   return async (args, context) => {
-    const entry = loadLegacyActions().get(name);
+    const entry = loadTaskEntries().get(name);
     if (!entry?.action) throw new Error(`No operational handler for '${name}'`);
-    const run = (action: LegacyAction | undefined): Promise<unknown> => {
+    const run = (action: TaskAction | undefined): Promise<unknown> => {
       if (!action) throw new Error(`No parent handler for '${name}'`);
-      return action(args, context, () => run(entry.superAction));
+      return action(args, context, () =>
+        run(entry.superAction)
+      ) as Promise<unknown>;
     };
     const globals = globalThis as Record<string, unknown>;
     const values: Record<string, unknown> = {

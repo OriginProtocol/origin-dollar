@@ -65,7 +65,7 @@ abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
     }
 
     function _deployModule() internal {
-        // Pass all 5 strategies in constructor (as the Hardhat test does)
+        // Pass all 5 strategies in constructor (as the legacy test does)
         address[] memory strategies = new address[](5);
         strategies[0] = ousdCurveAMOProxy;
         strategies[1] = oethCurveAMOProxy;

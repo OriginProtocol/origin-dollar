@@ -28,7 +28,7 @@ const {
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
-const { getNetworkName } = require("./lib/network");
+const { CHAIN_NAMES, getNetworkName } = require("./lib/network");
 const { ZERO_BYTES32 } = require("../utils/constants");
 const {
   address: mainnetCompoundingStakingSSVStrategyProxy,
@@ -43,15 +43,7 @@ const {
 const log = require("../utils/logger")("task:beacon");
 const MAX_DATE_MS = 8640000000000000n;
 
-const getStrategyNetworkName = async () => {
-  const networkName = await getNetworkName();
-  if (networkName === "hardhat") {
-    return (
-      process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat"
-    );
-  }
-  return networkName;
-};
+const getStrategyNetworkName = async () => getNetworkName();
 
 const getKnownWithdrawalStrategies = (networkName) => {
   if (networkName === "mainnet") {
@@ -150,9 +142,12 @@ const formatEpochUtc = (epoch, networkName) => {
 };
 
 /// Returns an ethers provider connected to the Ethereum mainnet or Hoodi.
-/// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses Hardhat provider if not supplied.
+/// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses the ambient provider if not supplied.
 async function getLiveProvider(provider) {
-  const networkName = await getNetworkName(provider);
+  const networkName = provider
+    ? CHAIN_NAMES[(await provider.getNetwork()).chainId]
+    : getNetworkName();
+  if (!networkName) throw new Error("Unsupported provider chain");
   if (networkName == "hoodi") {
     return new ethers.providers.JsonRpcProvider(process.env.HOODI_PROVIDER_URL);
   }
