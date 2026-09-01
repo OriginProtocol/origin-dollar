@@ -1,1 +1,1 @@
-dotenv: .env
+# Environment variables are inherited from the shell. A local .env is optional.

@@ -58,7 +58,7 @@ from world import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     # Swap OETH to WETH
     oeth_balance = oeth.balanceOf(MULTICHAIN_STRATEGIST)
@@ -145,7 +145,7 @@ from world import *
 def main(): 
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     woeth_balance = woeth.balanceOf(MULTICHAIN_STRATEGIST)
 
@@ -167,7 +167,7 @@ from world import *
 def main(): 
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     withdrawal_request_id = 613
 

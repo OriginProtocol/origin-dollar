@@ -622,7 +622,7 @@ import brownie
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     weth_amount = 822 * 10**18
     
@@ -652,7 +652,7 @@ from world_base import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     eth_balance = base_strategist.balance() - (0.02 * 10**18)
     print("eth_balance", eth_balance)
