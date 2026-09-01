@@ -70,28 +70,27 @@ The [Slither installation](https://github.com/crytic/slither#how-to-install) ins
 pnpm slither
 ```
 
-## Hardhat
+## Toolchains
 
-[Hardhat](https://hardhat.org/) is used to compile, test, and deploy contracts. The configuration for Hardhat is in [hardhat.config.js](./hardhat.config.js).
+[Foundry](https://book.getfoundry.sh/) is the contract toolchain. It builds,
+tests, and deploys contracts:
 
-```
-# Compile changed contracts
-pnpm hardhat compile
-
-# Recompile all contracts
-pnpm clean
-pnpm hardhat compile
+```sh
+make build
+make test-unit
+make simulate
 ```
 
-Alternatively, the Hardhat companion npm package [hardhat-shorthand](https://www.npmjs.com/package/hardhat-shorthand) can be used as a shorthand for npx hardhat. Installation instructions can be found [here](https://hardhat.org/hardhat-runner/docs/guides/command-line-completion#installation).
+Operational commands use the standalone TypeScript CLI. Hardhat is temporarily
+retained only for the local forked node:
 
+```sh
+pnpm ops <command> --network <network>
+pnpm node
 ```
-## Compile
-hh compile
 
-## Tasks
-hh task
-```
+Run `pnpm ops help` for the full command catalogue. The next PR migrates the
+local forked node to Anvil.
 
 ## Testing
 
@@ -105,7 +104,7 @@ make test-fork-base
 
 Tests live under [`tests/`](./tests). Contract mocks live under [`contracts/mocks/`](./contracts/mocks) and Foundry-specific mocks under [`tests/mocks/`](./tests/mocks).
 
-The remaining Mocha suite validates the Hardhat ops task implementation, not smart contracts:
+The remaining Mocha suite validates the standalone ops implementation, not smart contracts:
 
 ```sh
 pnpm test:tasks
@@ -143,34 +142,16 @@ Example module names
 
 ## Contract Sizes
 
-The Hardhat plug-in [hardhat-contract-sizer](https://www.npmjs.com/package/hardhat-contract-sizer) is used to report the size of contracts.
+Foundry reports deployed and init code sizes during compilation:
 
-This is not enabled by default. To enable, export the `CONTRACT_SIZE` environment variable.
-
-```
-export CONTRACT_SIZE=true
-```
-
-The contract sizes will be output after the contracts are compiled. Here's a sample of the first few.
-
-```
-Compiled 155 Solidity files successfully
- ·-----------------------------------------|--------------------------------|--------------------------------·
- |  Solc version: 0.8.7                    ·  Optimizer enabled: true       ·  Runs: 200                     │
- ··········································|································|·································
- |  Contract Name                          ·  Deployed size (KiB) (change)  ·  Initcode size (KiB) (change)  │
- ··········································|································|·································
- |  AaveStrategy                           ·                     11.427 ()  ·                     11.583 ()  │
- ··········································|································|·································
- |  AaveStrategyProxy                      ·                      2.438 ()  ·                      2.591 ()  │
- ··········································|································|·································
- |  Address                                ·                      0.084 ()  ·                      0.138 ()  │
+```sh
+forge build --sizes
 ```
 
 
 ## Signers
 
-When using Hardhat tasks, there are a few options for specifying the wallet to send transactions from.
+When using standalone ops commands, there are a few options for specifying the wallet to send transactions from.
 
 1. Primary key
 2. AWS KMS signer
@@ -191,14 +172,14 @@ unset GOVERNOR_PK
 
 ### AWS KMS Signer
 
-Hardhat tasks can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
+Standalone ops commands can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY` are set.
 
 The default `relayer-id` is `origin-relayer-production-evm`. Some tasks can be mapped
 to different defaults in code, and a user-provided task parameter always wins:
 
 ```
-npx hardhat <task> --network <network> --relayer-id <kms-key-id-or-alias>
+pnpm ops <command> --network <network> --relayer-id <kms-key-id-or-alias>
 ```
 
 The relayer resolution precedence is:
@@ -223,19 +204,21 @@ unset IMPERSONATE
 
 ### Automated Actions (Talos)
 
-The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@oplabs/talos-client`](https://github.com/oplabs/talos):
+The standalone actions under `contracts/tasks/actions/` are driven in
+production by a container that imports
+[`@oplabs/talos-client`](https://github.com/oplabs/talos):
 
-- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
-- **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
-- **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
+- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and runs the command stored with each schedule.
+- **`contracts/migrations/seed_schedules.sql`** seeds those commands using `pnpm exec tsx tasks/run.ts <name> --network <chain>`.
+- **`contracts/tasks/lib/signer.ts`** wraps the standalone signer with `wrapSignerWithNonceQueueV5` when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
 
 Every scheduled action — its cadence and one-line purpose — is catalogued in [`docs/ACTIONS.md`](docs/ACTIONS.md).
 
-Every action remains directly executable as a hardhat task on your dev machine — nothing about the local workflow changed:
+Run an action locally through the standalone CLI:
 
 ```
-pnpm hardhat harvest --network mainnet
-pnpm hardhat healthcheck --network mainnet
+pnpm action harvest --network mainnet
+pnpm action healthcheck --network mainnet
 ```
 
 **No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.
@@ -251,8 +234,6 @@ does not provide an owner confirmation or reduce the Safe threshold.
 
 ## Contract Verification
 
-The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.
-
 ### Auto-verification
 
 The Foundry deployment targets verify newly deployed contracts automatically:
@@ -265,55 +246,7 @@ Equivalent targets exist for the other supported networks; see `scripts/deploy/R
 
 ### Manual verification
 
-**IMPORTANT:**
-
-- Currently only yarn works. Do not use npx/pnpm
-- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode mismatch errors
-
-There's an example
-
-```
-yarn hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
-```
-
-Example with constructor parameters passed as command params
-
-```
-yarn hardhat verify --network mainnet 0x0FC66355B681503eFeE7741BD848080d809FD6db --contract contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 0xAA8af8Db4B6a827B51786334d26349eb03569731 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd
-```
-
-Example with constructor parameters saved to file and file path passed to the command
-
-```
-echo "module.exports = [[
-  \"0x0000000000000000000000000000000000000001\",
-  \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\"
-}]" > flux-args.js
-npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrategy.sol:FluxStrategy --constructor-args flux-args.js 0x57d49c28Cf9A0f65B1279a97eD01C3e49a5A173f
-```
-
-`hardhat-deploy` package offers a secondary way to verify contracts, where constructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
-
-```
-yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
-```
-
-#### Addressing verification slowdowns
-
-Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter
-it can take up to 4-5 minutes to gather the necessary contract information.
-Use `--contract` e.g. `--contract contracts/vault/VaultAdmin.sol:VaultAdmin` to mitigate the issue.
-
-#### Migration to full support of Etherscan V2 api
-
-Migrating to Etherscan V2 has been attempted with no success.
-Resources:
-
-- migration guid by Etherscan: https://docs.etherscan.io/v2-migration
-- guide for Hardhat setup: https://docs.etherscan.io/contract-verification/verify-with-hardhat. (note upgrading @nomicfoundation/hardhat-verify to 2.0.14 didn't resolve the issue last time)
-- openzeppelin-upgrades claims to have solved the issue in 3.9.1 version of the package: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/1165 Not only does this not solve the verification issue, it is also a breaking change for our repo.
-
-Good luck when attempting to solve this.
+Use Foundry's `forge verify-contract`; see the [Foundry verification documentation](https://getfoundry.sh/forge/reference/verify-contract/) for supported explorers and constructor arguments.
 
 ### Deployed contract code verification
 

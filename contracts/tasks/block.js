@@ -40,10 +40,7 @@ async function getDiffBlocks(taskArguments) {
 
 async function advanceBlocks(blocks) {
   log(`Advancing ${blocks} blocks`);
-  // hardhat-only (test/dev) — required lazily so the standalone action runtime
-  // never loads hardhat just to import this module.
-  const { mine } = require("@nomicfoundation/hardhat-network-helpers");
-  await mine(blocks);
+  await currentProvider().send("hardhat_mine", [`0x${blocks.toString(16)}`]);
 }
 
 module.exports = {
