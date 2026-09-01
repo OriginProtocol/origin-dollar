@@ -1,1340 +1,1353 @@
 {
-  "address": "0x6469c899463CB5a455aee15318add98554AE20CF",
+  "address": "0x689Dd7a91cC353de2b8B1b09Cd9DBd57f7546dCe",
   "abi": [
     {
+      "type": "constructor",
       "inputs": [
         {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "platformAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "vaultAddress",
-              "type": "address"
-            }
-          ],
-          "internalType": "struct InitializableAbstractStrategy.BaseStrategyConfig",
           "name": "_baseConfig",
-          "type": "tuple"
+          "type": "tuple",
+          "internalType": "struct InitializableAbstractStrategy.BaseStrategyConfig",
+          "components": [
+            {
+              "name": "platformAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "vaultAddress",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
         },
         {
-          "internalType": "address",
           "name": "_wethAddress",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         },
         {
-          "internalType": "address",
           "name": "_beaconChainDepositContract",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         },
         {
-          "internalType": "address",
           "name": "_beaconProofs",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         },
         {
-          "internalType": "uint64",
           "name": "_beaconGenesisTimestamp",
-          "type": "uint64"
+          "type": "uint64",
+          "internalType": "uint64"
         }
       ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [],
-      "name": "InvalidFirstDepositAmount",
-      "type": "error"
+      "type": "receive",
+      "stateMutability": "payable"
     },
     {
-      "inputs": [],
-      "name": "NoFirstDeposit",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotRegistrator",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotRegistratorOrGovernor",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "UnsupportedAsset",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "UnsupportedFunction",
-      "type": "error"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "blockRoot",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "ethBalance",
-          "type": "uint256"
-        }
-      ],
-      "name": "BalancesSnapped",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint64",
-          "name": "timestamp",
-          "type": "uint64"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "totalDepositsWei",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "totalValidatorBalance",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "ethBalance",
-          "type": "uint256"
-        }
-      ],
-      "name": "BalancesVerified",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_pToken",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "Deposit",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pendingDepositRoot",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amountWei",
-          "type": "uint256"
-        }
-      ],
-      "name": "DepositVerified",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pubKeyHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pendingDepositRoot",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes",
-          "name": "pubKey",
-          "type": "bytes"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amountWei",
-          "type": "uint256"
-        }
-      ],
-      "name": "ETHStaked",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "FirstDepositReset",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "previousGovernor",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newGovernor",
-          "type": "address"
-        }
-      ],
-      "name": "GovernorshipTransferred",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_oldHarvesterAddress",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newHarvesterAddress",
-          "type": "address"
-        }
-      ],
-      "name": "HarvesterAddressesUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amountWei",
-          "type": "uint256"
-        }
-      ],
-      "name": "InitialDepositAmountChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_pToken",
-          "type": "address"
-        }
-      ],
-      "name": "PTokenAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_pToken",
-          "type": "address"
-        }
-      ],
-      "name": "PTokenRemoved",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "Paused",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "previousGovernor",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newGovernor",
-          "type": "address"
-        }
-      ],
-      "name": "PendingGovernorshipTransfer",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newAddress",
-          "type": "address"
-        }
-      ],
-      "name": "RegistratorChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address[]",
-          "name": "_oldAddresses",
-          "type": "address[]"
-        },
-        {
-          "indexed": false,
-          "internalType": "address[]",
-          "name": "_newAddresses",
-          "type": "address[]"
-        }
-      ],
-      "name": "RewardTokenAddressesUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "recipient",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "rewardToken",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "RewardTokenCollected",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "Unpaused",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pubKeyHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "ValidatorInvalid",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pubKeyHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint40",
-          "name": "validatorIndex",
-          "type": "uint40"
-        }
-      ],
-      "name": "ValidatorVerified",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "pubKeyHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amountWei",
-          "type": "uint256"
-        }
-      ],
-      "name": "ValidatorWithdraw",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_pToken",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "Withdrawal",
-      "type": "event"
-    },
-    {
-      "inputs": [],
+      "type": "function",
       "name": "BEACON_PROOFS",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "address",
           "name": "",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "SNAP_BALANCES_DELAY",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "uint64",
           "name": "",
-          "type": "uint64"
+          "type": "uint64",
+          "internalType": "uint64"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "type": "function",
       "name": "assetToPToken",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
+          "name": "",
+          "type": "address",
+          "internalType": "address"
         }
       ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "checkBalance",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
       "outputs": [
         {
-          "internalType": "uint256",
           "name": "balance",
-          "type": "uint256"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "claimGovernance",
+      "inputs": [],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "collectRewardTokens",
+      "inputs": [],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
+      "type": "function",
       "name": "deposit",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "depositAll",
+      "inputs": [],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "type": "function",
       "name": "depositList",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "bytes32",
           "name": "",
-          "type": "bytes32"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "depositListLength",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "uint256",
           "name": "",
-          "type": "uint256"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "depositedWethAccountedFor",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "uint256",
           "name": "",
-          "type": "uint256"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
+      "type": "function",
       "name": "deposits",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
       "outputs": [
         {
-          "internalType": "bytes32",
           "name": "pubKeyHash",
-          "type": "bytes32"
+          "type": "bytes32",
+          "internalType": "bytes32"
         },
         {
-          "internalType": "uint64",
           "name": "amountGwei",
-          "type": "uint64"
+          "type": "uint64",
+          "internalType": "uint64"
         },
         {
-          "internalType": "uint64",
           "name": "slot",
-          "type": "uint64"
+          "type": "uint64",
+          "internalType": "uint64"
         },
         {
-          "internalType": "uint32",
           "name": "depositIndex",
-          "type": "uint32"
+          "type": "uint32",
+          "internalType": "uint32"
         },
         {
-          "internalType": "enum CompoundingValidatorStorage.DepositStatus",
           "name": "status",
-          "type": "uint8"
+          "type": "uint8",
+          "internalType": "enum CompoundingValidatorStorage.DepositStatus"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "firstDeposit",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "bool",
           "name": "",
-          "type": "bool"
+          "type": "bool",
+          "internalType": "bool"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "getRewardTokenAddresses",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "address[]",
           "name": "",
-          "type": "address[]"
+          "type": "address[]",
+          "internalType": "address[]"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "governor",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "address",
           "name": "",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "harvesterAddress",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "address",
           "name": "",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "initialDepositAmountWei",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "uint256",
           "name": "",
-          "type": "uint256"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "_rewardTokenAddresses",
-          "type": "address[]"
-        },
-        {
-          "internalType": "address[]",
-          "name": "_assets",
-          "type": "address[]"
-        },
-        {
-          "internalType": "address[]",
-          "name": "_pTokens",
-          "type": "address[]"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_initialDepositAmountWei",
-          "type": "uint256"
-        }
-      ],
+      "type": "function",
       "name": "initialize",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "isGovernor",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "lastVerifiedEthBalance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "pause",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "paused",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "platformAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "removePToken",
-      "outputs": [],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "resetFirstDeposit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "rewardTokenAddresses",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "safeApproveAllTokens",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_harvesterAddress",
-          "type": "address"
-        }
-      ],
-      "name": "setHarvesterAddress",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_initialDepositAmountWei",
-          "type": "uint256"
-        }
-      ],
-      "name": "setInitialDepositAmount",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "setPTokenAddress",
-      "outputs": [],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_address",
-          "type": "address"
-        }
-      ],
-      "name": "setRegistrator",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address[]",
           "name": "_rewardTokenAddresses",
-          "type": "address[]"
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_assets",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_pTokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_initialDepositAmountWei",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isGovernor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastVerifiedBalanceTimestamp",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastVerifiedEthBalance",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pause",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "paused",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "platformAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "removePToken",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "resetFirstDeposit",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "rewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "safeApproveAllTokens",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setHarvesterAddress",
+      "inputs": [
+        {
+          "name": "_harvesterAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setInitialDepositAmount",
+      "inputs": [
+        {
+          "name": "_initialDepositAmountWei",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPTokenAddress",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "setRegistrator",
+      "inputs": [
+        {
+          "name": "_address",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "setRewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "_rewardTokenAddresses",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "snapBalances",
+      "inputs": [],
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "inputs": [],
+      "type": "function",
       "name": "snappedBalance",
+      "inputs": [],
       "outputs": [
         {
-          "internalType": "bytes32",
           "name": "blockRoot",
-          "type": "bytes32"
+          "type": "bytes32",
+          "internalType": "bytes32"
         },
         {
-          "internalType": "uint64",
           "name": "timestamp",
-          "type": "uint64"
+          "type": "uint64",
+          "internalType": "uint64"
         },
         {
-          "internalType": "uint128",
           "name": "ethBalance",
-          "type": "uint128"
+          "type": "uint128",
+          "internalType": "uint128"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "stateMutability": "view"
     },
     {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes",
-              "name": "pubkey",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "signature",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "depositDataRoot",
-              "type": "bytes32"
-            }
-          ],
-          "internalType": "struct CompoundingStakingStrategy.ValidatorStakeData",
-          "name": "validatorStakeData",
-          "type": "tuple"
-        },
-        {
-          "internalType": "uint64",
-          "name": "depositAmountGwei",
-          "type": "uint64"
-        }
-      ],
+      "type": "function",
       "name": "stakeEth",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
+          "name": "validatorStakeData",
+          "type": "tuple",
+          "internalType": "struct CompoundingStakingStrategy.ValidatorStakeData",
+          "components": [
+            {
+              "name": "pubkey",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "signature",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "depositDataRoot",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ]
+        },
+        {
+          "name": "depositAmountGwei",
+          "type": "uint64",
+          "internalType": "uint64"
         }
       ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "supportsAsset",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_newGovernor",
-          "type": "address"
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
         }
       ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "transferGovernance",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
+          "name": "_newGovernor",
+          "type": "address",
+          "internalType": "address"
         }
       ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "transferToken",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "unPause",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "validator",
-      "outputs": [
-        {
-          "internalType": "enum CompoundingValidatorStorage.ValidatorState",
-          "name": "state",
-          "type": "uint8"
-        },
-        {
-          "internalType": "uint40",
-          "name": "index",
-          "type": "uint40"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "validatorRegistrator",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes",
-          "name": "publicKey",
-          "type": "bytes"
-        },
-        {
-          "internalType": "uint64",
-          "name": "amountGwei",
-          "type": "uint64"
-        }
-      ],
-      "name": "validatorWithdrawal",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "vaultAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "verifiedValidators",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "verifiedValidatorsLength",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "balancesContainerRoot",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "balancesContainerProof",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes32[]",
-              "name": "validatorBalanceLeaves",
-              "type": "bytes32[]"
-            },
-            {
-              "internalType": "bytes[]",
-              "name": "validatorBalanceProofs",
-              "type": "bytes[]"
-            }
-          ],
-          "internalType": "struct CompoundingStakingStrategy.BalanceProofs",
-          "name": "balanceProofs",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "pendingDepositContainerRoot",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "pendingDepositContainerProof",
-              "type": "bytes"
-            },
-            {
-              "internalType": "uint32[]",
-              "name": "pendingDepositIndexes",
-              "type": "uint32[]"
-            },
-            {
-              "internalType": "bytes[]",
-              "name": "pendingDepositProofs",
-              "type": "bytes[]"
-            }
-          ],
-          "internalType": "struct CompoundingStakingStrategy.PendingDepositProofs",
-          "name": "pendingDepositProofs",
-          "type": "tuple"
-        }
-      ],
-      "name": "verifyBalances",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "pendingDepositRoot",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint64",
-          "name": "depositProcessedSlot",
-          "type": "uint64"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint64",
-              "name": "slot",
-              "type": "uint64"
-            },
-            {
-              "internalType": "bytes",
-              "name": "proof",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct CompoundingStakingStrategy.FirstPendingDepositSlotProofData",
-          "name": "firstPendingDeposit",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint64",
-              "name": "withdrawableEpoch",
-              "type": "uint64"
-            },
-            {
-              "internalType": "bytes",
-              "name": "withdrawableEpochProof",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct CompoundingStakingStrategy.StrategyValidatorProofData",
-          "name": "strategyValidatorData",
-          "type": "tuple"
-        }
-      ],
-      "name": "verifyDeposit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint64",
-          "name": "nextBlockTimestamp",
-          "type": "uint64"
-        },
-        {
-          "internalType": "uint40",
-          "name": "validatorIndex",
-          "type": "uint40"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "pubKeyHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "withdrawalCredentials",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes",
-          "name": "validatorPubKeyProof",
-          "type": "bytes"
-        }
-      ],
-      "name": "verifyValidator",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
           "name": "_asset",
-          "type": "address"
+          "type": "address",
+          "internalType": "address"
         },
         {
-          "internalType": "uint256",
           "name": "_amount",
-          "type": "uint256"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
-      "name": "withdraw",
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
+      "type": "function",
+      "name": "unPause",
       "inputs": [],
-      "name": "withdrawAll",
       "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "nonpayable"
     },
     {
-      "stateMutability": "payable",
-      "type": "receive"
+      "type": "function",
+      "name": "validator",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "state",
+          "type": "uint8",
+          "internalType": "enum CompoundingValidatorStorage.ValidatorState"
+        },
+        {
+          "name": "index",
+          "type": "uint40",
+          "internalType": "uint40"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "validatorRegistrator",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "validatorWithdrawal",
+      "inputs": [
+        {
+          "name": "publicKey",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "amountGwei",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "vaultAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "verifiedValidators",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "verifiedValidatorsLength",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "verifyBalances",
+      "inputs": [
+        {
+          "name": "balanceProofs",
+          "type": "tuple",
+          "internalType": "struct CompoundingStakingStrategy.BalanceProofs",
+          "components": [
+            {
+              "name": "balancesContainerRoot",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "balancesContainerProof",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "validatorBalanceLeaves",
+              "type": "bytes32[]",
+              "internalType": "bytes32[]"
+            },
+            {
+              "name": "validatorBalanceProofs",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ]
+        },
+        {
+          "name": "pendingDepositProofs",
+          "type": "tuple",
+          "internalType": "struct CompoundingStakingStrategy.PendingDepositProofs",
+          "components": [
+            {
+              "name": "pendingDepositContainerRoot",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "pendingDepositContainerProof",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "pendingDepositIndexes",
+              "type": "uint32[]",
+              "internalType": "uint32[]"
+            },
+            {
+              "name": "pendingDepositProofs",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "verifyDeposit",
+      "inputs": [
+        {
+          "name": "pendingDepositRoot",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "depositProcessedSlot",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "firstPendingDeposit",
+          "type": "tuple",
+          "internalType": "struct CompoundingStakingStrategy.FirstPendingDepositSlotProofData",
+          "components": [
+            {
+              "name": "slot",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "proof",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "strategyValidatorData",
+          "type": "tuple",
+          "internalType": "struct CompoundingStakingStrategy.StrategyValidatorProofData",
+          "components": [
+            {
+              "name": "withdrawableEpoch",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "withdrawableEpochProof",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "verifyValidator",
+      "inputs": [
+        {
+          "name": "nextBlockTimestamp",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "validatorIndex",
+          "type": "uint40",
+          "internalType": "uint40"
+        },
+        {
+          "name": "pubKeyHash",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "withdrawalCredentials",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "validatorPubKeyProof",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawAll",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "BalancesSnapped",
+      "inputs": [
+        {
+          "name": "blockRoot",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "ethBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "BalancesVerified",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": true,
+          "internalType": "uint64"
+        },
+        {
+          "name": "totalDepositsWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalValidatorBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "ethBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Deposit",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "DepositVerified",
+      "inputs": [
+        {
+          "name": "pendingDepositRoot",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amountWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ETHStaked",
+      "inputs": [
+        {
+          "name": "pubKeyHash",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "pendingDepositRoot",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "pubKey",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        },
+        {
+          "name": "amountWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "FirstDepositReset",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "GovernorshipTransferred",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "HarvesterAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_newHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "InitialDepositAmountChanged",
+      "inputs": [
+        {
+          "name": "amountWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenAdded",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenRemoved",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Paused",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingGovernorshipTransfer",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RegistratorChanged",
+      "inputs": [
+        {
+          "name": "newAddress",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        },
+        {
+          "name": "_newAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenCollected",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "rewardToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Unpaused",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ValidatorInvalid",
+      "inputs": [
+        {
+          "name": "pubKeyHash",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ValidatorVerified",
+      "inputs": [
+        {
+          "name": "pubKeyHash",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "validatorIndex",
+          "type": "uint40",
+          "indexed": true,
+          "internalType": "uint40"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ValidatorWithdraw",
+      "inputs": [
+        {
+          "name": "pubKeyHash",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amountWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Withdrawal",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "InvalidFirstDepositAmount",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NoFirstDeposit",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotRegistrator",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotRegistratorOrGovernor",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UnsupportedAsset",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UnsupportedFunction",
+      "inputs": []
     }
   ],
   "storageLayout": {
     "storage": [
       {
-        "astId": 6303,
+        "astId": 52408,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "initialized",
         "offset": 0,
@@ -1342,7 +1355,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 6306,
+        "astId": 52411,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "initializing",
         "offset": 1,
@@ -1350,15 +1363,15 @@
         "type": "t_bool"
       },
       {
-        "astId": 6346,
+        "astId": 52451,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
-        "label": "______gap",
+        "label": "__gap",
         "offset": 0,
         "slot": "1",
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 17,
+        "astId": 58853,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_paused",
         "offset": 0,
@@ -1366,7 +1379,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 2447,
+        "astId": 38036,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "validatorRegistrator",
         "offset": 1,
@@ -1374,7 +1387,7 @@
         "type": "t_address"
       },
       {
-        "astId": 2468,
+        "astId": 38057,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "firstDeposit",
         "offset": 21,
@@ -1382,15 +1395,15 @@
         "type": "t_bool"
       },
       {
-        "astId": 2474,
+        "astId": 38063,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "deposits",
         "offset": 0,
         "slot": "52",
-        "type": "t_mapping(t_bytes32,t_struct(DepositData)2465_storage)"
+        "type": "t_mapping(t_bytes32,t_struct(DepositData)38054_storage)"
       },
       {
-        "astId": 2478,
+        "astId": 38067,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "depositList",
         "offset": 0,
@@ -1398,7 +1411,7 @@
         "type": "t_array(t_bytes32)dyn_storage"
       },
       {
-        "astId": 2498,
+        "astId": 38087,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "verifiedValidators",
         "offset": 0,
@@ -1406,23 +1419,23 @@
         "type": "t_array(t_bytes32)dyn_storage"
       },
       {
-        "astId": 2504,
+        "astId": 38093,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "validator",
         "offset": 0,
         "slot": "55",
-        "type": "t_mapping(t_bytes32,t_struct(ValidatorData)2494_storage)"
+        "type": "t_mapping(t_bytes32,t_struct(ValidatorData)38083_storage)"
       },
       {
-        "astId": 2516,
+        "astId": 38105,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "snappedBalance",
         "offset": 0,
         "slot": "56",
-        "type": "t_struct(Balances)2512_storage"
+        "type": "t_struct(Balances)38101_storage"
       },
       {
-        "astId": 2519,
+        "astId": 38108,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "lastVerifiedEthBalance",
         "offset": 0,
@@ -1430,7 +1443,7 @@
         "type": "t_uint256"
       },
       {
-        "astId": 2522,
+        "astId": 38111,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "depositedWethAccountedFor",
         "offset": 0,
@@ -1438,7 +1451,7 @@
         "type": "t_uint256"
       },
       {
-        "astId": 2525,
+        "astId": 38114,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "initialDepositAmountWei",
         "offset": 0,
@@ -1446,15 +1459,23 @@
         "type": "t_uint256"
       },
       {
-        "astId": 2529,
+        "astId": 38117,
+        "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
+        "label": "lastVerifiedBalanceTimestamp",
+        "offset": 0,
+        "slot": "61",
+        "type": "t_uint64"
+      },
+      {
+        "astId": 38121,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "__gap",
         "offset": 0,
-        "slot": "61",
-        "type": "t_array(t_uint256)40_storage"
+        "slot": "62",
+        "type": "t_array(t_uint256)39_storage"
       },
       {
-        "astId": 6426,
+        "astId": 52531,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_deprecated_platformAddress",
         "offset": 0,
@@ -1462,7 +1483,7 @@
         "type": "t_address"
       },
       {
-        "astId": 6429,
+        "astId": 52534,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_deprecated_vaultAddress",
         "offset": 0,
@@ -1470,7 +1491,7 @@
         "type": "t_address"
       },
       {
-        "astId": 6434,
+        "astId": 52539,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "assetToPToken",
         "offset": 0,
@@ -1478,7 +1499,7 @@
         "type": "t_mapping(t_address,t_address)"
       },
       {
-        "astId": 6438,
+        "astId": 52543,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "assetsMapped",
         "offset": 0,
@@ -1486,7 +1507,7 @@
         "type": "t_array(t_address)dyn_storage"
       },
       {
-        "astId": 6440,
+        "astId": 52545,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_deprecated_rewardTokenAddress",
         "offset": 0,
@@ -1494,7 +1515,7 @@
         "type": "t_address"
       },
       {
-        "astId": 6442,
+        "astId": 52547,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_deprecated_rewardLiquidationThreshold",
         "offset": 0,
@@ -1502,7 +1523,7 @@
         "type": "t_uint256"
       },
       {
-        "astId": 6445,
+        "astId": 52550,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "harvesterAddress",
         "offset": 0,
@@ -1510,7 +1531,7 @@
         "type": "t_address"
       },
       {
-        "astId": 6449,
+        "astId": 52554,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "rewardTokenAddresses",
         "offset": 0,
@@ -1518,7 +1539,7 @@
         "type": "t_array(t_address)dyn_storage"
       },
       {
-        "astId": 6453,
+        "astId": 52558,
         "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
         "label": "_reserved",
         "offset": 0,
@@ -1550,10 +1571,10 @@
         "numberOfBytes": "3136",
         "base": "t_int256"
       },
-      "t_array(t_uint256)40_storage": {
+      "t_array(t_uint256)39_storage": {
         "encoding": "inplace",
-        "label": "uint256[40]",
-        "numberOfBytes": "1280",
+        "label": "uint256[39]",
+        "numberOfBytes": "1248",
         "base": "t_uint256"
       },
       "t_array(t_uint256)50_storage": {
@@ -1572,12 +1593,12 @@
         "label": "bytes32",
         "numberOfBytes": "32"
       },
-      "t_enum(DepositStatus)2452": {
+      "t_enum(DepositStatus)38041": {
         "encoding": "inplace",
         "label": "enum CompoundingValidatorStorage.DepositStatus",
         "numberOfBytes": "1"
       },
-      "t_enum(ValidatorState)2488": {
+      "t_enum(ValidatorState)38077": {
         "encoding": "inplace",
         "label": "enum CompoundingValidatorStorage.ValidatorState",
         "numberOfBytes": "1"
@@ -1594,27 +1615,27 @@
         "numberOfBytes": "32",
         "value": "t_address"
       },
-      "t_mapping(t_bytes32,t_struct(DepositData)2465_storage)": {
+      "t_mapping(t_bytes32,t_struct(DepositData)38054_storage)": {
         "encoding": "mapping",
         "key": "t_bytes32",
         "label": "mapping(bytes32 => struct CompoundingValidatorStorage.DepositData)",
         "numberOfBytes": "32",
-        "value": "t_struct(DepositData)2465_storage"
+        "value": "t_struct(DepositData)38054_storage"
       },
-      "t_mapping(t_bytes32,t_struct(ValidatorData)2494_storage)": {
+      "t_mapping(t_bytes32,t_struct(ValidatorData)38083_storage)": {
         "encoding": "mapping",
         "key": "t_bytes32",
         "label": "mapping(bytes32 => struct CompoundingValidatorStorage.ValidatorData)",
         "numberOfBytes": "32",
-        "value": "t_struct(ValidatorData)2494_storage"
+        "value": "t_struct(ValidatorData)38083_storage"
       },
-      "t_struct(Balances)2512_storage": {
+      "t_struct(Balances)38101_storage": {
         "encoding": "inplace",
         "label": "struct CompoundingValidatorStorage.Balances",
         "numberOfBytes": "64",
         "members": [
           {
-            "astId": 2507,
+            "astId": 38096,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "blockRoot",
             "offset": 0,
@@ -1622,7 +1643,7 @@
             "type": "t_bytes32"
           },
           {
-            "astId": 2509,
+            "astId": 38098,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "timestamp",
             "offset": 0,
@@ -1630,7 +1651,7 @@
             "type": "t_uint64"
           },
           {
-            "astId": 2511,
+            "astId": 38100,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "ethBalance",
             "offset": 8,
@@ -1639,13 +1660,13 @@
           }
         ]
       },
-      "t_struct(DepositData)2465_storage": {
+      "t_struct(DepositData)38054_storage": {
         "encoding": "inplace",
         "label": "struct CompoundingValidatorStorage.DepositData",
         "numberOfBytes": "64",
         "members": [
           {
-            "astId": 2455,
+            "astId": 38044,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "pubKeyHash",
             "offset": 0,
@@ -1653,7 +1674,7 @@
             "type": "t_bytes32"
           },
           {
-            "astId": 2457,
+            "astId": 38046,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "amountGwei",
             "offset": 0,
@@ -1661,7 +1682,7 @@
             "type": "t_uint64"
           },
           {
-            "astId": 2459,
+            "astId": 38048,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "slot",
             "offset": 8,
@@ -1669,7 +1690,7 @@
             "type": "t_uint64"
           },
           {
-            "astId": 2461,
+            "astId": 38050,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "depositIndex",
             "offset": 16,
@@ -1677,30 +1698,30 @@
             "type": "t_uint32"
           },
           {
-            "astId": 2464,
+            "astId": 38053,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "status",
             "offset": 20,
             "slot": "1",
-            "type": "t_enum(DepositStatus)2452"
+            "type": "t_enum(DepositStatus)38041"
           }
         ]
       },
-      "t_struct(ValidatorData)2494_storage": {
+      "t_struct(ValidatorData)38083_storage": {
         "encoding": "inplace",
         "label": "struct CompoundingValidatorStorage.ValidatorData",
         "numberOfBytes": "32",
         "members": [
           {
-            "astId": 2491,
+            "astId": 38080,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "state",
             "offset": 0,
             "slot": "0",
-            "type": "t_enum(ValidatorState)2488"
+            "type": "t_enum(ValidatorState)38077"
           },
           {
-            "astId": 2493,
+            "astId": 38082,
             "contract": "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy",
             "label": "index",
             "offset": 1,
