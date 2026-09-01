@@ -6,4 +6,5 @@ library Mocks {
         "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol:CCTPMessageTransmitterMock2";
     string internal constant CCTP_TOKEN_MESSENGER_MOCK =
         "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol:CCTPTokenMessengerMock";
+    string internal constant CCIP_ROUTER_MOCK = "contracts/mocks/crosschainV3/MockCCIPRouter.sol:MockCCIPRouter";
 }

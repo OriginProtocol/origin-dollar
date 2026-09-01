@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 library Proxies {
     string internal constant CROSS_CHAIN_STRATEGY_PROXY =
         "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy";
+    string internal constant BRIDGE_ADAPTER_PROXY =
+        "contracts/proxies/create2/BridgeAdapterProxy.sol:BridgeAdapterProxy";
     string internal constant IG_PROXY =
         "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy";
     string internal constant IG_PROXY_2 =

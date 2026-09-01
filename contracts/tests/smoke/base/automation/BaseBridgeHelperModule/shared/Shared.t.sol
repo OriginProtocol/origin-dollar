@@ -42,6 +42,10 @@ abstract contract Smoke_BaseBridgeHelperModule_Shared_Test is BaseSmoke {
         super.setUp();
         _createAndSelectForkBase();
         _igniteDeployManager();
+        // Ignition warps past the timelock delay to execute pending governance, which leaves
+        // the forked wOETH feed stale. Every mutative test here routes through
+        // `BridgedWOETHStrategy.withdrawBridgedWOETH`, which prices wOETH via the oracle router.
+        _refreshChainlinkFeed(Base.BridgedWOETHOracleFeed);
         _fetchContracts();
         _resolveActors();
         _labelContracts();
