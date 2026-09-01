@@ -107,7 +107,7 @@ details block, and a confidence (High/Med/Low). Absence of evidence is ⚠️/�
   (nothing to check); ❌ args differ (show the diff).
 
 **5 — Governance proposal matches the deploy script**
-- Read the on-chain proposal directly via ethers — do NOT use `npx hardhat proposal --id`,
+- Read the on-chain proposal directly via ethers — do NOT use `pnpm ops proposal --id`,
   it parses the id as a float and overflows on real (77-digit) proposalIds. Use the
   GovernorSix (`addresses.mainnet.GovernorSix`) ABI with the id as a `BigNumber`:
   `g.state(id)` and `g.getActions(id) -> (targets, values, signatures, calldatas)`

@@ -1,7 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Standalone (hardhat-free) CLI entrypoint for Talos actions. Replaces
- * `pnpm hardhat <task> --network <net>`. The Talos dispatcher spawns this as a
+ * Standalone CLI entrypoint for Talos actions. The dispatcher spawns this as a
  * tsx/node child, e.g. `pnpm exec tsx tasks/run.ts harvest --network mainnet`.
  *
  * Usage: tsx tasks/run.ts <actionName> --network <net> [--flag value ...]

@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { initNetwork } = require("../lib/network");
-const { replaceContractAt } = require("../../utils/hardhat");
+const { replaceContractAt } = require("../../utils/anvil");
 
 describe("replaceContractAt", function () {
   const originalRpc = process.env.MAINNET_PROVIDER_URL;
@@ -29,7 +29,7 @@ describe("replaceContractAt", function () {
 
     assert.deepEqual(sent, [
       {
-        method: "hardhat_setCode",
+        method: "anvil_setCode",
         params: [
           "0x000000000000000000000000000000000000dEaD",
           "0x60016002:0x00000000000000000000000000000000000000A1",

@@ -240,7 +240,7 @@ def main():
     )
 
     # use the following command to get cluster info:
-    # pnpm hardhat getClusterInfo --operatorids 752,753,754,755 --network mainnet --owner 0x4685dB8bF2Df743c861d71E6cFb5347222992076
+    # pnpm ops getClusterInfo --operatorids 752,753,754,755 --network mainnet --owner 0x4685dB8bF2Df743c861d71E6cFb5347222992076
 
     txs.append(
       native_staking_2_strat.depositSSV(

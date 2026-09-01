@@ -5,7 +5,7 @@ const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
 
 const log = require("../utils/logger")("task:vault");
 

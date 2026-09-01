@@ -1,12 +1,12 @@
 const {
-  subtask: baseSubtask,
   task: baseTask,
+  subtask: baseSubtask,
   types,
-} = require("hardhat/config");
+} = require("./lib/task-registry");
 const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const addresses = require("../utils/addresses");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
 const { signMessage } = require("./crypto");
 const { advanceBlocks } = require("./block");
 const { getSigner } = require("../utils/signers");
@@ -92,7 +92,7 @@ const { claimMerklRewards } = require("./merkl");
 const {
   withTaskSignerContext,
   DEFAULT_KMS_RELAYER_ID,
-} = require("../utils/signersNoHardhat");
+} = require("../utils/signersStandalone");
 const { rebalancerTask } = require("./rebalancer");
 
 const log = require("../utils/logger")("tasks");

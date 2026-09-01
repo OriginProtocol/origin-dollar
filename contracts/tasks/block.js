@@ -1,15 +1,8 @@
 const log = require("../utils/logger")("task:block");
 
-// Works in both runtimes: the standalone action CLI (ambient provider from
-// tasks/lib/network) and legacy hardhat dev tasks (the `hre` global). Prefer
-// the standalone provider; fall back to hre when the network isn't initialized.
+// Uses the ambient provider initialized by the standalone CLI.
 function currentProvider() {
-  try {
-    return require("./lib/network").getProvider();
-  } catch {
-    // eslint-disable-next-line no-undef
-    return hre.ethers.provider;
-  }
+  return require("./lib/network").getProvider();
 }
 
 async function getBlock(block) {
@@ -40,7 +33,7 @@ async function getDiffBlocks(taskArguments) {
 
 async function advanceBlocks(blocks) {
   log(`Advancing ${blocks} blocks`);
-  await currentProvider().send("hardhat_mine", [`0x${blocks.toString(16)}`]);
+  await currentProvider().send("anvil_mine", [`0x${blocks.toString(16)}`]);
 }
 
 module.exports = {

@@ -12,7 +12,7 @@ DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcas
 DEPLOY_BUILD    := contracts/ scripts/deploy/
 
 # Rewrites deployments/<network>/<Name>.json for whatever the broadcast just
-# deployed, so Talos crons and the hardhat task CLI keep resolving live
+# deployed, so Talos crons and the standalone ops CLI keep resolving live
 # addresses. Deliberately NOT wired into deploy-local: that target also
 # broadcasts, but against a throwaway node.
 #
@@ -22,7 +22,7 @@ DEPLOY_BUILD    := contracts/ scripts/deploy/
 # the descriptor update and leave live crons pointing at the old contract — the
 # exact silent drift this step exists to prevent. A descriptor failure still
 # fails the target (`|| exit 1`); only forge's own exit code is deferred.
-DESCRIPTORS     := node scripts/create-hardhat-format-descriptors.js
+DESCRIPTORS     := node scripts/create-deployment-descriptors.js
 
 # Clearing the chain's broadcast dir first is what makes "a run file exists"
 # mean "this run deployed something". forge leaves the PREVIOUS run-latest.json

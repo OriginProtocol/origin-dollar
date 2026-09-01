@@ -4,17 +4,16 @@ import { ethers } from "ethers";
 import { getChainId, getSignerOrProvider } from "./network";
 
 /**
- * Drop-in replacements for `hre.ethers.getContract` / `hre.ethers.getContractAt`
- * that do NOT require hardhat. Addresses come from the committed hardhat-deploy
- * artifacts in deployments/<network>/<Name>.json (the deployed truth); ABIs come
+ * Standalone `getContract` / `getContractAt` helpers. Addresses come from the
+ * committed descriptors in deployments/<network>/<Name>.json (the deployed truth); ABIs come
  * from the deployment artifact (getContract) or a curated interface ABI in abi/
  * (getContractAt by name). Contracts are bound to the ambient signer (writes) or
- * provider (reads), matching hardhat's signer-connected contracts.
+ * provider (reads).
  */
 
 const CONTRACTS_ROOT = join(__dirname, "..", "..");
 
-// chainId -> deployments/ sub-directory (mirrors utils/hardhat-helpers.js networkMap).
+// chainId -> deployments/ sub-directory.
 const DIR_BY_CHAIN: Record<number, string> = {
   1: "mainnet",
   42161: "arbitrumOne",
@@ -118,7 +117,7 @@ function findFoundryArtifact(directory: string, name: string): string | null {
   return null;
 }
 
-/** Load a deployable Foundry artifact from out/ without hardhat artifacts. */
+/** Load a deployable Foundry artifact from out/. */
 export async function getContractFactory(
   name: string
 ): Promise<ethers.ContractFactory> {

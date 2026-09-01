@@ -1,10 +1,10 @@
 import type { ethers } from "ethers";
 
 /**
- * Standalone (hardhat-free) action framework. Same authoring API as before —
+ * Standalone action framework. Same authoring API as before —
  * action({ name, description, chains, params, run }) with an ethers `signer` in
  * the run context — but actions self-register into an in-process registry
- * instead of hardhat tasks, and the `params:(t)=>{...}` builder is served by a
+ * instead of runtime tasks, and the `params:(t)=>{...}` builder is served by a
  * lightweight shim so existing action bodies need no change. Dispatched by
  * tasks/run.ts; catalogued by dump-actions-catalog.ts.
  */
@@ -35,14 +35,13 @@ export interface ParamSpec {
   defaultValue: string | number | boolean | null;
 }
 
-// hardhat-compatible `types` markers — only `.name` is ever read. Lets action
-// files do `import { types } from "../lib/action"` instead of "hardhat/config".
+// Task-compatible `types` markers — only `.name` is ever read.
 export const types = {
   string: { name: "string" as const },
   int: { name: "int" as const },
   float: { name: "float" as const },
   boolean: { name: "boolean" as const },
-  // Aliases hardhat exposes that some actions may reference.
+  // Aliases some actions may reference.
   json: { name: "string" as const },
   bigint: { name: "string" as const },
 };
@@ -50,7 +49,7 @@ export const types = {
 type TypeMarker = { name: string };
 
 /**
- * Mirrors the subset of hardhat's ConfigurableTaskDefinition param builder that
+ * Mirrors the subset of the task parameter builder that
  * action files use, so `params:(t)=>{ t.addParam(...) }` blocks are unchanged.
  */
 export class ParamBuilder {

@@ -24,7 +24,7 @@ describe("standalone ops command catalogue", function () {
       "utf8"
     )
   );
-  const { commands, hasLegacyAction } = require("../commands");
+  const { commands, hasTaskAction } = require("../commands");
 
   it("matches the pinned snapshot of the tasks.js declarations", function () {
     assert.deepEqual(
@@ -61,7 +61,7 @@ describe("standalone ops command catalogue", function () {
   it("binds every command to a live handler", function () {
     for (const { name, handler } of commands) {
       assert.equal(typeof handler, "function", name);
-      assert.equal(hasLegacyAction(name), true, `no action for '${name}'`);
+      assert.equal(hasTaskAction(name), true, `no action for '${name}'`);
     }
   });
 

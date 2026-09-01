@@ -155,7 +155,7 @@ abstract contract Unit_CompoundingStakingStrategy_TwentyOneValidators_Shared_Tes
         internal
         returns (bytes32 pendingDepositRoot)
     {
-        // Hardhat mines each top-up in a new block. Keep the Beacon deposit slot
+        // The legacy test mined each top-up in a new block. Keep the Beacon deposit slot
         // distinct so equal amounts to the same validator produce distinct roots.
         vm.warp(block.timestamp + SLOT_DURATION);
         TestValidator storage validatorData = testValidators[validatorPosition];
