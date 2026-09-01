@@ -13,7 +13,7 @@
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
-| eth, sonic, base | permissionedRebase |
+| eth, hoodi | doAccounting, registerValidators, stakeValidators |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, holesky, arb, plume, hoodi | healthcheck |
 
