@@ -6,15 +6,14 @@ import {
   AWS_KMS_REGION,
   hasAwsKmsCredentials,
   resolveKmsRelayerId,
-} from "../../utils/signersNoHardhat";
+} from "../../utils/signersStandalone";
 
 /**
- * Standalone (hardhat-free) signer factory. Same precedence as the old
+ * Standalone signer factory. Same precedence as the old
  * utils/signers.js, reusing the exact same production-proven building blocks:
  * the purrikey AWS KMS ethers signer and the
  * Talos ethers-v5 nonce queue (wrapSignerWithNonceQueueV5). The only change vs.
- * hardhat is the provider — a standalone JsonRpcProvider from the RPC env
- * instead of hre.ethers.provider.
+ * runtime is the provider — a standalone JsonRpcProvider from the RPC env.
  */
 
 type Db = unknown;
@@ -33,7 +32,7 @@ let dbInstance: Db | null = null;
 function getNonceDb(): Db | null {
   if (!process.env.DATABASE_URL) return null;
   if (!talosClient) {
-    // Talos is an optional peer dependency so non-Talos Hardhat commands do not
+    // Talos is an optional peer dependency so local ops commands do not
     // require credentials for the private package registry.
     talosClient = require("@oplabs/talos-client") as TalosClient;
   }
@@ -93,16 +92,8 @@ export async function getSigner(
   // 3. Fork impersonation (dev/testing only — the node signs).
   if (process.env.FORK === "true" && process.env.IMPERSONATE) {
     const address = process.env.IMPERSONATE;
-    try {
-      await provider.send("anvil_impersonateAccount", [address]);
-      await provider.send("anvil_setBalance", [address, "0x56bc75e2d63100000"]); // 100 ETH
-    } catch {
-      await provider.send("hardhat_impersonateAccount", [address]);
-      await provider.send("hardhat_setBalance", [
-        address,
-        "0x56bc75e2d63100000",
-      ]);
-    }
+    await provider.send("anvil_impersonateAccount", [address]);
+    await provider.send("anvil_setBalance", [address, "0x56bc75e2d63100000"]); // 100 ETH
     // Wrapped like the KMS and private-key branches: without it the
     // transaction bypasses the nonce queue, so Talos never records it and the
     // run shows no transactions. ethers v5 getSigner() is synchronous.

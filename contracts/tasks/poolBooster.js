@@ -351,7 +351,7 @@ async function calculateRewardsPerVote(provider, options = {}) {
 }
 
 /**
- * Hardhat task to calculate and display the MaxPricePerVote for all Curve Pool Boosters
+ * Task to calculate and display the MaxPricePerVote for all Curve Pool Boosters
  */
 async function calculateMaxPricePerVoteTask(taskArguments) {
   const targetEfficiency = parseFloat(taskArguments.efficiency || "1");
@@ -496,7 +496,7 @@ function buildManageBribesChunks({
 }
 
 module.exports = {
-  // Hardhat task
+  // Ops task
   calculateMaxPricePerVoteTask,
   // Shared function for automation actions
   calculateRewardsPerVote,

@@ -5,7 +5,7 @@ const path = require("node:path");
 
 // The legacy package flattened artifacts by contract name. These two names are
 // declared in multiple production sources; preserve the exact source selected
-// by the previously published Hardhat package.
+// by the previously published package.
 const PREFERRED_SOURCES = {
   ICurvePoolBooster: "contracts/automation/CurvePoolBoosterBribesModule.sol",
   IOToken: "contracts/interfaces/IOToken.sol",
@@ -28,7 +28,7 @@ function linkReferences(value) {
   return value && typeof value === "object" ? value.linkReferences || {} : {};
 }
 
-function hardhatArtifactFromForge(artifact) {
+function publicArtifactFromForge(artifact) {
   const target = compilationTarget(artifact);
   if (!target) {
     throw new Error("Forge artifact has no unique compilation target");
@@ -129,7 +129,7 @@ function exportAbiPackage({ outDir, distDir, packageFile, npmrcFile }) {
 
   for (const contractName of [...artifacts.keys()].sort()) {
     const { artifact } = artifacts.get(contractName);
-    const exported = hardhatArtifactFromForge(artifact);
+    const exported = publicArtifactFromForge(artifact);
     fs.writeFileSync(
       path.join(abiDir, `${contractName}.json`),
       `${JSON.stringify(exported, null, 2)}\n`
@@ -159,6 +159,6 @@ if (require.main === module) main();
 
 module.exports = {
   exportAbiPackage,
-  hardhatArtifactFromForge,
+  publicArtifactFromForge,
   selectArtifacts,
 };

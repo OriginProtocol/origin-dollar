@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  legacyHandler,
+  taskHandler,
   type CommandDefinition,
   type CommandParam,
 } from "./lib/command";
@@ -31,7 +31,7 @@ export const commands: CommandDefinition[] = catalogue.map((entry) => ({
             console.log(`${address}${role}`);
           }
         }
-      : legacyHandler(entry.name),
+      : taskHandler(entry.name),
 }));
 
 export const commandByName = new Map(

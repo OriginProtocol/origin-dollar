@@ -26,7 +26,7 @@ async function getProposalExecutionValue(governor, proposalId) {
 }
 
 async function execute(taskArguments, hre) {
-  const { isMainnet, isFork } = require("../utils/hardhat-task-helpers");
+  const { isMainnet, isFork } = require("../utils/runtime-helpers");
 
   if (isMainnet) {
     throw new Error("The execute task can not be used on mainnet");
@@ -102,7 +102,7 @@ async function executeOnFork(taskArguments, hre) {
     : null;
   console.log("Enqueueing and executing proposal", proposalId);
 
-  const { isFork } = require("../utils/hardhat-task-helpers");
+  const { isFork } = require("../utils/runtime-helpers");
   if (!isFork) throw new Error("Can only be used on Fork");
 
   const { guardianAddr } = await hre.getNamedAccounts();

@@ -105,7 +105,7 @@ abstract contract Unit_OETHVault_Shared_Test is Base {
         vm.stopPrank();
     }
 
-    /// @dev Fund matt and josh with 100 OETH each (matching Hardhat fixture's 200 OETH total supply)
+    /// @dev Fund matt and josh with 100 OETH each (matching the legacy fixture's 200 OETH total supply)
     function _fundInitialUsers() internal {
         _mintOETH(matt, 100e18);
         _mintOETH(josh, 100e18);
