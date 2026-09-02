@@ -7,21 +7,12 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b OSonicHarvester -o OSonicHarvesterHiera
 sol2uml .. -s -d 0 -b OSonicHarvester -o OSonicHarvesterSquashed.svg
 sol2uml storage .. -c OSonicHarvester -o OSonicHarvesterStorage.svg --hideExpand __gap,___gap,______gap
 
-# contracts/governance
-sol2uml .. -v -hv -hf -he -hs -hl -b Governor -o GovernorHierarchy.svg
-sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
-sol2uml storage .. -c Governor -o GovernorStorage.svg
-
 # contracts/proxies
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSDProxy -o OUSDProxyHierarchy.svg
 sol2uml .. -s -d 0 -b OUSDProxy -o OUSDProxySquashed.svg
 sol2uml storage .. -c OUSDProxy -o OUSDProxyStorage.svg
 
 # contracts/strategies
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
-sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
-
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b BridgedWOETHStrategy -o BridgedWOETHStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BridgedWOETHStrategy -o BridgedWOETHStrategySquashed.svg
 sol2uml storage .. -c BridgedWOETHStrategy -o BridgedWOETHStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
@@ -41,12 +32,6 @@ sol2uml storage .. -c CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOSt
 sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b BaseCurveAMOStrategy -o BaseCurveAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategySquashed.svg
 sol2uml storage .. -c BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
-
-# contracts/strategies/algebra
-sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OETHSupernovaAMOStrategy -o OETHSupernovaAMOStrategyHierarchy.svg
-sol2uml .. -v -hv -hf -he -hs -hn -d 2 -i prettier-plugin-solidity -b OETHSupernovaAMOStrategy -o OETHSupernovaAMOStrategyInteractions.svg
-sol2uml .. -s -d 0 -b OETHSupernovaAMOStrategy -i prettier-plugin-solidity -o OETHSupernovaAMOStrategySquashed.svg
-sol2uml storage .. -c OETHSupernovaAMOStrategy -i prettier-plugin-solidity -o OETHSupernovaAMOStrategyStorage.svg --hideExpand ______gap,_reserved
 
 # contracts/strategies/sonic
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStrategyHierarchy.svg
