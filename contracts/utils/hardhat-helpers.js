@@ -1,132 +1,22 @@
-const fetch = require("sync-fetch");
 require("dotenv").config();
 
 const isFork = process.env.FORK === "true";
-const isArbitrum = process.env.NETWORK_NAME === "arbitrumOne";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
-const isBase = process.env.NETWORK_NAME === "base";
 const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
-const isSonic = process.env.NETWORK_NAME === "sonic";
 const isSonicFork = process.env.FORK_NETWORK_NAME === "sonic";
-const isPlume = process.env.NETWORK_NAME === "plume";
 const isPlumeFork = process.env.FORK_NETWORK_NAME === "plume";
-const isHoodi = process.env.NETWORK_NAME === "hoodi";
 const isHoodiFork = process.env.FORK_NETWORK_NAME === "hoodi";
-const isHyperEVM = process.env.NETWORK_NAME === "hyperevm";
 const isHyperEVMFork = process.env.FORK_NETWORK_NAME === "hyperevm";
 
-const isForkTest = isFork && process.env.IS_TEST === "true";
-const isArbForkTest = isForkTest && isArbitrumFork;
-const isBaseForkTest = isForkTest && isBaseFork;
-const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
-const isSonicForkTest = isForkTest && isSonicFork;
-const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
-const isPlumeForkTest = isForkTest && isPlumeFork;
-const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
-const isHoodiForkTest = isForkTest && isHoodiFork;
-const isHyperEVMForkTest = isForkTest && isHyperEVMFork;
-const isHyperEVMUnitTest = process.env.UNIT_TESTS_NETWORK === "hyperevm";
-
-const providerUrl = `${
-  process.env.LOCAL_PROVIDER_URL ||
-  process.env.MAINNET_PROVIDER_URL ||
-  process.env.PROVIDER_URL
-}`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
 const hoodiProviderUrl = `${process.env.HOODI_PROVIDER_URL}`;
 const hyperEVMProviderUrl = `${process.env.HYPEREVM_PROVIDER_URL}`;
-const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
-/**
- * - Reads the fork block number from environmental variables depending on the context of the run
- * - In case a local node is running (and it could have deployments executed) the updated block number is queried
- *   from the node and that one is used.
- * - Local node is forwarded by 40 blocks
- */
-const adjustTheForkBlockNumber = () => {
-  let forkBlockNumber = undefined;
-
-  if (isForkTest) {
-    if (isArbForkTest) {
-      forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER
-        ? Number(process.env.ARBITRUM_BLOCK_NUMBER)
-        : undefined;
-    } else if (isBaseForkTest) {
-      forkBlockNumber = process.env.BASE_BLOCK_NUMBER
-        ? process.env.BASE_BLOCK_NUMBER
-        : undefined;
-    } else if (isSonicForkTest) {
-      forkBlockNumber = process.env.SONIC_BLOCK_NUMBER
-        ? process.env.SONIC_BLOCK_NUMBER
-        : undefined;
-    } else if (isPlumeForkTest) {
-      forkBlockNumber = process.env.PLUME_BLOCK_NUMBER
-        ? process.env.PLUME_BLOCK_NUMBER
-        : undefined;
-    } else if (isHoodiForkTest) {
-      forkBlockNumber = process.env.HOODI_BLOCK_NUMBER
-        ? Number(process.env.HOODI_BLOCK_NUMBER)
-        : undefined;
-    } else if (isHyperEVMForkTest) {
-      forkBlockNumber = process.env.HYPEREVM_BLOCK_NUMBER
-        ? Number(process.env.HYPEREVM_BLOCK_NUMBER)
-        : undefined;
-    } else {
-      forkBlockNumber = process.env.BLOCK_NUMBER
-        ? Number(process.env.BLOCK_NUMBER)
-        : undefined;
-    }
-  }
-
-  if (isForkTest && standaloneLocalNodeRunning) {
-    const jsonResponse = fetch(providerUrl, {
-      method: "post",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_blockNumber",
-        id: 1,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).json();
-
-    /*
-     * We source the block number from the hardhat context rather than from
-     * node-test.sh startup script, so that block number from an already
-     * running local node can be fetched after the deployments have already
-     * been applied.
-     *
-     */
-    forkBlockNumber = parseInt(jsonResponse.result, 16);
-
-    console.log(`Connecting to local node on block: ${forkBlockNumber}`);
-
-    // Mine 40 blocks so Hardhat won't complain about the fork block being too recent.
-    fetch(providerUrl, {
-      method: "post",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "hardhat_mine",
-        params: ["0x28"], // 40
-        id: 1,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).json();
-  } else if (isForkTest) {
-    console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
-  }
-
-  return forkBlockNumber;
-};
-
-// returns hardhat network chainId and provider
-const getHardhatNetworkProperties = () => {
+// Returns the chain ID used by the in-process Hardhat network.
+const getHardhatNetworkChainId = () => {
   let chainId = 1337;
   if (isArbitrumFork && isFork) {
     chainId = 42161;
@@ -145,24 +35,7 @@ const getHardhatNetworkProperties = () => {
     chainId = 1;
   }
 
-  let provider = providerUrl;
-  if (!providerUrl.includes("localhost")) {
-    if (isArbForkTest) {
-      provider = arbitrumProviderUrl;
-    } else if (isBaseForkTest) {
-      provider = baseProviderUrl;
-    } else if (isSonicForkTest) {
-      provider = sonicProviderUrl;
-    } else if (isPlumeForkTest) {
-      provider = plumeProviderUrl;
-    } else if (isHoodiForkTest) {
-      provider = hoodiProviderUrl;
-    } else if (isHyperEVMForkTest) {
-      provider = hyperEVMProviderUrl;
-    }
-  }
-
-  return { chainId, provider };
+  return chainId;
 };
 
 const networkMap = {
@@ -195,38 +68,17 @@ const getNetworkName = async (provider) => {
 };
 
 module.exports = {
-  isFork,
-  isArbitrum,
-  isArbitrumFork,
-  isBase,
   isBaseFork,
   getNetworkName,
-  isBaseForkTest,
-  isBaseUnitTest,
-  isSonic,
   isSonicFork,
-  isSonicForkTest,
-  isSonicUnitTest,
-  isForkTest,
-  isArbForkTest,
-  isPlume,
   isPlumeFork,
-  isPlumeForkTest,
-  isPlumeUnitTest,
-  isHoodi,
   isHoodiFork,
-  isHoodiForkTest,
-  isHyperEVM,
   isHyperEVMFork,
-  isHyperEVMForkTest,
-  isHyperEVMUnitTest,
-  providerUrl,
   arbitrumProviderUrl,
   baseProviderUrl,
   sonicProviderUrl,
   plumeProviderUrl,
   hoodiProviderUrl,
   hyperEVMProviderUrl,
-  adjustTheForkBlockNumber,
-  getHardhatNetworkProperties,
+  getHardhatNetworkChainId,
 };

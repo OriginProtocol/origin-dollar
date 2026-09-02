@@ -2,12 +2,6 @@
 
 For more details about the product, checkout [our docs](https://docs.oeth.com).
 
----
-
-| Branch   | CI/CD Status                                                                                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `master` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml) |
-
 ## Requirements
 
 - Node Version
@@ -34,7 +28,7 @@ The `origin-dollar` project is a repo that hosts the smart contracts of some Ori
 
 ### Eth Node
 
-The `smart contracts` and all of their associated code are located in the `<project-root>/contracts` directory. The Ethereum tests and the local Ethereum EVM node are managed by [Hardhat](https://hardhat.org/).
+The smart contracts and their associated code are located in the `<project-root>/contracts` directory. [Foundry](https://book.getfoundry.sh/) builds, tests, and deploys the contracts. [Hardhat](https://hardhat.org/) remains available for operational tasks and the local forked EVM node.
 
 A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
 <br/><br/>
@@ -46,7 +40,7 @@ A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are av
 The dapp interacts with many 3rd party contracts (Uniswap, Curve, Sushiswap) and it would be too cumbersome to initialize all those contracts in a fresh node environment and set them to a state that mimics the Mainnet. For that reason we are using Hardhat's forked mode. By setting the `BLOCK_NUMBER` environment variable, the node will download part of the mainnet state that it requires to fulfill the requests. It is less reliable since the node isn't as stable in forked mode (and sometimes requires restarts), but mimicking the mainnet is a huge benefit. We used to develop with fresh state node, but the behavior discrepancies between fresh node and mainnet have started to become too large. For that reason, we have deprecated the fresh state development.
 <br/><br/>
 
-Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one (Sign up for a free Alchemy or Infura account, create a new API key, and use the URL they provide). If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER` to a more recent Ethereum block. Also add your mainnet testing account(s) (if more than one, comma separate them) under the `ACCOUNTS_TO_FUND`. After the node starts up, the script will transfer 100k of USDT, OUSD and DAI to those accounts. Open a separate terminal to run the hardhat node in.
+Rename `contracts/dev.env` to `.env` and set `PROVIDER_URL` to a valid one (sign up for an Alchemy or Infura account, create an API key, and use the URL they provide). To pin the fork to a specific mainnet block, set `BLOCK_NUMBER`. Open a separate terminal to run the Hardhat node.
 <br/><br/>
 
 Run the node:
