@@ -536,7 +536,7 @@ from world_plume import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
 

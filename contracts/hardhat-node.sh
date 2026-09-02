@@ -50,7 +50,7 @@ main()
           PROVIDER_URL=$HOODI_PROVIDER_URL;
           BLOCK_NUMBER=$HOODI_BLOCK_NUMBER;
         fi
-        
+
         echo "Fork Network: $FORK_NETWORK_NAME"
 
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
@@ -89,7 +89,7 @@ main()
         done
         printf "\n"
         echo "🟢 Node initialized"
-        
+
         # wait for subprocesses to finish
         for job in `jobs -p`
           do

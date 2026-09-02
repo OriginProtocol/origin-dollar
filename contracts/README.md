@@ -81,16 +81,15 @@ make test-unit
 make simulate
 ```
 
-Operational commands use the standalone TypeScript CLI. Hardhat is temporarily
-retained only for the local forked node:
+Operational commands use the standalone TypeScript CLI. Local forks use Anvil:
 
 ```sh
 pnpm ops <command> --network <network>
-pnpm node
+pnpm node:mainnet
 ```
 
-Run `pnpm ops help` for the full command catalogue. The next PR migrates the
-local forked node to Anvil.
+Run `pnpm ops help` for the full command catalogue. The legacy runtime remains
+available only as a temporary A/B oracle during this migration.
 
 ## Testing
 

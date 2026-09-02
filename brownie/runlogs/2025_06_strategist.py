@@ -44,7 +44,7 @@ from aerodrome_harvest import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
 
     woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
 
@@ -247,7 +247,7 @@ from aerodrome_harvest import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
 
     woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
 
@@ -408,7 +408,7 @@ from aerodrome_harvest import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
 
     woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
 
@@ -697,7 +697,7 @@ from world_base import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Hack to make weth.withdraw work
-    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    brownie.network.web3.provider.make_request('anvil_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     txs.append(vault_core.rebase(from_strategist))
     txs.append(vault_value_checker.takeSnapshot(from_strategist))
