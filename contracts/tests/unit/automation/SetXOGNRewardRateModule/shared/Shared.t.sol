@@ -39,6 +39,10 @@ abstract contract Unit_SetXOGNRewardRateModule_Shared_Test is Base {
     uint16 internal constant MAX_STEP_BPS = 2500;
     uint256 internal constant MIN_RUNWAY = 12 hours;
 
+    /// @dev Matches the weekly schedule, so a normal run always opens a fresh
+    ///      step period and the limit behaves as if it were per call.
+    uint32 internal constant STEP_PERIOD = 7 days;
+
     /// @dev Enough OGN to satisfy MIN_RUNWAY at MAX_RATE, so runway is never the
     ///      binding constraint unless a test makes it so.
     uint256 internal constant SOURCE_FUNDING = 1_000_000e18;
@@ -76,12 +80,30 @@ abstract contract Unit_SetXOGNRewardRateModule_Shared_Test is Base {
         );
 
         vm.prank(address(mockSafe));
-        module.setBounds(MIN_RATE, MAX_RATE, MAX_STEP_BPS, MIN_RUNWAY);
+        module.setBounds(MIN_RATE, MAX_RATE, MAX_STEP_BPS, MIN_RUNWAY, STEP_PERIOD);
     }
 
     //////////////////////////////////////////////////////
     /// --- HELPERS
     //////////////////////////////////////////////////////
+
+    /// @dev Advance a whole step period and top the source back up. A period of
+    ///      emissions drains more than the source holds at setup, so without the
+    ///      refill every period-crossing test would trip the runway check for
+    ///      reasons unrelated to what it is testing.
+    ///
+    ///      The target covers a full period paid at MAX_RATE plus the runway
+    ///      floor that has to survive it, which is the worst case any of these
+    ///      tests can reach.
+    function _skipStepPeriod() internal {
+        skip(STEP_PERIOD);
+
+        uint256 target = uint256(MAX_RATE) * STEP_PERIOD + uint256(MAX_RATE) * MIN_RUNWAY;
+        uint256 balance = ognToken.balanceOf(address(rewardsSource));
+        if (balance < target) {
+            ognToken.mint(address(rewardsSource), target - balance);
+        }
+    }
 
     /// @dev OGN the reward source owes stakers but has not paid out yet.
     function _owed() internal view returns (uint256) {

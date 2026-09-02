@@ -118,12 +118,41 @@ action({
       rate = clamped;
     }
 
+    // The module measures the step against a checkpoint that refreshes once per
+    // `stepPeriod`, not against the live rate. Clamping against `currentRate`
+    // would propose a rate the module rejects whenever a run repeats inside a
+    // period -- a retry after a failure, most likely -- so mirror its baseline.
     const maxStepBps: number = await module.maxStepBps();
-    const stepped = clampStep(rate, currentRate, maxStepBps);
+    const checkpointRate: BigNumber = await module.checkpointRate();
+    // uint64 decodes to a BigNumber, unlike the uint32/uint16 bounds above.
+    const checkpointTime: BigNumber = await module.checkpointTime();
+    const stepPeriod: number = await module.stepPeriod();
+
+    // Compare against chain time, not the local clock: the module checks
+    // `block.timestamp`, and a skewed host would otherwise pick the wrong
+    // baseline and propose a rate that reverts.
+    const chainNow = (await provider.getBlock(latestBlock)).timestamp;
+    const periodEnd = checkpointTime.add(stepPeriod);
+    const periodElapsed = periodEnd.lte(chainNow);
+    const baseline = periodElapsed ? currentRate : checkpointRate;
+
+    log.info(
+      periodElapsed
+        ? `Step period has elapsed; baseline refreshes to the live rate ` +
+            `${fmt(currentRate)} OGN/sec`
+        : `Still inside the step period (opened at ${checkpointTime.toString()}, ` +
+            `${stepPeriod}s long, ends ${periodEnd.toString()}); baseline stays ` +
+            `at ${fmt(checkpointRate)} OGN/sec`
+    );
+
+    const stepped = clampStep(rate, baseline, maxStepBps);
     if (!stepped.eq(rate)) {
       log.warn(
-        `Step limit (${maxStepBps} bps) moved the rate from ${fmt(rate)} to ` +
-          `${fmt(stepped)}. It will take several runs to converge.`
+        `Step limit (${maxStepBps} bps of ${fmt(
+          baseline
+        )} OGN/sec) moved the ` +
+          `rate from ${fmt(rate)} to ${fmt(stepped)}. It will take several ` +
+          `runs to converge.`
       );
       rate = stepped;
     }
@@ -263,15 +292,17 @@ function clamp(value: BigNumber, low: BigNumber, high: BigNumber): BigNumber {
   return value;
 }
 
+/// Clamp to within `maxStepBps` of `baseline`. The baseline is the module's
+/// step checkpoint, which is the live rate only once per step period.
 function clampStep(
   value: BigNumber,
-  current: BigNumber,
+  baseline: BigNumber,
   maxStepBps: number
 ): BigNumber {
-  if (current.isZero()) return value;
-  const maxDelta = current.mul(maxStepBps).div(10000);
-  if (value.gt(current.add(maxDelta))) return current.add(maxDelta);
-  if (value.lt(current.sub(maxDelta))) return current.sub(maxDelta);
+  if (baseline.isZero()) return value;
+  const maxDelta = baseline.mul(maxStepBps).div(10000);
+  if (value.gt(baseline.add(maxDelta))) return baseline.add(maxDelta);
+  if (value.lt(baseline.sub(maxDelta))) return baseline.sub(maxDelta);
   return value;
 }
 

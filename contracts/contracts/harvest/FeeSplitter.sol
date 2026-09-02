@@ -116,16 +116,13 @@ contract FeeSplitter is Strategizable {
     }
 
     function _distribute(address asset) internal {
-        uint256 balance = IERC20(asset).balanceOf(address(this));
-        if (balance < minDistribute[asset] || balance == 0) {
+        (uint256 opsAmount, uint256 buybackAmount) = previewDistribute(asset);
+
+        // Nothing to move: either the balance is zero or it is under the dust
+        // floor. Return before emitting, so a skipped asset stays silent.
+        if (opsAmount == 0 && buybackAmount == 0) {
             return;
         }
-
-        // The ops share floors, so the rounding remainder goes to the buyback.
-        uint256 opsAmount = (balance * operationsBps) / 1e4;
-        // Derived from the same snapshot rather than a second balanceOf(): these
-        // are rebasing tokens, and the balance can move between the two reads.
-        uint256 buybackAmount = balance - opsAmount;
 
         if (opsAmount > 0) {
             IERC20(asset).safeTransfer(operationsWallet, opsAmount);
@@ -146,8 +143,11 @@ contract FeeSplitter is Strategizable {
 
     /// @notice Amounts a distribution would move right now.
     /// @dev Returns (0, 0) when the balance is under the asset's dust floor.
+    ///      `public` rather than `external` because `_distribute` calls it: the
+    ///      split is defined in exactly one place, so the preview and the
+    ///      transfer can never disagree.
     function previewDistribute(address asset)
-        external
+        public
         view
         returns (uint256 opsAmount, uint256 buybackAmount)
     {
@@ -155,7 +155,10 @@ contract FeeSplitter is Strategizable {
         if (balance < minDistribute[asset] || balance == 0) {
             return (0, 0);
         }
+        // The ops share floors, so the rounding remainder goes to the buyback.
         opsAmount = (balance * operationsBps) / 1e4;
+        // Derived from the same snapshot rather than a second balanceOf(): these
+        // are rebasing tokens, and the balance can move between the two reads.
         buybackAmount = balance - opsAmount;
     }
 
@@ -186,8 +189,11 @@ contract FeeSplitter is Strategizable {
     }
 
     /// @notice Recover a token that is not part of the fee flow.
-    /// @dev Refuses supported assets. Without that check this would be an
-    ///      unbounded fee redirect that bypasses `setOperationsWallet`.
+    /// @dev Refuses supported assets. This guards against operator error, not
+    ///      against the Governor: a Governor set on redirecting fees can call
+    ///      `removeAsset` first, and already has `setOperationsWallet` anyway.
+    ///      What it does buy is that a rescue cannot touch fee balances by
+    ///      accident, which is the realistic failure.
     function rescue(address _token, uint256 _amount) external onlyGovernor {
         require(!isSupported[_token], "Cannot rescue a supported asset");
         IERC20(_token).safeTransfer(governor(), _amount);

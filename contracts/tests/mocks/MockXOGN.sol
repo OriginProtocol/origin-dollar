@@ -16,6 +16,11 @@ contract MockXOGN {
     /// @notice Makes the pull revert, to exercise the try/catch in production.
     bool public collectReverts;
 
+    /// @notice Mirrors production's `if (supply > 0)` guard. When there are no
+    ///         stakers, `ExponentialStaking._collectRewards` skips the pull
+    ///         entirely -- no revert, so nothing for a try/catch to see.
+    bool public supplyIsZero;
+
     constructor(address _ogn) {
         ogn = MockERC20(_ogn);
     }
@@ -32,11 +37,17 @@ contract MockXOGN {
         collectReverts = _reverts;
     }
 
+    function setSupplyIsZero(bool _isZero) external {
+        supplyIsZero = _isZero;
+    }
+
     function collectRewards() external {
         if (address(rewardsSource) != address(0)) {
-            // Production wraps this in try/catch so staking keeps working when
-            // rewards fail. The module must stay correct when it silently no-ops.
-            if (!collectReverts) {
+            // Production skips the pull outright while there are no stakers, and
+            // otherwise wraps it in try/catch so staking keeps working when
+            // rewards fail. Both paths leave `lastCollect` untouched without
+            // reverting, which is exactly what the module has to detect.
+            if (!supplyIsZero && !collectReverts) {
                 try rewardsSource.collectRewards() {} catch {}
             }
             return;

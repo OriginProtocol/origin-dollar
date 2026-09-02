@@ -125,23 +125,33 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
         module.setRewardRate(1.5e18);
     }
 
-    /// @dev xOGN swallows a failing reward-source collect, so the module must
-    ///      still discount what is owed rather than trusting the settle.
-    function test_setRewardRate_runwayHoldsWhenSettleSilentlyNoops() public {
+    /// @dev xOGN swallows a failing reward-source collect. If the module went
+    ///      ahead anyway, `setRewardsPerSecond` would reprice the still-open
+    ///      window at the new rate -- the exact loss the settle exists to stop.
+    ///      So it must refuse to proceed rather than merely price around it.
+    function test_setRewardRate_RevertWhen_settleSilentlyNoops() public {
         xognMock.setCollectReverts(true);
 
-        uint192 newRate = 2e18;
-        uint256 target = uint256(newRate) * MIN_RUNWAY;
-
-        uint256 balance = ognToken.balanceOf(address(rewardsSource));
-        vm.prank(address(rewardsSource));
-        ognToken.transfer(address(0xdead), balance - target);
-
         skip(1 hours);
+        assertGt(_owed(), 0, "test needs an open window to protect");
 
         vm.prank(operator);
-        vm.expectRevert("Runway too short");
-        module.setRewardRate(newRate);
+        vm.expectRevert("Rewards not settled");
+        module.setRewardRate(2e18);
+    }
+
+    /// @dev The second silent path: `ExponentialStaking._collectRewards` skips
+    ///      the pull entirely while `totalSupply() == 0`. Nothing reverts, so a
+    ///      try/catch would not see it -- only `lastCollect` reveals it.
+    function test_setRewardRate_RevertWhen_settleSkippedForZeroSupply() public {
+        xognMock.setSupplyIsZero(true);
+
+        skip(1 hours);
+        assertGt(_owed(), 0, "test needs an open window to protect");
+
+        vm.prank(operator);
+        vm.expectRevert("Rewards not settled");
+        module.setRewardRate(2e18);
     }
 
     //////////////////////////////////////////////////////
@@ -149,7 +159,9 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
     //////////////////////////////////////////////////////
 
     function test_setRewardRate_acceptsRateAtBounds() public {
-        // Walk down to MIN_RATE in allowed steps.
+        // Walk down to MIN_RATE in allowed steps. Each step needs its own period:
+        // the checkpoint only refreshes once per `stepPeriod`, so without the
+        // skip the second call would still be measured against INITIAL_RATE.
         uint192 rate = INITIAL_RATE;
         while (rate > MIN_RATE) {
             uint192 next = uint192((uint256(rate) * (1e4 - MAX_STEP_BPS)) / 1e4);
@@ -157,13 +169,14 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
             vm.prank(operator);
             module.setRewardRate(next);
             rate = next;
+            _skipStepPeriod();
         }
         assertEq(_currentRate(), MIN_RATE);
     }
 
     function test_setRewardRate_RevertWhen_belowMinRate() public {
         vm.prank(address(mockSafe));
-        module.setBounds(MIN_RATE, MAX_RATE, 1e4, MIN_RUNWAY);
+        module.setBounds(MIN_RATE, MAX_RATE, 1e4, MIN_RUNWAY, STEP_PERIOD);
 
         vm.prank(operator);
         vm.expectRevert("Rate out of range");
@@ -172,7 +185,7 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
 
     function test_setRewardRate_RevertWhen_aboveMaxRate() public {
         vm.prank(address(mockSafe));
-        module.setBounds(MIN_RATE, MAX_RATE, 1e4, MIN_RUNWAY);
+        module.setBounds(MIN_RATE, MAX_RATE, 1e4, MIN_RUNWAY, STEP_PERIOD);
 
         vm.prank(operator);
         vm.expectRevert("Rate out of range");
@@ -193,6 +206,79 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
         module.setRewardRate(newRate);
 
         assertEq(_currentRate(), newRate);
+    }
+
+    /// @dev The finding this checkpoint exists for. Measured per call, each
+    ///      update becomes the next one's baseline, so 25% steps compound and
+    ///      the operator walks 1.7 -> 5 OGN/s in six back-to-back transactions
+    ///      while every individual step looks legal. Against a checkpoint the
+    ///      second call in the same period is already too far.
+    function test_setRewardRate_RevertWhen_ratchetingWithinOnePeriod() public {
+        uint192 first = uint192((uint256(INITIAL_RATE) * (1e4 + MAX_STEP_BPS)) / 1e4);
+
+        vm.prank(operator);
+        module.setRewardRate(first);
+        assertEq(_currentRate(), first);
+
+        // Legal against the new live rate, but not against the checkpoint.
+        uint192 second = uint192((uint256(first) * (1e4 + MAX_STEP_BPS)) / 1e4);
+
+        vm.prank(operator);
+        vm.expectRevert("Rate step too large");
+        module.setRewardRate(second);
+    }
+
+    /// @dev The limit is per period, not per lifetime: once the period rolls the
+    ///      checkpoint refreshes and the next 25% is allowed.
+    function test_setRewardRate_allowsStepAfterPeriodElapses() public {
+        uint192 first = uint192((uint256(INITIAL_RATE) * (1e4 + MAX_STEP_BPS)) / 1e4);
+
+        vm.prank(operator);
+        module.setRewardRate(first);
+
+        _skipStepPeriod();
+
+        uint192 second = uint192((uint256(first) * (1e4 + MAX_STEP_BPS)) / 1e4);
+        vm.prank(operator);
+        module.setRewardRate(second);
+
+        assertEq(_currentRate(), second);
+        assertEq(uint256(module.checkpointRate()), first, "checkpoint should refresh to the live rate");
+    }
+
+    /// @dev A retry inside the same period is still allowed -- it just cannot
+    ///      travel further from the checkpoint. This is why the fix is a
+    ///      checkpoint rather than a plain cooldown.
+    function test_setRewardRate_allowsRetryWithinPeriodInsideTheBand() public {
+        uint192 first = uint192((uint256(INITIAL_RATE) * (1e4 + 1000)) / 1e4);
+
+        vm.prank(operator);
+        module.setRewardRate(first);
+
+        // Still within 25% of the checkpoint, so a same-period correction lands.
+        uint192 second = uint192((uint256(INITIAL_RATE) * (1e4 + 2000)) / 1e4);
+        vm.prank(operator);
+        module.setRewardRate(second);
+
+        assertEq(_currentRate(), second);
+    }
+
+    /// @dev The Safe is the reward source's Strategist and outranks this module.
+    ///      A rate it sets directly becomes the next period's baseline rather
+    ///      than drift the module tries to correct.
+    function test_setRewardRate_checkpointRefreshesToARateTheSafeSetDirectly() public {
+        uint192 safeRate = 3e18;
+        rewardsSource.setRewardsPerSecond(safeRate);
+
+        _skipStepPeriod();
+
+        // A 25% step from 3.0 -- far outside 25% of the original 1.7.
+        uint192 stepped = uint192((uint256(safeRate) * (1e4 + MAX_STEP_BPS)) / 1e4);
+        vm.prank(operator);
+        module.setRewardRate(stepped);
+
+        assertEq(_currentRate(), stepped);
+        assertEq(uint256(module.checkpointRate()), safeRate);
     }
 
     function test_setRewardRate_skipsStepCheckWhenCurrentRateIsZero() public {

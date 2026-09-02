@@ -50,6 +50,16 @@ const { join } = require("path");
  *                          – Hard floor, an emergency brake. Deliberately far below the
  *                            script's operating range: a brake that equals the target
  *                            never catches anything the script would not have clamped.
+ * moduleBounds.maxStepBps  – Largest move per step period, measured against the module's
+ *                            checkpoint rather than the live rate.
+ * moduleBounds.stepPeriodSeconds
+ *                          – How long a step checkpoint holds before it refreshes. 7 days,
+ *                            matching the weekly schedule, so a normal run always opens a
+ *                            fresh period and behaves as if the limit were per call. The
+ *                            period is what makes maxStepBps bound anything at all: per
+ *                            call, each update becomes the next one's baseline and a key
+ *                            can walk minRate -> maxRate in a few back-to-back txs. It
+ *                            also leaves a failed run free to retry within the period.
  *
  * script.windowDays        – Trailing window for measuring OGN bought via CoW. 30 days;
  *                            shorter windows are noisy (14d reads 1.262 OGN/s against
@@ -152,6 +162,15 @@ function validate(config) {
     moduleBounds.maxStepBps > 10000
   ) {
     errors.push("moduleBounds.maxStepBps must be an integer in (0, 10000]");
+  }
+  if (
+    !Number.isInteger(moduleBounds?.stepPeriodSeconds) ||
+    moduleBounds.stepPeriodSeconds <= 0 ||
+    moduleBounds.stepPeriodSeconds > 0xffffffff
+  ) {
+    errors.push(
+      "moduleBounds.stepPeriodSeconds must be a positive integer that fits uint32"
+    );
   }
   if (
     !Number.isInteger(moduleBounds?.minRunwaySeconds) ||

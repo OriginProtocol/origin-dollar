@@ -36,6 +36,12 @@ contract Unit_Concrete_SetXOGNRewardRateModule_Constructor_Test is Unit_SetXOGNR
         assertEq(uint256(ISetXOGNRewardRateModuleView(fresh).maxRate()), 0);
         assertEq(uint256(ISetXOGNRewardRateModuleView(fresh).maxStepBps()), 0);
         assertEq(ISetXOGNRewardRateModuleView(fresh).minRunway(), 0);
+        assertEq(uint256(ISetXOGNRewardRateModuleView(fresh).stepPeriod()), 0);
+
+        // The step checkpoint self-initialises on the first setRewardRate, so it
+        // must start zeroed rather than be seeded by the constructor.
+        assertEq(uint256(ISetXOGNRewardRateModuleView(fresh).checkpointRate()), 0);
+        assertEq(uint256(ISetXOGNRewardRateModuleView(fresh).checkpointTime()), 0);
     }
 
     function test_constructor_RevertWhen_zeroRewardsSource() public {
@@ -68,4 +74,7 @@ interface ISetXOGNRewardRateModuleView {
     function maxRate() external view returns (uint192);
     function maxStepBps() external view returns (uint16);
     function minRunway() external view returns (uint256);
+    function checkpointRate() external view returns (uint192);
+    function checkpointTime() external view returns (uint64);
+    function stepPeriod() external view returns (uint32);
 }

@@ -178,6 +178,7 @@ contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
             "module rewardsSource mismatch"
         );
         require(ISetXOGNRewardRateModuleView(rateModule).minRunway() == 0, "bounds already set");
+        require(ISetXOGNRewardRateModuleView(rateModule).stepPeriod() == 0, "step period already set");
 
         _forkVerifyDistribution(feeSplitter);
     }
@@ -216,4 +217,5 @@ contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
 interface ISetXOGNRewardRateModuleView {
     function rewardsSource() external view returns (address);
     function minRunway() external view returns (uint256);
+    function stepPeriod() external view returns (uint32);
 }

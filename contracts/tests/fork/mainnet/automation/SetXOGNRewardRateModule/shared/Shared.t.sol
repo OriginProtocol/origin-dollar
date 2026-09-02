@@ -36,6 +36,7 @@ abstract contract Fork_SetXOGNRewardRateModule_Shared_Test is BaseFork {
     uint192 internal constant MAX_RATE = 5e18;
     uint16 internal constant MAX_STEP_BPS = 2500;
     uint256 internal constant MIN_RUNWAY = 12 hours;
+    uint32 internal constant STEP_PERIOD = 7 days;
 
     function setUp() public virtual override {
         super.setUp();
@@ -63,7 +64,7 @@ abstract contract Fork_SetXOGNRewardRateModule_Shared_Test is BaseFork {
         ISafeModules(CrossChain.multichainStrategist).enableModule(address(module));
 
         vm.prank(CrossChain.multichainStrategist);
-        module.setBounds(MIN_RATE, MAX_RATE, MAX_STEP_BPS, MIN_RUNWAY);
+        module.setBounds(MIN_RATE, MAX_RATE, MAX_STEP_BPS, MIN_RUNWAY, STEP_PERIOD);
     }
 
     function _currentRate() internal view returns (uint192 rate) {
