@@ -81,6 +81,8 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`     | Claim and forward OGN rewards from all modules                                                  |
 | `managePassThrough`         | mainnet     | `30 12 * * 0`    | Transfer tokens via the pass-through mechanism                                                  |
 | `harvest`                   | mainnet     | `25 11,23 * * *` | Claim strategy rewards through the ClaimStrategyRewards Safe module                             |
+| `feeSplitterDistribute`     | mainnet     | `10 12 * * *`    | Split protocol fees on the FeeSplitter: operations share out, remainder to the OGN buyback       |
+| `setXOGNRewardRate`         | mainnet     | `20 1 * * 2`     | Set the xOGN reward rate from measured OGN buybacks, via SetXOGNRewardRateModule                 |
 
 ## System
 
