@@ -115,6 +115,9 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
         module.setRewardRate(newRate);
     }
 
+    /// @dev Must propose an *increase*: the runway floor only applies upward,
+    ///      so 1.5e18 (a cut from 1.7) would sail through and the test would
+    ///      pass without exercising the guard it is named for.
     function test_setRewardRate_RevertWhen_runwayTooShort() public {
         uint256 balance = ognToken.balanceOf(address(rewardsSource));
         vm.prank(address(rewardsSource));
@@ -122,7 +125,48 @@ contract Unit_Concrete_SetXOGNRewardRateModule_SetRewardRate_Test is Unit_SetXOG
 
         vm.prank(operator);
         vm.expectRevert("Runway too short");
-        module.setRewardRate(1.5e18);
+        module.setRewardRate(2e18);
+    }
+
+    /// @dev The unwedge. A cut can only improve runway, so refusing it when
+    ///      runway is short blocks the sole escape from a drained source. The
+    ///      old guard applied unconditionally and reverted here.
+    function test_setRewardRate_allowsDecreaseWhenRunwayIsShort() public {
+        uint256 balance = ognToken.balanceOf(address(rewardsSource));
+        vm.prank(address(rewardsSource));
+        ognToken.transfer(address(0xdead), balance - 1e18);
+
+        // Far below what MIN_RUNWAY would demand of any rate at this balance.
+        assertLt(ognToken.balanceOf(address(rewardsSource)), MIN_RATE * MIN_RUNWAY);
+
+        uint192 lower = uint192((uint256(INITIAL_RATE) * (1e4 - MAX_STEP_BPS)) / 1e4);
+        vm.prank(operator);
+        module.setRewardRate(lower);
+
+        assertEq(_currentRate(), lower);
+    }
+
+    /// @dev The full F-1 wedge: source drained at a rate inflow cannot sustain.
+    ///      The step limit caps how far each run may cut, so recovery has to be
+    ///      a walk rather than one jump -- what matters is that every step lands
+    ///      instead of reverting, so the controller heals without a Safe tx.
+    function test_setRewardRate_wedgeScenarioRecovers() public {
+        uint256 balance = ognToken.balanceOf(address(rewardsSource));
+        vm.prank(address(rewardsSource));
+        ognToken.transfer(address(0xdead), balance);
+
+        assertEq(ognToken.balanceOf(address(rewardsSource)), 0, "source must be dry");
+
+        uint192 rate = INITIAL_RATE;
+        for (uint256 i = 0; i < 4; ++i) {
+            rate = uint192((uint256(rate) * (1e4 - MAX_STEP_BPS)) / 1e4);
+            vm.prank(operator);
+            module.setRewardRate(rate);
+            assertEq(_currentRate(), rate);
+            skip(STEP_PERIOD);
+        }
+
+        assertLt(_currentRate(), INITIAL_RATE);
     }
 
     /// @dev xOGN swallows a failing reward-source collect. If the module went

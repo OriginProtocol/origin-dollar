@@ -5,7 +5,7 @@ const { join } = require("path");
  * OGN buyback configuration.
  *
  * The values live in `scripts/config/ogn-buyback.json` rather than here because the
- * Foundry deploy script (`scripts/deploy/mainnet/005_OGNBuyback.s.sol`) reads the same
+ * Foundry deploy script (`scripts/deploy/mainnet/006_OGNBuyback.s.sol`) reads the same
  * file with `vm.readFile` + `vm.parseJson`. One file, both toolchains, no drift. JSON
  * cannot carry comments, so the documentation and validation live here.
  *
@@ -53,9 +53,14 @@ const { join } = require("path");
  * moduleBounds.maxStepBps  – Largest move per step period, measured against the module's
  *                            checkpoint rather than the live rate.
  * moduleBounds.stepPeriodSeconds
- *                          – How long a step checkpoint holds before it refreshes. 7 days,
- *                            matching the weekly schedule, so a normal run always opens a
- *                            fresh period and behaves as if the limit were per call. The
+ *                          – How long a step checkpoint holds before it refreshes. 6.9 days,
+ *                            deliberately just under the weekly cadence: at exactly 7d the
+ *                            "a normal run always opens a fresh period" property is a coin
+ *                            flip on block-inclusion jitter, and a short week measures
+ *                            against the stale checkpoint and silently no-ops. Same
+ *                            "backstop sits below the target" pattern as the runway pair
+ *                            below. A normal run opens a fresh period, so the limit
+ *                            behaves as if it were per call. The
  *                            period is what makes maxStepBps bound anything at all: per
  *                            call, each update becomes the next one's baseline and a key
  *                            can walk minRate -> maxRate in a few back-to-back txs. It
@@ -65,9 +70,28 @@ const { join } = require("path");
  *                            shorter windows are noisy (14d reads 1.262 OGN/s against
  *                            30d's 1.689 on the same data).
  * script.minRunwaySeconds  – Script's operating floor; drives `ceilRate` ("don't drain").
+ *                            14 days, which must stay comfortably above the run cadence:
+ *                            at the old 1 day, a single weekly run could set a rate that
+ *                            emptied the source days before the next run could correct it.
  * script.maxRunwaySeconds  – Script's operating ceiling; drives `floorRate` ("don't
- *                            hoard"). Near-inert while the reward source holds ~1.6 days;
- *                            becomes meaningful if it is ever funded to a real reserve.
+ *                            hoard"). 60 days, chosen to be inert at today's funding.
+ *
+ *                            Measured 2026-09-03: the reward source holds 2,499,605 OGN,
+ *                            8,078 owed, so ~2.49M available = 17.0 days at 1.7 OGN/s --
+ *                            and it has been growing ~100k OGN/day. (An earlier revision
+ *                            of this file claimed ~1.6 days, which was off by ~10x and is
+ *                            what made a 4-day ceiling look harmless.)
+ *
+ *                            The ceiling is what decides whether a surplus gets spent
+ *                            down, so it is a policy number, not a safety rail. floorRate
+ *                            = available / maxRunwaySeconds only binds once it exceeds
+ *                            measured inflow, i.e. below ~19.5 days of runway today. At
+ *                            4 days it computed 7.2 OGN/s and would have ramped emissions
+ *                            ~95% and drained the reserve in three weeks; at 60 days it
+ *                            computes 0.48 OGN/s and the rate simply tracks what the
+ *                            protocol actually buys. Shortening it is how you would
+ *                            deliberately distribute a backlog -- a decision for whoever
+ *                            owns staker rewards, not a default.
  * script.deadbandBps       – Skip the update when the change is smaller than this.
  * script.blockBatchSize    – Blocks per `eth_getLogs` call during a cold-start backfill.
  *                            10000 is also the cap some providers enforce.

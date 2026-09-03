@@ -149,7 +149,19 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         // as runway would let through a rate the source cannot sustain.
         uint256 available = IERC20(ogn).balanceOf(rewardsSource) -
             IFixedRateRewardsSource(rewardsSource).previewRewards();
-        require(uint256(newRate) * minRunway <= available, "Runway too short");
+
+        // Only an increase can make runway worse, so only an increase is
+        // checked. Applying this to a decrease deadlocks the automation: once
+        // the source is drained `available` is zero, the step limit forbids
+        // proposing anything far below the stuck rate, and every run reverts --
+        // the guard blocking the one action that would relieve the condition it
+        // is complaining about. Recovery would then need a Safe transaction.
+        if (newRate > currentRate) {
+            require(
+                uint256(newRate) * minRunway <= available,
+                "Runway too short"
+            );
+        }
 
         bool success = safeContract.execTransactionFromModule(
             rewardsSource,

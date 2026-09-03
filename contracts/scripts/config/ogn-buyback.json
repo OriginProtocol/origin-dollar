@@ -19,13 +19,13 @@
     "minRate": "250000000000000000",
     "maxRate": "5000000000000000000",
     "maxStepBps": 2500,
-    "stepPeriodSeconds": 604800,
+    "stepPeriodSeconds": 596400,
     "minRunwaySeconds": 43200
   },
   "script": {
     "windowDays": 30,
-    "minRunwaySeconds": 86400,
-    "maxRunwaySeconds": 345600,
+    "minRunwaySeconds": 1209600,
+    "maxRunwaySeconds": 5184000,
     "deadbandBps": 500,
     "blockBatchSize": 10000,
     "reorgBufferBlocks": 50
