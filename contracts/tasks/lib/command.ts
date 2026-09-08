@@ -135,7 +135,13 @@ type LegacyAction = (
   context: CommandContext,
   runSuper: () => Promise<unknown>
 ) => Promise<unknown>;
-type LegacyEntry = { action?: LegacyAction; superAction?: LegacyAction };
+type LegacyEntry = {
+  description: string;
+  params: CommandParam[];
+  action?: LegacyAction;
+  superAction?: LegacyAction;
+};
+type LegacyType = { name: string };
 let legacyActions: Map<string, LegacyEntry> | undefined;
 
 /**
@@ -143,6 +149,12 @@ let legacyActions: Map<string, LegacyEntry> | undefined;
  * registration-only shim. It never imports or starts Hardhat; the captured
  * business handlers receive the explicit standalone CommandContext above.
  * tasks/tasks.js remains unchanged as the A/B oracle until PR B.
+ *
+ * The shim records the param declarations with Hardhat's semantics, so
+ * tasks.js stays the single source of truth for the catalogue: an override
+ * (`task("x")` after `subtask("x")`) inherits the parent's description and
+ * params, `addParam` is optional as soon as it carries a default, and
+ * `default` is only present when one was declared.
  */
 function loadLegacyActions(): Map<string, LegacyEntry> {
   if (legacyActions) return legacyActions;
@@ -153,28 +165,122 @@ function loadLegacyActions(): Map<string, LegacyEntry> {
       { name },
     ])
   );
-  const makeDefinition = (name: string) => {
+  const makeDefinition = (name: string, description?: string) => {
     const prior = entries.get(name);
     const entry: LegacyEntry = prior
-      ? { action: undefined, superAction: prior.action ?? prior.superAction }
-      : {};
+      ? {
+          description: description ?? prior.description,
+          params: [...prior.params],
+          superAction: prior.action ?? prior.superAction,
+        }
+      : { description: description ?? "", params: [] };
     entries.set(name, entry);
+    const paramDefinitions: Record<string, CommandParam> = {};
+    for (const param of entry.params) paramDefinitions[param.name] = param;
+    const record = (
+      param: Omit<CommandParam, "type" | "default">,
+      type: LegacyType | undefined,
+      defaultValue: unknown
+    ) => {
+      const spec: CommandParam = {
+        ...param,
+        type: (type?.name ?? "string") as ParamType,
+      };
+      if (defaultValue !== undefined) spec.default = defaultValue;
+      if (paramDefinitions[spec.name])
+        throw new Error(`Param '${spec.name}' declared twice on '${name}'`);
+      paramDefinitions[spec.name] = spec;
+      entry.params.push(spec);
+      return definition;
+    };
     const definition: Record<string, unknown> = {
-      paramDefinitions: {},
-      addParam() {
-        return definition;
+      paramDefinitions,
+      addParam(
+        paramName: string,
+        paramDescription = "",
+        defaultValue?: unknown,
+        type?: LegacyType,
+        isOptional = defaultValue !== undefined
+      ) {
+        return record(
+          {
+            name: paramName,
+            description: paramDescription,
+            optional: isOptional,
+            flag: false,
+            variadic: false,
+          },
+          type,
+          defaultValue
+        );
       },
-      addOptionalParam() {
-        return definition;
+      addOptionalParam(
+        paramName: string,
+        paramDescription = "",
+        defaultValue?: unknown,
+        type?: LegacyType
+      ) {
+        return record(
+          {
+            name: paramName,
+            description: paramDescription,
+            optional: true,
+            flag: false,
+            variadic: false,
+          },
+          type,
+          defaultValue
+        );
       },
-      addFlag() {
-        return definition;
+      addFlag(paramName: string, paramDescription = "") {
+        return record(
+          {
+            name: paramName,
+            description: paramDescription,
+            optional: true,
+            flag: true,
+            variadic: false,
+          },
+          types.boolean,
+          false
+        );
       },
-      addVariadicParam() {
-        return definition;
+      addVariadicPositionalParam(
+        paramName: string,
+        paramDescription = "",
+        defaultValue?: unknown,
+        type?: LegacyType,
+        isOptional = defaultValue !== undefined
+      ) {
+        return record(
+          {
+            name: paramName,
+            description: paramDescription,
+            optional: isOptional,
+            flag: false,
+            variadic: true,
+          },
+          type,
+          defaultValue
+        );
       },
-      addOptionalVariadicParam() {
-        return definition;
+      addOptionalVariadicPositionalParam(
+        paramName: string,
+        paramDescription = "",
+        defaultValue?: unknown,
+        type?: LegacyType
+      ) {
+        return record(
+          {
+            name: paramName,
+            description: paramDescription,
+            optional: true,
+            flag: false,
+            variadic: true,
+          },
+          type,
+          defaultValue
+        );
       },
       setAction(action: LegacyAction) {
         entry.action = action;
@@ -184,8 +290,10 @@ function loadLegacyActions(): Map<string, LegacyEntry> {
     return definition;
   };
   const registration = {
-    task: (name: string) => makeDefinition(name),
-    subtask: (name: string) => makeDefinition(name),
+    task: (name: string, description?: string) =>
+      makeDefinition(name, description),
+    subtask: (name: string, description?: string) =>
+      makeDefinition(name, description),
     types,
   };
   const moduleApi = require("node:module") as {
@@ -203,6 +311,23 @@ function loadLegacyActions(): Map<string, LegacyEntry> {
   }
   legacyActions = entries;
   return entries;
+}
+
+/** Every task declared in tasks.js, in declaration order. */
+export function registeredCommands(): Array<{
+  name: string;
+  description: string;
+  params: CommandParam[];
+}> {
+  return [...loadLegacyActions()].map(([name, { description, params }]) => ({
+    name,
+    description,
+    params: params.map((param) => ({ ...param })),
+  }));
+}
+
+export function hasLegacyAction(name: string): boolean {
+  return loadLegacyActions().get(name)?.action !== undefined;
 }
 
 export function legacyHandler(name: string): CommandHandler {

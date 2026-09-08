@@ -1,41 +1,27 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
+  hasLegacyAction,
   legacyHandler,
+  registeredCommands,
   type CommandDefinition,
-  type CommandParam,
 } from "./lib/command";
 
 type CatalogueEntry = Omit<CommandDefinition, "handler">;
-const catalogue = JSON.parse(
-  readFileSync(
-    join(__dirname, "test", "fixtures", "ops-command-catalog.json"),
-    "utf8"
-  )
-) as Array<{
-  name: string;
-  description: string;
-  params: CommandParam[];
-  destination: string;
-}>;
 
-export const commands: CommandDefinition[] = catalogue.map((entry) => ({
-  ...entry,
-  handler:
-    entry.name === "accounts"
-      ? async (_args, context) => {
-          const accounts = await context.ethers.provider.listAccounts();
-          for (const [index, address] of accounts.entries()) {
-            const role =
-              index === 0 ? " [Deployer]" : index === 1 ? " [Governor]" : "";
-            console.log(`${address}${role}`);
-          }
-        }
-      : legacyHandler(entry.name),
-}));
+/**
+ * The catalogue is derived from the task declarations in tasks/tasks.js;
+ * tasks/test/fixtures/ops-command-catalog.json pins it as a snapshot.
+ */
+export const commands: CommandDefinition[] = registeredCommands().map(
+  (entry) => ({
+    ...entry,
+    destination: `ops:${entry.name}`,
+    handler: legacyHandler(entry.name),
+  })
+);
 
 export const commandByName = new Map(
   commands.map((command) => [command.name, command])
 );
 
+export { hasLegacyAction };
 export type { CatalogueEntry };
