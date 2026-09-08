@@ -211,7 +211,6 @@ tests/                     # Foundry suite (canonical)
   unit/                    # mocked unit tests — aim for ~100% coverage here
   fork/                    # integration tests on a chain fork; deploy our contracts fresh, use real external protocols
   smoke/                   # live-deployment health checks; deploy nothing, use only what is on chain
-  invariant/
   mocks/
   utils/                   # Addresses.sol, shared helpers
 tasks/test/                # Mocha tests for Hardhat ops tasks only

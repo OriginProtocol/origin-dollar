@@ -64,32 +64,19 @@ pnpm i
 pnpm run node
 ```
 
-### Minting Stablecoins via hardhat task
+## Running Contract Tests
 
-This is an option, but a simpler way is to use the `ACCOUNTS_TO_FUND` setting described above.
+The contract test suite uses Foundry. From the `contracts/` directory:
 
 ```bash
-# Mint 1000 worth of each supported stablecoin to each account defined in the mnemonic
-npx hardhat fund --amount 1000 --network localhost
+make test-unit
+make test-fork-mainnet
+make test-smoke-mainnet
 ```
 
-## Running Smoke Tests
-
-Smoke tests can be run in 2 modes:
-
-- Run `scripts/test/smokeTest.sh` to launch interactive mode. All the "before contract changes" parts of tests
-  will execute and wait for the user to manually using a console performs contract changes. Once those are done,
-  hit "Enter" in the smoke test console and the second part of the tests shall be run that validate that contract
-  changes haven't broken basic functionality.
-- Run `scripts/test/smokeTest.sh --deployid [numeric_id_of_deploy]` will run smoke tests against a specific
-  deployment validating that basic functionality didn't break.
-  <br/><br/>
-
----
-
-## Fork Tests
-
-Head over to [contracts/fork-test.md](contracts/fork-test.md)
+Equivalent fork and smoke targets exist for the other supported networks. See
+[contracts/tests/README.md](contracts/tests/README.md) for the test conventions
+and complete command list.
 
 ---
 
