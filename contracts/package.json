@@ -27,7 +27,7 @@
     "node:anvil:hoodi": "anvil --fork-url $HOODI_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:hyperevm": "anvil --fork-url $HYPEREVM_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "lint": "pnpm run lint:js && pnpm run lint:ts && pnpm run lint:sol",
-    "lint:js": "eslint \"tasks/**/*.js\" \"scripts/export-abi.js\" \"scripts/lib/**/*.js\" \"scripts/test/**/*.js\" \"utils/hardhat-task-helpers.js\"",
+    "lint:js": "eslint \"tasks/**/*.js\" \"scripts/export-abi.js\" \"scripts/lib/**/*.js\" \"scripts/test/**/*.js\" \"utils/runtime-helpers.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "lint:ts": "eslint \"tasks/**/*.ts\"",
     "prettier": "pnpm run prettier:js && pnpm run prettier:sol && pnpm run prettier:ts",
