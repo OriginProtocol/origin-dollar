@@ -44,10 +44,10 @@
 | `abi/poolBoosterSwapX.json` | 1 | sonic |
 | `abi/sonic_staking_strategy.json` | 1 | sonic |
 | `abi/vault.json` | 1 | sonic |
+| `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
 | `utils/discord` | 1 | eth |
-| `utils/anvil` | 1 | eth |
 | `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |

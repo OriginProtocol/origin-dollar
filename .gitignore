@@ -56,7 +56,6 @@ contracts/artifacts/
 contracts/deployments/localhost*
 contracts/deployments/ganache_*
 contracts/deployments/fork_*
-
 contracts/coverage/
 contracts/coverage.json
 contracts/build/*

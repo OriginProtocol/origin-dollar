@@ -23,7 +23,7 @@ cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoin
 make install             # foundryup (v1.8.1), forge soldeer install, install-deps.sh, pnpm i
 ```
 
-Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The ops CLI also resolves Ethereum from `MAINNET_PROVIDER_URL`.
+Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The ops CLI and `anvil.sh` also resolve Ethereum from `MAINNET_PROVIDER_URL` (legacy fallback: `PROVIDER_URL`).
 
 Real deployments additionally need `DEPLOYER_ADDRESS` and the encrypted `deployerKey` keystore (`cast wallet import deployerKey --interactive`).
 
