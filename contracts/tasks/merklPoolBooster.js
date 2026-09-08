@@ -68,7 +68,7 @@ async function manageMerklBribes({
 }
 
 /**
- * Hardhat task wrapper for manageMerklBribes
+ * Task wrapper for manageMerklBribes
  */
 async function manageMerklBribesTask(taskArguments) {
   const { getSigner } = require("../utils/signers");

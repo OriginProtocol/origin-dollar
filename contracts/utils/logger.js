@@ -71,7 +71,7 @@ const createDebugLogger = (module) => {
 const createWinstonLogger = (module) => {
   let bridge;
   try {
-    // ts-node is registered by hardhat and cron entrypoints.
+    // ts-node is registered by CLI and cron entrypoints.
     bridge = require("../tasks/lib/logger");
   } catch (err) {
     const fallback = createDebugLogger(module);

@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { coerceParams, legacyHandler, parseCli } = require("../lib/command");
+const { coerceParams, taskHandler, parseCli } = require("../lib/command");
 const deployments = require("../lib/deployments");
 const { rpcUrlFor } = require("../lib/network");
 const { getOptionalSigner } = require("../lib/signer");
@@ -130,7 +130,7 @@ describe("ops CLI parsing", function () {
     }
   });
 
-  it("provides legacy globals only while a standalone handler runs", async function () {
+  it("provides task globals only while a standalone handler runs", async function () {
     const before = {
       ethers: global.ethers,
       deployments: global.deployments,
@@ -157,7 +157,7 @@ describe("ops CLI parsing", function () {
     const originalLog = console.log;
     console.log = () => {};
     try {
-      await legacyHandler("governors")({}, context);
+      await taskHandler("governors")({}, context);
     } finally {
       console.log = originalLog;
     }

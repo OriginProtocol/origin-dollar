@@ -33,7 +33,7 @@
 | `utils/localKeyValueStore` | 3 | eth, hyper, base |
 | `utils/regex` | 3 | eth, base, arb |
 | `utils/signers` | 3 | eth, base, arb |
-| `utils/signersNoHardhat` | 3 | eth, base, arb |
+| `utils/signersStandalone` | 3 | eth, base, arb |
 | `tasks/lib/safeProposal` | 2 | eth, base |
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `utils/resolvers` | 2 | eth, base |
@@ -44,10 +44,10 @@
 | `abi/poolBoosterSwapX.json` | 1 | sonic |
 | `abi/sonic_staking_strategy.json` | 1 | sonic |
 | `abi/vault.json` | 1 | sonic |
+| `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
 | `utils/discord` | 1 | eth |
-| `utils/hardhat` | 1 | eth |
 | `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |

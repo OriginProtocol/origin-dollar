@@ -1,7 +1,7 @@
 import {
-  hasLegacyAction,
-  legacyHandler,
+  hasTaskAction,
   registeredCommands,
+  taskHandler,
   type CommandDefinition,
 } from "./lib/command";
 
@@ -15,7 +15,7 @@ export const commands: CommandDefinition[] = registeredCommands().map(
   (entry) => ({
     ...entry,
     destination: `ops:${entry.name}`,
-    handler: legacyHandler(entry.name),
+    handler: taskHandler(entry.name),
   })
 );
 
@@ -23,5 +23,5 @@ export const commandByName = new Map(
   commands.map((command) => [command.name, command])
 );
 
-export { hasLegacyAction };
+export { hasTaskAction };
 export type { CatalogueEntry };

@@ -3,17 +3,15 @@ import * as contracts from "./contracts";
 import * as deployments from "./deployments";
 import { getChainId, getNetworkName, getProvider } from "./network";
 import { rolesFor } from "./roles";
+import {
+  registeredTasks,
+  type CommandParam,
+  type ParamType,
+  type TaskAction,
+  type TaskEntry,
+} from "./task-registry";
 
-export type ParamType = "string" | "int" | "float" | "boolean" | "json";
-export type CommandParam = {
-  name: string;
-  description: string;
-  type: ParamType;
-  optional: boolean;
-  flag: boolean;
-  variadic: boolean;
-  default?: unknown;
-};
+export type { CommandParam, ParamType };
 export type CommandContext = {
   chainId: number;
   networkName: string;
@@ -138,187 +136,13 @@ export function createCommandContext(): CommandContext {
   };
 }
 
-type LegacyAction = (
-  args: Record<string, unknown>,
-  context: CommandContext,
-  runSuper: () => Promise<unknown>
-) => Promise<unknown>;
-type LegacyEntry = {
-  description: string;
-  params: CommandParam[];
-  action?: LegacyAction;
-  superAction?: LegacyAction;
-};
-type LegacyType = { name: string };
-let legacyActions: Map<string, LegacyEntry> | undefined;
+let taskEntries: Map<string, TaskEntry> | undefined;
 
-/**
- * Temporary PR-A adapter: loads the existing task declarations through a tiny,
- * registration-only shim. It never imports or starts Hardhat; the captured
- * business handlers receive the explicit standalone CommandContext above.
- * tasks/tasks.js remains unchanged as the A/B oracle until PR B.
- *
- * The shim records the param declarations with Hardhat's semantics, so
- * tasks.js stays the single source of truth for the catalogue: an override
- * (`task("x")` after `subtask("x")`) inherits the parent's description and
- * params, `addParam` is optional as soon as it carries a default, and
- * `default` is only present when one was declared.
- */
-function loadLegacyActions(): Map<string, LegacyEntry> {
-  if (legacyActions) return legacyActions;
-  const entries = new Map<string, LegacyEntry>();
-  const types = Object.fromEntries(
-    ["string", "int", "float", "boolean", "json", "any"].map((name) => [
-      name,
-      { name },
-    ])
-  );
-  const makeDefinition = (name: string, description?: string) => {
-    const prior = entries.get(name);
-    const entry: LegacyEntry = prior
-      ? {
-          description: description ?? prior.description,
-          params: [...prior.params],
-          superAction: prior.action ?? prior.superAction,
-        }
-      : { description: description ?? "", params: [] };
-    entries.set(name, entry);
-    const paramDefinitions: Record<string, CommandParam> = {};
-    for (const param of entry.params) paramDefinitions[param.name] = param;
-    const record = (
-      param: Omit<CommandParam, "type" | "default">,
-      type: LegacyType | undefined,
-      defaultValue: unknown
-    ) => {
-      const spec: CommandParam = {
-        ...param,
-        type: (type?.name ?? "string") as ParamType,
-      };
-      if (defaultValue !== undefined) spec.default = defaultValue;
-      if (paramDefinitions[spec.name])
-        throw new Error(`Param '${spec.name}' declared twice on '${name}'`);
-      paramDefinitions[spec.name] = spec;
-      entry.params.push(spec);
-      return definition;
-    };
-    const definition: Record<string, unknown> = {
-      paramDefinitions,
-      addParam(
-        paramName: string,
-        paramDescription = "",
-        defaultValue?: unknown,
-        type?: LegacyType,
-        isOptional = defaultValue !== undefined
-      ) {
-        return record(
-          {
-            name: paramName,
-            description: paramDescription,
-            optional: isOptional,
-            flag: false,
-            variadic: false,
-          },
-          type,
-          defaultValue
-        );
-      },
-      addOptionalParam(
-        paramName: string,
-        paramDescription = "",
-        defaultValue?: unknown,
-        type?: LegacyType
-      ) {
-        return record(
-          {
-            name: paramName,
-            description: paramDescription,
-            optional: true,
-            flag: false,
-            variadic: false,
-          },
-          type,
-          defaultValue
-        );
-      },
-      addFlag(paramName: string, paramDescription = "") {
-        return record(
-          {
-            name: paramName,
-            description: paramDescription,
-            optional: true,
-            flag: true,
-            variadic: false,
-          },
-          types.boolean,
-          false
-        );
-      },
-      addVariadicPositionalParam(
-        paramName: string,
-        paramDescription = "",
-        defaultValue?: unknown,
-        type?: LegacyType,
-        isOptional = defaultValue !== undefined
-      ) {
-        return record(
-          {
-            name: paramName,
-            description: paramDescription,
-            optional: isOptional,
-            flag: false,
-            variadic: true,
-          },
-          type,
-          defaultValue
-        );
-      },
-      addOptionalVariadicPositionalParam(
-        paramName: string,
-        paramDescription = "",
-        defaultValue?: unknown,
-        type?: LegacyType
-      ) {
-        return record(
-          {
-            name: paramName,
-            description: paramDescription,
-            optional: true,
-            flag: false,
-            variadic: true,
-          },
-          type,
-          defaultValue
-        );
-      },
-      setAction(action: LegacyAction) {
-        entry.action = action;
-        return definition;
-      },
-    };
-    return definition;
-  };
-  const registration = {
-    task: (name: string, description?: string) =>
-      makeDefinition(name, description),
-    subtask: (name: string, description?: string) =>
-      makeDefinition(name, description),
-    types,
-  };
-  const moduleApi = require("node:module") as {
-    _load: (request: string, parent: unknown, isMain: boolean) => unknown;
-  };
-  const originalLoad = moduleApi._load;
-  moduleApi._load = (request, parent, isMain) =>
-    request === "hardhat/config"
-      ? registration
-      : originalLoad(request, parent, isMain);
-  try {
-    require("../tasks.js");
-  } finally {
-    moduleApi._load = originalLoad;
-  }
-  legacyActions = entries;
-  return entries;
+function loadTaskEntries(): Map<string, TaskEntry> {
+  if (taskEntries) return taskEntries;
+  require("../tasks.js");
+  taskEntries = registeredTasks();
+  return taskEntries;
 }
 
 /** Every task declared in tasks.js, in declaration order. */
@@ -327,24 +151,26 @@ export function registeredCommands(): Array<{
   description: string;
   params: CommandParam[];
 }> {
-  return [...loadLegacyActions()].map(([name, { description, params }]) => ({
+  return [...loadTaskEntries()].map(([name, { description, params }]) => ({
     name,
     description,
     params: params.map((param) => ({ ...param })),
   }));
 }
 
-export function hasLegacyAction(name: string): boolean {
-  return loadLegacyActions().get(name)?.action !== undefined;
+export function hasTaskAction(name: string): boolean {
+  return loadTaskEntries().get(name)?.action !== undefined;
 }
 
-export function legacyHandler(name: string): CommandHandler {
+export function taskHandler(name: string): CommandHandler {
   return async (args, context) => {
-    const entry = loadLegacyActions().get(name);
+    const entry = loadTaskEntries().get(name);
     if (!entry?.action) throw new Error(`No operational handler for '${name}'`);
-    const run = (action: LegacyAction | undefined): Promise<unknown> => {
+    const run = (action: TaskAction | undefined): Promise<unknown> => {
       if (!action) throw new Error(`No parent handler for '${name}'`);
-      return action(args, context, () => run(entry.superAction));
+      return action(args, context, () =>
+        run(entry.superAction)
+      ) as Promise<unknown>;
     };
     const globals = globalThis as Record<string, unknown>;
     const values: Record<string, unknown> = {

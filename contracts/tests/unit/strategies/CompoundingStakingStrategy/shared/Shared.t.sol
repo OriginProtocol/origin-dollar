@@ -59,7 +59,7 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
     bytes32 internal constant GOVERNOR_SLOT = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
 
     /// @dev ETH required for the first deposit to a new validator. Must be within
-    ///      [1 ether, 2048 ether]; matches the Hardhat fixture.
+    ///      [1 ether, 2048 ether]; matches the legacy fixture.
     uint256 internal constant INITIAL_DEPOSIT_AMOUNT = 1 ether;
 
     // Beacon chain constants
@@ -198,7 +198,7 @@ abstract contract Unit_CompoundingStakingStrategy_Shared_Test is Base {
         vm.startPrank(governor);
 
         address[] memory emptyAddresses = new address[](0);
-        // Matches the Hardhat fixture's initial validator deposit amount.
+        // Matches the legacy fixture's initial validator deposit amount.
         compoundingStakingStrategy.initialize(emptyAddresses, emptyAddresses, emptyAddresses, INITIAL_DEPOSIT_AMOUNT);
         oethVault.approveStrategy(address(compoundingStakingStrategy));
 

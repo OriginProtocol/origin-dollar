@@ -7,36 +7,27 @@ const log = require("./logger")("task:assets");
 
 /**
  * Resolves a token symbol to a ERC20 token contract.
- * Uses the shared contract helpers and works in both Hardhat tasks and standalone actions.
+ * Uses the shared standalone contract helpers.
  * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
  */
 const resolveAsset = async (symbol) => {
   const networkName = await getNetworkName();
 
-  // If not a unit test or task running against the hardhat network
-  if (networkName != "hardhat") {
-    const assetAddr =
-      addresses[networkName][symbol + "Proxy"] ||
-      addresses[networkName][symbol];
-    if (!assetAddr) {
-      throw Error(
-        `Failed to resolve symbol "${symbol}" to an address on the "${networkName}" network`
-      );
-    }
-    log(`Resolved ${symbol} to ${assetAddr} on the ${networkName} network`);
-    const asset = await getContractAt("IERC20Metadata", assetAddr);
-    return asset;
+  const assetAddr =
+    addresses[networkName][symbol + "Proxy"] || addresses[networkName][symbol];
+  if (!assetAddr) {
+    throw Error(
+      `Failed to resolve symbol "${symbol}" to an address on the "${networkName}" network`
+    );
   }
-  const asset = await getContract("Mock" + symbol);
-  if (!asset) {
-    throw Error(`Failed to resolve symbol "${symbol}" to a mock contract`);
-  }
+  log(`Resolved ${symbol} to ${assetAddr} on the ${networkName} network`);
+  const asset = await getContractAt("IERC20Metadata", assetAddr);
   return asset;
 };
 
 /**
  * Returns a contract instance.
- * Uses the shared contract helpers and works in both Hardhat tasks and standalone actions.
+ * Uses the shared standalone contract helpers.
  * @param {string} proxy Address or name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper
  * @param {string} [abiName=proxy] ABI name. Will default to proxy is not used. eg VaultAdmin, VaultCore, Governable or IERC20Metadata
  * @returns
