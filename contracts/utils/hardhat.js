@@ -1,11 +1,11 @@
-const replaceContractAt = async (targetAddress, mockContract) => {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
+const { getProvider } = require("../tasks/lib/network");
 
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
+// hardhat_setCode is honoured by both the Hardhat node and Anvil, so this
+// works whichever local node is attached.
+const replaceContractAt = async (targetAddress, mockContract) => {
+  const provider = getProvider();
+  const mockCode = await provider.getCode(mockContract.address);
+  await provider.send("hardhat_setCode", [targetAddress, mockCode]);
 };
 
 module.exports = {

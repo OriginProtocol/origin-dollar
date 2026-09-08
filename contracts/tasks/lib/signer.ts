@@ -18,6 +18,7 @@ import {
  */
 
 type Db = unknown;
+type SignerContext = { relayerId?: string; taskName?: string };
 type TalosClient = {
   createDb(pool: unknown): Db;
   createPool(options: { connectionString: string }): unknown;
@@ -53,12 +54,31 @@ function maybeWrap(signer: ethers.Signer): ethers.Signer {
     : signer;
 }
 
-export async function getSigner(): Promise<ethers.Signer> {
+export async function getOptionalSigner(
+  context?: SignerContext
+): Promise<ethers.Signer | undefined> {
+  const hasPrivateKey = Boolean(
+    process.env.DEPLOYER_PK || process.env.GOVERNOR_PK
+  );
+  const canImpersonate =
+    process.env.FORK === "true" && Boolean(process.env.IMPERSONATE);
+  if (!hasAwsKmsCredentials() && !hasPrivateKey && !canImpersonate) {
+    return undefined;
+  }
+  return getSigner(context);
+}
+
+export async function getSigner(
+  context?: SignerContext
+): Promise<ethers.Signer> {
   const provider = getProvider();
 
   // 1. AWS KMS (production) — reuse the existing purrikey ethers signer.
   if (hasAwsKmsCredentials()) {
-    const relayerId = resolveKmsRelayerId();
+    const resolveRelayerId = resolveKmsRelayerId as (
+      signerContext?: SignerContext
+    ) => string;
+    const relayerId = resolveRelayerId(context);
     return maybeWrap(
       new DirectKmsTransactionSigner(relayerId, provider, AWS_KMS_REGION)
     );

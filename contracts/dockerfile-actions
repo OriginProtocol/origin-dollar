@@ -10,11 +10,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   ca-certificates \
-  curl \
-  git \
   build-essential \
   python3 \
-  bsdutils \
   nodejs \
   npm \
   && rm -rf /var/lib/apt/lists/*
@@ -37,7 +34,6 @@ RUN --mount=type=secret,id=talos_package_token,env=NODE_AUTH_TOKEN,required=true
       '@oplabs:registry=https://npm.pkg.github.com' \
       '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' \
       > /tmp/talos.npmrc \
-    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc pnpm install --frozen-lockfile \
     && TALOS_CLIENT_VERSION="$(node -p 'require("./package.json").peerDependencies["@oplabs/talos-client"]')" \
     && NPM_CONFIG_USERCONFIG=/tmp/talos.npmrc \
@@ -53,12 +49,10 @@ COPY . .
 
 # Dump the action catalog to /app/actions-catalog.json at build time from the
 # in-process registry (tsx, no hardhat). The runner reads this file at boot and
-# passes it to runContainer's `actionsCatalog`. A dump failure is non-fatal:
-# empty catalog ⇒ admin UI shows zero editable flags per action (fail-closed).
+# passes it to runContainer's `actionsCatalog`. Fail the image build if an action
+# cannot be loaded so a broken or incomplete catalog is never deployed.
 RUN cd /app \
-    && pnpm exec tsx dump-actions-catalog.ts > /app/actions-catalog.json \
-    || (echo "[build] action catalog dump failed; shipping empty catalog" \
-        && echo "{}" > /app/actions-catalog.json)
+    && pnpm exec tsx dump-actions-catalog.ts > /app/actions-catalog.json
 
 # Hand /app over to the runtime user. After this, all reads/writes by
 # the runner process are as `runner`, not root. Closes security/M-012.
@@ -68,8 +62,7 @@ ENV MAINNET_PROVIDER_URL="" \
   SONIC_PROVIDER_URL="" \
   PLUME_PROVIDER_URL="" \
   HOODI_PROVIDER_URL="" \
-  BEACON_PROVIDER_URL="" \
-  HARDHAT_NETWORK=""
+  BEACON_PROVIDER_URL=""
 
 # Git commit this image was built from. CI passes
 # --build-arg GIT_COMMIT_SHA=<github.sha>; empty for local builds. @oplabs/talos-client's

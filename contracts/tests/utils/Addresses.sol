@@ -396,16 +396,6 @@ library Sonic {
     address internal constant MerklDistributor = 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd;
 }
 
-library Holesky {
-    address internal constant WETH = 0x94373a4919B3240D86eA41593D5eBa789FEF3848;
-    address internal constant beaconChainDepositContract = 0x4242424242424242424242424242424242424242;
-    address internal constant NativeStakingSSVStrategyProxy = 0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E;
-    address internal constant OETHVaultProxy = 0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9;
-    address internal constant Governor = 0x1b94CA50D3Ad9f8368851F8526132272d1a5028C;
-    address internal constant validatorRegistrator = 0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4;
-    address internal constant Guardian = 0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4;
-}
-
 library Hoodi {
     address internal constant OETHVaultProxy = 0xD0cC28bc8F4666286F3211e465ecF1fe5c72AC8B;
     address internal constant WETH = 0x2387fD72C1DA19f6486B843F5da562679FbB4057;

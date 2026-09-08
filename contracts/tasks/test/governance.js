@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const governancePath = require.resolve("../governance");
 const dependencyPaths = {
-  taskHelpers: require.resolve("../../utils/hardhat-task-helpers"),
+  taskHelpers: require.resolve("../../utils/runtime-helpers"),
   signers: require.resolve("../../utils/signers"),
   time: require.resolve("../../utils/time.js"),
   tx: require.resolve("../../utils/tx"),

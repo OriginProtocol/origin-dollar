@@ -15,13 +15,13 @@
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, sonic, base | permissionedRebase |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
-| eth, sonic, hyper, base, holesky, arb, plume, hoodi | healthcheck |
+| eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 
 ## A2. Utility / lib / abi -> union of importing actions' chains
 
 | module | # chains | chains |
 |---|---|---|
-| `tasks/lib/action` | 8 | eth, sonic, hyper, base, holesky, arb, plume, hoodi |
+| `tasks/lib/action` | 7 | eth, sonic, hyper, base, arb, plume, hoodi |
 | `tasks/lib/logger` | 6 | eth, sonic, hyper, base, arb, plume |
 | `tasks/lib/network` | 6 | eth, sonic, hyper, base, arb, plume |
 | `utils/logger` | 6 | eth, sonic, hyper, base, arb, plume |
