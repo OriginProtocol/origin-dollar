@@ -62,7 +62,15 @@ export function parseCli(argv: string[]): {
     if (!token.startsWith("--")) {
       throw new Error(`Unexpected positional argument '${token}'`);
     }
-    const key = kebabToCamel(token.slice(2));
+    const separator = token.indexOf("=");
+    const option = separator === -1 ? token : token.slice(0, separator);
+    const key = kebabToCamel(option.slice(2));
+    if (Object.prototype.hasOwnProperty.call(flags, key))
+      throw new Error(`Option ${option} is repeated`);
+    if (separator !== -1) {
+      flags[key] = token.slice(separator + 1);
+      continue;
+    }
     const next = rest[index + 1];
     if (next === undefined || next.startsWith("--")) flags[key] = true;
     else {

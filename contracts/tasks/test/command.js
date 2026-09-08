@@ -62,6 +62,21 @@ describe("ops CLI parsing", function () {
     );
   });
 
+  it("accepts --key=value and rejects a repeated option", function () {
+    assert.deepEqual(
+      parseCli(["mine", "--network=base", "--count=2", "--note=a=b"]),
+      { name: "mine", network: "base", flags: { count: "2", note: "a=b" } }
+    );
+    assert.throws(
+      () => parseCli(["rebase", "--symbol", "OUSD", "--symbol", "OETH"]),
+      /Option --symbol is repeated/
+    );
+    assert.throws(
+      () => parseCli(["rebase", "--symbol=OUSD", "--symbol", "OETH"]),
+      /Option --symbol is repeated/
+    );
+  });
+
   it("preserves the canonical arbitrumOne network name", function () {
     const previous = process.env.ARBITRUM_PROVIDER_URL;
     process.env.ARBITRUM_PROVIDER_URL = "http://127.0.0.1:8545";

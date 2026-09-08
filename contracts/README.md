@@ -89,7 +89,8 @@ pnpm ops <command> --network <network>
 pnpm node
 ```
 
-Run `pnpm ops help` for the full command catalogue. The next PR migrates the
+Run `pnpm ops help` for the full command catalogue and
+`pnpm ops <command> --help` for a command's options. The next PR migrates the
 local forked node to Anvil.
 
 ## Testing
