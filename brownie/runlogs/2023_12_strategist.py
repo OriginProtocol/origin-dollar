@@ -126,8 +126,9 @@ def main():
       )
     )
 
-    # The line below worked with an in-process fork but not when Brownie attached
-    # to a node running in a separate terminal.
+    # below line works on hardhat's default node (brownie console --network mainnet-fork)
+    # but not on our default node running in a separate terminal and attaching
+    # to it: (brownie console --network hardhat)
     #print(txs[-1].call_trace(True))
 
     # After
