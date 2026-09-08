@@ -118,7 +118,7 @@
     "tsx": "^4.23.1"
   },
   "peerDependencies": {
-    "@oplabs/talos-client": "0.0.28"
+    "@oplabs/talos-client": "0.0.29"
   },
   "peerDependenciesMeta": {
     "@oplabs/talos-client": {
