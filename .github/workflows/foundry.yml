@@ -110,6 +110,17 @@ jobs:
       - name: Typecheck standalone CLIs
         working-directory: contracts
         run: pnpm run typecheck
+      - name: Run Brownie bridge tests
+        working-directory: contracts
+        run: pnpm run test:brownie
+      # Install only the pinned Anvil binary after script tests have verified
+      # that they do not depend on Foundry being present.
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+      - name: Run Anvil node tests
+        working-directory: contracts
+        run: pnpm run test:anvil
 
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:
