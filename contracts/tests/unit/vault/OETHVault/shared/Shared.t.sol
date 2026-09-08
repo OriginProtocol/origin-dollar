@@ -98,6 +98,7 @@ abstract contract Unit_OETHVault_Shared_Test is Base {
         vm.startPrank(governor);
         oethVault.unpauseCapital();
         oethVault.setStrategistAddr(strategist);
+        oethVault.setAdminAddr(guardian); // Admin multisig: the only unpauser
         oethVault.setMaxSupplyDiff(5e16); // 5%
         oethVault.setWithdrawalClaimDelay(DELAY_PERIOD);
         oethVault.setDripDuration(0); // Disable drip smoothing for instant rebase in tests

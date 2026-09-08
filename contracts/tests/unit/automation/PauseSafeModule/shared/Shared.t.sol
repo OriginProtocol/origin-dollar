@@ -14,29 +14,32 @@ import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IPermissionedRebaseModule} from "contracts/interfaces/automation/IPermissionedRebaseModule.sol";
+import {IPauseSafeModule} from "contracts/interfaces/automation/IPauseSafeModule.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // --- Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockPausableARM} from "tests/mocks/MockPausableARM.sol";
 
-abstract contract Unit_PermissionedRebaseModule_Shared_Test is Base {
+abstract contract Unit_PauseSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    IPermissionedRebaseModule internal permissionedRebaseModule;
+    IPauseSafeModule internal pauseSafeModule;
 
     IOToken internal oeth;
     IVault internal oethVault;
 
-    //////////////////////////////////////////////////////
-    /// --- CONSTANTS
-    //////////////////////////////////////////////////////
+    /// @dev A second vault, deliberately left off the module's allow-list.
+    IOToken internal otherOeth;
+    IVault internal unlistedVault;
 
-    uint256 internal constant REBASE_RATE_MAX = 200e18; // 200% APR
+    /// @dev An ARM-shaped target: no-argument `pause()`, guardian can pause,
+    ///      only the admin multisig can unpause.
+    MockPausableARM internal arm;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -45,12 +48,8 @@ abstract contract Unit_PermissionedRebaseModule_Shared_Test is Base {
     function setUp() public virtual override {
         super.setUp();
 
-        // Set a reasonable starting timestamp so rebase per-second caps work
-        vm.warp(7 days);
-
         _deployContracts();
         _configureContracts();
-        _fundInitialUsers();
         label();
     }
 
@@ -59,17 +58,27 @@ abstract contract Unit_PermissionedRebaseModule_Shared_Test is Base {
         weth = IERC20(address(new MockERC20("Wrapped Ether", "WETH", 18)));
 
         (oeth, oethVault) = _deployOethVault();
+        (otherOeth, unlistedVault) = _deployOethVault();
 
-        address[] memory initialVaults = new address[](1);
-        initialVaults[0] = address(oethVault);
+        // The Safe hosting the module is the ARM's guardian, exactly as
+        // arm-oeth deploy script 043 wires it on mainnet.
+        arm = new MockPausableARM(address(mockSafe), guardian);
 
-        permissionedRebaseModule = IPermissionedRebaseModule(
-            vm.deployCode(Automation.PERMISSIONED_REBASE_MODULE, abi.encode(address(mockSafe), operator, initialVaults))
+        // `unlistedVault` is left off so tests can prove the module refuses
+        // targets the Safe never approved.
+        address[] memory initialTargets = new address[](2);
+        initialTargets[0] = address(oethVault);
+        initialTargets[1] = address(arm);
+
+        address[] memory operators = new address[](1);
+        operators[0] = operator;
+
+        pauseSafeModule = IPauseSafeModule(
+            vm.deployCode(Automation.PAUSE_SAFE_MODULE, abi.encode(address(mockSafe), operators, initialTargets))
         );
     }
 
-    /// @dev Deploy an OETH token + vault pair behind fresh proxies. Exposed so
-    ///      tests can stand up a second vault and exercise the module's loop.
+    /// @dev Deploy an OETH token + vault pair behind fresh proxies.
     function _deployOethVault() internal returns (IOToken token, IVault vault) {
         vm.startPrank(deployer);
 
@@ -96,57 +105,20 @@ abstract contract Unit_PermissionedRebaseModule_Shared_Test is Base {
 
     function _configureContracts() internal {
         _configureVault(oethVault);
+        _configureVault(unlistedVault);
     }
 
-    /// @dev Wire a vault the way production wires it for this module: the Safe is
-    ///      the Strategist. `pauseRebase`/`unpauseRebase` are onlyGovernorOrStrategist
-    ///      and `rebase` accepts the Strategist, so that single role lets the module
-    ///      drive the whole unpause->rebase->pause sequence. The vault is then left
-    ///      rebase-paused, which is the module's premise.
+    /// @dev Wire a vault the way production wires it: the Safe hosting the module
+    ///      is the Strategist, which is what authorizes `pauseCapital`/`pauseRebase`.
+    ///      A separate Admin holds unpause, so the module's Safe can pause but can
+    ///      never lift what it paused — the property this module exists to preserve.
+    ///      Both flags start unpaused so tests can observe them being tripped.
     function _configureVault(IVault vault) internal {
         vm.startPrank(governor);
         vault.unpauseCapital();
         vault.setStrategistAddr(address(mockSafe));
-        vault.setDripDuration(0); // Disable drip smoothing for instant rebase in tests
-        vault.setRebaseRateMax(REBASE_RATE_MAX); // Without this the per-second cap clamps yield to 0
-        vault.pauseRebase();
+        vault.setAdminAddr(guardian);
         vm.stopPrank();
-    }
-
-    /// @dev Give the vault a non-zero rebasing supply so a rebase can distribute yield
-    function _fundInitialUsers() internal {
-        _fundVault(oethVault);
-    }
-
-    function _fundVault(IVault vault) internal {
-        _mintOETH(vault, matt, 100e18);
-        _mintOETH(vault, josh, 100e18);
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- HELPERS
-    //////////////////////////////////////////////////////
-
-    function _dealWETH(address to, uint256 amount) internal {
-        MockERC20(address(weth)).mint(to, amount);
-    }
-
-    function _mintOETH(IVault vault, address user, uint256 wethAmount) internal {
-        _dealWETH(user, wethAmount);
-        vm.startPrank(user);
-        weth.approve(address(vault), wethAmount);
-        vault.mint(wethAmount);
-        vm.stopPrank();
-    }
-
-    /// @dev Send WETH straight to the vault so `rebase()` has yield to distribute
-    function _injectYield(uint256 amount) internal {
-        _injectYield(oethVault, amount);
-    }
-
-    function _injectYield(IVault vault, uint256 amount) internal {
-        _dealWETH(address(vault), amount);
-        vm.warp(block.timestamp + 1);
     }
 
     //////////////////////////////////////////////////////
@@ -155,9 +127,11 @@ abstract contract Unit_PermissionedRebaseModule_Shared_Test is Base {
 
     function label() public {
         vm.label(address(mockSafe), "MockSafe");
-        vm.label(address(permissionedRebaseModule), "PermissionedRebaseModule");
+        vm.label(address(pauseSafeModule), "PauseSafeModule");
         vm.label(address(weth), "WETH");
         vm.label(address(oeth), "OETH");
         vm.label(address(oethVault), "OETHVault");
+        vm.label(address(unlistedVault), "UnlistedVault");
+        vm.label(address(arm), "MockPausableARM");
     }
 }
