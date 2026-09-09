@@ -87,22 +87,30 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Checks the pool is balanced enough to allow deposits.
+     * @dev Checks the pool is balanced enough to allow deposits. The probe
+     * size is 0.1% of the smaller reserve, which keeps the probe small
+     * relative to liquidity so the quote reflects the pool's CURRENT
+     * marginal price rather than the slippage of the probe itself. This
+     * makes the check work the same for tiny bootstrap pools and large
+     * established pools alike.
      */
     modifier nearBalancedPool() {
-        // OToken/asset price = asset / OToken
-        // Get the OToken/asset price for selling 1 OToken for asset
-        // As OToken is 1, the asset amount is the OToken/asset price
-        uint256 sellPrice = IPair(pool).getAmountOut(1e18, oToken);
+        (uint256 r0, uint256 r1, ) = IPair(pool).getReserves();
+        uint256 probe = (r0 < r1 ? r0 : r1) / 1000;
+        require(probe > 0, "Pool too small");
 
-        // Get the amount of OToken received from selling 1 asset. This is buying OToken.
-        uint256 oTokenAmount = IPair(pool).getAmountOut(1e18, asset);
+        // Amount of asset received for selling `probe` of OToken in.
+        uint256 sellOut = IPair(pool).getAmountOut(probe, oToken);
+        // Amount of OToken received for selling `probe` of asset in.
+        uint256 oTokenOut = IPair(pool).getAmountOut(probe, asset);
 
         // If the pool is degenerate, then the pool is not valid and we can't deposit.
-        require(oTokenAmount > 0, "Pool degenerate");
+        require(oTokenOut > 0, "Pool degenerate");
 
-        // Convert to a OToken/asset price = asset / OToken
-        uint256 buyPrice = 1e36 / oTokenAmount;
+        // Normalize both quotes back to 1e18 pricing units so the comparison
+        // against pegPrice ± maxDepeg stays scale-invariant.
+        uint256 sellPrice = (sellOut * 1e18) / probe;
+        uint256 buyPrice = (probe * 1e18) / oTokenOut;
 
         uint256 pegPrice = 1e18;
 
