@@ -126,6 +126,26 @@ test-smoke-%:
 	forge build contracts/ tests/smoke/$*/ scripts/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/smoke/$*/**' $(MAKE) test-base
 
+# Run the default symbolic check with compact output.
+SYMBOLIC_CONTRACT ?= Symbolic_OUSD_Rebasing_Test
+SYMBOLIC_TEST     ?= check_transferIntegrityTo
+SYMBOLIC_STRICT   ?= 0
+
+test-symbolic:
+	@output=$$(forge test --symbolic --match-contract "$(SYMBOLIC_CONTRACT)" --match-test "$(SYMBOLIC_TEST)" 2>&1); \
+	status=$$?; \
+	metrics=$$(printf '%s\n' "$$output" | sed -n 's/.*\((paths: .*)\)$$/\1/p' | head -n 1); \
+	if [ -z "$$metrics" ]; then \
+		printf '%s\n' "$$output"; \
+		exit $$status; \
+	fi; \
+	if [ $$status -eq 0 ]; then \
+		printf '%s\n' "$$metrics"; \
+	else \
+		printf '\033[31m%s\033[0m\n' "$$metrics"; \
+	fi; \
+	if [ "$(SYMBOLIC_STRICT)" = "1" ]; then exit $$status; fi
+
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                 COVERAGE                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
@@ -271,7 +291,7 @@ lint-imports:
 # ║                                  PHONY                                       ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
-.PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
+.PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% test-symbolic \
         coverage coverage-html gas snapshot build build-% \
         deploy-mainnet deploy-base deploy-hyperevm deploy-local simulate \
         match clean clean-all install update-fork-blocks frame lint-imports
