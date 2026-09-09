@@ -64,6 +64,10 @@ library Mainnet {
     address internal constant veOGV = 0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9;
     address internal constant RewardsSource = 0x7d82E86CF1496f9485a8ea04012afeb3C7489397;
     address internal constant OGNRewardsSource = 0x7609c88E5880e934dd3A75bCFef44E31b1Badb8b;
+    /// @dev CoW harvester for the OGN buyback: sells fee OTokens for OGN and pays
+    ///      OGNRewardsSource. Not to be confused with the strategy-reward CoW
+    ///      harvester at 0xD400341a..., which sells CRV/MORPHO for USDC.
+    address internal constant OGNCoWHarvester = 0x637C509383Ec7Da55C19a3Dbf3227C1Bb8A89151;
     address internal constant xOGN = 0x63898b3b6Ef3d39332082178656E9862bee45C57;
 
     // Uniswap

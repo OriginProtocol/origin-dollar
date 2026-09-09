@@ -393,7 +393,13 @@ addresses.mainnet.CampaignCreator =
 addresses.mainnet.MorphoOethUsdcMarket =
   "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
 
+// CoW harvester for strategy rewards (sells CRV/MORPHO for USDC).
 addresses.mainnet.CoWHarvester = "0xD400341aEfED0BC75176714cFdE82e8BDAA2D3b8";
+// CoW harvester for the OGN buyback (sells fee OTokens for OGN, paid to the
+// OGNRewardsSource). Distinct from CoWHarvester above -- different sell tokens,
+// different buy token, different receiver. Deployed by mainnet/189.
+addresses.mainnet.OGNCoWHarvester =
+  "0x637C509383Ec7Da55C19a3Dbf3227C1Bb8A89151";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
