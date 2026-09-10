@@ -74,6 +74,12 @@ abstract contract VaultCore is VaultInitializer {
     function _mint(uint256 _amount) internal virtual {
         require(_amount > 0, "Amount must be greater than 0");
 
+        // Block mints into an under-backed vault: new minters would otherwise
+        // buy OTokens above their real value and subsidise the withdrawal queue
+        // at par. Checked on the pre-mint state (the deposit is transferred in
+        // below). mintForStrategy is a separate path and stays ungated.
+        require(_totalValue() >= oToken.totalSupply(), "Vault under-backed");
+
         // Scale amount to 18 decimals
         uint256 scaledAmount = _amount.scaleBy(18, assetDecimals);
 
