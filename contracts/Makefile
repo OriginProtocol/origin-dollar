@@ -7,6 +7,9 @@ MAKEFLAGS += --no-print-directory
 # ║                                 VARIABLES                                    ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
+# Foundry PR #16800 (merged): prioritize deferred symbolic outcomes locally.
+FOUNDRY_COMMIT  := f6606ca720d14e57ef3b6aef22a3108f9bd45315
+
 DEPLOY_SCRIPT   := scripts/deploy/DeployManager.s.sol
 DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow
 DEPLOY_BUILD    := contracts/ scripts/deploy/
@@ -40,11 +43,14 @@ default:
 	forge fmt scripts/ tests/
 	$(MAKE) build
 
-install:
-	foundryup --version v1.8.1
+install: install-foundry
 	forge soldeer install
 	./install-deps.sh
 	pnpm i
+
+# Build and activate only the pinned Foundry toolchain (requires Rust/Cargo).
+install-foundry:
+	foundryup --commit $(FOUNDRY_COMMIT)
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                   CLEAN                                      ║
@@ -128,7 +134,7 @@ test-smoke-%:
 
 # Run the default symbolic check with compact output.
 SYMBOLIC_CONTRACT ?= Symbolic_OUSD_Rebasing_Test
-SYMBOLIC_TEST     ?= check_transferIntegrityTo
+SYMBOLIC_TEST     ?= check_rebaseOptInIntegrity
 SYMBOLIC_STRICT   ?= 0
 
 test-symbolic:
@@ -294,4 +300,4 @@ lint-imports:
 .PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% test-symbolic \
         coverage coverage-html gas snapshot build build-% \
         deploy-mainnet deploy-base deploy-hyperevm deploy-local simulate \
-        match clean clean-all install update-fork-blocks frame lint-imports
+        match clean clean-all install install-foundry update-fork-blocks frame lint-imports

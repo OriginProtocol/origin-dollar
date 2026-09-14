@@ -20,8 +20,16 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM.
 ```bash
 cd contracts
 cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoint
-make install             # foundryup (v1.8.1), forge soldeer install, install-deps.sh, pnpm i
+make install             # pinned Foundry commit, forge soldeer install, install-deps.sh, pnpm i
 ```
+
+Foundry is pinned locally to commit `f6606ca720d14e57ef3b6aef22a3108f9bd45315`
+from [foundry-rs/foundry#16800](https://github.com/foundry-rs/foundry/pull/16800)
+for deferred symbolic arithmetic in external calls. This merged commit is built from
+source and requires Rust/Cargo. To update only Foundry, run `make install-foundry`
+from `contracts/`, or run
+`foundryup --commit f6606ca720d14e57ef3b6aef22a3108f9bd45315` directly.
+CI remains on Foundry `v1.8.1`.
 
 Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The Hardhat task CLI resolves its mainnet RPC from `MAINNET_PROVIDER_URL` as well (legacy fallback: `PROVIDER_URL`).
 
