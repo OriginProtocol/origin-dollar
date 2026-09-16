@@ -254,29 +254,32 @@ The Certora rule uses more than the visible account conditions:
 - `initTotalSupply()` requires a minimum total supply.
 - `allAccountValidState()` constrains rebase states, delegation links, and
   `alternativeCreditsPerToken` for all accounts.
-- `OtherInvariants.spec` also activates the invariants relating
-  `nonRebasingSupply` to all non-rebasing balances and `rebasingCredits_` to all
-  rebasing credits.
 - It asserts both that the balance is unchanged and that
   `alternativeCreditsPerToken[account] == 0` after `rebaseOptIn()`.
 
-The current Foundry setup initializes OUSD with a global high-resolution CPT of
-`1e27`, mints `1 ether` to `operator`, and leaves `nonRebasingSupply` at zero.
-Under the default storage layout, a different symbolic account can nevertheless
-have arbitrary mapping values. Assuming that this account is non-rebasing with
-a positive balance while keeping the concrete global
-`nonRebasingSupply == 0` creates an inconsistent state:
-`rebaseOptIn()` subtracts the account balance from zero and reverts.
+The current Foundry setup deploys the OUSD implementation directly and enables
+arbitrary storage with `vm.setArbitraryStorage(address(ousd), true)`. The rule
+then constrains:
 
-There are also two successful semantic cases in the contract:
+- The global high-resolution CPT to `>= 1e18`, with no explicit upper bound.
+- The account's alternative CPT to `0` or `1e18`, matching the values allowed by
+  Certora's `alternativeCreditsPerTokenIsOneOrZeroOnly` invariant. Historical
+  rates such as `1e27` are excluded.
 
-1. `StdNonRebasing`, normally with `alternativeCreditsPerToken == 1e18` and a
-   possibly positive credit balance.
-2. `NotSet` with zero credits/balance, which may explicitly opt in.
+The rule has no explicit bound on raw account credits. It does not constrain the
+account address, its rebase state, or the global non-rebasing supply.
+This proof requires the [local Forge arithmetic changes](foundry-issue/RAW_CREDITS_BOUND_FIX.md).
+OUSD enforces its own eligibility and arithmetic checks;
+reverting paths do not reach the final assertions. If the alternative CPT is
+zero, a successful opt-in requires zero credits. If it is `1e18`, the balance
+equals the credits for the states accepted by opt-in (`NotSet` or
+`StdNonRebasing`).
 
-Splitting these cases is generally clearer and cheaper than encoding one large
-disjunction. Any credits or CPT bound added only for solver performance must be
-documented as a proof-scope restriction.
+Both Certora postconditions are checked after a successful call: the balance is
+unchanged and the alternative CPT is zero. This verifies successful-call
+integrity within the stated domain, not that every permitted initial state can
+complete the call. The local rate restriction does not reproduce Certora's
+relationships between account states, rates, and delegation links.
 
 ## Useful Forge 1.8.1 features
 

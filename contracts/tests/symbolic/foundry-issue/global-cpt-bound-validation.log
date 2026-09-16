@@ -1,0 +1,45 @@
+OUSD with the permanent Foundry checkout
+No files changed, compilation skipped
+
+Ran 1 test for tests/symbolic/OUSD/Rebasing.t.sol:Symbolic_OUSD_Rebasing_Test
+[PASS] check_rebaseOptInIntegrity(address) (paths: 168, queries: 98, smt: 44, sat: 734 (636 cached), models: 0 (0 cached), hard-arith: 38, solver: 177ms)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 249.70ms (246.86ms CPU time)
+
+Ran 1 test suite in 252.01ms (249.70ms CPU time): 1 tests passed, 0 failed, 0 skipped (1 total tests)
+
+Symbolic unit tests
+test runtime::expr::word::tests::bitwise_bool_word_condition_visits_shared_or_dag_once ... ok
+
+test result: ok. 378 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+
+
+Focused CLI regressions
+
+running 5 tests
+test test_cmd::symbolic::symbolic_finds_wrapping_arithmetic_riddle_counterexample ... ok
+test test_cmd::symbolic_conformance::symbolic_conformance_stateless_arithmetic_and_opcodes ... ok
+test test_cmd::symbolic::symbolic_retries_deferred_nested_arithmetic ... ok
+test test_cmd::symbolic::symbolic_soundness_hardening_regressions ... ok
+test test_cmd::symbolic::symbolic_bounded_fixed_point_round_trip ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1532 filtered out; finished in 3.80s
+
+
+Clippy
+    Blocking waiting for file lock on build directory
+    Checking foundry-evm-symbolic v1.8.2 (/private/tmp/foundry-ousd-symbolic/crates/evm/symbolic)
+    Finished `release` profile [optimized] target(s) in 3m 53s
+
+Concrete OUSD boundaries
+Compiling 1 files with Solc 0.8.28
+Solc 0.8.28 finished in 2.18s
+Compiler run successful!
+
+Ran 3 tests for tests/symbolic/OUSD/RateBoundDiagnostic.t.sol:Unit_OUSD_RateBoundaryDiagnostic_Test
+[PASS] test_rateNearUint256MaxPreservesBalance() (gas: 67248)
+[PASS] test_ratePastAdditionLimitReverts() (gas: 31384)
+[PASS] test_zeroBalanceAtUint256MaxRate() (gas: 38838)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 23.79ms (7.18ms CPU time)
+
+Ran 1 test suite in 34.78ms (23.79ms CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)
+2026-09-16T08:32:58.206563Z  WARN evm::traces: failed to flush signature cache err=failed to create file "/Users/clement/.foundry/cache/signatures": Operation not permitted (os error 1)

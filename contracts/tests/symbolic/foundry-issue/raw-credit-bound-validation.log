@@ -1,0 +1,36 @@
+Base commit: 9e79f19c42472bdd615bd71f77c22cec934cc53d
+Binary: /Users/clement/Documents/Travail/Origin/2-SC/foundry/target/release/forge
+Binary SHA256: d5fcdc9c5c4716576d436bf4f9973d84ba0e48b430992295316f340e194b8fb8
+Source: committed base plus raw-credit-bound-forge.patch; follow-up is uncommitted.
+
+OUSD rule (permanent checkout binary)
+[PASS] check_rebaseOptInIntegrity(address) (paths: 172, queries: 100, smt: 25, sat: 724 (624 cached), models: 0 (0 cached), hard-arith: 55, solver: 269ms)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 406.78ms (403.95ms CPU time)
+
+Symbolic engine tests
+test result: ok. 384 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Full-width and concrete integration witnesses
+[PASS] checkFullWidthOptIn(address) (paths: 184, queries: 100, smt: 25, sat: 628 (528 cached), models: 0 (0 cached), hard-arith: 55, solver: 289ms)
+[PASS] checkFullWidthRoundTrip(uint256,uint256) (paths: 4, queries: 7, smt: 0, sat: 14 (7 cached), models: 0 (0 cached), hard-arith: 1, solver: 0ms)
+[PASS] testOptInConcreteWitness() (gas: 72292)
+[PASS] testOptInConcreteWitnessAboveUint128() (gas: 80058)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 420.78ms (438.23ms CPU time)
+
+Deliberately invalid arithmetic checks
+checkLowRate(uint128): fail_counterexample, replay=confirmed, panic: assertion failed (0x01)
+checkUncheckedRounding(uint256): fail_counterexample, replay=confirmed, panic: assertion failed (0x01)
+checkWrapping(uint256): fail_counterexample, replay=confirmed, panic: assertion failed (0x01)
+
+Focused CLI suites
+    Finished `release` profile [optimized] target(s) in 9m 41s
+test test_cmd::symbolic::symbolic_finds_wrapping_arithmetic_riddle_counterexample ... ok
+test test_cmd::symbolic_conformance::symbolic_conformance_stateless_arithmetic_and_opcodes ... ok
+test test_cmd::symbolic::symbolic_retries_deferred_nested_arithmetic ... ok
+test test_cmd::symbolic::symbolic_soundness_hardening_regressions ... ok
+test test_cmd::symbolic::symbolic_bounded_fixed_point_round_trip ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1532 filtered out; finished in 4.80s
+
+Clippy (warnings denied)
+    Finished `release` profile [optimized] target(s) in 7.07s
