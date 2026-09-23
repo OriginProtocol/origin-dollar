@@ -6,12 +6,6 @@ import {Symbolic_OUSD_Shared_Test} from "tests/symbolic/OUSD/Shared.t.sol";
 
 /// @notice Symbolic checks for OUSD rebasing transitions.
 contract Symbolic_OUSD_Rebasing_Test is Symbolic_OUSD_Shared_Test {
-    modifier assumeValidRebasingCreditsPerToken() {
-        uint256 cpt = ousd.rebasingCreditsPerTokenHighres();
-        vm.assume(cpt >= 1e18);
-        _;
-    }
-
     // Explicit preconditions for this rule (not a comparison of prover models).
     // Sources: certora/specs/OUSD/{OtherInvariants,AccountInvariants,common}.spec.
     // Certora calls initTotalSupply() and allAccountValidState(), which requires
@@ -20,7 +14,7 @@ contract Symbolic_OUSD_Rebasing_Test is Symbolic_OUSD_Shared_Test {
     //
     // | Hypothesis / invariant                    | Certora      | Foundry      |
     // | ----------------------------------------- | ------------ | ------------ |
-    // | rebasingCreditsPerToken_ >= 1e18          | Yes          | Yes          |
+    // | rebasingCreditsPerToken_ lower bound      | >= 1e18      | >= 1e18      |
     // | totalSupply >= 1e16                       | Yes          | No           |
     // | DelegationAccountsCorrelation             | All accounts | No           |
     // | DelegationValidRebaseState                | All accounts | No           |
@@ -35,6 +29,8 @@ contract Symbolic_OUSD_Rebasing_Test is Symbolic_OUSD_Shared_Test {
     // | zeroAlternativeCreditsPerTokenStates      | All accounts | No           |
     // | nonZeroAlternativeCreditsPerTokenStates   | All accounts | No           |
     //
+    // Foundry's global rate bound (1e18) is weaker than Certora's (1e18), so it
+    // admits more states. It is the only global assumption Foundry makes.
     // Neither rule explicitly requires credits > 0, credits <= uint128.max,
     // an upper bound on the global rate, or an upper bound on totalSupply.
     // Defining MAX_TOTAL_SUPPLY does not impose it; the imported global-sum
@@ -49,8 +45,11 @@ contract Symbolic_OUSD_Rebasing_Test is Symbolic_OUSD_Shared_Test {
     ///      with no explicit upper bound on credits or the global rate.
     ///      Checks only paths where the balance reads and opt-in do not revert.
     /// @param account The account calling rebaseOptIn and whose balance is checked.
-    function check_rebaseOptInIntegrity(address account) external assumeValidRebasingCreditsPerToken {
+    function check_rebaseOptInIntegrity(address account) external {
         // --- Assumptions
+        // Bound the global rate from below (Certora uses the stricter 1e18).
+        uint256 cpt = ousd.rebasingCreditsPerTokenHighres();
+        vm.assume(cpt >= 1e18);
         // Restrict the account to the global rate (0) or a fixed rate of 1e18,
         // where each stored credit equals one base unit of token balance.
         uint256 nonRebasingCPT = ousd.nonRebasingCreditsPerToken(account);
@@ -68,10 +67,48 @@ contract Symbolic_OUSD_Rebasing_Test is Symbolic_OUSD_Shared_Test {
         assertEq(ousd.nonRebasingCreditsPerToken(account), 0, "nonRebasingCreditsPerToken");
     }
 
+    // Explicit preconditions for this rule (not a comparison of prover models).
+    // Sources: certora/specs/OUSD/{OtherInvariants,AccountInvariants,common}.spec.
+    // Certora calls initTotalSupply() and allAccountValidState() as for opt-in,
+    // but this rule does not require a minimum global rate. "No" means no
+    // explicit assumption; OUSD's own eligibility and checked-arithmetic guards
+    // still apply. Foundry makes no explicit assumption at all for this rule.
+    //
+    // | Hypothesis / invariant                    | Certora      | Foundry      |
+    // | ----------------------------------------- | ------------ | ------------ |
+    // | rebasingCreditsPerToken_ lower bound      | No           | No           |
+    // | totalSupply >= 1e16                       | Yes          | No           |
+    // | DelegationAccountsCorrelation             | All accounts | No           |
+    // | DelegationValidRebaseState                | All accounts | No           |
+    // | stdNonRebasingDoesntYield                 | All accounts | No           |
+    // | alternativeCreditsPerTokenIsOneOrZeroOnly | All accounts | No           |
+    // | yieldDelegationSourceHasNonZeroYeildTo    | All accounts | No           |
+    // | yieldDelegationTargetHasNonZeroYeildFrom  | All accounts | No           |
+    // | yieldToOfZeroIsZero                       | Yes          | No           |
+    // | yieldFromOfZeroIsZero                     | Yes          | No           |
+    // | cantYieldToSelf                           | All accounts | No           |
+    // | cantYieldFromSelf                         | All accounts | No           |
+    // | zeroAlternativeCreditsPerTokenStates      | All accounts | No           |
+    // | nonZeroAlternativeCreditsPerTokenStates   | All accounts | No           |
+    //
+    // No global rate bound is needed: the balance is computed once at the global
+    // rate, stored as credits, and read back at 1e18, so the round trip is exact
+    // for any non-zero rate (a zero rate reverts in balanceOf).
+    // Foundry needs no account-level rate assumption because rebaseOptOut itself
+    // requires an alternative rate of 0 and a NotSet or StdRebasing state, which
+    // also keeps the delegation branches of balanceOf off non-reverting paths.
+    // Neither rule explicitly requires credits > 0, a bound on the balance or
+    // raw credits, any bound on the global rate, or an upper bound on
+    // totalSupply. Both check balance preservation and an alternative rate of
+    // 1e18 on non-reverting paths; neither proves that every admitted state can
+    // opt out.
+
     /// @notice Checks that opting out preserves the balance and sets the fixed rate to 1e18.
-    /// @dev Checks non-reverting paths with a global rate >= 1e18 and no explicit
-    ///      credit bound. OUSD's eligibility and checked-arithmetic guards apply.
-    function check_rebaseOptOutIntegrity(address account) external assumeValidRebasingCreditsPerToken {
+    /// @dev Starts from arbitrary storage with no explicit assumption: no bound on
+    ///      the global rate, the account balance or raw credits.
+    ///      Checks only paths where the balance reads and opt-out do not revert.
+    ///      OUSD's eligibility and checked-arithmetic guards apply.
+    function check_rebaseOptOutIntegrity(address account) external {
         // --- Action
         uint256 preBalance = ousd.balanceOf(account);
         vm.prank(account);
