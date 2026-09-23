@@ -8,7 +8,7 @@ runs:
       uses: foundry-rs/foundry-toolchain@v1
       with:
         # Keep CI aligned with the version installed by `make install`.
-        version: v1.8.1
+        version: v1.8.3
 
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -49,8 +49,8 @@ runs:
         path: |
           contracts/out/
           contracts/cache/solidity-files-cache.json
-        key: forge-build-v1.8.1-${{ hashFiles('contracts/**/*.sol', 'contracts/foundry.toml') }}
-        restore-keys: forge-build-v1.8.1-
+        key: forge-build-v1.8.3-${{ hashFiles('contracts/**/*.sol', 'contracts/foundry.toml') }}
+        restore-keys: forge-build-v1.8.3-
 
     - name: Build all artifacts
       shell: bash
