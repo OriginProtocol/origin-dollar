@@ -29,17 +29,17 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 ## OToken operations
 
-| Action                              | Network | Cron             | Description                                                             |
-| ----------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------- |
-| `otokenOsCollectAndRelease`         | sonic   | `55 23 * * *`    | Rebase the OS vault and harvest on Sonic                                |
-| `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule              |
-| `otokenAddWithdrawalQueueLiquidity` | mainnet | `20 0 * * *`     | Call `addWithdrawalQueueLiquidity` on every OToken vault on the network |
-| `otokenAddWithdrawalQueueLiquidity` | base    | `30 0 * * *`     | As above, on Base                                                       |
-| `otokenAddWithdrawalQueueLiquidity` | sonic   | `35 0 * * *`     | As above, on Sonic                                                      |
-| `otokenAddWithdrawalQueueLiquidity` | plume   | `25 0 * * *`     | As above, on Plume                                                      |
-| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy          |
-| `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                        |
-| `otokenOsSonicRestakeRewards`       | sonic   | `52 22 * * *`    | Restake rewards for Sonic validators                                    |
+| Action                              | Network | Cron             | Description                                                                                         |
+| ----------------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
+| `otokenOsCollectAndRelease`         | sonic   | `55 23 * * *`    | Rebase the OS vault and harvest on Sonic                                                            |
+| `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule                                          |
+| `otokenAddWithdrawalQueueLiquidity` | mainnet | `*/10 * * * *`   | Call `addWithdrawalQueueLiquidity` on each OToken vault, only when it would add claimable liquidity |
+| `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
+| `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
+| `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
+| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
+| `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
+| `otokenOsSonicRestakeRewards`       | sonic   | `52 22 * * *`    | Restake rewards for Sonic validators                                                                |
 
 ## Native staking (Ethereum validators)
 

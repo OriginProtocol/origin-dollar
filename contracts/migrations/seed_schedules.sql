@@ -10,6 +10,21 @@ DELETE FROM schedules
 WHERE product = 'origin-dollar'
   AND name = 'otoken_oethp_addWithdrawalQueueLiquidity';
 
+-- Move the addWithdrawalQueueLiquidity rows from daily to every 10 minutes
+-- (the action now skips the tx when there is nothing to add). The INSERT below
+-- is ON CONFLICT DO NOTHING, so existing rows need this UPDATE. Guarded on the
+-- old daily crons so it never overrides a cron later changed in the UI.
+UPDATE schedules
+SET cron_expr = '*/10 * * * *'
+WHERE product = 'origin-dollar'
+  AND name IN (
+    'otoken_addWithdrawalQueueLiquidity_mainnet',
+    'otoken_addWithdrawalQueueLiquidity_base',
+    'otoken_addWithdrawalQueueLiquidity_sonic',
+    'otoken_addWithdrawalQueueLiquidity_plume'
+  )
+  AND cron_expr IN ('20 0 * * *', '30 0 * * *', '35 0 * * *', '25 0 * * *');
+
 INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, note) VALUES
 ('origin-dollar', 'manage_merkle_morpho_bribe',               'cd /app && pnpm exec tsx tasks/run.ts manageMerklBribes --network mainnet',            '30 13 * * 3',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_curve_pb_mainnet',                  'cd /app && pnpm exec tsx tasks/run.ts manageBribes --network mainnet',                 '30 09 * * 5',           'UTC', false, 'permissioned'),
@@ -32,10 +47,10 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'otoken_os_collectAndRelease',              'cd /app && pnpm exec tsx tasks/run.ts otokenOsCollectAndRelease --network sonic',      '55 23 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_autoWithdrawal',               'cd /app && pnpm exec tsx tasks/run.ts otokenOusdAutoWithdrawal --network mainnet',     '35 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_updateWoethPrice',            'cd /app && pnpm exec tsx tasks/run.ts otokenOethbUpdateWoethPrice --network base',     '30 21 * * *',           'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network mainnet', '20 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network base',    '30 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network sonic',   '35 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_plume',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network plume',   '25 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network mainnet', '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network base',    '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network sonic',   '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_plume',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network plume',   '*/10 * * * *',   'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_rebase',                      'cd /app && pnpm exec tsx tasks/run.ts otokenOethbRebase --network base',               '25 9,21 * * *',         'UTC', false, NULL),
 ('origin-dollar', 'otoken_os_sonicRestakeRewards',            'cd /app && pnpm exec tsx tasks/run.ts otokenOsSonicRestakeRewards --network sonic',    '52 22 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'cross_chain_balance_update_base',          'cd /app && pnpm exec tsx tasks/run.ts crossChainBalanceUpdateBase --network base',     '40 7,15,23 * * *',      'UTC', false, 'permissioned'),
