@@ -41,7 +41,7 @@ default:
 	$(MAKE) build
 
 install:
-	foundryup --version v1.8.1
+	foundryup --version v1.8.3
 	forge soldeer install
 	./install-deps.sh
 	pnpm i
