@@ -188,4 +188,64 @@ contract Unit_Concrete_OUSDVault_Mint_Test is Unit_Shared_Test {
         // Strategy should have received funds via auto-allocate
         assertGt(usdc.balanceOf(address(strategy)), 0, "Strategy should receive allocation");
     }
+
+    //////////////////////////////////////////////////////
+    /// --- MINT GATING: UNDER-BACKED VAULT
+    //////////////////////////////////////////////////////
+
+    /// @dev Simulate a loss by moving USDC out of the vault so totalValue falls
+    /// below OToken supply. The vault starts fully backed (200 OUSD / 200e6 USDC).
+    function _makeUnderBacked() internal {
+        vm.prank(address(ousdVault));
+        usdc.transfer(governor, 10e6);
+        assertLt(ousdVault.totalValue(), ousd.totalSupply(), "vault should be under-backed");
+    }
+
+    function test_mint_RevertWhen_underBacked() public {
+        _makeUnderBacked();
+
+        _dealUSDC(alice, 1e6);
+        vm.startPrank(alice);
+        usdc.approve(address(ousdVault), 1e6);
+        vm.expectRevert("Vault under-backed");
+        ousdVault.mint(1e6);
+        vm.stopPrank();
+    }
+
+    function test_mint_worksAfterBackingRestored() public {
+        _makeUnderBacked();
+
+        _dealUSDC(alice, 1e6);
+        vm.startPrank(alice);
+        usdc.approve(address(ousdVault), 1e6);
+        vm.expectRevert("Vault under-backed");
+        ousdVault.mint(1e6);
+        vm.stopPrank();
+
+        // Restore backing to exactly 1:1
+        _dealUSDC(address(this), 10e6);
+        usdc.transfer(address(ousdVault), 10e6);
+        assertEq(ousdVault.totalValue(), ousd.totalSupply(), "vault should be fully backed again");
+
+        // 1e6 USDC mints 1e18 OUSD
+        uint256 balanceBefore = ousd.balanceOf(alice);
+        vm.prank(alice);
+        ousdVault.mint(1e6);
+        assertEq(ousd.balanceOf(alice), balanceBefore + 1e18, "mint should succeed once backed");
+    }
+
+    function test_mintForStrategy_worksWhenUnderBacked() public {
+        MockStrategy strategy = _deployAndApproveStrategy();
+        vm.prank(governor);
+        ousdVault.addStrategyToMintWhitelist(address(strategy));
+
+        _makeUnderBacked();
+
+        // mintForStrategy is a separate path and is intentionally not gated
+        uint256 mintAmount = 1000e18;
+        vm.prank(address(strategy));
+        ousdVault.mintForStrategy(mintAmount);
+
+        assertEq(ousd.balanceOf(address(strategy)), mintAmount, "mintForStrategy should succeed under-backed");
+    }
 }
