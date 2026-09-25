@@ -82,8 +82,8 @@ contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
 
         feeSplitter.setStrategistAddr(CrossChain.multichainStrategist);
 
-        // Two-step handover: the timelock must claim, which is a proposal action.
-        feeSplitter.transferGovernance(Mainnet.Timelock);
+        // Two-step handover: the 5/8 must claim 
+        feeSplitter.transferGovernance(Mainnet.Guardian);
 
         // --- SetXOGNRewardRateModule
         //
@@ -106,20 +106,9 @@ contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
 
         govProposal.setDescription(
             "Route protocol fees through the FeeSplitter\n\n"
-            "Protocol fees (20% of OUSD and OETH yield) are currently minted to a Safe with "
-            "three owners and a threshold of one. This proposal makes a FeeSplitter contract "
-            "the fee recipient instead, so the routing is fixed in code and no human holds " "protocol fees.\n\n"
-            "CHANGE TO STAKER ECONOMICS: today 100% of these fees are spent buying OGN for "
-            "xOGN stakers. The FeeSplitter is configured to send 20% to the operations wallet "
-            "and 80% to the OGN buyback. This reduces OGN bought for stakers by roughly a "
-            "fifth, and lowers the xOGN reward rate proportionally.\n\n"
-            "The FeeSplitter's operations wallet, harvester and split percentage are all "
-            "governor-only, so any future change to where fees go requires another vote."
+            "Protocol fees are currently sent to a Safe with three owners and a threshold of one. This proposal makes a FeeSplitter contract the fee recipient instead, so the routing is fixed in code and no human holds the protocol fees.\n\n"
+            "The FeeSplitter will send the net protocol fees to the OGN CoW Harvester, so that they are automatically bought back for xOGN stakers.\n\n"
         );
-
-        // The deployer called transferGovernance; without this claim the splitter stays
-        // under the deployer key.
-        govProposal.action(feeSplitter, "claimGovernance()", "");
 
         govProposal.action(Mainnet.VaultProxy, "setTrusteeAddress(address)", abi.encode(feeSplitter));
         govProposal.action(Mainnet.OETHVaultProxy, "setTrusteeAddress(address)", abi.encode(feeSplitter));
