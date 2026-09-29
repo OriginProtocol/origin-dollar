@@ -18,6 +18,14 @@ import {IAdapter} from "contracts/interfaces/crosschainV3/IAdapter.sol";
 import {IRemoteWOTokenStrategy} from "contracts/interfaces/crosschainV3/IRemoteWOTokenStrategy.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 
+/// @dev `IRemoteWOTokenStrategy` only declares what Remote defines itself; add the inherited
+///      `AbstractCrossChainV3Strategy` setters the fixture calls.
+interface IRemoteWOTokenStrategyHandle is IRemoteWOTokenStrategy {
+    function setInboundAdapter(address adapter) external;
+
+    function setOutboundAdapter(address adapter) external;
+}
+
 struct BaseStrategyConfig {
     address platformAddress;
     address vaultAddress;
@@ -49,7 +57,7 @@ abstract contract Fork_RemoteWOTokenStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    IRemoteWOTokenStrategy internal remote;
+    IRemoteWOTokenStrategyHandle internal remote;
     IAdapter internal ccipAdapter;
     IAdapter internal superbridgeAdapter;
     IERC20 internal woeth;
@@ -94,7 +102,7 @@ abstract contract Fork_RemoteWOTokenStrategy_Shared_Test is BaseFork {
         vm.prank(governor);
         strategyProxy.initialize(strategyImpl, governor, abi.encodeWithSignature("initialize(address)", operator));
 
-        remote = IRemoteWOTokenStrategy(address(strategyProxy));
+        remote = IRemoteWOTokenStrategyHandle(address(strategyProxy));
 
         // Inbound on Ethereum is CCIP (Base -> Ethereum). Outbound is Superbridge
         // (Ethereum -> Base): canonical ETH leg + CCIP message.

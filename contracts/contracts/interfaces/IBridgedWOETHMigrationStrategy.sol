@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+/// @dev Inherited by `BridgedWOETHMigrationStrategy`, so it declares only what that contract
+///      defines itself. Members from `BridgedWOETHStrategy` / `InitializableAbstractStrategy` /
+///      `Governable` (e.g. `weth`, `lastOraclePrice`, `vaultAddress`, `governor`) are public
+///      getters or non-virtual functions there and so can't be declared here. `ccipRouter` is
+///      omitted because its `IRouterClient`-typed getter can't implement an `address` return.
 interface IBridgedWOETHMigrationStrategy {
     // Events
     event WOETHBridgedToRemote(uint256 amount, uint256 totalBridged);
@@ -11,7 +16,9 @@ interface IBridgedWOETHMigrationStrategy {
 
     function setMaxPerBridge(uint256 maxPerBridge) external;
 
-    // Views (migration)
+    // Views
+    function checkBalance(address asset) external view returns (uint256);
+
     function master() external view returns (address);
 
     function ccipChainSelectorMainnet() external view returns (uint64);
@@ -19,25 +26,4 @@ interface IBridgedWOETHMigrationStrategy {
     function totalBridged() external view returns (uint256);
 
     function maxPerBridge() external view returns (uint256);
-
-    // Views (inherited from BridgedWOETHStrategy)
-    function checkBalance(address asset) external view returns (uint256);
-
-    function updateWOETHOraclePrice() external returns (uint256);
-
-    function lastOraclePrice() external view returns (uint128);
-
-    function maxPriceDiffBps() external view returns (uint128);
-
-    function weth() external view returns (address);
-
-    function bridgedWOETH() external view returns (address);
-
-    function oethb() external view returns (address);
-
-    function oracle() external view returns (address);
-
-    function vaultAddress() external view returns (address);
-
-    function governor() external view returns (address);
 }

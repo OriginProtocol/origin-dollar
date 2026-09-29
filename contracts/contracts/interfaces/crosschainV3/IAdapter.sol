@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-interface IAdapter {
-    /// @dev Per-lane routing config, keyed by the authorised sender strategy. Declared here so
-    ///      tests can build and read it back by field name.
+import { IBridgeAdapter } from "./IBridgeAdapter.sol";
+
+/// @dev Inherited by `AbstractAdapter`, so it declares only what that contract defines itself.
+///      Governance (`governor` / `transferGovernance` / `claimGovernance`) comes from
+///      `Governable`, whose functions are not virtual and so can't satisfy an interface.
+interface IAdapter is IBridgeAdapter {
+    /// @notice Per-lane routing config. One row per authorised sender.
     struct ChainConfig {
         bool paused;
-        uint64 chainSelector;
-        uint32 destGasLimit;
+        uint64 chainSelector; // destination chain identifier (protocol-specific encoding)
+        uint32 destGasLimit; // gas hint forwarded to the receive callback on the peer
     }
 
     // Events
@@ -65,28 +69,4 @@ interface IAdapter {
     function authorised(address sender) external view returns (bool);
 
     function strategists(address who) external view returns (bool);
-
-    function maxTransferAmount() external view returns (uint256);
-
-    function minTransferAmount() external view returns (uint256);
-
-    function quoteFee(
-        address token,
-        uint256 amount,
-        bytes calldata payload
-    )
-        external
-        view
-        returns (
-            uint256 fee,
-            address feeToken,
-            bool requiresExternalPayment
-        );
-
-    // Governance (from Governable)
-    function transferGovernance(address newGovernor) external;
-
-    function claimGovernance() external;
-
-    function governor() external view returns (address);
 }

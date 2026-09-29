@@ -10,7 +10,7 @@ import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 // Contracts
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {MasterWOTokenStrategy} from "contracts/strategies/crosschainV3/MasterWOTokenStrategy.sol";
-import {AbstractAdapter} from "contracts/strategies/crosschainV3/adapters/AbstractAdapter.sol";
+import {IAdapter} from "contracts/interfaces/crosschainV3/IAdapter.sol";
 import {CCIPAdapter} from "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol";
 import {SuperbridgeAdapter, IL1StandardBridge} from "contracts/strategies/crosschainV3/adapters/SuperbridgeAdapter.sol";
 import {BridgeAdapterProxy} from "contracts/proxies/create2/BridgeAdapterProxy.sol";
@@ -106,7 +106,7 @@ contract $003_OETHbV3MasterImpl is AbstractDeployScript("003_OETHbV3MasterImpl")
         SuperbridgeAdapter superInbound = SuperbridgeAdapter(payable(superProxy));
 
         // --- 6. Lane configuration ---
-        AbstractAdapter.ChainConfig memory lane = AbstractAdapter.ChainConfig({
+        IAdapter.ChainConfig memory lane = IAdapter.ChainConfig({
             paused: false, chainSelector: Mainnet.CCIPChainSelector, destGasLimit: DEST_GAS_LIMIT
         });
         ccipOutbound.authorise(masterProxy, lane);

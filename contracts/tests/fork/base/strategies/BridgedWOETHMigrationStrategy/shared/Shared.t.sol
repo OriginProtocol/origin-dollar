@@ -18,6 +18,26 @@ import {IBridgedWOETHMigrationStrategy} from "contracts/interfaces/IBridgedWOETH
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IStrategy} from "contracts/interfaces/IStrategy.sol";
 
+/// @dev `IBridgedWOETHMigrationStrategy` only declares what the migration contract defines
+///      itself; add the inherited `BridgedWOETHStrategy` / `Governable` members the tests read.
+interface IBridgedWOETHMigrationStrategyHandle is IBridgedWOETHMigrationStrategy {
+    function lastOraclePrice() external view returns (uint128);
+
+    function maxPriceDiffBps() external view returns (uint128);
+
+    function weth() external view returns (address);
+
+    function bridgedWOETH() external view returns (address);
+
+    function oethb() external view returns (address);
+
+    function oracle() external view returns (address);
+
+    function vaultAddress() external view returns (address);
+
+    function governor() external view returns (address);
+}
+
 struct BaseStrategyConfig {
     address platformAddress;
     address vaultAddress;
@@ -44,7 +64,7 @@ abstract contract Fork_BridgedWOETHMigrationStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    IBridgedWOETHMigrationStrategy internal migration;
+    IBridgedWOETHMigrationStrategyHandle internal migration;
     IStrategy internal master;
     IERC20 internal woeth;
     address internal ccipRouter;
@@ -108,7 +128,7 @@ abstract contract Fork_BridgedWOETHMigrationStrategy_Shared_Test is BaseFork {
 
         vm.startPrank(BaseAddresses.timelock);
         IProxy(BaseAddresses.BridgedWOETHStrategyProxy).upgradeTo(migrationImpl);
-        migration = IBridgedWOETHMigrationStrategy(BaseAddresses.BridgedWOETHStrategyProxy);
+        migration = IBridgedWOETHMigrationStrategyHandle(BaseAddresses.BridgedWOETHStrategyProxy);
         migration.setMaxPerBridge(MAX_PER_BRIDGE);
         vm.stopPrank();
 

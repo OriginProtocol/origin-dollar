@@ -10,7 +10,7 @@ import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 // Contracts
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {RemoteWOTokenStrategy} from "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol";
-import {AbstractAdapter} from "contracts/strategies/crosschainV3/adapters/AbstractAdapter.sol";
+import {IAdapter} from "contracts/interfaces/crosschainV3/IAdapter.sol";
 import {CCIPAdapter} from "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol";
 import {SuperbridgeAdapter, IL1StandardBridge} from "contracts/strategies/crosschainV3/adapters/SuperbridgeAdapter.sol";
 import {BridgeAdapterProxy} from "contracts/proxies/create2/BridgeAdapterProxy.sol";
@@ -99,9 +99,8 @@ contract $007_OETHbV3RemoteImpl is AbstractDeployScript("007_OETHbV3RemoteImpl")
         CCIPAdapter ccipInbound = CCIPAdapter(payable(ccipProxy));
 
         // --- 6. Lane configuration ---
-        AbstractAdapter.ChainConfig memory lane = AbstractAdapter.ChainConfig({
-            paused: false, chainSelector: Base.CCIPChainSelector, destGasLimit: DEST_GAS_LIMIT
-        });
+        IAdapter.ChainConfig memory lane =
+            IAdapter.ChainConfig({paused: false, chainSelector: Base.CCIPChainSelector, destGasLimit: DEST_GAS_LIMIT});
         superOutbound.authorise(remoteProxy, lane);
         ccipInbound.authorise(remoteProxy, lane);
 
