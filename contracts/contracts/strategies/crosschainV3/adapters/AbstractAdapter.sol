@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { Governable } from "../../../governance/Governable.sol";
+import { IAdapter } from "../../../interfaces/crosschainV3/IAdapter.sol";
 import { IBridgeAdapter } from "../../../interfaces/crosschainV3/IBridgeAdapter.sol";
 import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceiver.sol";
 
@@ -38,15 +39,8 @@ import { IBridgeReceiver } from "../../../interfaces/crosschainV3/IBridgeReceive
  *         Concrete adapters implement three internal hooks for the bridge-specific transport
  *         calls: `_sendMessage`, `_sendMessageAndTokens`, `_quoteFee`.
  */
-abstract contract AbstractAdapter is IBridgeAdapter, Governable {
+abstract contract AbstractAdapter is IAdapter, Governable {
     using SafeERC20 for IERC20;
-
-    /// @notice Per-lane routing config. One row per authorised sender.
-    struct ChainConfig {
-        bool paused;
-        uint64 chainSelector; // destination chain identifier (protocol-specific encoding)
-        uint32 destGasLimit; // gas hint forwarded to the receive callback on the peer
-    }
 
     /// @notice Sender → authorised flag. Gates both outbound `msg.sender` and inbound
     ///         envelopeSender. CreateX/CREATE2 parity means the same address represents the same
@@ -71,27 +65,6 @@ abstract contract AbstractAdapter is IBridgeAdapter, Governable {
     ///      override to surface a hard protocol cap regardless of the configured value.
     ///      Internal so the override is the single source of truth externally.
     uint256 internal _maxTransferAmount;
-
-    event Authorised(address indexed sender, ChainConfig cfg);
-    event Revoked(address indexed sender);
-    event LaneConfigUpdated(address indexed sender, ChainConfig cfg);
-    event LanePaused(address indexed sender);
-    event LaneUnpaused(address indexed sender);
-    event StrategistAdded(address indexed who);
-    event StrategistRemoved(address indexed who);
-    event MaxTransferAmountUpdated(uint256 oldAmount, uint256 newAmount);
-    event MessageSent(
-        address indexed sender,
-        address token,
-        uint256 amount,
-        uint256 feeCharged
-    );
-    event MessageDelivered(
-        address indexed target,
-        address token,
-        uint256 amountReceived,
-        uint256 feePaid
-    );
 
     /// @dev Reserved for future expansion of this abstract layer (proxy upgradeable).
     uint256[50] private __gap;

@@ -9,6 +9,7 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 
 import { BridgedWOETHStrategy } from "./BridgedWOETHStrategy.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IBridgedWOETHMigrationStrategy } from "../interfaces/IBridgedWOETHMigrationStrategy.sol";
 import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.sol";
 
 /**
@@ -32,7 +33,10 @@ import { CCIPMessageBuilder } from "./crosschainV3/libraries/CCIPMessageBuilder.
  *           - V1's `setMaxPriceDiffBps` (governor-only) and depositBridgedWOETH /
  *             withdrawBridgedWOETH (governor or strategist) are inherited unchanged.
  */
-contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
+contract BridgedWOETHMigrationStrategy is
+    BridgedWOETHStrategy,
+    IBridgedWOETHMigrationStrategy
+{
     using SafeERC20 for IERC20;
 
     // --- Immutables -------------------------------------------------------
@@ -57,11 +61,6 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     uint256 public maxPerBridge;
 
     uint256[48] private __gap;
-
-    // --- Events -----------------------------------------------------------
-
-    event MaxPerBridgeSet(uint256 maxPerBridge);
-    event WOETHBridgedToRemote(uint256 amount, uint256 totalBridged);
 
     // --- Errors -----------------------------------------------------------
 
@@ -192,7 +191,7 @@ contract BridgedWOETHMigrationStrategy is BridgedWOETHStrategy {
     function checkBalance(address _asset)
         external
         view
-        override
+        override(BridgedWOETHStrategy, IBridgedWOETHMigrationStrategy)
         returns (uint256)
     {
         require(_asset == address(weth), "BWM: unsupported asset");

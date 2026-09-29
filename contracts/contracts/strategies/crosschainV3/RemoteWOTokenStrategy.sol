@@ -6,6 +6,7 @@ import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IBasicToken } from "../../interfaces/IBasicToken.sol";
 import { IBridgeAdapter } from "../../interfaces/crosschainV3/IBridgeAdapter.sol";
+import { IRemoteWOTokenStrategy } from "../../interfaces/crosschainV3/IRemoteWOTokenStrategy.sol";
 
 import { AbstractWOTokenStrategy } from "./AbstractWOTokenStrategy.sol";
 import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
@@ -27,7 +28,10 @@ import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
  *         For the full Remote state-transition table (Idle → Requested → Claimed → Bridging-out
  *         → Completed) see `FLOWS.md`.
  */
-contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
+contract RemoteWOTokenStrategy is
+    AbstractWOTokenStrategy,
+    IRemoteWOTokenStrategy
+{
     using SafeERC20 for IERC20;
 
     // --- Immutables --------------------------------------------------------
@@ -62,37 +66,6 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
     /// @dev Reserved for future expansion.
     uint256[43] private __gap;
-
-    // --- Events -------------------------------------------------------------
-
-    event DepositProcessed(uint64 nonce, uint256 amount, uint256 remoteBalance);
-    event WithdrawRequestProcessed(
-        uint64 nonce,
-        uint256 amount,
-        uint256 requestId
-    );
-    event WithdrawClaimDelivered(
-        uint64 nonce,
-        uint256 amount,
-        uint256 remoteBalance
-    );
-    event WithdrawClaimNack(uint64 nonce, uint256 remoteBalance);
-    event RemoteWithdrawalClaimed(uint256 requestId, uint256 amount);
-    event BalanceReportSent(
-        uint64 nonce,
-        uint256 remoteBalance,
-        uint256 timestamp
-    );
-    /// @dev DEPOSIT mint/wrap reverted; bridgeAsset/oToken left idle (recoverable via retryDeposit).
-    event DepositUnderlyingFailed(uint64 nonce, uint256 amount, bytes reason);
-    /// @dev WITHDRAW_REQUEST unwrap/queue reverted; nothing queued, Master told to clear pending.
-    event WithdrawRequestUnderlyingFailed(
-        uint64 nonce,
-        uint256 amount,
-        bytes reason
-    );
-    /// @dev Operator re-ran the mint/wrap pipeline on idle bridgeAsset/oToken.
-    event IdleDepositRetried(uint256 mintedBridgeAsset, uint256 wrappedOToken);
 
     // --- Construction / initialisation -------------------------------------
 
@@ -140,7 +113,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     function checkBalance(address _asset)
         external
         view
-        override
+        override(InitializableAbstractStrategy, IRemoteWOTokenStrategy)
         returns (uint256)
     {
         require(_asset == bridgeAsset, "Remote: unsupported asset");
@@ -152,7 +125,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     /// @inheritdoc InitializableAbstractStrategy
     function safeApproveAllTokens()
         external
-        override
+        override(InitializableAbstractStrategy, IRemoteWOTokenStrategy)
         onlyGovernor
         nonReentrant
     {
@@ -205,7 +178,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
     ///      recoverable; true custody recovery goes through the governor upgrade path.
     function transferToken(address _asset, uint256 _amount)
         public
-        override
+        override(InitializableAbstractStrategy, IRemoteWOTokenStrategy)
         onlyGovernor
     {
         require(
