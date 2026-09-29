@@ -10,6 +10,10 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// --- Project imports
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {VaultStorage} from "contracts/vault/VaultStorage.sol";
+
 /// @notice The two-leg withdrawal against the real OETH vault withdrawal queue.
 ///
 ///         Unit tests cover the state machine against a mock vault. What only a fork can show
@@ -83,5 +87,68 @@ contract Fork_RemoteWOTokenStrategy_Withdrawal_Test is Fork_RemoteWOTokenStrateg
 
         assertEq(remote.outstandingRequestId(), REQUEST_ID_EMPTY, "request not closed");
         assertEq(IERC20(Mainnet.WETH).balanceOf(address(remote)), wethAfterFirst, "second claim moved funds");
+    }
+
+    /// @dev Claimed-but-unshipped WETH belongs to leg 2. If `retryDeposit` re-wrapped it, leg 2
+    ///      would NACK forever and Master's pending withdrawal would block the channel.
+    function test_retryDeposit_leavesClaimedWithdrawalForLeg2() public {
+        _deliverAndMeasure(_envelope(WITHDRAW_REQUEST, 1, abi.encode(WITHDRAW_AMOUNT)), 0);
+        _claimWithLiquidity();
+
+        // Unrelated idle WETH alongside the claimed proceeds — only this should be re-wrapped.
+        uint256 extra = 0.5 ether;
+        uint256 wethClaimed = IERC20(Mainnet.WETH).balanceOf(address(remote));
+        deal(Mainnet.WETH, address(remote), wethClaimed + extra);
+        uint256 sharesBefore = woeth.balanceOf(address(remote));
+
+        vm.prank(governor);
+        remote.retryDeposit();
+
+        assertEq(IERC20(Mainnet.WETH).balanceOf(address(remote)), wethClaimed, "reserved WETH re-wrapped");
+        assertGt(woeth.balanceOf(address(remote)), sharesBefore, "idle WETH not wrapped");
+
+        // Leg 2 still ships the full claimed amount.
+        _deliverAndMeasure(_envelope(WITHDRAW_CLAIM, 2, ""), 0);
+        assertEq(remote.outstandingRequestAmount(), 0, "leg 2 did not ship");
+        assertEq(IERC20(Mainnet.WETH).balanceOf(address(remote)), wethClaimed - WITHDRAW_AMOUNT, "wrong amount shipped");
+    }
+
+    function test_retryDeposit_revertsWhenOnlyClaimedWithdrawalIsIdle() public {
+        _deliverAndMeasure(_envelope(WITHDRAW_REQUEST, 1, abi.encode(WITHDRAW_AMOUNT)), 0);
+        _claimWithLiquidity();
+
+        vm.prank(governor);
+        vm.expectRevert("Remote: nothing to retry");
+        remote.retryDeposit();
+    }
+
+    /// @dev While the request is still queued nothing is held for it, so no reserve applies.
+    function test_retryDeposit_wrapsAllIdleWethWhileRequestQueued() public {
+        _deliverAndMeasure(_envelope(WITHDRAW_REQUEST, 1, abi.encode(WITHDRAW_AMOUNT)), 0);
+        assertNotEq(remote.outstandingRequestId(), REQUEST_ID_EMPTY, "no request queued");
+
+        deal(Mainnet.WETH, address(remote), 0.5 ether);
+
+        vm.prank(governor);
+        remote.retryDeposit();
+
+        assertEq(IERC20(Mainnet.WETH).balanceOf(address(remote)), 0, "idle WETH not wrapped");
+    }
+
+    /// @dev Warp past the queue delay, cover any live queue shortfall on the OETH vault (the
+    ///      fork block can be short of WETH, which makes the claim revert "Queue pending
+    ///      liquidity"), then claim and check it landed.
+    function _claimWithLiquidity() internal {
+        vm.warp(block.timestamp + 11 days);
+        vm.roll(block.number + 1);
+
+        IVault vault = IVault(Mainnet.OETHVaultProxy);
+        VaultStorage.WithdrawalQueueMetadata memory meta = vault.withdrawalQueueMetadata();
+        uint256 shortfall = meta.queued > meta.claimable ? meta.queued - meta.claimable : 0;
+        deal(Mainnet.WETH, address(vault), IERC20(Mainnet.WETH).balanceOf(address(vault)) + shortfall);
+        vault.addWithdrawalQueueLiquidity();
+
+        remote.claimRemoteWithdrawal();
+        assertEq(remote.outstandingRequestId(), REQUEST_ID_EMPTY, "claim did not land");
     }
 }

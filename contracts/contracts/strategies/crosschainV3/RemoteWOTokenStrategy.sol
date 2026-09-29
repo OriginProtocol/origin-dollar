@@ -515,6 +515,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
      *         idle bridgeAsset (mint → OToken) and idle OToken (wrap → wOToken), returning the
      *         stranded value to productive wOToken. `checkBalance` already counts the idle assets,
      *         so this changes nothing for accounting — it just stops the value sitting unproductive.
+     *         Claimed-but-unshipped withdrawal proceeds are left untouched for leg 2.
      * @dev Operator/strategist/governor; reverts loudly if the underlying still fails (unlike the
      *      message path, a manual retry SHOULD surface the error).
      */
@@ -523,7 +524,17 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         onlyOperatorGovernorOrStrategist
         nonReentrant
     {
-        uint256 idleBridgeAsset = IERC20(bridgeAsset).balanceOf(address(this));
+        uint256 bridgeAssetHeld = IERC20(bridgeAsset).balanceOf(address(this));
+        // Claimed-but-unshipped withdrawal proceeds belong to leg 2 (WITHDRAW_CLAIM); re-wrapping
+        // them would make `_processWithdrawClaim` NACK forever and wedge Master's pending
+        // withdrawal. While the request is still queued the amount isn't held yet, so nothing
+        // is reserved.
+        uint256 reserved = outstandingRequestId == REQUEST_ID_EMPTY
+            ? outstandingRequestAmount
+            : 0;
+        uint256 idleBridgeAsset = bridgeAssetHeld > reserved
+            ? bridgeAssetHeld - reserved
+            : 0;
         uint256 oTokenBefore = IERC20(oToken).balanceOf(address(this));
         require(
             idleBridgeAsset > 0 || oTokenBefore > 0,
