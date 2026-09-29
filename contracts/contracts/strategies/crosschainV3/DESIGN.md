@@ -396,6 +396,8 @@ the serialized channel:
   (or OToken) is left idle on Remote — still counted, value preserved — and the
   operator-only **`retryDeposit()`** re-runs the mint/wrap pipeline to put it back
   into productive wOToken. The DEPOSIT_ACK is still sent with the true balance.
+  `retryDeposit` skips bridgeAsset reserved for a claimed-but-unshipped withdrawal
+  (`outstandingRequestAmount` once the queue claim has landed), so it can't strand leg 2.
 
 ### 4.4 9-batch Phase 1 migration pacing
 
