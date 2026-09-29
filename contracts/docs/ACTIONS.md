@@ -51,6 +51,11 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `autoValidatorDeposits`    | mainnet | `14 1 * * *`     | Deposit WETH to under-funded validators (withdrawing from the strategy first if the Vault needs it) |
 | `autoValidatorWithdrawals` | mainnet | `24 1 * * *`     | Withdraw ETH from validators when the Vault needs WETH for user withdrawals                         |
 
+`verifyBalances` and `verifyDeposits` auto-detect the beacon SSZ fork from the
+beacon node response. Operators can pass `beaconFork=legacy` or
+`beaconFork=gloas` for dry-runs and incident response during the Glamsterdam
+transition.
+
 ## Sonic staking
 
 | Action                  | Network | Cron                 | Description                                                |

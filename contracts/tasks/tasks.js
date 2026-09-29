@@ -1355,6 +1355,12 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "beaconFork",
+    "Beacon SSZ fork to use for proof generation: auto, legacy, or gloas",
+    "auto",
+    types.string
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyValidator({ ...taskArgs, signer });
@@ -1393,6 +1399,12 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     "Override the validator with the index of a test validator. Used when generating proofs for unit tests.",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "beaconFork",
+    "Beacon SSZ fork to use for proof generation: auto, legacy, or gloas",
+    "auto",
+    types.string
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();

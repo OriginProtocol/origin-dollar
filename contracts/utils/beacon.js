@@ -14,9 +14,17 @@ const fetchImpl =
     ? globalThis.fetch.bind(globalThis)
     : (...args) =>
         import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const esmImport = new Function("specifier", "return import(specifier)");
 
 const SLOTS_PER_EPOCH = 32;
 const BEACON_STATE_FETCH_TIMEOUT_MS = 15 * 60 * 1000;
+const BEACON_FORK_AUTO = "auto";
+const BEACON_FORK_ALIASES = {
+  glamsterdam: "gloas",
+  postglamsterdam: "gloas",
+  preglamsterdam: "legacy",
+  legacy: "legacy",
+};
 const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
   index: Number(index),
   validatorindex: Number(index),
@@ -91,10 +99,40 @@ const getBeaconBlockRoot = async (blockId = "head") => {
  * Gets the full beacon chain data for a given slot, root or "head".
  * @param {string|number} [slot=head] - The slot to get the beacon block for. Can be "head", a slot number or a beacon block root.
  */
-const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
+const normalizeBeaconFork = (beaconFork) => {
+  if (!beaconFork || beaconFork === BEACON_FORK_AUTO) {
+    return undefined;
+  }
+
+  const normalized = String(beaconFork).toLowerCase().replace(/[-_]/g, "");
+  return BEACON_FORK_ALIASES[normalized] ?? normalized;
+};
+
+const assertGloasProgressiveSsz = async () => {
+  const { ssz } = await esmImport("@lodestar/types");
+  const fields = ssz.gloas?.BeaconState?.fields;
+  const progressiveFields = ["validators", "balances", "pendingDeposits"];
+
+  for (const field of progressiveFields) {
+    const typeName = fields?.[field]?.constructor?.name || "";
+    if (!typeName.includes("Progressive")) {
+      throw new Error(
+        `@lodestar/types does not expose EIP-7688 Progressive SSZ for gloas BeaconState.${field}. Found ${
+          typeName || "unknown"
+        }.`
+      );
+    }
+  }
+};
+
+const getBeaconBlock = async (
+  slot = "head",
+  networkName = "mainnet",
+  beaconFork = BEACON_FORK_AUTO
+) => {
   const client = await configClient();
 
-  const { ssz } = await import("@lodestar/types");
+  const { ssz } = await esmImport("@lodestar/types");
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
@@ -106,7 +144,22 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     );
   }
 
-  const fork = blockRes.meta().version;
+  const detectedFork = blockRes.meta().version;
+  const forkOverride = normalizeBeaconFork(beaconFork);
+  if (forkOverride === "legacy" && detectedFork === "gloas") {
+    throw new Error(
+      `Refusing to use legacy SSZ types for Gloas beacon block ${slot}`
+    );
+  }
+  const fork =
+    forkOverride && forkOverride !== "legacy" ? forkOverride : detectedFork;
+  if (!ssz[fork]) {
+    throw new Error(`Unsupported beacon fork "${fork}" for slot ${slot}`);
+  }
+  if (fork === "gloas") {
+    await assertGloasProgressiveSsz();
+  }
+  log(`Using ${fork} SSZ types for slot ${slot} (${detectedFork} from node)`);
   const BeaconBlock = ssz[fork].BeaconBlock;
   const BeaconState = ssz[fork].BeaconState;
   const blockView = BeaconBlock.toView(blockRes.value().message);
@@ -290,8 +343,8 @@ const hashPubKey = (pubKey) => {
 const configClient = async () => {
   // Get the latest slot from the beacon chain API
   // Dynamically import the Lodestar API client as its an ESM module
-  const { getClient } = await import("@lodestar/api");
-  const { config } = await import("@lodestar/config/default");
+  const { getClient } = await esmImport("@lodestar/api");
+  const { config } = await esmImport("@lodestar/config/default");
 
   const baseUrl = process.env.BEACON_PROVIDER_URL;
 
@@ -416,7 +469,7 @@ const getEpoch = async (epochId = "latest") => {
 };
 
 const serializeUint64 = async (value) => {
-  const { ssz } = await import("@lodestar/types");
+  const { ssz } = await esmImport("@lodestar/types");
 
   // Need to convert to little-endian Uint8Array
   const slotLittleEndian = ssz.Slot.serialize(Number(value));
@@ -510,13 +563,13 @@ const verifyDepositSignatureAndMessageRoot = async ({
   forkVersion, // fork version
 }) => {
   // Can not import via require since these packages support only ESM mode
-  const bls = await import("@chainsafe/bls");
-  const { ssz } = await import("@lodestar/types/phase0");
-  const { computeDomain, computeSigningRoot } = await import(
+  const bls = await esmImport("@chainsafe/bls");
+  const { ssz } = await esmImport("@lodestar/types/phase0");
+  const { computeDomain, computeSigningRoot } = await esmImport(
     "@lodestar/state-transition"
   );
-  const { DOMAIN_DEPOSIT } = await import("@lodestar/params");
-  const { fromHex } = await import("@lodestar/utils");
+  const { DOMAIN_DEPOSIT } = await esmImport("@lodestar/params");
+  const { fromHex } = await esmImport("@lodestar/utils");
 
   log("Validating BLS deposit message signature");
   log(`pubkey: ${pubkey}`);
@@ -581,6 +634,7 @@ module.exports = {
   calcBlockTimestamp,
   calcSlot,
   calcEpoch,
+  assertGloasProgressiveSsz,
   getValidator,
   getValidators,
   getValidatorBalance,

@@ -6,6 +6,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon:test:utils");
+const esmImport = new Function("specifier", "return import(specifier)");
 
 const calcWithdrawalCredential = (type, owner) => {
   const withdrawalCredential = solidityPack(
@@ -19,8 +20,8 @@ const calcWithdrawalCredential = (type, owner) => {
 
 const calcDepositRoot = async (owner, type, pubkey, sig, amount) => {
   // Dynamically import the Lodestar as its an ESM module
-  const { ssz } = await import("@lodestar/types");
-  const { fromHex } = await import("@lodestar/utils");
+  const { ssz } = await esmImport("@lodestar/types");
+  const { fromHex } = await esmImport("@lodestar/utils");
 
   const validTypes = ["0x00", "0x01", "0x02"];
   if (!validTypes.includes(type)) {

@@ -49,6 +49,12 @@ action({
       "",
       types.string
     );
+    t.addOptionalParam(
+      "beaconFork",
+      "Beacon SSZ fork to use for proof generation: auto, legacy, or gloas",
+      "auto",
+      types.string
+    );
   },
   run: async ({ signer, args }) => {
     await verifyBalances({ ...args, signer });

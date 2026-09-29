@@ -20,23 +20,23 @@ importers:
         specifier: ^8.2.0
         version: 8.2.0
       '@lodestar/api':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@lodestar/config':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@lodestar/params':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@lodestar/state-transition':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@lodestar/types':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@lodestar/utils':
-        specifier: ^1.44.0
-        version: 1.44.0
+        specifier: ^1.46.0
+        version: 1.46.0
       '@safe-global/api-kit':
         specifier: ^5.0.1
         version: 5.0.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -351,6 +351,9 @@ packages:
   '@chainsafe/as-sha256@1.2.4':
     resolution: {integrity: sha512-3GXDysZOKD6cTYbm48lEdXdUbS7cafjXQZfgHOspTByhoGR/JM3KBXyF3vE6bf63ImjNPyoEZwnQcpYPQ6k3bQ==}
 
+  '@chainsafe/as-sha256@1.2.5':
+    resolution: {integrity: sha512-8LzmWxBC/2O5BgbP+aRom/FaDJMrM04VZMlVIivYTc6yNQKYrONmIv27m3q/1VBgxrfrNNqmibitb2hE2tQzIw==}
+
   '@chainsafe/bls-hd-key@0.3.0':
     resolution: {integrity: sha512-LsYYnfBEEmqGFPDm8hQN3Kc+v9wPFnhn+CToD403KEynUiUSHKLAf5B6UCY5eooShDOcaGCUgAUhIw1CmpEf3Q==}
 
@@ -465,6 +468,9 @@ packages:
 
   '@chainsafe/persistent-merkle-tree@1.3.0':
     resolution: {integrity: sha512-xGe95xNkYayC5BYQpo7ft5oHwyf52YtqBip+GJqZ9XgKSzraw93qUMNeqKrOVJbZM5HEOys8xxkt0h7VD1a9cw==}
+
+  '@chainsafe/persistent-merkle-tree@1.3.1':
+    resolution: {integrity: sha512-f8E1ftNhHK9zUEgb+Tdcx8TM57qeO4u9RU1kKDUDgCQyiMXrC+3rjAPAvum2HN7Du81myG7nz1WpIMZAPVWLTg==}
 
   '@chainsafe/pubkey-index-map-darwin-arm64@3.0.0':
     resolution: {integrity: sha512-gM/wwA6bpfeZm80aSoH2c3ddbPeZho73TUUprUFlHQNLldGzZ293yFQgj2Ontp1fMf9AI0w+F0uEN2qC6v7g9A==}
@@ -1005,23 +1011,23 @@ packages:
     peerDependencies:
       ethers: ^5.7.2
 
-  '@lodestar/api@1.44.0':
-    resolution: {integrity: sha512-nz+tDnYdLB+phVnQtno9zKPjCSVgqRjreX/v5Om1o9h96VZx9/mcS9EiiDlwwbMlREcq0PiqzdIBq9/dOvowHA==}
+  '@lodestar/api@1.46.0':
+    resolution: {integrity: sha512-CZPXq8NLcZfmt6X0DokjPAbqnPYSU387T8QT+g2krvMqlMgycf+ByM42YsOj7EboYG4a+h1XfsgI3D2DLK0JZg==}
 
-  '@lodestar/config@1.44.0':
-    resolution: {integrity: sha512-tFodHVWqXMPerI2MP4sJrdRcZbyok5gyWa0iKo9GZac9SejuTv2osxflG1l9bPPAuUckVmiQPr3GYMVm+8y3lg==}
+  '@lodestar/config@1.46.0':
+    resolution: {integrity: sha512-DJG1BavZowYq5ezOEQyR6Uijpc3ufFtTRM3zYp+7YhqDN+Y+LAOtWXJxPuAUJjUfEEFQgYj+ZJ7iJCS5suWj9g==}
 
-  '@lodestar/params@1.44.0':
-    resolution: {integrity: sha512-Hhb/YNLGSGLLVvCpfmTPaJzKXBSL1Sd64XWkpfO8+jkZOcRQM6GvRpMgbkJIdUBu2yC0B9sT19/iWxPik84jow==}
+  '@lodestar/params@1.46.0':
+    resolution: {integrity: sha512-eyJrn62yNZr+0KxzSKAtDkxzzMoo9T1Bz2N51mQAamp+eP6gFWPRKwegRc323SCALO41Jb1ELaECane2D7dQzA==}
 
-  '@lodestar/state-transition@1.44.0':
-    resolution: {integrity: sha512-RFKYhq2JB9Bbp2rWNZulWQ9pSDRtlcqyPY2qXa0TuRuaaG34H+thWw/LPn+h0QxwhdHwpXVWNMcetWvslndGTQ==}
+  '@lodestar/state-transition@1.46.0':
+    resolution: {integrity: sha512-/Wck1EE7nvv8qZvO2Gy5Pv79c1SZ0zNhoQjFA2MAHINwkd+azwmUX7tp16ZRkzwNnRPtYSHpY+rOvGH9imn/ng==}
 
-  '@lodestar/types@1.44.0':
-    resolution: {integrity: sha512-ZTa147pQOaoEntaLRF2sI6wWIirl8lw2XP1cOpu0+wuTfNucJMTA97JfbzMAi1gC83L+kHLjRH+TR1kB6XIU+Q==}
+  '@lodestar/types@1.46.0':
+    resolution: {integrity: sha512-Ga48V+1MNftO0a3cCS3CSLMpLihohsWAl1jOIFz47Jvz8xFDjXOATXmv+AlxNm4CbwmKLIEBL2e5UH0kRh85vw==}
 
-  '@lodestar/utils@1.44.0':
-    resolution: {integrity: sha512-xYIxos7I0gXY59OxXx0ZUwCj4uNZZTody5FmqQCC7BpL4A8Y5RIe+jMiWo4+0miXPhop2kfkF3AlqIr37OBlcw==}
+  '@lodestar/utils@1.46.0':
+    resolution: {integrity: sha512-KEDTwiJLuTotisRFaazZHZB7PJMHpBlKM3w2PVSqMIUTZ7c7XaQAssnCTz0elUH9oxZ/mZfEphVeDdzuRl6V1Q==}
 
   '@noble/ciphers@1.3.0':
     resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
@@ -5324,6 +5330,8 @@ snapshots:
 
   '@chainsafe/as-sha256@1.2.4': {}
 
+  '@chainsafe/as-sha256@1.2.5': {}
+
   '@chainsafe/bls-hd-key@0.3.0':
     dependencies:
       '@noble/hashes': 1.8.0
@@ -5405,7 +5413,13 @@ snapshots:
 
   '@chainsafe/persistent-merkle-tree@1.3.0':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.4
+      '@chainsafe/as-sha256': 1.2.5
+      '@chainsafe/hashtree': 1.0.2
+      '@noble/hashes': 1.8.0
+
+  '@chainsafe/persistent-merkle-tree@1.3.1':
+    dependencies:
+      '@chainsafe/as-sha256': 1.2.5
       '@chainsafe/hashtree': 1.0.2
       '@noble/hashes': 1.8.0
 
@@ -5446,8 +5460,8 @@ snapshots:
 
   '@chainsafe/ssz@1.6.2':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.4
-      '@chainsafe/persistent-merkle-tree': 1.3.0
+      '@chainsafe/as-sha256': 1.2.5
+      '@chainsafe/persistent-merkle-tree': 1.3.1
 
   '@chainsafe/swap-or-not-shuffle-darwin-arm64@1.2.1':
     optional: true
@@ -6197,56 +6211,56 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@lodestar/api@1.44.0':
+  '@lodestar/api@1.46.0':
     dependencies:
       '@chainsafe/persistent-merkle-tree': 1.3.0
       '@chainsafe/ssz': 1.6.2
-      '@lodestar/config': 1.44.0
-      '@lodestar/params': 1.44.0
-      '@lodestar/types': 1.44.0
-      '@lodestar/utils': 1.44.0
+      '@lodestar/config': 1.46.0
+      '@lodestar/params': 1.46.0
+      '@lodestar/types': 1.46.0
+      '@lodestar/utils': 1.46.0
       eventsource: 2.0.2
       qs: 6.15.0
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/config@1.44.0':
+  '@lodestar/config@1.46.0':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.0
+      '@chainsafe/as-sha256': 1.2.4
       '@chainsafe/ssz': 1.6.2
-      '@lodestar/params': 1.44.0
-      '@lodestar/types': 1.44.0
-      '@lodestar/utils': 1.44.0
+      '@lodestar/params': 1.46.0
+      '@lodestar/types': 1.46.0
+      '@lodestar/utils': 1.46.0
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/params@1.44.0': {}
+  '@lodestar/params@1.46.0': {}
 
-  '@lodestar/state-transition@1.44.0':
+  '@lodestar/state-transition@1.46.0':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.0
+      '@chainsafe/as-sha256': 1.2.4
       '@chainsafe/blst': 2.2.0
       '@chainsafe/persistent-merkle-tree': 1.3.0
       '@chainsafe/pubkey-index-map': 3.0.0
       '@chainsafe/ssz': 1.6.2
       '@chainsafe/swap-or-not-shuffle': 1.2.1
-      '@lodestar/config': 1.44.0
-      '@lodestar/params': 1.44.0
-      '@lodestar/types': 1.44.0
-      '@lodestar/utils': 1.44.0
+      '@lodestar/config': 1.46.0
+      '@lodestar/params': 1.46.0
+      '@lodestar/types': 1.46.0
+      '@lodestar/utils': 1.46.0
       '@vekexasia/bigint-buffer2': 1.1.1
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/types@1.44.0':
+  '@lodestar/types@1.46.0':
     dependencies:
       '@chainsafe/ssz': 1.6.2
-      '@lodestar/params': 1.44.0
+      '@lodestar/params': 1.46.0
       ethereum-cryptography: 2.2.1
 
-  '@lodestar/utils@1.44.0':
+  '@lodestar/utils@1.46.0':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.0
+      '@chainsafe/as-sha256': 1.2.4
       '@vekexasia/bigint-buffer2': 1.1.1
       any-signal: 4.2.0
       case: 1.6.3

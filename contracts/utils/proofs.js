@@ -4,6 +4,7 @@ const { formatUnits } = require("ethers/lib/utils");
 const { MAX_UINT64 } = require("./constants");
 
 const log = require("../utils/logger")("task:proof");
+const esmImport = new Function("specifier", "return import(specifier)");
 
 // BeaconBlock.state.PendingDeposits[0].slot
 async function generateFirstPendingDepositSlotProof({
@@ -13,7 +14,7 @@ async function generateFirstPendingDepositSlotProof({
   test,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
+  const { concatGindices, createProof, ProofType, toGindex } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
@@ -107,7 +108,7 @@ async function generateValidatorWithdrawableEpochProof({
   validatorIndex,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
+  const { concatGindices, createProof, ProofType, toGindex } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
@@ -178,7 +179,7 @@ async function generateValidatorPubKeyProof({
   stateView,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
+  const { concatGindices, createProof, ProofType, toGindex } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
@@ -237,7 +238,7 @@ async function generatePendingDepositsContainerProof({
   stateView,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType } = await import(
+  const { concatGindices, createProof, ProofType } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
@@ -283,11 +284,13 @@ async function generatePendingDepositProof({
   depositIndex,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
+  const { concatGindices, createProof, ProofType } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
   // Read the pending deposit from the state
+  depositIndex = Number(depositIndex);
+
   const pendingDeposit = stateView.pendingDeposits.get(depositIndex);
   log(`Pending deposit ${depositIndex}:`);
   log(`  pubkey : ${toHex(pendingDeposit.pubkey)}`);
@@ -308,10 +311,8 @@ async function generatePendingDepositProof({
   );
 
   // BeaconBlock.state.pendingDeposits[depositIndex]
-  const genIndexPendingDepositContainer = toGindex(
-    stateView.pendingDeposits.type.depth,
-    BigInt(depositIndex)
-  );
+  const genIndexPendingDepositContainer =
+    stateView.pendingDeposits.type.getPropertyGindex(depositIndex);
   log(
     `index for pending deposit in pending deposits container: ${genIndexPendingDepositContainer}`
   );
@@ -350,7 +351,7 @@ async function generateBalancesContainerProof({
   stateView,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType } = await import(
+  const { concatGindices, createProof, ProofType } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
 
@@ -392,9 +393,11 @@ async function generateBalanceProof({
   validatorIndex,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
+  const { concatGindices, createProof, ProofType } = await esmImport(
     "@chainsafe/persistent-merkle-tree"
   );
+
+  validatorIndex = Number(validatorIndex);
 
   // Read the validator's balance from the state
   const validatorBalance = stateView.balances.get(validatorIndex);
@@ -416,10 +419,8 @@ async function generateBalanceProof({
   // There are 4 balances per leaf, so we need to divide by 4 which is right shift by 2.
   const balanceIndex = validatorIndex >> 2;
   log(`Balance index in the balances container: ${balanceIndex}`);
-  const genIndexBalanceContainer = toGindex(
-    stateView.balances.type.depth,
-    BigInt(balanceIndex)
-  );
+  const genIndexBalanceContainer =
+    stateView.balances.type.getPropertyGindex(validatorIndex);
   log(`index for balance in balances container: ${genIndexBalanceContainer}`);
 
   log(`Balances sub tree root: ${toHex(balancesTree.root)}`);

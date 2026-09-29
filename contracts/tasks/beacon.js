@@ -44,7 +44,7 @@ const log = require("../utils/logger")("task:beacon");
 const MAX_DATE_MS = 8640000000000000n;
 
 const getStrategyNetworkName = async () => {
-  const networkName = await getNetworkName();
+  const networkName = await getStrategyNetworkName();
   if (networkName === "hardhat") {
     return (
       process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat"
@@ -108,6 +108,10 @@ const getLinkedStrategy = (withdrawalCredentials, networkName) => {
 
 const getValidatorType = (withdrawalCredentials) =>
   withdrawalCredentials.slice(0, 4).toLowerCase();
+
+const listLength = (list) => list?.length ?? 0;
+
+const listItem = (list, index) => list.get(index);
 
 const resolveBeaconSlot = ({ slot, epoch }) => {
   if (slot !== undefined && epoch !== undefined) {
@@ -175,7 +179,15 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
+async function verifyValidator({
+  slot,
+  index,
+  ids,
+  dryrun,
+  cred,
+  signer,
+  beaconFork,
+}) {
   if (index === undefined && ids === undefined) {
     throw new Error("Pass either --index or --ids");
   }
@@ -195,14 +207,12 @@ async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
     return Number(id);
   });
 
-  // Get provider to mainnet or testnet and not a local fork
-  const provider = await getLiveProvider(signer.provider);
-
   const networkName = await getNetworkName();
 
   const { blockView, blockTree, stateView } = await getBeaconBlock(
     slot,
-    networkName
+    networkName,
+    beaconFork
   );
 
   const strategy = await resolveContract(
@@ -244,10 +254,13 @@ async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
     cred = "0x020000000000000000000000" + strategy.address.slice(2);
   }
 
-  const nextBlock = blockView.body.executionPayload.blockNumber + 1;
-  const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
+  const nextBlockTimestamp = Number(
+    calcBlockTimestamp(BigInt(blockView.slot) + 1n, networkName)
+  );
   log(
-    `Next execution layer block ${nextBlock} has timestamp ${nextBlockTimestamp}`
+    `Next beacon slot ${
+      BigInt(blockView.slot) + 1n
+    } has timestamp ${nextBlockTimestamp}`
   );
 
   const validatorProofs = [];
@@ -314,7 +327,7 @@ async function verifyValidator({ slot, index, ids, dryrun, cred, signer }) {
 }
 
 // get deposits that have been processed on the beacon chain but not yet validated by the strategy
-async function getProcessedDeposits(pendingDeposits) {
+async function getProcessedDeposits(pendingDeposits, beaconFork) {
   const depositProcessedSlot = (await getSlot()) - 30;
 
   const networkName = await getNetworkName();
@@ -324,7 +337,11 @@ async function getProcessedDeposits(pendingDeposits) {
   );
 
   // Uses the beacon chain data for the beacon block root
-  const { stateView } = await getBeaconBlock(depositProcessedSlot, networkName);
+  const { stateView } = await getBeaconBlock(
+    depositProcessedSlot,
+    networkName,
+    beaconFork
+  );
 
   const pendingDepositMap = {};
 
@@ -352,7 +369,7 @@ async function getProcessedDeposits(pendingDeposits) {
   return { processedDeposits, depositProcessedSlot };
 }
 
-async function verifyDeposits({ dryrun, signer }) {
+async function verifyDeposits({ dryrun, signer, beaconFork }) {
   const stakingStrategy = await resolveContract(
     "CompoundingStakingStrategyProxy",
     "CompoundingStakingStrategy"
@@ -369,7 +386,7 @@ async function verifyDeposits({ dryrun, signer }) {
   }
 
   const { processedDeposits, depositProcessedSlot } =
-    await getProcessedDeposits(pendingDeposits);
+    await getProcessedDeposits(pendingDeposits, beaconFork);
 
   /**
    * Deposit verification requires the depositProcessedSlot to be smaller than the
@@ -393,6 +410,7 @@ async function verifyDeposits({ dryrun, signer }) {
       root: deposit.pendingDepositRoot,
       dryrun,
       signer,
+      beaconFork,
     });
   }
 }
@@ -404,6 +422,7 @@ async function verifyDeposit({
   test,
   index: strategyValidatorIndex,
   signer,
+  beaconFork,
 }) {
   const strategy = await resolveContract(
     "CompoundingStakingStrategyProxy",
@@ -459,7 +478,11 @@ async function verifyDeposit({
 
   // Uses the latest slot if the slot is undefined
   const networkName = await getNetworkName();
-  const depositProcessedBeaconData = await getBeaconBlock(slot, networkName);
+  const depositProcessedBeaconData = await getBeaconBlock(
+    slot,
+    networkName,
+    beaconFork
+  );
   const depositProcessedSlot = depositProcessedBeaconData.blockView.slot;
 
   // if generating unit testing data
@@ -604,6 +627,7 @@ async function verifyBalances({
   test,
   signer,
   slot,
+  beaconFork,
 }) {
   const strategy = test
     ? undefined
@@ -627,7 +651,8 @@ async function verifyBalances({
   const networkName = await getNetworkName();
   const { blockView, blockTree, stateView } = await getBeaconBlock(
     slot,
-    networkName
+    networkName,
+    beaconFork
   );
   const verificationSlot = blockView.slot;
 
@@ -976,12 +1001,16 @@ async function getValidator({ slot, epoch, index, pubkey }) {
     } pending withdrawals`
   );
 
+  const executionWithdrawals =
+    blockView.body.executionPayload?.withdrawals ??
+    stateView.payloadExpectedWithdrawals;
+
   console.log(
-    `\n${blockView.body.executionPayload.withdrawals.length} execution payload withdrawals:`
+    `\n${listLength(executionWithdrawals)} execution payload withdrawals:`
   );
   let withdrawals = 0;
-  for (let i = 0; i < blockView.body.executionPayload.withdrawals.length; i++) {
-    const withdrawal = blockView.body.executionPayload.withdrawals.get(i);
+  for (let i = 0; i < listLength(executionWithdrawals); i++) {
+    const withdrawal = listItem(executionWithdrawals, i);
     log(
       `Withdrawal ${withdrawal.index} for validator ${
         withdrawal.validatorIndex
@@ -997,20 +1026,23 @@ async function getValidator({ slot, epoch, index, pubkey }) {
     }
   }
   console.log(
-    `${withdrawals} withdrawals for validator in ${blockView.body.executionPayload.withdrawals.length} withdrawals`
+    `${withdrawals} withdrawals for validator in ${listLength(
+      executionWithdrawals
+    )} withdrawals`
   );
 
+  const executionWithdrawalRequests =
+    blockView.body.executionRequests?.withdrawals ??
+    blockView.body.parentExecutionRequests?.withdrawals;
+
   console.log(
-    `\n${blockView.body.executionRequests.withdrawals.length} execution withdrawal requests:`
+    `\n${listLength(
+      executionWithdrawalRequests
+    )} execution withdrawal requests:`
   );
   let withdrawalRequests = 0;
-  for (
-    let i = 0;
-    i < blockView.body.executionRequests.withdrawals.length;
-    i++
-  ) {
-    const withdrawalRequest =
-      blockView.body.executionRequests.withdrawals.get(i);
+  for (let i = 0; i < listLength(executionWithdrawalRequests); i++) {
+    const withdrawalRequest = listItem(executionWithdrawalRequests, i);
     log(
       `Withdrawal request for validator ${toHex(
         withdrawalRequest.validatorPubkey
@@ -1031,7 +1063,9 @@ async function getValidator({ slot, epoch, index, pubkey }) {
     }
   }
   console.log(
-    `${withdrawalRequests} withdrawal requests on the execution layer found for validator in ${blockView.body.executionRequests.withdrawals.length} requests`
+    `${withdrawalRequests} withdrawal requests on the execution layer found for validator in ${listLength(
+      executionWithdrawalRequests
+    )} requests`
   );
 
   console.log(
