@@ -116,6 +116,10 @@ abstract contract AbstractAdapter is IAdapter, Governable {
         onlyGovernor
     {
         require(sender != address(0), "Adapter: zero sender");
+        // Every outbound message carries a payload that needs gas in the peer's receive
+        // callback; CCIP doesn't reject a 0 gas limit at source, so 0 would silently fail
+        // every message on the lane at the destination.
+        require(cfg.destGasLimit > 0, "Adapter: zero dest gas");
         // chainSelector is deliberately not range-checked: some transports use 0 as a
         // legitimate domain id. Authorisation lookup uses the `authorised` flag, not
         // chainSelector, so 0 is a valid (non-uninitialised) value here.
@@ -134,7 +138,9 @@ abstract contract AbstractAdapter is IAdapter, Governable {
         onlyGovernor
     {
         require(authorised[sender], "Adapter: sender not authorised");
-        // See note in `authorise()` — chainSelector is deliberately not range-checked.
+        // See notes in `authorise()`: destGasLimit must be non-zero; chainSelector is
+        // deliberately not range-checked.
+        require(cfg.destGasLimit > 0, "Adapter: zero dest gas");
         laneConfig[sender] = cfg;
         emit LaneConfigUpdated(sender, cfg);
     }
