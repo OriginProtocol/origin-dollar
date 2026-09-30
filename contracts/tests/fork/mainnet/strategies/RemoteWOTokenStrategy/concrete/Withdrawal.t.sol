@@ -51,12 +51,9 @@ contract Fork_RemoteWOTokenStrategy_Withdrawal_Test is Fork_RemoteWOTokenStrateg
         uint256 totalBefore = remote.checkBalance(Mainnet.WETH);
         uint256 wethBefore = IERC20(Mainnet.WETH).balanceOf(address(remote));
 
-        // Past the vault's `withdrawalClaimDelay`, with room to spare.
-        vm.warp(block.timestamp + 11 days);
-        vm.roll(block.number + 1);
-
+        // Past the vault's `withdrawalClaimDelay`, with the live queue shortfall covered.
         // Permissionless — the operator cadence calls it, but anyone can.
-        remote.claimRemoteWithdrawal();
+        _claimWithLiquidity();
 
         // The sentinel id is what marks the request closed; `outstandingRequestAmount` is
         // deliberately left holding the vault's actually-paid amount so leg 2 ships exactly
@@ -76,10 +73,7 @@ contract Fork_RemoteWOTokenStrategy_Withdrawal_Test is Fork_RemoteWOTokenStrateg
     function test_claimRemoteWithdrawal_isIdempotent() public {
         _deliverAndMeasure(_envelope(WITHDRAW_REQUEST, 1, abi.encode(WITHDRAW_AMOUNT)), 0);
 
-        vm.warp(block.timestamp + 11 days);
-        vm.roll(block.number + 1);
-
-        remote.claimRemoteWithdrawal();
+        _claimWithLiquidity();
         uint256 wethAfterFirst = IERC20(Mainnet.WETH).balanceOf(address(remote));
 
         // Second call sees the empty sentinel and early-returns.
