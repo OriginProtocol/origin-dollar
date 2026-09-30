@@ -115,6 +115,14 @@
         {
             "implementation": "0xad2b1657E2c3243750B32Cb9A51169575945b05B",
             "name": "OETH_VAULT_LENS_PROXY"
+        },
+        {
+            "implementation": "0xbbE561181D831e2a0fAd54C2c27F159a20B60464",
+            "name": "FeeSplitter"
+        },
+        {
+            "implementation": "0x549f300EEA621969b88Db15120A5fb9103680535",
+            "name": "SetXOGNRewardRateModule"
         }
     ],
     "executions": [
@@ -140,6 +148,12 @@
             "name": "005_DeployOETHVaultLens",
             "proposalId": 0,
             "tsDeployment": 1787914607,
+            "tsGovernance": 0
+        },
+        {
+            "name": "006_OGNBuyback",
+            "proposalId": 0,
+            "tsDeployment": 1790178659,
             "tsGovernance": 0
         }
     ]
