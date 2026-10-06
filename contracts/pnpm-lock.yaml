@@ -10,6 +10,9 @@ importers:
 
   .:
     dependencies:
+      '@aws-sdk/client-kms':
+        specifier: 3.1036.0
+        version: 3.1036.0
       '@chainlink/contracts-ccip':
         specifier: 1.2.1
         version: 1.2.1(ethers@5.7.2)

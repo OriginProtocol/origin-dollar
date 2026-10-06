@@ -1,5 +1,9 @@
 import { ethers } from "ethers";
-import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
+import { KMSClient, SignCommand } from "@aws-sdk/client-kms";
+import {
+  DirectKmsTransactionSigner,
+  derToSignature,
+} from "@lastdotnet/purrikey";
 import { getProvider } from "./network";
 // CJS util.
 import {
@@ -103,5 +107,61 @@ export async function getSigner(
   throw new Error(
     "No signer available. Set AWS KMS credentials, DEPLOYER_PK/GOVERNOR_PK, or " +
       "FORK=true + IMPERSONATE=0x..."
+  );
+}
+
+export interface DigestSigner {
+  address: string;
+  signDigest(digest: string): Promise<ethers.Signature>;
+}
+
+/**
+ * Signs a raw 32-byte digest, with no EIP-191 prefix. Needed for off-chain
+ * signatures checked by contracts with their own prefix (the CoW harvester's
+ * `\x19COWSWAP order digest:\n32`). The purrikey signer only exposes
+ * `signMessage`, which always applies EIP-191, so the KMS branch calls
+ * `SignCommand` on the digest directly and normalises the DER signature the
+ * same way purrikey does. Not wrapped by the nonce queue: nothing is broadcast.
+ */
+export async function getDigestSigner(): Promise<DigestSigner> {
+  if (hasAwsKmsCredentials()) {
+    const keyId = (resolveKmsRelayerId as () => string)();
+    const address = await new DirectKmsTransactionSigner(
+      keyId,
+      getProvider(),
+      AWS_KMS_REGION
+    ).getAddress();
+    const kms = new KMSClient({ region: AWS_KMS_REGION });
+    return {
+      address,
+      async signDigest(digest: string) {
+        const { Signature } = await kms.send(
+          new SignCommand({
+            KeyId: keyId,
+            Message: ethers.utils.arrayify(digest),
+            MessageType: "DIGEST",
+            SigningAlgorithm: "ECDSA_SHA_256",
+          })
+        );
+        if (!Signature) throw new Error("No signature returned from KMS");
+        return derToSignature(Buffer.from(Signature), digest, 0, address);
+      },
+    };
+  }
+
+  const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
+  if (pk) {
+    const key = new ethers.utils.SigningKey(pk);
+    return {
+      address: ethers.utils.computeAddress(key.publicKey),
+      async signDigest(digest: string) {
+        return ethers.utils.splitSignature(key.signDigest(digest));
+      },
+    };
+  }
+
+  throw new Error(
+    "No digest signer available. Set AWS KMS credentials or " +
+      "DEPLOYER_PK/GOVERNOR_PK (impersonation cannot sign digests)."
   );
 }

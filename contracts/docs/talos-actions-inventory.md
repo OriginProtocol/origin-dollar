@@ -6,7 +6,7 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | sonic | manageBribeOnSonic, otokenOsCollectAndRelease, otokenOsRebase, otokenOsSonicRestakeRewards, sonicClaimWithdrawals, sonicUndelegate |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
@@ -44,6 +44,8 @@
 | `abi/poolBoosterSwapX.json` | 1 | sonic |
 | `abi/sonic_staking_strategy.json` | 1 | sonic |
 | `abi/vault.json` | 1 | sonic |
+| `tasks/lib/cowHarvest` | 1 | eth |
+| `tasks/lib/deployments` | 1 | eth |
 | `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
@@ -51,6 +53,7 @@
 | `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |
+| `utils/ogn-buyback-config` | 1 | eth |
 | `utils/proofs` | 1 | eth |
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |
