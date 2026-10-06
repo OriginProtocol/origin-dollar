@@ -71,6 +71,7 @@
     "viem": "^2.27.0"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "3.1036.0",
     "@chainlink/contracts-ccip": "1.2.1",
     "@chainsafe/bls": "^8.2.0",
     "@lodestar/api": "^1.44.0",

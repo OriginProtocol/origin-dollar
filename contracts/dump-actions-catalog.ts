@@ -13,6 +13,7 @@ import { registry } from "./tasks/lib/action";
 // Per-task parameter allow-lists — only these params are editable from the
 // Talos admin UI.
 const TALOS_PARAM_ALLOWLISTS: Record<string, Set<string>> = {
+  cowHarvest: new Set(["dryrun", "slippageBps"]),
   removeValidator: new Set(["pubkey"]),
   stakeValidator: new Set(["amount", "depositMessageRoot", "pubkey", "sig"]),
   withdrawValidator: new Set(["amount", "pubkey"]),
