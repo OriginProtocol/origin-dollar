@@ -7,9 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Origin DeFi's OTokens monorepo containing smart contracts for:
 - **OUSD** (Origin Dollar) - a yield-bearing stablecoin
 - **OETH** (Origin Ether) - an Ethereum liquid staking token
-- **OS** (Origin Sonic) - Sonic chain native token
 
-Deployed on Ethereum Mainnet, Base, Arbitrum, Sonic, Plume, Hoodi, and HyperEVM. All smart contract work happens in the `contracts/` directory.
+Deployed on Ethereum Mainnet, Base, Arbitrum, Plume, Hoodi, and HyperEVM. Origin Sonic (OS) is being wound down on Sonic; its contracts and automation were removed from the repo (see git history). All smart contract work happens in the `contracts/` directory.
 
 ## Toolchain
 
@@ -23,7 +22,7 @@ cp dev.env .env          # Set MAINNET_PROVIDER_URL to an Alchemy/Infura endpoin
 make install             # foundryup (v1.8.3), forge soldeer install, install-deps.sh, pnpm i
 ```
 
-Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `SONIC_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The ops CLI and `anvil.sh` also resolve Ethereum from `MAINNET_PROVIDER_URL` (legacy fallback: `PROVIDER_URL`).
+Key `.env` variables: `MAINNET_PROVIDER_URL` (required), `BASE_PROVIDER_URL`, `ARBITRUM_PROVIDER_URL`, `HYPEREVM_PROVIDER_URL`, `BEACON_PROVIDER_URL` (beacon-proof fork tests), and optional `FORK_BLOCK_NUMBER_<CHAIN>` pins for Foundry fork tests (unset = latest block; refresh with `make update-fork-blocks`). The ops CLI and `anvil.sh` also resolve Ethereum from `MAINNET_PROVIDER_URL` (legacy fallback: `PROVIDER_URL`).
 
 Real deployments additionally need `DEPLOYER_ADDRESS` and the encrypted `deployerKey` keystore (`cast wallet import deployerKey --interactive`).
 
@@ -146,8 +145,7 @@ be as small as possible.
 Note the protocol-wide reach of the role addresses when evaluating option 1:
 `IVault.strategistAddr()` is the strategist source of truth for `OUSD.sol`,
 `InitializableAbstractStrategy` (so every strategy), the Curve/Aerodrome/Algebra
-AMO strategies, `ValidatorRegistrator`, `SonicValidatorDelegator` and
-`FixedRateDripper`. Re-pointing it is a cheap transaction but a wide blast
+AMO strategies, `ValidatorRegistrator` and `FixedRateDripper`. Re-pointing it is a cheap transaction but a wide blast
 radius — enumerate the affected call sites before recommending it.
 
 Worked example: PR #2973 added an `adminAddr` role to `VaultAdmin`/`VaultStorage`
@@ -167,7 +165,7 @@ Vaults (`contracts/vault/`) are the core of each OToken. They handle:
 - Rebalancing via `allocate()`
 - Yield accounting via `rebase()`
 
-Each chain/token has its own vault contract: `OUSDVault`, `OETHVault`, `OETHBaseVault` (Base), `OSVault` (Sonic) and `OETHPlumeVault` (Plume). `OETHPlumeVault` is being shut down and will be removed from the repo after all funds are withdrawn.
+Each chain/token has its own vault contract: `OUSDVault`, `OETHVault`, `OETHBaseVault` (Base) and `OETHPlumeVault` (Plume). `OETHPlumeVault` is being shut down and will be removed from the repo after all funds are withdrawn.
 
 Inheritance: `VaultStorage` → `VaultInitializer` → `VaultCore` (user-facing mint/redeem) → `VaultAdmin` (governance functions) → the concrete per-chain vault, deployed as a **single implementation** behind the proxy. (They were historically two implementations sharing one proxy because the combined contract exceeded the size limit; that split is gone.)
 
@@ -222,7 +220,7 @@ Layout mirrors `<type>/<chain>/<area>/<Contract>/{concrete,fuzz}/<Behaviour>.t.s
 
 Foundry deploy scripts live in `scripts/deploy/<network>/` and are numbered. The file, contract, and constructor deployment ID must match: file `017_UpgradeVault.s.sol`, contract `$017_UpgradeVault`, constructor ID `"017_UpgradeVault"`. Start from `000_Example.s.sol` in the chain directory. Record every new address with `_recordDeployment("Name", addr)` and resolve prior entries with `resolver.resolve("Name")`.
 
-`DeployManager.s.sol` discovers scripts, skips completed ones (state in `build/deployments-<chainId>.json`), and simulates pending governance on forks. Mainnet governance proposals go through GovernorSix; Base and HyperEVM use their chain TimelockController; Sonic scripts apply fork-only governance effects in `_fork()`.
+`DeployManager.s.sol` discovers scripts, skips completed ones (state in `build/deployments-<chainId>.json`), and simulates pending governance on forks. Mainnet governance proposals go through GovernorSix; Base and HyperEVM use their chain TimelockController.
 
 ```bash
 make simulate                  # fork simulation, no broadcast (NETWORK=base|hyperevm for other chains)
@@ -267,7 +265,7 @@ time, because OZ's `isGap()` matches only `__gap`/`__gap_*` while contracts
 deployed before the rename still carry `______gap` on chain. Stored layouts stay
 faithful to their source, so a bug in that normalisation never costs a re-fetch.
 
-Storage-slot checks cover **Ethereum mainnet and Base** only. ArbitrumOne, Sonic,
+Storage-slot checks cover **Ethereum mainnet and Base** only. ArbitrumOne,
 Plume, Hoodi and HyperEVM are out of scope; the gate is a no-op there.
 
 **Re-supporting a chain means re-fetching every layout.** The legacy

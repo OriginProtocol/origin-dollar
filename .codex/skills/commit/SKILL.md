@@ -107,7 +107,6 @@ Suggested scopes in this repo:
 - `zapper`
 - `market`
 - `pendle`
-- `sonic`
 - `skill`
 
 If the change spans multiple unrelated areas, omit the scope. Use imperative mood, lowercase, no trailing period, and keep the subject under 72 characters.

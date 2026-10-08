@@ -8,7 +8,6 @@ import { logTxDetails } from "../../utils/txLogger";
 const MODULES_BY_CHAIN_ID: Record<number, string> = {
   1: "0xB3bCfA33C54fa4D18146196eDfB404BD036a52a6", // Ethereum
   8453: "0xf633980A61E9F90a41d030676059Dc201D9d4A37", // Base
-  146: "0x77121911A387c9e4Eae46345E0f831A6da8a1364", // Sonic
 };
 
 const PERMISSIONED_REBASE_ABI = ["function permissionedRebase() external"];
@@ -16,8 +15,8 @@ const PERMISSIONED_REBASE_ABI = ["function permissionedRebase() external"];
 action({
   name: "permissionedRebase",
   description:
-    "Call permissionedRebase() on the PermissionedRebase Safe module on the current chain (Ethereum / Base / Sonic). The module unpauses, rebases, and re-pauses every vault it manages atomically.",
-  chains: [1, 8453, 146],
+    "Call permissionedRebase() on the PermissionedRebase Safe module on the current chain (Ethereum / Base). The module unpauses, rebases, and re-pauses every vault it manages atomically.",
+  chains: [1, 8453],
   run: async ({ signer, chainId, networkName, log }) => {
     const moduleAddress = MODULES_BY_CHAIN_ID[chainId];
     if (!moduleAddress) {

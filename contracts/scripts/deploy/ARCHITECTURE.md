@@ -1,7 +1,7 @@
 # Deployment Framework
 
 A Foundry-based deployment framework that orchestrates smart contract deployments
-across Ethereum Mainnet, Sonic, Base, and HyperEVM. It tracks deployment history
+across Ethereum Mainnet, Base, and HyperEVM. It tracks deployment history
 in JSON, resolves cross-script contract addresses via an in-memory registry,
 builds and simulates governance actions on forks, and produces ready-to-submit
 calldata for real deployments.
@@ -61,7 +61,6 @@ scripts/deploy/
 │   ├── Resolver.sol                     # Contract address registry (vm.etched singleton)
 ├── mainnet/                             # Ethereum Mainnet scripts (001_, 002_, ...)
 │   └── 000_Example.s.sol               # Reference template (skip = true)
-├── sonic/                               # Sonic chain scripts
 ├── base/                                # Base scripts
 └── hyperevm/                            # HyperEVM scripts
 ```
@@ -222,7 +221,6 @@ This filtering enables **historical fork replay**: set `FORK_BLOCK_NUMBER_MAINNE
 
 Determines the script folder based on chain ID:
 - Chain `1` → `scripts/deploy/mainnet/`
-- Chain `146` → `scripts/deploy/sonic/`
 - Chain `8453` → `scripts/deploy/base/`
 - Chain `999` → `scripts/deploy/hyperevm/`
 
@@ -393,7 +391,6 @@ Deployment history is stored in chain-specific JSON files:
 | File | Chain |
 |------|-------|
 | `build/deployments-1.json` | Ethereum Mainnet |
-| `build/deployments-146.json` | Sonic |
 | `build/deployments-8453.json` | Base |
 | `build/deployments-999.json` | HyperEVM |
 | `build/deployments-fork-{timestamp}.json` | Temporary fork files (ignored by git) |

@@ -48,7 +48,6 @@ const { ethers } = require("ethers");
 // Mirrors DIR_BY_CHAIN in tasks/lib/contracts.ts.
 const NETWORK_BY_CHAIN = {
   1: "mainnet",
-  146: "sonic",
   999: "hyperevm",
   8453: "base",
   42161: "arbitrumOne",

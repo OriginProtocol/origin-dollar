@@ -1823,54 +1823,6 @@
     "destination": "ops:mine"
   },
   {
-    "name": "sonicDefaultValidator",
-    "description": "Set the default validator for the Sonic Staking Strategy",
-    "params": [
-      {
-        "name": "relayerId",
-        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
-        "optional": true,
-        "flag": false,
-        "variadic": false,
-        "type": "string",
-        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
-      },
-      {
-        "name": "id",
-        "description": "Validator identifier. eg 18",
-        "optional": false,
-        "flag": false,
-        "variadic": false,
-        "type": "int"
-      }
-    ],
-    "destination": "ops:sonicDefaultValidator"
-  },
-  {
-    "name": "sonicStaking",
-    "description": "Snap of the Sonic Staking Strategy",
-    "params": [
-      {
-        "name": "relayerId",
-        "description": "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
-        "optional": true,
-        "flag": false,
-        "variadic": false,
-        "type": "string",
-        "default": "f153abb3-12be-4fa4-be0d-bceeb796ff3e"
-      },
-      {
-        "name": "block",
-        "description": "Block number. (default: latest)",
-        "optional": true,
-        "flag": false,
-        "variadic": false,
-        "type": "int"
-      }
-    ],
-    "destination": "ops:sonicStaking"
-  },
-  {
     "name": "depositValidator",
     "description": "Deposits ETH to a validator on the Beacon chain",
     "params": [

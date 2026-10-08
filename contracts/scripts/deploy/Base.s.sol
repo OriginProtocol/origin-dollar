@@ -73,7 +73,7 @@ abstract contract Base {
     // ==================== Multi-Chain Support ==================== //
 
     /// @notice Mapping from chain ID to human-readable chain name.
-    /// @dev Used for logging and file path construction (e.g., "mainnet", "sonic").
+    /// @dev Used for logging and file path construction (e.g., "mainnet", "base").
     ///      Populated in the constructor with supported chains.
     mapping(uint256 chainId => string chainName) public chainNames;
 
@@ -94,10 +94,9 @@ abstract contract Base {
     /// @notice Initializes the chain name mappings.
     /// @dev Add new chains here when expanding multi-chain support.
     ///      The chain names should match the directory names in scripts/deploy/
-    ///      (e.g., "mainnet" for chain ID 1, "sonic" for chain ID 146).
+    ///      (e.g., "mainnet" for chain ID 1, "base" for chain ID 8453).
     constructor() {
         chainNames[1] = "Ethereum Mainnet";
-        chainNames[146] = "Sonic Mainnet";
         chainNames[8453] = "Base Mainnet";
         chainNames[999] = "HyperEVM";
     }

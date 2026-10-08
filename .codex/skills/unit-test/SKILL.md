@@ -49,10 +49,10 @@ Available interfaces:
 | Interface | File | Used for |
 |-----------|------|----------|
 | `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
-| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
-| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WrappedOusd) |
 | `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
-| Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces (ICurveAMOStrategy, ISonicStakingStrategy, etc.) |
+| Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces (ICurveAMOStrategy, ICompoundingStakingStrategy, etc.) |
 
 Key rules:
 
@@ -68,12 +68,9 @@ Key rules:
 |---------|-------|-------|---------------------|
 | OUSD | `OUSD` | `OUSDVault` | `Vaults.OUSD` |
 | OETH | `OETH` | `OETHVault` | `Vaults.OETH` |
-| OSonic | `OSonic` | `OSVault` | `Vaults.OS` |
 | OETHBase | `OETHBase` | `OETHBaseVault` | `Vaults.OETH_BASE` |
 
 Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
-
-Never use `OETHVault` for Sonic tests.
 
 ## 3. Shared setup contract
 

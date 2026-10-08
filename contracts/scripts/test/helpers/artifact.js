@@ -8,7 +8,7 @@
  *
  * 1. An artifact can be built WITHOUT a storageLayout — a targeted
  *    `forge build <path>` omits it even though foundry.toml sets
- *    `extra_output = ["storageLayout"]`. Observed on OSVault and OETHBaseVault.
+ *    `extra_output = ["storageLayout"]`. Observed on OETHBaseVault.
  *    A reader that treats the missing key as "no storage" turns the pinning
  *    tests into a permanent pass, so this throws instead.
  * 2. out/ is keyed by source-file BASENAME, so two different .sol files with the

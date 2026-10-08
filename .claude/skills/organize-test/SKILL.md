@@ -53,7 +53,6 @@ import {Fork_SomeStrategy_Shared_Test} from "../shared/Shared.t.sol";
 
 // --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

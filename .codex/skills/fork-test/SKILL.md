@@ -52,12 +52,9 @@ Same rules as unit tests — use interfaces, not concrete contracts:
 |---------|-------|-------|-------|---------------------|
 | OUSD | `OUSD` | `OUSDVault` | Mainnet | `Vaults.OUSD` |
 | OETH | `OETH` | `OETHVault` | Mainnet | `Vaults.OETH` |
-| OSonic | `OSonic` | `OSVault` | Sonic | `Vaults.OS` |
 | OETHBase | `OETHBase` | `OETHBaseVault` | Base | `Vaults.OETH_BASE` |
 
 Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
-
-Never use `OETHVault` for Sonic tests.
 
 ## 3. Shared setup contract
 
@@ -133,7 +130,6 @@ Use the repository's fork helpers and address libraries consistently:
 
 - Mainnet -> `_createAndSelectForkMainnet()`
 - Base -> `_createAndSelectForkBase()`
-- Sonic -> `_createAndSelectForkSonic()`
 - Arbitrum if relevant -> `_createAndSelectForkArbitrum()`
 
 ## Output expectations

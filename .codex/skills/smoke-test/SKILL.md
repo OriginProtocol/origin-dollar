@@ -72,10 +72,7 @@ Same rules as unit and fork tests — use interfaces, not concrete contracts:
 |---------|-------|-------|-------|
 | OUSD | `OUSD` | `OUSDVault` | Mainnet |
 | OETH | `OETH` | `OETHVault` | Mainnet |
-| OSonic | `OSonic` | `OSVault` | Sonic |
 | OETHBase | `OETHBase` | `OETHBaseVault` | Base |
-
-Never use `OETHVault` for Sonic tests.
 
 ## 3. Shared setup contract
 
