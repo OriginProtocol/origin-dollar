@@ -1,0 +1,172 @@
+{
+  "address": "0x0929C0fbFF88e129ACaA51Bba0C959491325b4aD",
+  "_seeded": "Pre-deploy storage baseline. BridgedWOETHMigrationStrategy upgrades the live BridgedWOETHStrategyProxy, so its baseline is the layout of the implementation deployed there today (copied from BridgedWOETHStrategy.json). Lets scripts/check-storage-upgrade.js run a real comparison in scripts/deploy/base/004_OETHbV3WOETHMigration.s.sol instead of passing the new name as a fresh contract. Replaced wholesale by the descriptor refresh after the real deploy.",
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 4598,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 4601,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 4641,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "______gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 4721,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "_deprecated_platformAddress",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 4724,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "_deprecated_vaultAddress",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_address"
+      },
+      {
+        "astId": 4729,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "assetToPToken",
+        "offset": 0,
+        "slot": "53",
+        "type": "t_mapping(t_address,t_address)"
+      },
+      {
+        "astId": 4733,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "assetsMapped",
+        "offset": 0,
+        "slot": "54",
+        "type": "t_array(t_address)dyn_storage"
+      },
+      {
+        "astId": 4735,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "_deprecated_rewardTokenAddress",
+        "offset": 0,
+        "slot": "55",
+        "type": "t_address"
+      },
+      {
+        "astId": 4737,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "_deprecated_rewardLiquidationThreshold",
+        "offset": 0,
+        "slot": "56",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 4740,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "harvesterAddress",
+        "offset": 0,
+        "slot": "57",
+        "type": "t_address"
+      },
+      {
+        "astId": 4744,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "rewardTokenAddresses",
+        "offset": 0,
+        "slot": "58",
+        "type": "t_array(t_address)dyn_storage"
+      },
+      {
+        "astId": 4748,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "_reserved",
+        "offset": 0,
+        "slot": "59",
+        "type": "t_array(t_int256)98_storage"
+      },
+      {
+        "astId": 2300,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "lastOraclePrice",
+        "offset": 0,
+        "slot": "157",
+        "type": "t_uint128"
+      },
+      {
+        "astId": 2302,
+        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "label": "maxPriceDiffBps",
+        "offset": 16,
+        "slot": "157",
+        "type": "t_uint128"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_address)dyn_storage": {
+        "encoding": "dynamic_array",
+        "label": "address[]",
+        "numberOfBytes": "32",
+        "base": "t_address"
+      },
+      "t_array(t_int256)98_storage": {
+        "encoding": "inplace",
+        "label": "int256[98]",
+        "numberOfBytes": "3136",
+        "base": "t_int256"
+      },
+      "t_array(t_uint256)50_storage": {
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600",
+        "base": "t_uint256"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_int256": {
+        "encoding": "inplace",
+        "label": "int256",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_address)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_uint128": {
+        "encoding": "inplace",
+        "label": "uint128",
+        "numberOfBytes": "16"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

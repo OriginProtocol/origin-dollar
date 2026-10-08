@@ -216,6 +216,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         external
         view
+        virtual
         override
         returns (uint256 balance)
     {

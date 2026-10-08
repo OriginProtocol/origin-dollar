@@ -8,12 +8,18 @@ library Strategies {
         "contracts/strategies/BaseCurveAMOStrategy.sol:BaseCurveAMOStrategy";
     string internal constant BRIDGED_WOETH_STRATEGY =
         "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy";
+    string internal constant BRIDGED_WOETH_MIGRATION_STRATEGY =
+        "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy";
     string internal constant COMPOUNDING_STAKING_STRATEGY =
         "contracts/strategies/NativeStaking/CompoundingStakingStrategy.sol:CompoundingStakingStrategy";
     string internal constant CROSS_CHAIN_MASTER_STRATEGY =
         "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy";
     string internal constant CROSS_CHAIN_REMOTE_STRATEGY =
         "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy";
+    string internal constant REMOTE_WOTOKEN_STRATEGY =
+        "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy";
+    string internal constant MASTER_WOTOKEN_STRATEGY =
+        "contracts/strategies/crosschainV3/MasterWOTokenStrategy.sol:MasterWOTokenStrategy";
     string internal constant CURVE_AMO_STRATEGY = "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy";
     string internal constant GENERALIZED_4626_STRATEGY =
         "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy";
