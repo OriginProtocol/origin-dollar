@@ -644,7 +644,6 @@ Copy `dev.env` to `.env` and fill in the required values.
 | **unit-tests** | PRs, pushes (not schedule) | No |
 | **fork-tests-mainnet/base/hyperevm** | All workflow triggers | No (mostly deploy from scratch) |
 | **smoke-tests-mainnet/base/hyperevm** | All workflow triggers | Yes (bootstraps DeployManager) |
-| **slither**, **snyk** | PRs, pushes (not schedule) | No |
 
 ---
 
