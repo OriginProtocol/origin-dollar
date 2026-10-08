@@ -11,7 +11,7 @@
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
-| eth, base | crossChainRelay, manageMerklBribes, permissionedRebase, proposeVaultStrategyMoves, relayCCTPMessage |
+| eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 

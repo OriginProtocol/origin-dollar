@@ -21,9 +21,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OUSD on mainnet                                                                                           |
 | `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OETH on mainnet                                                                                           |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
-| `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Allocate idle assets and rebase the SuperOETH (OETHb) vault on Base                                                                       |
-| `permissionedRebase`   | mainnet | `15 10,22 * * *` | `permissionedRebase()` every managed vault via the Safe module (unpause → rebase → re-pause atomically)                                  |
-| `permissionedRebase`   | base    | `15 10,22 * * *` | As above, on Base                                                                                                                         |
+| `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
 
 ## OToken operations
 
