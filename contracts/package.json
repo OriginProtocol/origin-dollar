@@ -39,8 +39,6 @@
     "prettier:sol": "prettier --write --plugin=prettier-plugin-solidity \"contracts/**/*.sol\"",
     "prettier:ts": "prettier --write \"tasks/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "slither": "pnpm run clean && slither . --config-file slither.config.json",
-    "slither:triage": "pnpm run clean && slither . --triage --config-file slither.config.json",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*",
     "action": "tsx tasks/run.ts",
     "dump-catalog": "tsx dump-actions-catalog.ts"
