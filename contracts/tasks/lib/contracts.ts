@@ -1,23 +1,21 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { ethers } from "ethers";
 import { getChainId, getSignerOrProvider } from "./network";
 
 /**
- * Drop-in replacements for `hre.ethers.getContract` / `hre.ethers.getContractAt`
- * that do NOT require hardhat. Addresses come from the committed hardhat-deploy
- * artifacts in deployments/<network>/<Name>.json (the deployed truth); ABIs come
+ * Standalone `getContract` / `getContractAt` helpers. Addresses come from the
+ * committed descriptors in deployments/<network>/<Name>.json (the deployed truth); ABIs come
  * from the deployment artifact (getContract) or a curated interface ABI in abi/
  * (getContractAt by name). Contracts are bound to the ambient signer (writes) or
- * provider (reads), matching hardhat's signer-connected contracts.
+ * provider (reads).
  */
 
 const CONTRACTS_ROOT = join(__dirname, "..", "..");
 
-// chainId -> deployments/ sub-directory (mirrors utils/hardhat-helpers.js networkMap).
+// chainId -> deployments/ sub-directory.
 const DIR_BY_CHAIN: Record<number, string> = {
   1: "mainnet",
-  17000: "holesky",
   42161: "arbitrumOne",
   8453: "base",
   146: "sonic",
@@ -70,11 +68,15 @@ function readAbiByName(chainId: number, name: string): unknown[] {
     `${name}.json`
   );
   if (existsSync(dep)) return JSON.parse(readFileSync(dep, "utf8")).abi;
+  const artifactPath = findFoundryArtifact(join(CONTRACTS_ROOT, "out"), name);
+  if (artifactPath) {
+    const artifact = JSON.parse(readFileSync(artifactPath, "utf8"));
+    if (Array.isArray(artifact.abi)) return artifact.abi;
+  }
   throw new Error(
     `ABI for '${name}' not found (checked abi/${name}.json and ` +
-      `deployments/${deploymentDir(
-        chainId
-      )}/${name}.json). Add a curated abi/${name}.json.`
+      `deployments/${deploymentDir(chainId)}/${name}.json and Foundry out/). ` +
+      `Run 'forge build contracts/' or add a curated abi/${name}.json.`
   );
 }
 
@@ -101,4 +103,38 @@ export async function getContractAt(
     abi as ethers.ContractInterface,
     getSignerOrProvider()
   );
+}
+
+function findFoundryArtifact(directory: string, name: string): string | null {
+  if (!existsSync(directory)) return null;
+  for (const entry of readdirSync(directory).sort()) {
+    const path = join(directory, entry);
+    if (statSync(path).isDirectory()) {
+      const nested = findFoundryArtifact(path, name);
+      if (nested) return nested;
+    } else if (entry === `${name}.json`) return path;
+  }
+  return null;
+}
+
+/** Load a deployable Foundry artifact from out/. */
+export async function getContractFactory(
+  name: string
+): Promise<ethers.ContractFactory> {
+  const artifactPath = findFoundryArtifact(join(CONTRACTS_ROOT, "out"), name);
+  if (!artifactPath) {
+    throw new Error(
+      `Foundry artifact for '${name}' was not found under out/. Run 'forge build' first.`
+    );
+  }
+  const artifact = JSON.parse(readFileSync(artifactPath, "utf8"));
+  const bytecode = artifact.bytecode?.object ?? artifact.bytecode;
+  if (!Array.isArray(artifact.abi) || !bytecode || bytecode === "0x") {
+    throw new Error(`Foundry artifact '${artifactPath}' is not deployable`);
+  }
+  const signerOrProvider = getSignerOrProvider();
+  if (!ethers.Signer.isSigner(signerOrProvider)) {
+    throw new Error(`A signer is required to deploy '${name}'`);
+  }
+  return new ethers.ContractFactory(artifact.abi, bytecode, signerOrProvider);
 }

@@ -89,7 +89,7 @@ async function undelegateValidator({ id, amount, signer, bufferPct = 0 }) {
     // Convert back to a positive amount
     amountBN = wsWithBuffer.mul(-1);
   } else {
-    // Use amount passed in from Hardhat task
+    // Use amount passed in from the task
     amountBN = parseUnits(amount.toString(), 18);
   }
 

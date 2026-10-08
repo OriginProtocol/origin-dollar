@@ -95,6 +95,10 @@ library Mainnet {
     address internal constant veOGV = 0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9;
     address internal constant RewardsSource = 0x7d82E86CF1496f9485a8ea04012afeb3C7489397;
     address internal constant OGNRewardsSource = 0x7609c88E5880e934dd3A75bCFef44E31b1Badb8b;
+    /// @dev CoW harvester for the OGN buyback: sells fee OTokens for OGN and pays
+    ///      OGNRewardsSource. Not to be confused with the strategy-reward CoW
+    ///      harvester at 0xD400341a..., which sells CRV/MORPHO for USDC.
+    address internal constant OGNCoWHarvester = 0x637C509383Ec7Da55C19a3Dbf3227C1Bb8A89151;
     address internal constant xOGN = 0x63898b3b6Ef3d39332082178656E9862bee45C57;
 
     // Uniswap
@@ -436,16 +440,6 @@ library Sonic {
     address internal constant childLiquidityGaugeFactory = 0xf3A431008396df8A8b2DF492C913706BDB0874ef;
 
     address internal constant MerklDistributor = 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd;
-}
-
-library Holesky {
-    address internal constant WETH = 0x94373a4919B3240D86eA41593D5eBa789FEF3848;
-    address internal constant beaconChainDepositContract = 0x4242424242424242424242424242424242424242;
-    address internal constant NativeStakingSSVStrategyProxy = 0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E;
-    address internal constant OETHVaultProxy = 0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9;
-    address internal constant Governor = 0x1b94CA50D3Ad9f8368851F8526132272d1a5028C;
-    address internal constant validatorRegistrator = 0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4;
-    address internal constant Guardian = 0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4;
 }
 
 library Hoodi {

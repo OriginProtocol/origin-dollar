@@ -2,12 +2,6 @@
 
 For more details about the product, checkout [our docs](https://docs.oeth.com).
 
----
-
-| Branch   | CI/CD Status                                                                                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `master` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml) |
-
 ## Requirements
 
 - Node Version
@@ -34,19 +28,19 @@ The `origin-dollar` project is a repo that hosts the smart contracts of some Ori
 
 ### Eth Node
 
-The `smart contracts` and all of their associated code are located in the `<project-root>/contracts` directory. The Ethereum tests and the local Ethereum EVM node are managed by [Hardhat](https://hardhat.org/).
+The smart contracts and their associated code are located in the `<project-root>/contracts` directory. [Foundry](https://book.getfoundry.sh/) builds, tests, and deploys the contracts. The standalone `pnpm ops` CLI runs operational commands and Anvil provides the local forked EVM node.
 
-A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
+A variety of operational commands are available to interact with the contracts. Run `pnpm ops help` from the `contracts/` directory to list them.
 <br/><br/>
 
 ---
 
 ## Running the node
 
-The dapp interacts with many 3rd party contracts (Uniswap, Curve, Sushiswap) and it would be too cumbersome to initialize all those contracts in a fresh node environment and set them to a state that mimics the Mainnet. For that reason we are using Hardhat's forked mode. By setting the `BLOCK_NUMBER` environment variable, the node will download part of the mainnet state that it requires to fulfill the requests. It is less reliable since the node isn't as stable in forked mode (and sometimes requires restarts), but mimicking the mainnet is a huge benefit. We used to develop with fresh state node, but the behavior discrepancies between fresh node and mainnet have started to become too large. For that reason, we have deprecated the fresh state development.
+The dapp interacts with many third-party contracts (Uniswap, Curve, Sushiswap), so local development uses an Anvil fork rather than recreating Mainnet state. Set `BLOCK_NUMBER` to pin the fork; unset means latest.
 <br/><br/>
 
-Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one (Sign up for a free Alchemy or Infura account, create a new API key, and use the URL they provide). If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER` to a more recent Ethereum block. Also add your mainnet testing account(s) (if more than one, comma separate them) under the `ACCOUNTS_TO_FUND`. After the node starts up, the script will transfer 100k of USDT, OUSD and DAI to those accounts. Open a separate terminal to run the hardhat node in.
+Rename `contracts/dev.env` to `.env` and set `MAINNET_PROVIDER_URL` to a valid endpoint. To pin the fork to a specific mainnet block, set `BLOCK_NUMBER`. Open a separate terminal to run Anvil.
 <br/><br/>
 
 Run the node:
@@ -64,32 +58,19 @@ pnpm i
 pnpm run node
 ```
 
-### Minting Stablecoins via hardhat task
+## Running Contract Tests
 
-This is an option, but a simpler way is to use the `ACCOUNTS_TO_FUND` setting described above.
+The contract test suite uses Foundry. From the `contracts/` directory:
 
 ```bash
-# Mint 1000 worth of each supported stablecoin to each account defined in the mnemonic
-npx hardhat fund --amount 1000 --network localhost
+make test-unit
+make test-fork-mainnet
+make test-smoke-mainnet
 ```
 
-## Running Smoke Tests
-
-Smoke tests can be run in 2 modes:
-
-- Run `scripts/test/smokeTest.sh` to launch interactive mode. All the "before contract changes" parts of tests
-  will execute and wait for the user to manually using a console performs contract changes. Once those are done,
-  hit "Enter" in the smoke test console and the second part of the tests shall be run that validate that contract
-  changes haven't broken basic functionality.
-- Run `scripts/test/smokeTest.sh --deployid [numeric_id_of_deploy]` will run smoke tests against a specific
-  deployment validating that basic functionality didn't break.
-  <br/><br/>
-
----
-
-## Fork Tests
-
-Head over to [contracts/fork-test.md](contracts/fork-test.md)
+Equivalent fork and smoke targets exist for the other supported networks. See
+[contracts/tests/README.md](contracts/tests/README.md) for the test conventions
+and complete command list.
 
 ---
 

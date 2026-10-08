@@ -12,11 +12,10 @@ if (!databaseUrl) {
 // scheduler. Applying them here too was redundant, and bypassed the
 // client-side validation of seed contents.
 
-// The catalog is dumped at image build time by docker/dump-actions-catalog.cjs
-// (Node, where hardhat works). Reading it here keeps the runner's bun parent
-// out of hardhat's load path, which crashes under bun (keccak native module —
-// bun#18546). Missing/invalid file ⇒ empty catalog ⇒ admin UI fail-closes
-// to zero editable flags for this product.
+// The catalog is dumped at image build time by dump-actions-catalog.ts. Reading
+// it here keeps action discovery out of the runner's Bun parent process.
+// Missing/invalid file ⇒ empty catalog ⇒ admin UI fail-closes to zero editable
+// flags for this product.
 const CATALOG_PATH = "/app/actions-catalog.json";
 let actionsCatalog: ActionsCatalog = {};
 if (existsSync(CATALOG_PATH)) {

@@ -196,6 +196,31 @@ const isMessageForDestination = ({
   );
 };
 
+// The source-chain reads go through a bare ethers JsonRpcProvider, which does
+// not retry. The load-balanced providers behind it (dRPC) intermittently answer
+// with transient errors: 500 "Temporary internal error. Please retry", 408
+// timeouts, and 400 "Unknown block" when eth_getLogs is routed to a node that
+// has not yet seen the block eth_blockNumber just returned. The reads are
+// idempotent, so retry with exponential backoff before failing the run.
+const withRetry = async (fn, { label, attempts = 5, baseDelayMs = 1000 }) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= attempts) {
+        throw error;
+      }
+      const delayMs = baseDelayMs * 2 ** (attempt - 1);
+      log(
+        `${label} failed (attempt ${attempt}/${attempts}): ${String(
+          error.message
+        ).slice(0, 300)}. Retrying in ${delayMs}ms`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
 // TokensBridged & MessageTransmitted are emitted when a CCTP message is posted.
 // A single source transaction can emit multiple CCTP messages.
 const fetchTxHashesFromCctpTransactions = async ({
@@ -209,7 +234,10 @@ const fetchTxHashesFromCctpTransactions = async ({
     resolvedFromBlock = overrideBlock;
     resolvedToBlock = overrideBlock;
   } else {
-    const latestBlock = await sourceChainProvider.getBlockNumber();
+    const latestBlock = await withRetry(
+      () => sourceChainProvider.getBlockNumber(),
+      { label: "eth_blockNumber" }
+    );
     resolvedFromBlock = Math.max(latestBlock - blockLookback, 0);
     resolvedToBlock = latestBlock;
   }
@@ -224,20 +252,21 @@ const fetchTxHashesFromCctpTransactions = async ({
   log(
     `Fetching event logs from block ${resolvedFromBlock} to block ${resolvedToBlock}`
   );
+  const getLogs = (eventName, topic) =>
+    withRetry(
+      () =>
+        sourceChainProvider.getLogs({
+          address: cctpIntegrationContractSource.address,
+          fromBlock: resolvedFromBlock,
+          toBlock: resolvedToBlock,
+          topics: [topic],
+        }),
+      { label: `eth_getLogs ${eventName}` }
+    );
   const [eventLogsTokenBridged, eventLogsMessageTransmitted] =
     await Promise.all([
-      sourceChainProvider.getLogs({
-        address: cctpIntegrationContractSource.address,
-        fromBlock: resolvedFromBlock,
-        toBlock: resolvedToBlock,
-        topics: [tokensBridgedTopic],
-      }),
-      sourceChainProvider.getLogs({
-        address: cctpIntegrationContractSource.address,
-        fromBlock: resolvedFromBlock,
-        toBlock: resolvedToBlock,
-        topics: [messageTransmittedTopic],
-      }),
+      getLogs("TokensBridged", tokensBridgedTopic),
+      getLogs("MessageTransmitted", messageTransmittedTopic),
     ]);
 
   // There should be no duplicates in the event logs, but still deduplicate to be safe
@@ -439,6 +468,8 @@ const processCctpBridgeTransactions = async ({
 
 module.exports = {
   processCctpBridgeTransactions,
+  fetchTxHashesFromCctpTransactions,
+  withRetry,
   decodeOriginMessage,
   nonceIsReplayKey,
   TX_HASH_REGEX,

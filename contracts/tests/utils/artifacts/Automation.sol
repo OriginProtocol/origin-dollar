@@ -20,4 +20,6 @@ library Automation {
         "contracts/automation/MerklPoolBoosterBribesModule.sol:MerklPoolBoosterBribesModule";
     string internal constant PERMISSIONED_REBASE_MODULE =
         "contracts/automation/PermissionedRebaseModule.sol:PermissionedRebaseModule";
+    string internal constant SET_XOGN_REWARD_RATE_MODULE =
+        "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule";
 }

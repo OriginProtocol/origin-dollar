@@ -4,7 +4,7 @@ const path = require("path");
 // When KV_STORE_DIR is set (talos runner sets it to the EFS mount at
 // /var/talos/kv), every kv file collapses into that flat directory by
 // basename so the JSON state survives Fargate task replacement.
-// Without the env var (local hardhat / fork dev) we keep the original
+// Without the env var (local fork development) we keep the original
 // `_storePath` semantics so test runs don't touch a shared dir.
 function resolveStorePath(storePath) {
   const root = process.env.KV_STORE_DIR;

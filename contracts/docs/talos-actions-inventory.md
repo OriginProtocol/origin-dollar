@@ -6,7 +6,7 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, executeGovernorSixProposal, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | sonic | manageBribeOnSonic, otokenOsCollectAndRelease, otokenOsRebase, otokenOsSonicRestakeRewards, sonicClaimWithdrawals, sonicUndelegate |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
@@ -15,13 +15,13 @@
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, sonic, base | permissionedRebase |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
-| eth, sonic, hyper, base, holesky, arb, plume, hoodi | healthcheck |
+| eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 
 ## A2. Utility / lib / abi -> union of importing actions' chains
 
 | module | # chains | chains |
 |---|---|---|
-| `tasks/lib/action` | 8 | eth, sonic, hyper, base, holesky, arb, plume, hoodi |
+| `tasks/lib/action` | 7 | eth, sonic, hyper, base, arb, plume, hoodi |
 | `tasks/lib/logger` | 6 | eth, sonic, hyper, base, arb, plume |
 | `tasks/lib/network` | 6 | eth, sonic, hyper, base, arb, plume |
 | `utils/logger` | 6 | eth, sonic, hyper, base, arb, plume |
@@ -33,7 +33,7 @@
 | `utils/localKeyValueStore` | 3 | eth, hyper, base |
 | `utils/regex` | 3 | eth, base, arb |
 | `utils/signers` | 3 | eth, base, arb |
-| `utils/signersNoHardhat` | 3 | eth, base, arb |
+| `utils/signersStandalone` | 3 | eth, base, arb |
 | `tasks/lib/safeProposal` | 2 | eth, base |
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `utils/resolvers` | 2 | eth, base |
@@ -44,13 +44,16 @@
 | `abi/poolBoosterSwapX.json` | 1 | sonic |
 | `abi/sonic_staking_strategy.json` | 1 | sonic |
 | `abi/vault.json` | 1 | sonic |
+| `tasks/lib/cowHarvest` | 1 | eth |
+| `tasks/lib/deployments` | 1 | eth |
+| `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
 | `utils/discord` | 1 | eth |
-| `utils/hardhat` | 1 | eth |
 | `utils/harvest` | 1 | eth |
 | `utils/managePassThrough` | 1 | eth |
 | `utils/morpho-apy` | 1 | eth |
+| `utils/ogn-buyback-config` | 1 | eth |
 | `utils/proofs` | 1 | eth |
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |

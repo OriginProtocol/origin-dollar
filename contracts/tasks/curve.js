@@ -1,7 +1,7 @@
 const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const curveNGPoolAbi = require("../abi/hardhat/curveStableSwapNG.json");
+const curveNGPoolAbi = require("../abi/curveStableSwapNG.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getDiffBlocks } = require("./block");
@@ -10,7 +10,7 @@ const { getSigner } = require("../utils/signers");
 const log = require("../utils/logger")("task:curve");
 
 /**
- * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
+ * Task to dump the current state of a Curve Metapool pool used for AMO
  */
 async function curvePoolTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;

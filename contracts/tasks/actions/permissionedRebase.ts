@@ -4,7 +4,7 @@ import { logTxDetails } from "../../utils/txLogger";
 
 // PermissionedRebase Safe module addresses, keyed by chain id. The contract
 // source lives in a PR not yet merged into this branch — until that lands and
-// the module gets a Hardhat deployment artifact, addresses are pinned here.
+// the module gets a deployment descriptor, addresses are pinned here.
 const MODULES_BY_CHAIN_ID: Record<number, string> = {
   1: "0xB3bCfA33C54fa4D18146196eDfB404BD036a52a6", // Ethereum
   8453: "0xf633980A61E9F90a41d030676059Dc201D9d4A37", // Base
