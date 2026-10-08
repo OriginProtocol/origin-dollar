@@ -83,7 +83,7 @@ const ethMorphoConstraints = {
 
 // ─── Secrets / RPC config ────────────────────────────────────────────────────
 // Automation runners call initSecrets once at startup.
-// Hardhat tasks fall through to process.env (loaded from .env by hardhat config).
+// Ops tasks fall through to process.env.
 
 let _secrets = {};
 

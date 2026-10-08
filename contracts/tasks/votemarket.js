@@ -154,7 +154,7 @@ async function updateVotemarketEpochs({
 }
 
 /**
- * Hardhat task to update Votemarket epochs for all Curve Pool Booster campaigns.
+ * Task to update Votemarket epochs for all Curve Pool Booster campaigns.
  */
 async function updateVotemarketEpochsTask(taskArguments) {
   const dryRun = taskArguments.dryRun !== false;

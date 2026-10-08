@@ -294,7 +294,7 @@ If the file uses a custom section name that is clear and descriptive, keep it. O
 **Do not reorganize** if any of these conditions hold:
 
 - The file is **not** a `*.t.sol` file under `contracts/tests/`.
-- The file is a **production contract** (`contracts/` outside `tests/`), a deploy script, or a Hardhat JS/TS test.
+- The file is a **production contract** (`contracts/` outside `tests/`), a deploy script, or a legacy JS/TS test.
 - The file contains inline assembly (`assembly { ... }`) interleaved with state variable declarations — moving variables could change storage layout.
 - The file is **auto-generated** or clearly marked as such.
 - The reorganization would produce a diff affecting **more than 60%** of the file's lines — this makes review impractical. In this case, do the smallest safe subset or nothing.

@@ -1,0 +1,33 @@
+{
+  "split": {
+    "operationsBps": 2000,
+    "operationsWallet": "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971"
+  },
+  "assets": {
+    "OUSD": {
+      "address": "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86",
+      "minDistribute": "20000000000000000000",
+      "rebasing": true
+    },
+    "OETH": {
+      "address": "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3",
+      "minDistribute": "10000000000000000",
+      "rebasing": true
+    }
+  },
+  "moduleBounds": {
+    "minRate": "250000000000000000",
+    "maxRate": "5000000000000000000",
+    "maxStepBps": 2500,
+    "stepPeriodSeconds": 596400,
+    "minRunwaySeconds": 43200
+  },
+  "script": {
+    "windowDays": 30,
+    "minRunwaySeconds": 1209600,
+    "maxRunwaySeconds": 5184000,
+    "deadbandBps": 500,
+    "blockBatchSize": 10000,
+    "reorgBufferBlocks": 50
+  }
+}

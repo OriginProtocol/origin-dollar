@@ -4,7 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { exportAbiPackage, hardhatArtifactFromForge } = require("../export-abi");
+const { exportAbiPackage, publicArtifactFromForge } = require("../export-abi");
 
 const forgeArtifact = ({
   contractName = "Example",
@@ -34,8 +34,8 @@ function writeArtifact(outDir, sourceFile, contractName, artifact) {
   );
 }
 
-test("converts a Forge artifact to the public Hardhat artifact shape", () => {
-  assert.deepEqual(hardhatArtifactFromForge(forgeArtifact()), {
+test("converts a Forge artifact to the public package artifact shape", () => {
+  assert.deepEqual(publicArtifactFromForge(forgeArtifact()), {
     _format: "hh-sol-artifact-1",
     contractName: "Example",
     sourceName: "contracts/Example.sol",

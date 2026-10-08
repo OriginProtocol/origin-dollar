@@ -5,7 +5,7 @@ const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
-const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("./lib/network");
 
 const log = require("../utils/logger")("task:vault");
 
@@ -229,7 +229,7 @@ async function rebase({ symbol }, hre) {
  * Call the Vault's admin pauseCapital method.
  */
 async function capital({ symbol, pause }, hre) {
-  const { isMainnet } = require("../utils/hardhat-task-helpers");
+  const { isMainnet } = require("../utils/runtime-helpers");
   const { proposeArgs } = require("../utils/governor");
 
   log("Setting Vault capitalPause to", pause);

@@ -1,7 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Standalone (hardhat-free) CLI entrypoint for Talos actions. Replaces
- * `pnpm hardhat <task> --network <net>`. The Talos dispatcher spawns this as a
+ * Standalone CLI entrypoint for Talos actions. The dispatcher spawns this as a
  * tsx/node child, e.g. `pnpm exec tsx tasks/run.ts harvest --network mainnet`.
  *
  * Usage: tsx tasks/run.ts <actionName> --network <net> [--flag value ...]
@@ -97,21 +96,11 @@ function coerceParams(
 }
 
 // Load every action file (side-effect: each self-registers into the registry).
-// Resilient during the transition: an action not yet ported off hardhat may
-// fail to import — skip it with a warning rather than sinking the whole CLI.
 async function loadActions(): Promise<void> {
   const actionsDir = join(__dirname, "actions");
   for (const file of readdirSync(actionsDir).sort()) {
     if (!file.endsWith(".ts") || file.startsWith("_")) continue;
-    try {
-      await import(join(actionsDir, file));
-    } catch (err) {
-      console.warn(
-        `[run] skipped ${file}: ${
-          (err as Error).message?.split("\n")[0] ?? err
-        }`
-      );
-    }
+    await import(join(actionsDir, file));
   }
 }
 

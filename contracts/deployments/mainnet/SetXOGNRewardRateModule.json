@@ -1,0 +1,776 @@
+{
+  "address": "0x549f300EEA621969b88Db15120A5fb9103680535",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_safeContract",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_operator",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_rewardsSource",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_ogn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_xogn",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "DEFAULT_ADMIN_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "OPERATOR_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "checkpointRate",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "checkpointTime",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRoleAdmin",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRoleMember",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "index",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRoleMemberCount",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "grantRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "hasRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxRate",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxStepBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "minRate",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "minRunway",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ogn",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "renounceRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revokeRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "rewardsSource",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "safeContract",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ISafe"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "setBounds",
+      "inputs": [
+        {
+          "name": "_minRate",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "_maxRate",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "_maxStepBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_minRunway",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_stepPeriod",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setRewardRate",
+      "inputs": [
+        {
+          "name": "newRate",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "stepPeriod",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferTokens",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "xogn",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "BoundsSet",
+      "inputs": [
+        {
+          "name": "minRate",
+          "type": "uint192",
+          "indexed": false,
+          "internalType": "uint192"
+        },
+        {
+          "name": "maxRate",
+          "type": "uint192",
+          "indexed": false,
+          "internalType": "uint192"
+        },
+        {
+          "name": "maxStepBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "minRunway",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "stepPeriod",
+          "type": "uint32",
+          "indexed": false,
+          "internalType": "uint32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardRateSet",
+      "inputs": [
+        {
+          "name": "newRate",
+          "type": "uint192",
+          "indexed": false,
+          "internalType": "uint192"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleAdminChanged",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleGranted",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleRevoked",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 58970,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "_roles",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_bytes32,t_struct(RoleData)58965_storage)"
+      },
+      {
+        "astId": 59273,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "_roleMembers",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_bytes32,t_struct(AddressSet)62986_storage)"
+      },
+      {
+        "astId": 4593,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "minRate",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint192"
+      },
+      {
+        "astId": 4596,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "maxRate",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint192"
+      },
+      {
+        "astId": 4599,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "maxStepBps",
+        "offset": 24,
+        "slot": "3",
+        "type": "t_uint16"
+      },
+      {
+        "astId": 4602,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "checkpointRate",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_uint192"
+      },
+      {
+        "astId": 4605,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "checkpointTime",
+        "offset": 24,
+        "slot": "4",
+        "type": "t_uint64"
+      },
+      {
+        "astId": 4608,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "stepPeriod",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 4611,
+        "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+        "label": "minRunway",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_bytes32)dyn_storage": {
+        "encoding": "dynamic_array",
+        "label": "bytes32[]",
+        "numberOfBytes": "32",
+        "base": "t_bytes32"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_bytes32,t_struct(AddressSet)62986_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => struct EnumerableSet.AddressSet)",
+        "numberOfBytes": "32",
+        "value": "t_struct(AddressSet)62986_storage"
+      },
+      "t_mapping(t_bytes32,t_struct(RoleData)58965_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+        "numberOfBytes": "32",
+        "value": "t_struct(RoleData)58965_storage"
+      },
+      "t_mapping(t_bytes32,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_struct(AddressSet)62986_storage": {
+        "encoding": "inplace",
+        "label": "struct EnumerableSet.AddressSet",
+        "numberOfBytes": "64",
+        "members": [
+          {
+            "astId": 62985,
+            "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+            "label": "_inner",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_struct(Set)62685_storage"
+          }
+        ]
+      },
+      "t_struct(RoleData)58965_storage": {
+        "encoding": "inplace",
+        "label": "struct AccessControl.RoleData",
+        "numberOfBytes": "64",
+        "members": [
+          {
+            "astId": 58962,
+            "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+            "label": "members",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_bool)"
+          },
+          {
+            "astId": 58964,
+            "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+            "label": "adminRole",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes32"
+          }
+        ]
+      },
+      "t_struct(Set)62685_storage": {
+        "encoding": "inplace",
+        "label": "struct EnumerableSet.Set",
+        "numberOfBytes": "64",
+        "members": [
+          {
+            "astId": 62680,
+            "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+            "label": "_values",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_bytes32)dyn_storage"
+          },
+          {
+            "astId": 62684,
+            "contract": "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule",
+            "label": "_indexes",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_uint256)"
+          }
+        ]
+      },
+      "t_uint16": {
+        "encoding": "inplace",
+        "label": "uint16",
+        "numberOfBytes": "2"
+      },
+      "t_uint192": {
+        "encoding": "inplace",
+        "label": "uint192",
+        "numberOfBytes": "24"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}

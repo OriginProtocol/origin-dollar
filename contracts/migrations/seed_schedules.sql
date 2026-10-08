@@ -10,6 +10,21 @@ DELETE FROM schedules
 WHERE product = 'origin-dollar'
   AND name = 'otoken_oethp_addWithdrawalQueueLiquidity';
 
+-- Move the addWithdrawalQueueLiquidity rows from daily to every 10 minutes
+-- (the action now skips the tx when there is nothing to add). The INSERT below
+-- is ON CONFLICT DO NOTHING, so existing rows need this UPDATE. Guarded on the
+-- old daily crons so it never overrides a cron later changed in the UI.
+UPDATE schedules
+SET cron_expr = '*/10 * * * *'
+WHERE product = 'origin-dollar'
+  AND name IN (
+    'otoken_addWithdrawalQueueLiquidity_mainnet',
+    'otoken_addWithdrawalQueueLiquidity_base',
+    'otoken_addWithdrawalQueueLiquidity_sonic',
+    'otoken_addWithdrawalQueueLiquidity_plume'
+  )
+  AND cron_expr IN ('20 0 * * *', '30 0 * * *', '35 0 * * *', '25 0 * * *');
+
 INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, note) VALUES
 ('origin-dollar', 'manage_merkle_morpho_bribe',               'cd /app && pnpm exec tsx tasks/run.ts manageMerklBribes --network mainnet',            '30 13 * * 3',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_curve_pb_mainnet',                  'cd /app && pnpm exec tsx tasks/run.ts manageBribes --network mainnet',                 '30 09 * * 5',           'UTC', false, 'permissioned'),
@@ -32,10 +47,10 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'otoken_os_collectAndRelease',              'cd /app && pnpm exec tsx tasks/run.ts otokenOsCollectAndRelease --network sonic',      '55 23 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'otoken_ousd_autoWithdrawal',               'cd /app && pnpm exec tsx tasks/run.ts otokenOusdAutoWithdrawal --network mainnet',     '35 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_updateWoethPrice',            'cd /app && pnpm exec tsx tasks/run.ts otokenOethbUpdateWoethPrice --network base',     '30 21 * * *',           'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network mainnet', '20 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network base',    '30 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network sonic',   '35 0 * * *',     'UTC', false, NULL),
-('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_plume',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network plume',   '25 0 * * *',     'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network mainnet', '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network base',    '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network sonic',   '*/10 * * * *',   'UTC', false, NULL),
+('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_plume',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network plume',   '*/10 * * * *',   'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_rebase',                      'cd /app && pnpm exec tsx tasks/run.ts otokenOethbRebase --network base',               '25 9,21 * * *',         'UTC', false, NULL),
 ('origin-dollar', 'otoken_os_sonicRestakeRewards',            'cd /app && pnpm exec tsx tasks/run.ts otokenOsSonicRestakeRewards --network sonic',    '52 22 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'cross_chain_balance_update_base',          'cd /app && pnpm exec tsx tasks/run.ts crossChainBalanceUpdateBase --network base',     '40 7,15,23 * * *',      'UTC', false, 'permissioned'),
@@ -49,6 +64,11 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'otoken_ousd_rebase',                       'cd /app && pnpm exec tsx tasks/run.ts otokenOusdRebase --network mainnet',             '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'otoken_os_rebase',                         'cd /app && pnpm exec tsx tasks/run.ts otokenOsRebase --network sonic',                 '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'ogn_claimAndForwardRewards',               'cd /app && pnpm exec tsx tasks/run.ts ognClaimAndForwardRewards --network mainnet',    '50 0 * * 2',            'UTC', false, NULL),
+('origin-dollar', 'fee_splitter_distribute',                   'cd /app && pnpm exec tsx tasks/run.ts feeSplitterDistribute --network mainnet',        '10 12 * * *',           'UTC', false, 'Daily on purpose: the CoW harvester has no on-chain price check, so a daily cadence caps what is exposed to the bot key to about one day of fees.'),
+('origin-dollar', 'cow_harvest_ousd',                          'cd /app && pnpm exec tsx tasks/run.ts cowHarvest --network mainnet --harvester ousd', '0 */4 * * *', 'UTC', false, 'Replaces the Railway "Harvester: OUSD" cron. Posts CoW orders signed with the Talos key, which must be bot() on the harvester. Add --dryrun to quote and sign without posting.'),
+('origin-dollar', 'cow_harvest_oeth',                          'cd /app && pnpm exec tsx tasks/run.ts cowHarvest --network mainnet --harvester oeth', '0 */4 * * *', 'UTC', false, 'Replaces the Railway "Harvester: OETH" cron. Posts CoW orders signed with the Talos key, which must be bot() on the harvester. Add --dryrun to quote and sign without posting.'),
+('origin-dollar', 'cow_harvest_ogn',                           'cd /app && pnpm exec tsx tasks/run.ts cowHarvest --network mainnet --harvester ogn', '0 */4 * * *', 'UTC', false, 'Replaces the Railway "Harvester: OGN" cron. Posts CoW orders signed with the Talos key, which must be bot() on the harvester. Add --dryrun to quote and sign without posting.'),
+('origin-dollar', 'set_xogn_reward_rate',                      'cd /app && pnpm exec tsx tasks/run.ts setXOGNRewardRate --network mainnet',            '20 1 * * 2',            'UTC', false, 'Reads config from scripts/config/ogn-buyback.json. Add --dryrun to report the rate without broadcasting.'),
 ('origin-dollar', 'otoken_oethb_harvest',                     'cd /app && pnpm exec tsx tasks/run.ts otokenOethbHarvest --network base',              '55 11 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'module_rebase_mainnet',                    'cd /app && pnpm exec tsx tasks/run.ts permissionedRebase --network mainnet',           '15 10,22 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'module_rebase_base',                       'cd /app && pnpm exec tsx tasks/run.ts permissionedRebase --network base',              '15 10,22 * * *',        'UTC', false, NULL),

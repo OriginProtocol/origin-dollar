@@ -23,13 +23,13 @@ abstract contract Fork_BeaconRoots_Shared_Test is BaseFork {
 
         _createAndSelectForkMainnet();
 
-        // This suite mirrors the Hardhat test's live-mainnet behavior.
+        // This suite mirrors the legacy test's live-mainnet behavior.
         // If the repo env pins mainnet globally, roll the selected fork forward here.
         if (vm.envExists("FORK_BLOCK_NUMBER_MAINNET")) {
             vm.rollFork(forkIdMainnet, _latestMainnetBlockNumber());
         }
 
-        // Use the deployed wrapper contract on mainnet, matching the Hardhat test.
+        // Use the deployed wrapper contract on mainnet, matching the legacy test.
         beaconRoots = MockBeaconRoots(Mainnet.mockBeaconRoots);
 
         vm.label(address(beaconRoots), "BeaconRoots");

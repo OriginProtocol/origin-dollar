@@ -33,14 +33,14 @@
         "depositProcessedSlot": 11787328,
         "processedBlockNumber": 22567745,
         "firstDepositValidatorCreatedSlot": 11787456,
-        "command": "npx hardhat verifyDeposit --slot 11787328 --index 1930685 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11787328 --index 1930685 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x33258f692fe9f5cb697918d2acb0beb634142f08efd02014bf345d14eb01b0f9",
         "depositx tx": "0x6bee31cbe395435fac4b9632ef718f6cf6f938a48d417d05bb96502fa588cf2d",
         "Proof from beacon chain slot": 12145621,
         "execution layer block": 22923668,
-        "comment": "So next block is 22923669 which is needed to set the parent beacon block root, use the following Hardhat task to generate the proof and root: npx hardhat verifyValidator --index 1930685 --slot 12145621 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "So next block is 22923669 which is needed to set the parent beacon block root, use the following ops command to generate the proof and root: pnpm ops verifyValidator --index 1930685 --slot 12145621 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -76,14 +76,14 @@
         "depositProcessedSlot": 12084224,
         "processedBlockNumber": 22862630,
         "firstDepositValidatorCreatedSlot": 12084256,
-        "command": "npx hardhat verifyDeposit --slot 12084224 --index 1998611 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12084224 --index 1998611 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x8998d4f271f149cf48eabe8b8d0d6d8d0b914734758ac36f5845c042dab21eba",
         "depositx tx": "0xbc44fa6de0a8e1e307aff7a4702681de4a82ec495db5eb2152a632538ac2bd86",
         "Proof from beacon chain slot": 12153322,
         "execution layer block": 22931335,
-        "comment": "So next block is 22931336 which is needed to set the parent beacon block root, use the following Hardhat task to generate the proof and root: npx hardhat verifyValidator --index 1998611 --slot 12153322 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "So next block is 22931336 which is needed to set the parent beacon block root, use the following ops command to generate the proof and root: pnpm ops verifyValidator --index 1998611 --slot 12153322 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -119,14 +119,14 @@
         "depositProcessedSlot": "11772896",
         "processedBlockNumber": "22553449",
         "firstDepositValidatorCreatedSlot": 11772928,
-        "command": "npx hardhat verifyDeposit --slot 11772896 --index 1927585 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11772896 --index 1927585 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x94e113697fdae7e6be3dfaf128c8147a7a7896f46f57c42d825dfc5ad72a021f",
         "depositx tx": "0x5823e074eddcdfd72b79a184cb7d6b21bd4d6c959468dd00a751756125b6477d",
         "Proof from beacon chain slot": 12157238,
         "execution layer block": 22935232,
-        "comment": "So next block is 22935233 which is needed to set the parent beacon block root, use the following Hardhat task to generate the proof and root: npx hardhat verifyValidator --index 1927585 --slot 12157238 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "So next block is 22935233 which is needed to set the parent beacon block root, use the following ops command to generate the proof and root: pnpm ops verifyValidator --index 1927585 --slot 12157238 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -141,7 +141,7 @@
         "bytes": "0x020000000000000000000000840081c97256d553a8f234d469d797b9535a3b49f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b99b713642e2ee8e825fea982cdaab16ec93294083e4910fe9950ccd28f1e3035a1ccfa45efdb3f6bec7ed55a981f5d01db87351f9afec41d8a50380bc2bd67a3fbd3e8dbd983cd7fbd03bc54b3938403f6d7505dc3d259e6aa86fcf49ddf27c858b5cf6165cb97b9e3ca546da60f9d31915a8f6b6f7bed3982155d2a62867e617299d9da5daf75df6bf3082eb6e17965778ea55ef7a6838e5cfae95646d6fc9ca4985ed8c929e483cf1d61c88ef13f0061f63bfac39fd0c71cfc0022437b072c71b7a19a907cea1cdabb4a7dce017525b7e2a00bedff2f23d93aa25c9c8b4261b5b33d3e4f6f050c58241affdd5d78439ecd4ec01f46fd38e0be62da2ada91940df7b24bf95f71183980d2d89a1dde8b953ce5ee9bfa6ee50b8ad5bf865a85e2aaf34e7dbb79b27ed84cdc8be096f37eefa32090ab9241787779225fba5d76f9da7ae9627c3563d9b95fee67ab53d9aeca9f5319cb8c926a88715dadb9ae9f16a815c56655f2d9f99d738d56da22ddfa68950b27ee8be873718338bbca3bd8c7f0d12cbea1cb040ce0406511d817270b7aba0216661089c1a5aaca7a33b83a0e314721f87dc2b4c885971b285c5c6cf19fec5c7e66bd626c59d5683ac1bc6c7998534184d57236bbebe9a4d4304c14409b9e07f8dbb6b3fc0d5f273b3a3b95e1b0e70adbdd9459d65973d2128654bfb7cd83b542c2a640c1c9f869f6a902362edd80ce0126069bdcb00ffa77d5aa9891b62a10da3f6087e14c2ee5b86a8da587fda203ecd612b6bf9608835609882d9cd6fed6f67aadc2f49bf93049695bfc8e6375b66eda10af23cc8f0ab907b8d745a128dbcb92309463acd27064941cd7215e6dc933dd4409545cbb0aa6be737c72d5bc72cd185df267babec812e2eb543076b6e310326178d665aab463237600ce3fbce63ffd62f7ec03604b9938c0469122d972f9e06a7355e800e1c388d856f87e5d1d42e0519417f947c1fc9f7d06e38a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a74f7210d4f8e7e1039790e7bf4efa207555a10a6db1dd4b95da313aaa88b88fe76ad21b516cbc645ffe34ab5de1c8aef8cd4e7f8d2b51e8e1456adc7563cda206f8dbe1e0000000000000000000000000000000000000000000000000000000000c6341f000000000000000000000000000000000000000000000000000000000077fc3aa4d23a816a7a78a3c5be68d69929e15967b8797df9a4581d983c87256538423867718f1ef1f9f1d9a0acd6f1c8a7e59ee891ab6c3f80a5455629835a2ac8218d5c77ed033e03697d44b0fd43821badc7de8d26e105e7035daf8b6488f8e6974315ed465a721ddae8054d52fd783ece4a2f355fbe5b5f6aaf2d2a9028e6eabab4bdce8e9d311f4968ed0411640fb79cd25aaa61c67e9b4092f867cd00f9b1103e525ec8dc44ba3f79ac24cf48127da695e86b82b090e85465f8091cd5a494da8fee38bd34cef2425ce91f71ff9744bbe93234cb65acc776e34973ea17765d93dd1d7088652ff8fdaf031380743881946d4f82cfd6a36114508d7d9ef933",
         "root": "0xe96dedc675361e240d5101fa44c504d1b1dd209419c451b953aada3ceb16f1f2",
         "nextBlockTimestamp": 1752723203,
-        "comment": "npx hardhat verifyValidator --index 1897126 --slot 12158264 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1897126 --slot 12158264 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       },
       "depositProof": {
         "firstPendingDeposit": {
@@ -161,7 +161,7 @@
         "depositBlockNumber": 22886969,
         "depositSlot": 12108720,
         "depositProcessedSlot": 11747136,
-        "command": "npx hardhat verifyDeposit --slot 11747136 --index 1897126 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11747136 --index 1897126 --id 1 --test true --network mainnet"
       },
       "comments": {
         "deposit tx 1": "0xf766074547a732de8517f6a7d531db6183ced5b1d0893163fe50f0a6910066ae",
@@ -215,7 +215,7 @@
         "depositSlot": "12120147",
         "depositProcessedSlot": "12172064",
         "processedBlockNumber": "22949998",
-        "command": "npx hardhat verifyDeposit --slot 12172064 --index 2018225 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12172064 --index 2018225 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x196014cc5d151529c2c7b73f97d72cec0f7957b8d4b15e758ec6b64066ff87a0",
@@ -254,7 +254,7 @@
         "depositSlot": "12120147",
         "depositProcessedSlot": "12172064",
         "processedBlockNumber": "22949998",
-        "command": "npx hardhat verifyDeposit --slot 12172064 --index 2018224 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12172064 --index 2018224 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x196014cc5d151529c2c7b73f97d72cec0f7957b8d4b15e758ec6b64066ff87a0",
@@ -294,7 +294,7 @@
         "depositRoot": "0xb79c73d23892c0444087328e549f8767edc746ef3999c35d797aec34bb3144e3",
         "depositProcessedSlot": "12084256",
         "processedBlockNumber": "22862662",
-        "command": "npx hardhat verifyDeposit --slot 12084256 --index 1998612 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12084256 --index 1998612 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x8998d4f271f149cf48eabe8b8d0d6d8d0b914734758ac36f5845c042dab21eba",
@@ -334,12 +334,12 @@
         "depositRoot": "0x079e6ec12cfc226e02d578e604ba0c7791e381f9299728189f9a7863c8f85b8e",
         "depositProcessedSlot": 11966000,
         "processedBlockNumber": 22745150,
-        "command": "npx hardhat verifyDeposit --slot 11966000 --index 1970362 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11966000 --index 1970362 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x4b29a7a2f442b44d8f6d87626743fea9a292608e9f5348e0cc9ab3fcce6c328d",
         "deposit tx": "0xa93890a08cd7c80224a467f2d7e6422ca466fcd26b069e0e8f4db70e433f1388",
-        "comment": "npx hardhat verifyValidator --index 1970362 --slot 12202000 --index 1970362 --network mainnet --test true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1970362 --slot 12202000 --index 1970362 --network mainnet --test true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -375,13 +375,13 @@
         "depositRoot": "0xda937b3db89bc41751648b7d75d2260609503a2240849aaee45aeeca02a7d3c9",
         "depositProcessedSlot": 11751000,
         "processedBlockNumber": 22531723,
-        "command": "npx hardhat verifyDeposit --slot 11751000  --index 1922881 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11751000  --index 1922881 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x1be26d6e8af2486aa0e26f1230540ce3ac2cd34af2726035c57a0f02c08b6779",
         "deposit tx": "0x1be26d6e8af2486aa0e26f1230540ce3ac2cd34af2726035c57a0f02c08b6779",
         "Proof from beacon chain slot": 12202000,
-        "comment": "npx hardhat verifyValidator --index 1922881 --slot 12202000 --network mainnet --test true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1922881 --slot 12202000 --network mainnet --test true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -416,12 +416,12 @@
         "depositSlot": 11743750,
         "depositProcessedSlot": 11750900,
         "processedBlockNumber": 22531624,
-        "command": "npx hardhat verifyDeposit --slot 11750900 --index 1922882 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11750900 --index 1922882 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x1be26d6e8af2486aa0e26f1230540ce3ac2cd34af2726035c57a0f02c08b6779",
         "deposit tx": "0x1be26d6e8af2486aa0e26f1230540ce3ac2cd34af2726035c57a0f02c08b6779",
-        "comment": "npx hardhat verifyValidator --index 1922882 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1922882 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -456,12 +456,12 @@
         "depositSlot": 12098163,
         "depositProcessedSlot": 12136000,
         "processedBlockNumber": 22914093,
-        "command": "npx hardhat verifyDeposit --slot 12136000 --index 2009356 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12136000 --index 2009356 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x0c787be8606fedd512f7ce2a8e12f8957f681aef3b397bac1f2145b63f070be7",
         "deposit tx": "0xe0da9236c1f121d3a927c2d744b006d642b9a4a47c4af5176f2063e9493df386",
-        "comment": "npx hardhat verifyValidator --index 2009356 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2009356 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -496,13 +496,13 @@
         "depositSlot": 12056630,
         "depositProcessedSlot": 12082650,
         "processedBlockNumber": 22861065,
-        "command": "npx hardhat verifyDeposit --slot 12082650 --index 1998140 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12082650 --index 1998140 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x0fa6e09b0dfef4aa098bf82e8f3b6c8d9546369d828343781b1b7d8c14b4c75c",
         "deposit tx": "0xb95c9f19d50a1a5c541d4347ecebaa74e05d57a9c1f902f0ca0c69cce10699a2",
         "Proof from beacon chain slot": 12202000,
-        "comment": "npx hardhat verifyValidator --index 1998140 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1998140 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -537,12 +537,12 @@
         "depositSlot": 11657711,
         "depositProcessedSlot": 11668800,
         "processedBlockNumber": 22450481,
-        "command": "npx hardhat verifyDeposit --slot 11668800 --index 1906722 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11668800 --index 1906722 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x93dee85a1f92b3f70cfaf14d08fe1631de23e8a23b4c185eef1c22482e686b4b",
         "deposit tx": "0x93dee85a1f92b3f70cfaf14d08fe1631de23e8a23b4c185eef1c22482e686b4b",
-        "comment": "npx hardhat verifyValidator --index 1906722 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1906722 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -557,7 +557,7 @@
         "bytes": "0x020000000000000000000000840081c97256d553a8f234d469d797b9535a3b49f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bb8a4dc8346bceab5a54170169a975454f3d7d47b3f0a855a46b9c1682f0e68c45e1a2482875fa0c1844e9eb19fafd10dd001f7c448e223ac2a174a070a4ae663cc2503e8b1dfda99d6a473b05b63e4ef77211090d7c7de000a3d60eb0512e6735ab8a9d341aee57da1c455a57ce11a7bc775237d6526be38f3e4a8327c9be583f40f3b115bf303e51ea29dcef8a70848a8cfbdc3ab3b51d654d9b7c4a1822f4f6dcc89c27a2126bba31f34b8a6232a8bdee644395cbd51359ad7427eadd82df8a7587443e47482dc63ab0424e3e76ba6e75a96770efb29408a37549bdae7f235de007409eb57c450e4a6d094851828248b643fea37c8c2c7ca2722cc9ab4b5db46ab7c4613ad4366f6c89a5edd17ed6e2f3166b02a5be973a9822f441d4ad98043c1dc1c5df770f5b317a3f46e3197a8b0bfaa807453cd35639eb93fc9102a9bf6f6e8941ba7ed76d08a6cf25db94a263fd1fd41e72766e4728ee41939efb03c912efb5c038ccd2cf8037a532fb6f067dc33d5c283c5f89c741b3d761408b891651016de9ac1cf5c8abfa145cc01c01b5440b4d5245bab5031834a2be57b0b565660eb3971ecf12bed5d4c10b3d200ee0b1e85228d62b37ed4edd4f76c2698f18c797738207ebb7487bc7c92f1e6efc29234317a07502d81652ddbe6361497d02030d3fa106e3a8dc286dcba72227bd702e461915cd928ca69432674300a23f7291d342ad0457de9916ef31cc38815375e6aa1c2b4940cd733873f2533a744ba859478df1c06b148271e8d12ef6a460c9ca26a636ba9b442cd141678890012106c44593d627de4af4487a52d4f449a373b225d7bd98193ee82ef6510cde5872d3d7f638fde7f712618272899e5f6b465b016f1031b4a5710c32df7b4b451cccce2f559cd1a5000ecab92f2f9407e3ac6cbae7166e187688f56ea62c72d59096c5ce5e37b4d4a8bf060fbb61e86e16ea54068bc9c4aabd4273d4d76bf1504d0d18a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a74f7210d4f8e7e1039790e7bf4efa207555a10a6db1dd4b95da313aaa88b88fe76ad21b516cbc645ffe34ab5de1c8aef8cd4e7f8d2b51e8e1456adc7563cda206fa8e01e0000000000000000000000000000000000000000000000000000000000c6341f00000000000000000000000000000000000000000000000000000000006d833de4787b4b14e2cf638da50c1707c9ff3cb0dc7a45a2660b4d3458c7efdfb6c721321dfb0e529649f74be64a31bbb7d70d337f37a56b020ecc32893d1dec899f8e0893bc267e3256c7542c6cdead589454432274d6bfdfa33e5a4372c0408332dd055e96fbddab4824219c99c6efd32f62a94680d7d7fd9a209136498a235d9eae31ca1126c31a097992d1aa46e4959dac388d050aa45b9ba26dd04c29d71e55542dbbada164392f6f61345af3b028848382633277ad75a17af787f75b843767942c6c4d511c58ce23665f710e5206efbcb15a207e9f7bc0bb86306f7409c256512691d51102f5d48c78b0bee220af931edde3dd49847fd7675ad6ab7fec",
         "root": "0x44b8ab595c44413189146115257225a6cc5bfb19a914c339fd35499d6b902ce7",
         "nextBlockTimestamp": 1753248035,
-        "comment": "npx hardhat verifyValidator --index 1906721 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1906721 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       },
       "depositProof": {
         "firstPendingDeposit": {
@@ -578,7 +578,7 @@
         "depositSlot": 11657690,
         "depositProcessedSlot": 11668900,
         "processedBlockNumber": 22450580,
-        "command": "npx hardhat verifyDeposit --slot 11668900 --index 1906721 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11668900 --index 1906721 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x10994ef5cca6868ec412f543a6430f53eabd4eeea29bf2d9ac93c66c782d1bbc",
@@ -618,12 +618,12 @@
         "depositSlot": 11657106,
         "depositProcessedSlot": 11668550,
         "processedBlockNumber": 22450237,
-        "command": "npx hardhat verifyDeposit --slot 11668550 --index 1906639 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 11668550 --index 1906639 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0xa6411cebf89098fe837646b017b7161fdfa10d6381600ff64625152793436f16",
         "deposit tx": "0xa6411cebf89098fe837646b017b7161fdfa10d6381600ff64625152793436f16",
-        "comment": "npx hardhat verifyValidator --index 1906639 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 1906639 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -658,12 +658,12 @@
         "depositSlot": 12108751,
         "depositProcessedSlot": 12159000,
         "processedBlockNumber": 22936987,
-        "command": "npx hardhat verifyDeposit --slot 12159000 --index 2015001 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159000 --index 2015001 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x77a3d3ee1898ae6310bce5719ee883fe68deeca232c3dcf6ca60a396c64b4c29",
         "deposit tx": "0x4d2ec847b4e52285b10e3dcbd8f28b7bf37d84b71d359272249c38973ad8df1a",
-        "comment": "npx hardhat verifyValidator --index 2009356 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2009356 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -698,12 +698,12 @@
         "depositSlot": 12108953,
         "depositProcessedSlot": 12159812,
         "processedBlockNumber": 22937797,
-        "command": "npx hardhat verifyDeposit --slot 12159812 --index 2014925 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159812 --index 2014925 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x094704cb3ee43a69a0a598d61ddd47d502b49252348897edda14c64dafc0a3ab",
         "deposit tx": "0xdcfcb446e984b2587c91a04e6272a61c6ad55f19a0cc068c3e9e71c51b527070",
-        "comment": "npx hardhat verifyValidator --index 2014925 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2014925 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -738,12 +738,12 @@
         "depositSlot": 12108732,
         "depositProcessedSlot": 12159809,
         "processedBlockNumber": 22937794,
-        "command": "npx hardhat verifyDeposit --slot 12159809 --index 2014907 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159809 --index 2014907 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x094704cb3ee43a69a0a598d61ddd47d502b49252348897edda14c64dafc0a3ab",
         "deposit tx": "0xdcfcb446e984b2587c91a04e6272a61c6ad55f19a0cc068c3e9e71c51b527070",
-        "comment": "npx hardhat verifyValidator --index 2014907 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2014907 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -778,12 +778,12 @@
         "depositSlot": 12108771,
         "depositProcessedSlot": 12159732,
         "processedBlockNumber": 22937717,
-        "command": "npx hardhat verifyDeposit --slot 12159732 --index 2015000 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159732 --index 2015000 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x77a3d3ee1898ae6310bce5719ee883fe68deeca232c3dcf6ca60a396c64b4c29",
         "deposit tx": "0x4d2ec847b4e52285b10e3dcbd8f28b7bf37d84b71d359272249c38973ad8df1a",
-        "comment": "npx hardhat verifyValidator --index 2015000 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2015000 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -818,12 +818,12 @@
         "depositSlot": 12108750,
         "depositProcessedSlot": 12159764,
         "processedBlockNumber": 22937749,
-        "command": "npx hardhat verifyDeposit --slot 12159764 --index 2014998 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159764 --index 2014998 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x77a3d3ee1898ae6310bce5719ee883fe68deeca232c3dcf6ca60a396c64b4c29",
         "deposit tx": "0x4d2ec847b4e52285b10e3dcbd8f28b7bf37d84b71d359272249c38973ad8df1a",
-        "comment": "npx hardhat verifyValidator --index 2014998 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2014998 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     },
     {
@@ -858,12 +858,12 @@
         "depositSlot": 12108753,
         "depositProcessedSlot": 12159345,
         "processedBlockNumber": 22937331,
-        "command": "npx hardhat verifyDeposit --slot 12159345 --index 2014926 --id 1 --test true --network mainnet"
+        "command": "pnpm ops verifyDeposit --slot 12159345 --index 2014926 --id 1 --test true --network mainnet"
       },
       "comments": {
         "register tx": "0x094704cb3ee43a69a0a598d61ddd47d502b49252348897edda14c64dafc0a3ab",
         "deposit tx": "0xdcfcb446e984b2587c91a04e6272a61c6ad55f19a0cc068c3e9e71c51b527070",
-        "comment": "npx hardhat verifyValidator --index 2014926 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
+        "comment": "pnpm ops verifyValidator --index 2014926 --slot 12202000 --network mainnet --dryrun true --withdrawal 0x840081c97256d553A8F234D469D797B9535a3B49"
       }
     }
   ],
@@ -905,7 +905,7 @@
         ]
       },
       "validatorBalances": ["0.0", "0.0", "2228.319778741"],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 11763000  --deposits 1,2,3,4 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 11763000  --deposits 1,2,3,4 --network mainnet"
     },
     {
       "description": "The third validator has done a partial withdrawal",
@@ -944,7 +944,7 @@
         ]
       },
       "validatorBalances": [0, 0, 1588.918094377],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 11787326 --deposits 1,2,3,4 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 11787326 --deposits 1,2,3,4 --network mainnet"
     },
     {
       "description": "Only the first validator had a balance",
@@ -983,7 +983,7 @@
         ]
       },
       "validatorBalances": ["137.28519386", "0.0", "0.0"],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12021100 --deposits 1,2,3,4 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12021100 --deposits 1,2,3,4 --network mainnet"
     },
     {
       "description": "The first and second validators had a balance",
@@ -1022,7 +1022,7 @@
         ]
       },
       "validatorBalances": ["137.492073144", "64.03884023", "0.0"],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12153439 --deposits 1,2,3,4 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12153439 --deposits 1,2,3,4 --network mainnet"
     },
     {
       "description": "Both validators have earned from consensus rewards",
@@ -1060,7 +1060,7 @@
         ]
       },
       "validatorBalances": ["137.497291011", "64.041294908", "0.0"],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12157779 --deposits 1,2,3,4 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1897126 --test true --slot 12157779 --deposits 1,2,3,4 --network mainnet"
     },
     {
       "description": "All validators 21 balance at the same time",
@@ -1169,7 +1169,7 @@
         "32.012689641",
         "32.012759287"
       ],
-      "command": "npx hardhat verifyBalances --indexes 1930685,1998611,1927585,1897126,2018225,2018224,1998612,1970362,1922881,1922882,2009356,1998140,1906722,1906721,1906639,2015001,2014925,2014907,2015000,2014998,2014926 --test true --slot 12204316 --deposits 1,2,3,4,5,6,7,8 --network mainnet"
+      "command": "pnpm ops verifyBalances --indexes 1930685,1998611,1927585,1897126,2018225,2018224,1998612,1970362,1922881,1922882,2009356,1998140,1906722,1906721,1906639,2015001,2014925,2014907,2015000,2014998,2014926 --test true --slot 12204316 --deposits 1,2,3,4,5,6,7,8 --network mainnet"
     }
   ]
 }

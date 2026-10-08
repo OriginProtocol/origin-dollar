@@ -1,12 +1,12 @@
 const { parseEther } = require("ethers/lib/utils");
-const { getKmsSigner } = require("./signersNoHardhat");
+const { getKmsSigner } = require("./signersStandalone");
 const { ethereumAddress } = require("./regex");
 
 const log = require("./logger")("utils:signers");
 
 // These modules are TypeScript and belong to the standalone Talos runtime.
-// Resolve them lazily so importing this legacy CommonJS helper still works in
-// Hardhat environments where the optional Talos dependencies are not installed.
+// Resolve them lazily so importing this CommonJS helper still works when the
+// optional Talos dependencies are not installed.
 function getProvider() {
   return require("../tasks/lib/network").getProvider();
 }
@@ -16,7 +16,7 @@ async function getStandaloneSigner() {
 }
 
 /**
- * Signer factory for the standalone (hardhat-free) action runtime.
+ * Signer factory for the standalone action runtime.
  * - If an address is passed, return a JSON-RPC signer for it on the ambient
  *   provider (fork impersonation tooling).
  * - Otherwise delegate to tasks/lib/signer.getSigner(), which selects AWS KMS /
@@ -35,18 +35,14 @@ async function getSigner(address = undefined) {
 }
 
 /**
- * Impersonate an account on a forked node (anvil / hardhat node) via raw RPC.
+ * Impersonate an account on a forked Anvil node via raw RPC.
  * @param {string} account address to impersonate
  * @returns an Ethers.js Signer object
  */
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
   const provider = getProvider();
-  try {
-    await provider.send("anvil_impersonateAccount", [account]);
-  } catch {
-    await provider.send("hardhat_impersonateAccount", [account]);
-  }
+  await provider.send("anvil_impersonateAccount", [account]);
   return await provider.getSigner(account);
 }
 
@@ -61,11 +57,7 @@ async function impersonateAndFund(account, amount = "100") {
   log(`Funding account ${account} with ${amount} ETH`);
   const wei = parseEther(amount.toString()).toHexString();
   const provider = getProvider();
-  try {
-    await provider.send("anvil_setBalance", [account, wei]);
-  } catch {
-    await provider.send("hardhat_setBalance", [account, wei]);
-  }
+  await provider.send("anvil_setBalance", [account, wei]);
   return signer;
 }
 
