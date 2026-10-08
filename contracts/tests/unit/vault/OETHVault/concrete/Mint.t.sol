@@ -203,4 +203,63 @@ contract Unit_Concrete_OETHVault_Mint_Test is Unit_OETHVault_Shared_Test {
         // Strategy should have received funds via auto-allocate
         assertGt(weth.balanceOf(address(strategy)), 0, "Strategy should receive allocation");
     }
+
+    //////////////////////////////////////////////////////
+    /// --- MINT GATING: UNDER-BACKED VAULT
+    //////////////////////////////////////////////////////
+
+    /// @dev Simulate a loss by moving WETH out of the vault so totalValue falls
+    /// below OToken supply. The vault starts fully backed (200 OETH / 200 WETH).
+    function _makeUnderBacked() internal {
+        vm.prank(address(oethVault));
+        weth.transfer(governor, 10e18);
+        assertLt(oethVault.totalValue(), oeth.totalSupply(), "vault should be under-backed");
+    }
+
+    function test_mint_RevertWhen_underBacked() public {
+        _makeUnderBacked();
+
+        _dealWETH(alice, 1e18);
+        vm.startPrank(alice);
+        weth.approve(address(oethVault), 1e18);
+        vm.expectRevert("Vault under-backed");
+        oethVault.mint(1e18);
+        vm.stopPrank();
+    }
+
+    function test_mint_worksAfterBackingRestored() public {
+        _makeUnderBacked();
+
+        _dealWETH(alice, 1e18);
+        vm.startPrank(alice);
+        weth.approve(address(oethVault), 1e18);
+        vm.expectRevert("Vault under-backed");
+        oethVault.mint(1e18);
+        vm.stopPrank();
+
+        // Restore backing to exactly 1:1
+        _dealWETH(address(this), 10e18);
+        weth.transfer(address(oethVault), 10e18);
+        assertEq(oethVault.totalValue(), oeth.totalSupply(), "vault should be fully backed again");
+
+        uint256 balanceBefore = oeth.balanceOf(alice);
+        vm.prank(alice);
+        oethVault.mint(1e18);
+        assertEq(oeth.balanceOf(alice), balanceBefore + 1e18, "mint should succeed once backed");
+    }
+
+    function test_mintForStrategy_worksWhenUnderBacked() public {
+        MockStrategy strategy = _deployAndApproveStrategy();
+        vm.prank(governor);
+        oethVault.addStrategyToMintWhitelist(address(strategy));
+
+        _makeUnderBacked();
+
+        // mintForStrategy is a separate path and is intentionally not gated
+        uint256 mintAmount = 1000e18;
+        vm.prank(address(strategy));
+        oethVault.mintForStrategy(mintAmount);
+
+        assertEq(oeth.balanceOf(address(strategy)), mintAmount, "mintForStrategy should succeed under-backed");
+    }
 }
