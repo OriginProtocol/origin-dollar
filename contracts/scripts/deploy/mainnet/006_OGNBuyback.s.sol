@@ -82,7 +82,7 @@ contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
 
         feeSplitter.setStrategistAddr(CrossChain.multichainStrategist);
 
-        // Two-step handover: the 5/8 must claim 
+        // Two-step handover: the 5/8 must claim
         feeSplitter.transferGovernance(Mainnet.Guardian);
 
         // --- SetXOGNRewardRateModule
