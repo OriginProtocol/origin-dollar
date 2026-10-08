@@ -1,7 +1,7 @@
 # Talos scheduled actions
 
-Hardhat tasks the Talos runner (`contracts/runner.ts` → `@oplabs/talos-client`) runs on
-a cron schedule, or on demand via the "Run now" button in the Talos admin UI.
+Standalone actions the Talos runner (`contracts/runner.ts` → `@oplabs/talos-client`) runs
+on a cron schedule, or on demand via the "Run now" button in the Talos admin UI.
 Each action is defined in [`tasks/actions/<name>.ts`](../tasks/actions); the
 canonical schedule — cron, enabled state, and per-row operational notes — lives
 in [`migrations/seed_schedules.sql`](../migrations/seed_schedules.sql). See
@@ -18,25 +18,25 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 | Action                 | Network | Cron             | Description                                                                                                                               |
 | ---------------------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Rebase OUSD on mainnet                                                                                                                    |
-| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Rebase OETH on mainnet                                                                                                                     |
+| `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OUSD on mainnet                                                                                           |
+| `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OETH on mainnet                                                                                           |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
 | `otokenOsRebase`       | sonic   | `45 11,23 * * *` | Collect the OS dripper and rebase OS on Sonic                                                                                             |
 | `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
 
 ## OToken operations
 
-| Action                              | Network | Cron             | Description                                                             |
-| ----------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------- |
-| `otokenOsCollectAndRelease`         | sonic   | `55 23 * * *`    | Rebase the OS vault and harvest on Sonic                                |
-| `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule              |
-| `otokenAddWithdrawalQueueLiquidity` | mainnet | `20 0 * * *`     | Call `addWithdrawalQueueLiquidity` on every OToken vault on the network |
-| `otokenAddWithdrawalQueueLiquidity` | base    | `30 0 * * *`     | As above, on Base                                                       |
-| `otokenAddWithdrawalQueueLiquidity` | sonic   | `35 0 * * *`     | As above, on Sonic                                                      |
-| `otokenAddWithdrawalQueueLiquidity` | plume   | `25 0 * * *`     | As above, on Plume                                                      |
-| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy          |
-| `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                        |
-| `otokenOsSonicRestakeRewards`       | sonic   | `52 22 * * *`    | Restake rewards for Sonic validators                                    |
+| Action                              | Network | Cron             | Description                                                                                         |
+| ----------------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
+| `otokenOsCollectAndRelease`         | sonic   | `55 23 * * *`    | Rebase the OS vault and harvest on Sonic                                                            |
+| `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule                                          |
+| `otokenAddWithdrawalQueueLiquidity` | mainnet | `*/10 * * * *`   | Call `addWithdrawalQueueLiquidity` on each OToken vault, only when it would add claimable liquidity |
+| `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
+| `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
+| `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
+| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
+| `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
+| `otokenOsSonicRestakeRewards`       | sonic   | `52 22 * * *`    | Restake rewards for Sonic validators                                                                |
 
 ## Native staking (Ethereum validators)
 
@@ -78,6 +78,11 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `ognClaimAndForwardRewards` | mainnet     | `50 0 * * 2`     | Claim and forward OGN rewards from all modules                                                  |
 | `managePassThrough`         | mainnet     | `30 12 * * 0`    | Transfer tokens via the pass-through mechanism                                                  |
 | `harvest`                   | mainnet     | `25 11,23 * * *` | Claim strategy rewards through the ClaimStrategyRewards Safe module                             |
+| `feeSplitterDistribute`     | mainnet     | `10 12 * * *`    | Split protocol fees on the FeeSplitter: operations share out, remainder to the OGN buyback       |
+| `cowHarvest`                | mainnet     | `0 */4 * * *`    | Sell the OUSD CoW harvester's CRV/MORPHO for USDC to the OUSD Vault (`--harvester ousd`)        |
+| `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for OETH: CRV/SSV for WETH to the OETH Vault (`--harvester oeth`)                      |
+| `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for the OGN buyback: OETH/WETH/OUSD/USDe for OGN to OGNRewardsSource (`--harvester ogn`) |
+| `setXOGNRewardRate`         | mainnet     | `20 1 * * 2`     | Set the xOGN reward rate from measured OGN buybacks, via SetXOGNRewardRateModule                 |
 
 ## System
 
@@ -105,6 +110,27 @@ each run (see notes in `seed_schedules.sql`).
 | Action                      | Description                                                                          |
 | --------------------------- | ------------------------------------------------------------------------------------ |
 | `proposeVaultStrategyMoves` | Simulate and propose ordered SuperOETH strategy movements to the Strategist 2/8 Safe |
+
+### CoW harvester parameters
+
+`cowHarvest` is the off-chain side of the `HarvestingEIP1271` CoW harvesters,
+moved from Railway. It sends no transaction. For each enabled sell token whose
+balance is at least the harvester's `minSellAmount`, it quotes the whole
+balance on the CoW API, takes `--slippage-bps` (default 50) off the quote, and
+posts a sell order valid for one hour with `feeAmount = 0`. The order is signed
+for EIP-1271: the signer signs `keccak256("\x19COWSWAP order digest:\n32" ‖
+hashOrder(order))`, with no EIP-191 prefix, through `getDigestSigner` (KMS
+`SignCommand` on the raw digest).
+
+- The Talos signer must be the harvester's `bot()`. Otherwise the run fails;
+  the owner (Strategist Safe) moves it with `setBot`.
+- An order is posted only when `isValidSignature` returns `0x1626ba7e`.
+- `--dryrun` quotes and signs without posting, checks that
+  `getMessageSigner` recovers the Talos signer, and only warns when the
+  signer is not yet `bot()`, so it can be run before `setBot`.
+- One failing token is logged and does not fail the run; all of them do.
+- The harvester checks no price beyond `buyAmount > 0`: the slippage on the
+  quote is the only price protection.
 
 ### Vault strategy proposal parameters
 

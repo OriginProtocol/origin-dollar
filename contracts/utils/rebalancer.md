@@ -8,7 +8,7 @@ submits the resulting strategy/amount arrays to the on-chain `RebalancerModule`.
 
 ```bash
 cd contracts
-npx hardhat planRebalance
+pnpm ops planRebalance --network mainnet
 ```
 
 This prints:
@@ -22,13 +22,13 @@ Simulate hypothetical balance changes to see how the rebalancer would respond:
 
 ```bash
 # What if the vault had $500K more idle USDC?
-npx hardhat planRebalance --sim-vault 500000
+pnpm ops planRebalance --network mainnet --sim-vault 500000
 
 # What if Base Morpho had $200K more?
-npx hardhat planRebalance --sim-base 200000
+pnpm ops planRebalance --network mainnet --sim-base 200000
 
 # Combine: vault +$500K, Ethereum Morpho -$100K
-npx hardhat planRebalance --sim-vault 500000 --sim-eth -100000
+pnpm ops planRebalance --network mainnet --sim-vault 500000 --sim-eth -100000
 ```
 
 ### Available flags
@@ -44,11 +44,11 @@ When simulation is active, a header is printed showing the adjustments applied.
 
 ## Talos execution action
 
-The production execution path is the `ousdRebalancer` task/action:
+The production execution path is the standalone `ousdRebalancer` Talos action:
 
 ```bash
 cd contracts
-npx hardhat ousdRebalancer
+pnpm action ousdRebalancer --network mainnet
 ```
 
 Useful options:
@@ -200,5 +200,5 @@ The before/after/Δ are shown in the table header and returned from
 - `utils/rebalancer.js` - core logic (allocation, filtering, formatting)
 - `utils/rebalancer-config.js` - strategy configs and constraints
 - `utils/morpho-apy.js` - Morpho APY fetching
-- `tasks/rebalancer.js` - Hardhat task entry point
+- `tasks/rebalancer.js` - ops task entry point
 - `tasks/actions/ousdRebalancer.ts` - Talos execution automation

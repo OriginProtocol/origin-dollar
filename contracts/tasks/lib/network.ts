@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
 
 /**
- * Ambient network context for the standalone (hardhat-free) action runtime.
+ * Ambient network context for the standalone action runtime.
  * `run.ts` calls initNetwork() once per process from `--network`; getContract /
  * getContractAt / getSigner read the provider + chainId from here — the same
- * role `hre.network` / `hre.ethers.provider` played under hardhat.
+ * role previously served by an injected runtime object.
  */
 
 export const CHAIN_NAMES: Record<number, string> = {
@@ -13,8 +13,7 @@ export const CHAIN_NAMES: Record<number, string> = {
   146: "sonic",
   560048: "hoodi",
   999: "hyperevm",
-  17000: "holesky",
-  42161: "arbitrum",
+  42161: "arbitrumOne",
   98866: "plume",
 };
 
@@ -22,9 +21,10 @@ const CHAIN_IDS: Record<string, number> = {
   ...Object.fromEntries(
     Object.entries(CHAIN_NAMES).map(([id, name]) => [name, Number(id)])
   ),
-  // Hardhat's name for 42161, still used by Talos schedules, deployments/ and
-  // addresses.js.
+  // Short alias accepted by the node wrapper; the canonical name remains
+  // arbitrumOne because Talos schedules and deployments/ use it.
   arbitrumone: 42161,
+  arbitrum: 42161,
 };
 
 const RPC_ENV_VARS: Record<number, string> = {
@@ -33,7 +33,6 @@ const RPC_ENV_VARS: Record<number, string> = {
   146: "SONIC_PROVIDER_URL",
   560048: "HOODI_PROVIDER_URL",
   999: "HYPEREVM_PROVIDER_URL",
-  17000: "HOLESKY_PROVIDER_URL",
   42161: "ARBITRUM_PROVIDER_URL",
   98866: "PLUME_PROVIDER_URL",
 };
@@ -42,17 +41,6 @@ let _chainId: number | undefined;
 let _networkName: string | undefined;
 let _provider: ethers.providers.JsonRpcProvider | undefined;
 let _signer: ethers.Signer | undefined;
-
-type HardhatGlobal = {
-  hre?: {
-    ethers?: { provider?: ethers.providers.JsonRpcProvider };
-    network?: { name?: string; config?: { chainId?: number } };
-  };
-};
-
-function hardhatRuntime() {
-  return (globalThis as typeof globalThis & HardhatGlobal).hre;
-}
 
 /** Resolve the RPC URL for a chain: LOCAL_PROVIDER_URL on a fork, else the
  *  matching `*_PROVIDER_URL` env var. */
@@ -120,36 +108,26 @@ export function initNetwork(nameOrId: string | number): {
 }
 
 export function getProvider(): ethers.providers.JsonRpcProvider {
-  const provider = _provider ?? hardhatRuntime()?.ethers?.provider;
-  if (!provider)
+  if (!_provider)
     throw new Error("Network not initialized — call initNetwork() first");
-  return provider;
+  return _provider;
 }
 
 export function getChainId(): number {
-  const hardhatNetwork = hardhatRuntime()?.network;
-  const chainId =
-    _chainId ??
-    hardhatNetwork?.config?.chainId ??
-    (hardhatNetwork?.name
-      ? CHAIN_IDS[hardhatNetwork.name.toLowerCase()]
-      : undefined);
-  if (chainId == null) throw new Error("Network not initialized");
-  return chainId;
+  if (_chainId == null) throw new Error("Network not initialized");
+  return _chainId;
 }
 
 export function getNetworkName(): string {
-  const networkName = _networkName ?? hardhatRuntime()?.network?.name;
-  if (!networkName) throw new Error("Network not initialized");
-  return networkName;
+  if (!_networkName) throw new Error("Network not initialized");
+  return _networkName;
 }
 
 export function setSigner(signer: ethers.Signer): void {
   _signer = signer;
 }
 
-/** getContract/getContractAt bind to the ambient signer when set (so writes work
- *  like hardhat's signer-connected contracts), else the provider (reads). */
+/** Bind contracts to the ambient signer when set, else the provider. */
 export function getSignerOrProvider():
   | ethers.Signer
   | ethers.providers.Provider {

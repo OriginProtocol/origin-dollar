@@ -19,4 +19,6 @@ library Automation {
     string internal constant MERKL_POOL_BOOSTER_BRIBES_MODULE =
         "contracts/automation/MerklPoolBoosterBribesModule.sol:MerklPoolBoosterBribesModule";
     string internal constant PAUSE_SAFE_MODULE = "contracts/automation/PauseSafeModule.sol:PauseSafeModule";
+    string internal constant SET_XOGN_REWARD_RATE_MODULE =
+        "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule";
 }

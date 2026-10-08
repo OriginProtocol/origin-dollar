@@ -18,13 +18,14 @@ def load_contract(name, address):
 
 # unlock an address to issue transactions as that address
 def unlock(address):
-    brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
-# unlock an address to issue transactions as that address
-def anvil_unlock(address):
     brownie.network.web3.provider.make_request('anvil_impersonateAccount', [address])
 
+# Backward-compatible alias for strategist runbooks that already adopted this name.
+anvil_unlock = unlock
+
 def fund_eth(address, balance):
-    brownie.network.web3.provider.make_request('hardhat_setBalance', [address, balance])
+    quantity = hex(balance) if isinstance(balance, int) else balance
+    brownie.network.web3.provider.make_request('anvil_setBalance', [address, quantity])
 
 
 

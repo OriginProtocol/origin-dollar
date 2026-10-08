@@ -1,23 +1,27 @@
 import { ethers } from "ethers";
-import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
+import { KMSClient, SignCommand } from "@aws-sdk/client-kms";
+import {
+  DirectKmsTransactionSigner,
+  derToSignature,
+} from "@lastdotnet/purrikey";
 import { getProvider } from "./network";
 // CJS util.
 import {
   AWS_KMS_REGION,
   hasAwsKmsCredentials,
   resolveKmsRelayerId,
-} from "../../utils/signersNoHardhat";
+} from "../../utils/signersStandalone";
 
 /**
- * Standalone (hardhat-free) signer factory. Same precedence as the old
+ * Standalone signer factory. Same precedence as the old
  * utils/signers.js, reusing the exact same production-proven building blocks:
  * the purrikey AWS KMS ethers signer and the
  * Talos ethers-v5 nonce queue (wrapSignerWithNonceQueueV5). The only change vs.
- * hardhat is the provider — a standalone JsonRpcProvider from the RPC env
- * instead of hre.ethers.provider.
+ * runtime is the provider — a standalone JsonRpcProvider from the RPC env.
  */
 
 type Db = unknown;
+type SignerContext = { relayerId?: string; taskName?: string };
 type TalosClient = {
   createDb(pool: unknown): Db;
   createPool(options: { connectionString: string }): unknown;
@@ -32,7 +36,7 @@ let dbInstance: Db | null = null;
 function getNonceDb(): Db | null {
   if (!process.env.DATABASE_URL) return null;
   if (!talosClient) {
-    // Talos is an optional peer dependency so non-Talos Hardhat commands do not
+    // Talos is an optional peer dependency so local ops commands do not
     // require credentials for the private package registry.
     talosClient = require("@oplabs/talos-client") as TalosClient;
   }
@@ -53,12 +57,31 @@ function maybeWrap(signer: ethers.Signer): ethers.Signer {
     : signer;
 }
 
-export async function getSigner(): Promise<ethers.Signer> {
+export async function getOptionalSigner(
+  context?: SignerContext
+): Promise<ethers.Signer | undefined> {
+  const hasPrivateKey = Boolean(
+    process.env.DEPLOYER_PK || process.env.GOVERNOR_PK
+  );
+  const canImpersonate =
+    process.env.FORK === "true" && Boolean(process.env.IMPERSONATE);
+  if (!hasAwsKmsCredentials() && !hasPrivateKey && !canImpersonate) {
+    return undefined;
+  }
+  return getSigner(context);
+}
+
+export async function getSigner(
+  context?: SignerContext
+): Promise<ethers.Signer> {
   const provider = getProvider();
 
   // 1. AWS KMS (production) — reuse the existing purrikey ethers signer.
   if (hasAwsKmsCredentials()) {
-    const relayerId = resolveKmsRelayerId();
+    const resolveRelayerId = resolveKmsRelayerId as (
+      signerContext?: SignerContext
+    ) => string;
+    const relayerId = resolveRelayerId(context);
     return maybeWrap(
       new DirectKmsTransactionSigner(relayerId, provider, AWS_KMS_REGION)
     );
@@ -73,16 +96,8 @@ export async function getSigner(): Promise<ethers.Signer> {
   // 3. Fork impersonation (dev/testing only — the node signs).
   if (process.env.FORK === "true" && process.env.IMPERSONATE) {
     const address = process.env.IMPERSONATE;
-    try {
-      await provider.send("anvil_impersonateAccount", [address]);
-      await provider.send("anvil_setBalance", [address, "0x56bc75e2d63100000"]); // 100 ETH
-    } catch {
-      await provider.send("hardhat_impersonateAccount", [address]);
-      await provider.send("hardhat_setBalance", [
-        address,
-        "0x56bc75e2d63100000",
-      ]);
-    }
+    await provider.send("anvil_impersonateAccount", [address]);
+    await provider.send("anvil_setBalance", [address, "0x56bc75e2d63100000"]); // 100 ETH
     // Wrapped like the KMS and private-key branches: without it the
     // transaction bypasses the nonce queue, so Talos never records it and the
     // run shows no transactions. ethers v5 getSigner() is synchronous.
@@ -92,5 +107,61 @@ export async function getSigner(): Promise<ethers.Signer> {
   throw new Error(
     "No signer available. Set AWS KMS credentials, DEPLOYER_PK/GOVERNOR_PK, or " +
       "FORK=true + IMPERSONATE=0x..."
+  );
+}
+
+export interface DigestSigner {
+  address: string;
+  signDigest(digest: string): Promise<ethers.Signature>;
+}
+
+/**
+ * Signs a raw 32-byte digest, with no EIP-191 prefix. Needed for off-chain
+ * signatures checked by contracts with their own prefix (the CoW harvester's
+ * `\x19COWSWAP order digest:\n32`). The purrikey signer only exposes
+ * `signMessage`, which always applies EIP-191, so the KMS branch calls
+ * `SignCommand` on the digest directly and normalises the DER signature the
+ * same way purrikey does. Not wrapped by the nonce queue: nothing is broadcast.
+ */
+export async function getDigestSigner(): Promise<DigestSigner> {
+  if (hasAwsKmsCredentials()) {
+    const keyId = (resolveKmsRelayerId as () => string)();
+    const address = await new DirectKmsTransactionSigner(
+      keyId,
+      getProvider(),
+      AWS_KMS_REGION
+    ).getAddress();
+    const kms = new KMSClient({ region: AWS_KMS_REGION });
+    return {
+      address,
+      async signDigest(digest: string) {
+        const { Signature } = await kms.send(
+          new SignCommand({
+            KeyId: keyId,
+            Message: ethers.utils.arrayify(digest),
+            MessageType: "DIGEST",
+            SigningAlgorithm: "ECDSA_SHA_256",
+          })
+        );
+        if (!Signature) throw new Error("No signature returned from KMS");
+        return derToSignature(Buffer.from(Signature), digest, 0, address);
+      },
+    };
+  }
+
+  const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
+  if (pk) {
+    const key = new ethers.utils.SigningKey(pk);
+    return {
+      address: ethers.utils.computeAddress(key.publicKey),
+      async signDigest(digest: string) {
+        return ethers.utils.splitSignature(key.signDigest(digest));
+      },
+    };
+  }
+
+  throw new Error(
+    "No digest signer available. Set AWS KMS credentials or " +
+      "DEPLOYER_PK/GOVERNOR_PK (impersonation cannot sign digests)."
   );
 }

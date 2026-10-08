@@ -2,7 +2,7 @@ const { solidityPack, parseUnits } = require("ethers/lib/utils");
 
 const { beaconRoot } = require("./beacon");
 const addresses = require("../utils/addresses");
-const { replaceContractAt } = require("../utils/hardhat");
+const { replaceContractAt } = require("../utils/anvil");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon:test:utils");
@@ -100,10 +100,8 @@ async function copyBeaconRoot({ block, signer }) {
 }
 
 async function mockBeaconRoot() {
-  if (hre.network.name == "mainnet") {
-    throw new Error(
-      "This task can only be run against a hardhat or a local forked network"
-    );
+  if (process.env.FORK !== "true") {
+    throw new Error("This task can only be run against a local forked network");
   }
 
   const factory = await hre.ethers.getContractFactory("MockBeaconRoots");

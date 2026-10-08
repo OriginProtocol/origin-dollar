@@ -103,7 +103,7 @@ abstract contract Unit_OUSD_Shared_Test is Base {
         vm.stopPrank();
     }
 
-    /// @dev Fund matt and josh with 100 OUSD each (matching Hardhat fixture's 200 OUSD total supply)
+    /// @dev Fund matt and josh with 100 OUSD each (matching the legacy fixture's 200 OUSD total supply)
     function _fundInitialUsers() internal {
         _mintOUSD(matt, 100e6);
         _mintOUSD(josh, 100e6);

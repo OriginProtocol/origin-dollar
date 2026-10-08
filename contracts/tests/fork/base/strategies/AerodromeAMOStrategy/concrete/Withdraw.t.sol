@@ -39,7 +39,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
         vm.prank(address(oethBaseVault));
         aerodromeAMOStrategy.withdraw(address(oethBaseVault), BaseAddresses.WETH, 1 ether);
 
-        // Per Hardhat tolerance: ≤1e6 wei WETH residual
+        // Preserve the prior tolerance: ≤1e6 wei WETH residual
         assertLe(
             IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 1e6, "WETH residual should be minimal"
         );
@@ -59,7 +59,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
         uint256 vaultBalanceAfter = IERC20(BaseAddresses.WETH).balanceOf(address(oethBaseVault));
         assertApproxEqRel(vaultBalanceAfter, vaultBalanceBefore + 1 ether, 0.01 ether, "Vault should receive ~1 WETH");
 
-        // WETH residual may be higher due to rounding, but per Hardhat ≤1e6
+        // WETH residual may be higher due to rounding, but remains ≤1e6
         assertLe(
             IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 1e6, "WETH residual should be minimal"
         );

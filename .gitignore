@@ -56,14 +56,12 @@ contracts/artifacts/
 contracts/deployments/localhost*
 contracts/deployments/ganache_*
 contracts/deployments/fork_*
-contracts/deployments/hardhat*
 contracts/coverage/
 contracts/coverage.json
 contracts/build/*
 !contracts/build/deployments-*.json
 contracts/build/deployments-fork-*.json
 contracts/dist/
-contracts/scripts/defender-actions/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.base
@@ -72,7 +70,6 @@ todo.txt
 brownie/env-brownie/
 
 crytic-export
-contracts/echidna-corpus
 
 contracts/.certora_*
 contracts/.last_confs
