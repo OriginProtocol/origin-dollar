@@ -50,12 +50,11 @@
   "devDependencies": {
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
     "@lastdotnet/purrikey": "^1.0.0",
-    "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/upgrades-core": "1.44.2",
     "@types/node": "25.0.3",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
-    "axios": "1.4.0",
+    "axios": "1.20.0",
     "chai": "4.3.7",
     "debug": "4.3.4",
     "dotenv": "10.0.0",
@@ -72,7 +71,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-kms": "3.1036.0",
-    "@chainlink/contracts-ccip": "1.2.1",
     "@chainsafe/bls": "^8.2.0",
     "@lodestar/api": "^1.44.0",
     "@lodestar/config": "^1.44.0",
