@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { VaultAdmin } from "../vault/VaultAdmin.sol";
-import { StableMath } from "../utils/StableMath.sol";
+import {VaultAdmin} from "../vault/VaultAdmin.sol";
+import {StableMath} from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
 contract MockVault is VaultAdmin {
@@ -24,12 +24,7 @@ contract MockVault is VaultAdmin {
         return storedTotalValue;
     }
 
-    function _checkBalance(address _asset)
-        internal
-        view
-        override
-        returns (uint256 balance)
-    {
+    function _checkBalance(address _asset) internal view override returns (uint256 balance) {
         // Avoids rounding errors by returning the total value
         // in a single currency
         if (asset == _asset) {

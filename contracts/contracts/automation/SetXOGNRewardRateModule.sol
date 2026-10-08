@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IXOGN {
     function collectRewards() external;
 }
 
 interface IFixedRateRewardsSource {
-    function rewardConfig()
-        external
-        view
-        returns (uint64 lastCollect, uint192 rewardsPerSecond);
+    function rewardConfig() external view returns (uint64 lastCollect, uint192 rewardsPerSecond);
 
     function previewRewards() external view returns (uint256);
 
@@ -75,21 +72,11 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
     uint256 public minRunway;
 
     event RewardRateSet(uint192 newRate, uint256 available);
-    event BoundsSet(
-        uint192 minRate,
-        uint192 maxRate,
-        uint16 maxStepBps,
-        uint256 minRunway,
-        uint32 stepPeriod
-    );
+    event BoundsSet(uint192 minRate, uint192 maxRate, uint16 maxStepBps, uint256 minRunway, uint32 stepPeriod);
 
-    constructor(
-        address _safeContract,
-        address _operator,
-        address _rewardsSource,
-        address _ogn,
-        address _xogn
-    ) AbstractSafeModule(_safeContract) {
+    constructor(address _safeContract, address _operator, address _rewardsSource, address _ogn, address _xogn)
+        AbstractSafeModule(_safeContract)
+    {
         require(_rewardsSource != address(0), "Invalid rewards source");
         require(_ogn != address(0), "Invalid OGN");
         require(_xogn != address(0), "Invalid xOGN");
@@ -120,9 +107,7 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         // gap. Keeping it here also means no caller can skip it.
         IXOGN(xogn).collectRewards();
 
-        (uint64 lastCollect, uint192 currentRate) = IFixedRateRewardsSource(
-            rewardsSource
-        ).rewardConfig();
+        (uint64 lastCollect, uint192 currentRate) = IFixedRateRewardsSource(rewardsSource).rewardConfig();
 
         // Prove the settle landed, rather than assuming it.
         //
@@ -147,8 +132,8 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         // on the grounds that it currently subtracts nothing: without the settle
         // the difference is routinely a third of the balance, and counting that
         // as runway would let through a rate the source cannot sustain.
-        uint256 available = IERC20(ogn).balanceOf(rewardsSource) -
-            IFixedRateRewardsSource(rewardsSource).previewRewards();
+        uint256 available =
+            IERC20(ogn).balanceOf(rewardsSource) - IFixedRateRewardsSource(rewardsSource).previewRewards();
 
         // Only an increase can make runway worse, so only an increase is
         // checked. Applying this to a decrease deadlocks the automation: once
@@ -157,19 +142,13 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         // the guard blocking the one action that would relieve the condition it
         // is complaining about. Recovery would then need a Safe transaction.
         if (newRate > currentRate) {
-            require(
-                uint256(newRate) * minRunway <= available,
-                "Runway too short"
-            );
+            require(uint256(newRate) * minRunway <= available, "Runway too short");
         }
 
         bool success = safeContract.execTransactionFromModule(
             rewardsSource,
             0, // Value
-            abi.encodeWithSelector(
-                IFixedRateRewardsSource.setRewardsPerSecond.selector,
-                newRate
-            ),
+            abi.encodeWithSelector(IFixedRateRewardsSource.setRewardsPerSecond.selector, newRate),
             0 // Call
         );
         require(success, "Failed to set reward rate");
@@ -185,13 +164,10 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
      * @param _minRunway Seconds of runway the unencumbered balance must cover.
      * @param _stepPeriod Seconds a step checkpoint holds before it refreshes.
      */
-    function setBounds(
-        uint192 _minRate,
-        uint192 _maxRate,
-        uint16 _maxStepBps,
-        uint256 _minRunway,
-        uint32 _stepPeriod
-    ) external onlySafe {
+    function setBounds(uint192 _minRate, uint192 _maxRate, uint16 _maxStepBps, uint256 _minRunway, uint32 _stepPeriod)
+        external
+        onlySafe
+    {
         require(_minRate <= _maxRate, "Invalid rate bounds");
         require(_maxStepBps > 0 && _maxStepBps <= 1e4, "Invalid step");
         require(_minRunway > 0, "Invalid runway");
@@ -203,13 +179,7 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         minRunway = _minRunway;
         stepPeriod = _stepPeriod;
 
-        emit BoundsSet(
-            _minRate,
-            _maxRate,
-            _maxStepBps,
-            _minRunway,
-            _stepPeriod
-        );
+        emit BoundsSet(_minRate, _maxRate, _maxStepBps, _minRunway, _stepPeriod);
     }
 
     /// @dev Reject a jump larger than `maxStepBps` away from the period's
@@ -231,10 +201,7 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
         // holds on mainnet only because the epoch is far behind us, and it
         // silently skips the whole step check anywhere the clock starts near
         // zero.
-        if (
-            checkpointTime == 0 ||
-            block.timestamp >= uint256(checkpointTime) + stepPeriod
-        ) {
+        if (checkpointTime == 0 || block.timestamp >= uint256(checkpointTime) + stepPeriod) {
             baseline = currentRate;
             checkpointRate = currentRate;
             checkpointTime = uint64(block.timestamp);
@@ -244,13 +211,8 @@ contract SetXOGNRewardRateModule is AbstractSafeModule {
             return;
         }
 
-        uint256 delta = newRate > baseline
-            ? uint256(newRate) - baseline
-            : uint256(baseline) - newRate;
+        uint256 delta = newRate > baseline ? uint256(newRate) - baseline : uint256(baseline) - newRate;
 
-        require(
-            delta * 1e4 <= uint256(baseline) * maxStepBps,
-            "Rate step too large"
-        );
+        require(delta * 1e4 <= uint256(baseline) * maxStepBps, "Rate step too large");
     }
 }

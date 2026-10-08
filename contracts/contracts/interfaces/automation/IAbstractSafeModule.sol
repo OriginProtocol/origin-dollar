@@ -8,15 +8,9 @@ interface IAbstractSafeModule {
 
     function OPERATOR_ROLE() external view returns (bytes32);
 
-    function hasRole(bytes32 role, address account)
-        external
-        view
-        returns (bool);
+    function hasRole(bytes32 role, address account) external view returns (bool);
 
-    function getRoleMember(bytes32 role, uint256 index)
-        external
-        view
-        returns (address);
+    function getRoleMember(bytes32 role, uint256 index) external view returns (address);
 
     function getRoleMemberCount(bytes32 role) external view returns (uint256);
 

@@ -7,12 +7,7 @@ interface ICurvePoolBooster {
     event FeeCollectorUpdated(address newFeeCollector);
     event VotemarketUpdated(address newVotemarket);
     event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
-    event CampaignCreated(
-        address gauge,
-        address rewardToken,
-        uint256 maxRewardPerVote,
-        uint256 totalRewardAmount
-    );
+    event CampaignCreated(address gauge, address rewardToken, uint256 maxRewardPerVote, uint256 totalRewardAmount);
     event CampaignIdUpdated(uint256 newId);
     event CampaignClosed(uint256 campaignId);
     event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
@@ -79,9 +74,7 @@ interface ICurvePoolBooster {
         uint256 additionalGasLimit
     ) external payable;
 
-    function closeCampaign(uint256 _campaignId, uint256 additionalGasLimit)
-        external
-        payable;
+    function closeCampaign(uint256 _campaignId, uint256 additionalGasLimit) external payable;
 
     function setCampaignId(uint256 _campaignId) external;
 

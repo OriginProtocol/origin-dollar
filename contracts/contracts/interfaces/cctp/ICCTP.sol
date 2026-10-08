@@ -35,9 +35,7 @@ interface ICCTPMessageTransmitter {
         bytes memory messageBody
     ) external;
 
-    function receiveMessage(bytes calldata message, bytes calldata attestation)
-        external
-        returns (bool);
+    function receiveMessage(bytes calldata message, bytes calldata attestation) external returns (bool);
 }
 
 interface IMessageHandlerV2 {

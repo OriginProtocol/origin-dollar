@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { CurvePoolBooster } from "./CurvePoolBooster.sol";
+import {CurvePoolBooster} from "./CurvePoolBooster.sol";
 
 /// @title CurvePoolBoosterPlain
 /// @author Origin Protocol
@@ -10,9 +10,7 @@ import { CurvePoolBooster } from "./CurvePoolBooster.sol";
 /// @dev    Governor is not set in the constructor so that the same contract can be deployed on the same address on
 ///         multiple chains. Governor is set in the initialize function.
 contract CurvePoolBoosterPlain is CurvePoolBooster {
-    constructor(address _rewardToken, address _gauge)
-        CurvePoolBooster(_rewardToken, _gauge)
-    {
+    constructor(address _rewardToken, address _gauge) CurvePoolBooster(_rewardToken, _gauge) {
         rewardToken = _rewardToken;
         gauge = _gauge;
     }

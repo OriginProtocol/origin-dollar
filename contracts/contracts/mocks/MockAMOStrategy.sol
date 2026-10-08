@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IVaultBurn {
     function burnForStrategy(uint256 amount) external;
@@ -23,11 +23,7 @@ contract MockAMOStrategy {
 
     bool public shouldSupportAsset = true;
 
-    function initialize(
-        address _vault,
-        address _oToken,
-        address _asset
-    ) external {
+    function initialize(address _vault, address _oToken, address _asset) external {
         vaultAddress = _vault;
         oTokenAddress = _oToken;
         assetAddress = _asset;
@@ -37,11 +33,7 @@ contract MockAMOStrategy {
 
     function depositAll() external {}
 
-    function withdraw(
-        address recipient,
-        address asset,
-        uint256 amount
-    ) external {
+    function withdraw(address recipient, address asset, uint256 amount) external {
         IERC20(asset).transfer(recipient, amount);
     }
 
@@ -68,11 +60,7 @@ contract MockAMOStrategy {
 
     function collectRewardTokens() external {}
 
-    function getRewardTokenAddresses()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getRewardTokenAddresses() external view returns (address[] memory) {
         return new address[](0);
     }
 }

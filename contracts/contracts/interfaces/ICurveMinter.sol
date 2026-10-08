@@ -4,10 +4,7 @@ pragma solidity ^0.8.4;
 interface ICurveMinter {
     event Minted(address indexed recipient, address gauge, uint256 minted);
 
-    function allowed_to_mint_for(address arg0, address arg1)
-        external
-        view
-        returns (bool);
+    function allowed_to_mint_for(address arg0, address arg1) external view returns (bool);
 
     function controller() external view returns (address);
 

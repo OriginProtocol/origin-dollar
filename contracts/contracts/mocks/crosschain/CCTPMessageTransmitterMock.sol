@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
-import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
-import { BytesHelper } from "../../utils/BytesHelper.sol";
-import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {ICCTPMessageTransmitter} from "../../interfaces/cctp/ICCTP.sol";
+import {IERC20} from "../../utils/InitializableAbstractStrategy.sol";
+import {BytesHelper} from "../../utils/BytesHelper.sol";
+import {AbstractCCTPIntegrator} from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
@@ -114,16 +114,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         messages.push(message);
     }
 
-    function receiveMessage(bytes memory message, bytes memory attestation)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function receiveMessage(bytes memory message, bytes memory attestation) public virtual override returns (bool) {
         Message memory storedMsg = encodedMessages[keccak256(message)];
-        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(
-            address(uint160(uint256(storedMsg.recipient)))
-        );
+        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(address(uint160(uint256(storedMsg.recipient))));
 
         bytes32 sender = storedMsg.sender;
         bytes memory messageBody = storedMsg.messageBody;
@@ -133,37 +126,22 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             usdc.transfer(address(recipient), storedMsg.tokenAmount);
             // override the sender with the one stored in the Burn message as the sender int he
             // message header is the TokenMessenger.
-            sender = bytes32(
-                uint256(
-                    uint160(
-                        storedMsg.messageBody.extractAddress(
-                            BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX
-                        )
-                    )
-                )
-            );
-            messageBody = storedMsg.messageBody.extractSlice(
-                BURN_MESSAGE_V2_HOOK_DATA_INDEX,
-                storedMsg.messageBody.length
-            );
+            sender =
+                bytes32(uint256(uint160(storedMsg.messageBody.extractAddress(BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX))));
+            messageBody =
+                storedMsg.messageBody.extractSlice(BURN_MESSAGE_V2_HOOK_DATA_INDEX, storedMsg.messageBody.length);
         } else {
-            bytes32 overrideSenderBytes = bytes32(
-                uint256(uint160(messageSender))
-            );
+            bytes32 overrideSenderBytes = bytes32(uint256(uint160(messageSender)));
             if (messageFinality >= 2000) {
                 recipient.handleReceiveFinalizedMessage(
-                    sourceDomain == 4294967295
-                        ? storedMsg.sourceDomain
-                        : sourceDomain,
+                    sourceDomain == 4294967295 ? storedMsg.sourceDomain : sourceDomain,
                     messageSender == address(0) ? sender : overrideSenderBytes,
                     messageFinality,
                     messageBody
                 );
             } else {
                 recipient.handleReceiveUnfinalizedMessage(
-                    sourceDomain == 4294967295
-                        ? storedMsg.sourceDomain
-                        : sourceDomain,
+                    sourceDomain == 4294967295 ? storedMsg.sourceDomain : sourceDomain,
                     messageSender == address(0) ? sender : overrideSenderBytes,
                     messageFinality,
                     messageBody
@@ -239,10 +217,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     function processFrontOverrideHeader(bytes4 customHeader) external {
         Message memory storedMsg = _removeFront();
 
-        bytes memory modifiedBody = abi.encodePacked(
-            customHeader,
-            storedMsg.messageBody.extractSlice(4, storedMsg.messageBody.length)
-        );
+        bytes memory modifiedBody =
+            abi.encodePacked(customHeader, storedMsg.messageBody.extractSlice(4, storedMsg.messageBody.length));
 
         storedMsg.messageBody = modifiedBody;
 
@@ -263,15 +239,11 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     function processFrontOverrideRecipient(address customRecipient) external {
         Message memory storedMsg = _removeFront();
-        storedMsg.messageHeaderRecipient = bytes32(
-            uint256(uint160(customRecipient))
-        );
+        storedMsg.messageHeaderRecipient = bytes32(uint256(uint160(customRecipient)));
         _processMessage(storedMsg);
     }
 
-    function processFrontOverrideMessageBody(bytes memory customMessageBody)
-        external
-    {
+    function processFrontOverrideMessageBody(bytes memory customMessageBody) external {
         Message memory storedMsg = _removeFront();
         storedMsg.messageBody = customMessageBody;
         _processMessage(storedMsg);

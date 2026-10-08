@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ISafe } from "../interfaces/ISafe.sol";
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ISafe} from "../interfaces/ISafe.sol";
 
 abstract contract AbstractSafeModule is AccessControlEnumerable {
     ISafe public immutable safeContract;
@@ -11,18 +11,12 @@ abstract contract AbstractSafeModule is AccessControlEnumerable {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     modifier onlySafe() {
-        require(
-            msg.sender == address(safeContract),
-            "Caller is not the safe contract"
-        );
+        require(msg.sender == address(safeContract), "Caller is not the safe contract");
         _;
     }
 
     modifier onlyOperator() {
-        require(
-            hasRole(OPERATOR_ROLE, msg.sender),
-            "Caller is not an operator"
-        );
+        require(hasRole(OPERATOR_ROLE, msg.sender), "Caller is not an operator");
         _;
     }
 

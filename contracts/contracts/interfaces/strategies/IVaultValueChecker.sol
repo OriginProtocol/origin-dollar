@@ -6,14 +6,7 @@ interface IVaultValueChecker {
 
     function ousd() external view returns (address);
 
-    function snapshots(address user)
-        external
-        view
-        returns (
-            uint256 vaultValue,
-            uint256 totalSupply,
-            uint256 time
-        );
+    function snapshots(address user) external view returns (uint256 vaultValue, uint256 totalSupply, uint256 time);
 
     function takeSnapshot() external;
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IBribe } from "../interfaces/poolBooster/ISwapXAlgebraBribe.sol";
-import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { StableMath } from "../utils/StableMath.sol";
+import {IBribe} from "../interfaces/poolBooster/ISwapXAlgebraBribe.sol";
+import {IPoolBooster} from "../interfaces/poolBooster/IPoolBooster.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {StableMath} from "../utils/StableMath.sol";
 
 /**
  * @title Pool booster for SwapX concentrated liquidity where 2 gauges are created for
@@ -27,20 +27,9 @@ contract PoolBoosterSwapxDouble is IPoolBooster {
     // @notice if balance under this amount the bribe action is skipped
     uint256 public constant MIN_BRIBE_AMOUNT = 1e10;
 
-    constructor(
-        address _bribeContractOS,
-        address _bribeContractOther,
-        address _osToken,
-        uint256 _split
-    ) {
-        require(
-            _bribeContractOS != address(0),
-            "Invalid bribeContractOS address"
-        );
-        require(
-            _bribeContractOther != address(0),
-            "Invalid bribeContractOther address"
-        );
+    constructor(address _bribeContractOS, address _bribeContractOther, address _osToken, uint256 _split) {
+        require(_bribeContractOS != address(0), "Invalid bribeContractOS address");
+        require(_bribeContractOther != address(0), "Invalid bribeContractOther address");
         // expect it to be between 1% & 99%
         require(_split > 1e16 && _split < 99e16, "Unexpected split amount");
 
@@ -65,10 +54,7 @@ contract PoolBoosterSwapxDouble is IPoolBooster {
         osToken.approve(address(bribeContractOther), otherBribeAmount);
 
         bribeContractOS.notifyRewardAmount(address(osToken), osBribeAmount);
-        bribeContractOther.notifyRewardAmount(
-            address(osToken),
-            otherBribeAmount
-        );
+        bribeContractOther.notifyRewardAmount(address(osToken), otherBribeAmount);
 
         emit BribeExecuted(balance);
     }

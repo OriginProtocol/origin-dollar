@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
 
 interface IPoolBoosterFactory {
     function bribeAll(address[] memory _exclusionList) external;
@@ -26,11 +26,7 @@ contract MerklPoolBoosterBribesModule is AbstractSafeModule {
     /// @param _safeContract Address of the Gnosis Safe this module is attached to
     /// @param _operator Address authorized to call operator-restricted functions
     /// @param _factory Address of the PoolBoosterFactoryMerkl contract
-    constructor(
-        address _safeContract,
-        address _operator,
-        address _factory
-    ) AbstractSafeModule(_safeContract) {
+    constructor(address _safeContract, address _operator, address _factory) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
         _setFactory(_factory);
     }
@@ -68,13 +64,7 @@ contract MerklPoolBoosterBribesModule is AbstractSafeModule {
     function bribeAll(address[] calldata _exclusionList) external onlyOperator {
         require(
             safeContract.execTransactionFromModule(
-                factory,
-                0,
-                abi.encodeWithSelector(
-                    IPoolBoosterFactory.bribeAll.selector,
-                    _exclusionList
-                ),
-                0
+                factory, 0, abi.encodeWithSelector(IPoolBoosterFactory.bribeAll.selector, _exclusionList), 0
             ),
             "bribeAll failed"
         );

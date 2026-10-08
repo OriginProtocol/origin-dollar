@@ -3,20 +3,10 @@ pragma solidity ^0.8.0;
 
 interface IProxy {
     event Upgraded(address indexed implementation);
-    event PendingGovernorshipTransfer(
-        address indexed previousGovernor,
-        address indexed newGovernor
-    );
-    event GovernorshipTransferred(
-        address indexed previousGovernor,
-        address indexed newGovernor
-    );
+    event PendingGovernorshipTransfer(address indexed previousGovernor, address indexed newGovernor);
+    event GovernorshipTransferred(address indexed previousGovernor, address indexed newGovernor);
 
-    function initialize(
-        address _logic,
-        address _initGovernor,
-        bytes calldata _data
-    ) external payable;
+    function initialize(address _logic, address _initGovernor, bytes calldata _data) external payable;
 
     function admin() external view returns (address);
 
@@ -32,7 +22,5 @@ interface IProxy {
 
     function upgradeTo(address _newImplementation) external;
 
-    function upgradeToAndCall(address newImplementation, bytes calldata data)
-        external
-        payable;
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
 }

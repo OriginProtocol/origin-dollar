@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Strategizable} from "../governance/Strategizable.sol";
 
 interface IRebaseOptIn {
     function rebaseOptIn() external;
@@ -57,11 +57,7 @@ contract FeeSplitter is Strategizable {
     /// @notice Per-asset dust floor. Balances below this are left to accumulate.
     mapping(address => uint256) public minDistribute;
 
-    event Distributed(
-        address indexed asset,
-        uint256 opsAmount,
-        uint256 buybackAmount
-    );
+    event Distributed(address indexed asset, uint256 opsAmount, uint256 buybackAmount);
     event OperationsBpsUpdated(uint16 bps);
     event OperationsWalletUpdated(address wallet);
     event HarvesterUpdated(address harvester);
@@ -87,10 +83,7 @@ contract FeeSplitter is Strategizable {
      */
     modifier onlyOperator() {
         require(
-            msg.sender == operatorAddr ||
-                msg.sender == strategistAddr ||
-                isGovernor(),
-            "Caller is not the Operator"
+            msg.sender == operatorAddr || msg.sender == strategistAddr || isGovernor(), "Caller is not the Operator"
         );
         _;
     }
@@ -146,11 +139,7 @@ contract FeeSplitter is Strategizable {
     ///      `public` rather than `external` because `_distribute` calls it: the
     ///      split is defined in exactly one place, so the preview and the
     ///      transfer can never disagree.
-    function previewDistribute(address asset)
-        public
-        view
-        returns (uint256 opsAmount, uint256 buybackAmount)
-    {
+    function previewDistribute(address asset) public view returns (uint256 opsAmount, uint256 buybackAmount) {
         uint256 balance = IERC20(asset).balanceOf(address(this));
         if (balance < minDistribute[asset] || balance == 0) {
             return (0, 0);
@@ -205,10 +194,7 @@ contract FeeSplitter is Strategizable {
     // Routine bookkeeping. None of these can move funds off the configured routes.
 
     /// @notice Add an asset to the distribution set.
-    function addAsset(address _asset, uint256 _minAmount)
-        external
-        onlyGovernorOrStrategist
-    {
+    function addAsset(address _asset, uint256 _minAmount) external onlyGovernorOrStrategist {
         require(_asset != address(0), "Invalid asset");
         require(!isSupported[_asset], "Asset already supported");
         isSupported[_asset] = true;
@@ -240,20 +226,14 @@ contract FeeSplitter is Strategizable {
     /// @dev Keep this at or above the harvester's `minSellAmount` for the asset,
     ///      otherwise a distribution can forward an amount the harvester is not
     ///      allowed to sell, and it sits there until the next one.
-    function setMinDistribute(address _asset, uint256 _minAmount)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setMinDistribute(address _asset, uint256 _minAmount) external onlyGovernorOrStrategist {
         require(isSupported[_asset], "Asset not supported");
         minDistribute[_asset] = _minAmount;
         emit MinDistributeUpdated(_asset, _minAmount);
     }
 
     /// @notice Set the automation account allowed to call `distribute()`.
-    function setOperatorAddr(address _operator)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setOperatorAddr(address _operator) external onlyGovernorOrStrategist {
         operatorAddr = _operator;
         emit OperatorUpdated(_operator);
     }

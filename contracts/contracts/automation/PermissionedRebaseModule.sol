@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import {IVault} from "../interfaces/IVault.sol";
 
 /**
  * @title PermissionedRebaseModule
@@ -21,11 +21,7 @@ contract PermissionedRebaseModule is AbstractSafeModule {
     event VaultRemoved(address vault);
     event PermissionedRebaseExecuted(address vault);
 
-    constructor(
-        address _safeAddress,
-        address _operator,
-        address[] memory _vaults
-    ) AbstractSafeModule(_safeAddress) {
+    constructor(address _safeAddress, address _operator, address[] memory _vaults) AbstractSafeModule(_safeAddress) {
         _grantRole(OPERATOR_ROLE, _operator);
 
         for (uint256 i = 0; i < _vaults.length; i++) {

@@ -6,8 +6,8 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the Hydrex superOETHb/WETH stable pool on Base
  * @author Origin Protocol Inc
  */
-import { StableSwapAMMStrategy } from "../algebra/StableSwapAMMStrategy.sol";
-import { IHydrexGauge } from "../../interfaces/hydrex/IHydrexGauge.sol";
+import {StableSwapAMMStrategy} from "../algebra/StableSwapAMMStrategy.sol";
+import {IHydrexGauge} from "../../interfaces/hydrex/IHydrexGauge.sol";
 
 contract OETHbHydrexAMOStrategy is StableSwapAMMStrategy {
     /**
@@ -18,10 +18,6 @@ contract OETHbHydrexAMOStrategy is StableSwapAMMStrategy {
      *        resolve here and forward to the parent.
      */
     constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
-        StableSwapAMMStrategy(
-            _baseConfig,
-            _gauge,
-            IHydrexGauge(_gauge).stakeToken()
-        )
+        StableSwapAMMStrategy(_baseConfig, _gauge, IHydrexGauge(_gauge).stakeToken())
     {}
 }

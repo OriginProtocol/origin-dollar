@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
 
-import { IStrategy } from "../interfaces/IStrategy.sol";
+import {IStrategy} from "../interfaces/IStrategy.sol";
 
 contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
     mapping(address => bool) public isStrategyWhitelisted;
@@ -14,11 +14,7 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
 
     event ClaimRewardsFailed(address strategy);
 
-    constructor(
-        address _safeAddress,
-        address operator,
-        address[] memory _strategies
-    ) AbstractSafeModule(_safeAddress) {
+    constructor(address _safeAddress, address operator, address[] memory _strategies) AbstractSafeModule(_safeAddress) {
         _grantRole(OPERATOR_ROLE, operator);
 
         // Whitelist all strategies
@@ -59,18 +55,12 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
      * @dev Add a strategy to the whitelist
      * @param _strategy The address of the strategy to add
      */
-    function addStrategy(address _strategy)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function addStrategy(address _strategy) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _addStrategy(_strategy);
     }
 
     function _addStrategy(address _strategy) internal {
-        require(
-            !isStrategyWhitelisted[_strategy],
-            "Strategy already whitelisted"
-        );
+        require(!isStrategyWhitelisted[_strategy], "Strategy already whitelisted");
         isStrategyWhitelisted[_strategy] = true;
         strategies.push(_strategy);
         emit StrategyAdded(_strategy);
@@ -80,10 +70,7 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
      * @dev Remove a strategy from the whitelist
      * @param _strategy The address of the strategy to remove
      */
-    function removeStrategy(address _strategy)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function removeStrategy(address _strategy) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isStrategyWhitelisted[_strategy], "Strategy not whitelisted");
         isStrategyWhitelisted[_strategy] = false;
 

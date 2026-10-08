@@ -9,24 +9,14 @@ interface IChildLiquidityGaugeFactory {
         bytes32 _salt,
         address _gauge
     );
-    event Minted(
-        address indexed _user,
-        address indexed _gauge,
-        uint256 _new_total
-    );
+    event Minted(address indexed _user, address indexed _gauge, uint256 _new_total);
     event TransferOwnership(address _old_owner, address _new_owner);
     event UpdateCallProxy(address _old_call_proxy, address _new_call_proxy);
-    event UpdateImplementation(
-        address _old_implementation,
-        address _new_implementation
-    );
+    event UpdateImplementation(address _old_implementation, address _new_implementation);
     event UpdateManager(address _manager);
     event UpdateMirrored(address indexed _gauge, bool _mirrored);
     event UpdateRoot(address _factory, address _implementation);
-    event UpdateVotingEscrow(
-        address _old_voting_escrow,
-        address _new_voting_escrow
-    );
+    event UpdateVotingEscrow(address _old_voting_escrow, address _new_voting_escrow);
 
     function accept_transfer_ownership() external;
 
@@ -36,15 +26,9 @@ interface IChildLiquidityGaugeFactory {
 
     function crv() external view returns (address);
 
-    function deploy_gauge(address _lp_token, bytes32 _salt)
-        external
-        returns (address);
+    function deploy_gauge(address _lp_token, bytes32 _salt) external returns (address);
 
-    function deploy_gauge(
-        address _lp_token,
-        bytes32 _salt,
-        address _manager
-    ) external returns (address);
+    function deploy_gauge(address _lp_token, bytes32 _salt, address _manager) external returns (address);
 
     function future_owner() external view returns (address);
 
@@ -54,10 +38,7 @@ interface IChildLiquidityGaugeFactory {
 
     function get_gauge_count() external view returns (uint256);
 
-    function get_gauge_from_lp_token(address arg0)
-        external
-        view
-        returns (address);
+    function get_gauge_from_lp_token(address arg0) external view returns (address);
 
     function get_implementation() external view returns (address);
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IOToken } from "./IOToken.sol";
-import { IVault } from "./IVault.sol";
+import {IOToken} from "./IOToken.sol";
+import {IVault} from "./IVault.sol";
 
 /**
  * @title OETH Vault Lens Interface

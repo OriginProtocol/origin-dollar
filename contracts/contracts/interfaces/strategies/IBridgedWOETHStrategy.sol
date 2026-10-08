@@ -5,21 +5,11 @@ interface IBridgedWOETHStrategy {
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(
-        address recipient,
-        address rewardToken,
-        uint256 amount
-    );
+    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
     event PTokenAdded(address indexed _asset, address _pToken);
     event PTokenRemoved(address indexed _asset, address _pToken);
-    event RewardTokenAddressesUpdated(
-        address[] _oldAddresses,
-        address[] _newAddresses
-    );
-    event HarvesterAddressesUpdated(
-        address _oldHarvesterAddress,
-        address _newHarvesterAddress
-    );
+    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
+    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
 
     // Events (BridgedWOETHStrategy-specific)
     event MaxPriceDiffBpsUpdated(uint128 oldValue, uint128 newValue);
@@ -30,18 +20,11 @@ interface IBridgedWOETHStrategy {
 
     function depositAll() external;
 
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external;
+    function withdraw(address _recipient, address _asset, uint256 _amount) external;
 
     function withdrawAll() external;
 
-    function checkBalance(address _asset)
-        external
-        view
-        returns (uint256 balance);
+    function checkBalance(address _asset) external view returns (uint256 balance);
 
     function supportsAsset(address _asset) external view returns (bool);
 
@@ -53,8 +36,7 @@ interface IBridgedWOETHStrategy {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
-        external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
 
     // InitializableAbstractStrategy functions
     function platformAddress() external view returns (address);
@@ -65,10 +47,7 @@ interface IBridgedWOETHStrategy {
 
     function safeApproveAllTokens() external;
 
-    function rewardTokenAddresses(uint256 _index)
-        external
-        view
-        returns (address);
+    function rewardTokenAddresses(uint256 _index) external view returns (address);
 
     function setPTokenAddress(address _asset, address _pToken) external;
 
@@ -86,10 +65,7 @@ interface IBridgedWOETHStrategy {
 
     function updateWOETHOraclePrice() external returns (uint256);
 
-    function getBridgedWOETHValue(uint256 woethAmount)
-        external
-        view
-        returns (uint256);
+    function getBridgedWOETHValue(uint256 woethAmount) external view returns (uint256);
 
     function depositBridgedWOETH(uint256 woethAmount) external;
 

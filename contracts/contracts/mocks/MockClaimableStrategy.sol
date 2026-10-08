@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MockClaimableStrategy
@@ -20,11 +20,7 @@ contract MockClaimableStrategy {
         shouldRevert = _shouldRevert;
     }
 
-    function getRewardTokenAddresses()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getRewardTokenAddresses() external view returns (address[] memory) {
         return _rewardTokenAddresses;
     }
 
@@ -35,9 +31,7 @@ contract MockClaimableStrategy {
     function collectRewardTokens() external {
         require(!shouldRevert, "MockClaimableStrategy: forced revert");
         for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
-            uint256 balance = IERC20(_rewardTokenAddresses[i]).balanceOf(
-                address(this)
-            );
+            uint256 balance = IERC20(_rewardTokenAddresses[i]).balanceOf(address(this));
             if (balance > 0) {
                 IERC20(_rewardTokenAddresses[i]).transfer(msg.sender, balance);
             }

@@ -21,11 +21,7 @@ interface IStrategy {
     /**
      * @dev Withdraw given asset from Lending platform
      */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external;
+    function withdraw(address _recipient, address _asset, uint256 _amount) external;
 
     /**
      * @dev Liquidate all assets in strategy and return them to Vault.
@@ -35,10 +31,7 @@ interface IStrategy {
     /**
      * @dev Returns the current balance of the given asset.
      */
-    function checkBalance(address _asset)
-        external
-        view
-        returns (uint256 balance);
+    function checkBalance(address _asset) external view returns (uint256 balance);
 
     /**
      * @dev Returns bool indicating whether strategy supports asset.
@@ -59,6 +52,5 @@ interface IStrategy {
 
     function transferToken(address token, uint256 amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
-        external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
 }

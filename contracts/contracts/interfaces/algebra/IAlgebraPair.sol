@@ -6,12 +6,7 @@ interface IPair {
     event Transfer(address indexed src, address indexed dst, uint256 wad);
 
     event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(
-        address indexed sender,
-        uint256 amount0,
-        uint256 amount1,
-        address indexed to
-    );
+    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
     event Swap(
         address indexed sender,
         uint256 amount0In,
@@ -20,25 +15,12 @@ interface IPair {
         uint256 amount1Out,
         address indexed to
     );
-    event Claim(
-        address indexed sender,
-        address indexed recipient,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event Claim(address indexed sender, address indexed recipient, uint256 amount0, uint256 amount1);
 
     function metadata()
         external
         view
-        returns (
-            uint256 dec0,
-            uint256 dec1,
-            uint256 r0,
-            uint256 r1,
-            bool st,
-            address t0,
-            address t1
-        );
+        returns (uint256 dec0, uint256 dec1, uint256 r0, uint256 r1, bool st, address t0, address t1);
 
     function claimFees() external returns (uint256, uint256);
 
@@ -48,37 +30,16 @@ interface IPair {
 
     function token1() external view returns (address);
 
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external;
 
-    function swap(
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address to,
-        bytes calldata data
-    ) external;
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
 
-    function burn(address to)
-        external
-        returns (uint256 amount0, uint256 amount1);
+    function burn(address to) external returns (uint256 amount0, uint256 amount1);
 
     function mint(address to) external returns (uint256 liquidity);
 
-    function getReserves()
-        external
-        view
-        returns (
-            uint256 _reserve0,
-            uint256 _reserve1,
-            uint256 _blockTimestampLast
-        );
+    function getReserves() external view returns (uint256 _reserve0, uint256 _reserve1, uint256 _blockTimestampLast);
 
     function getAmountOut(uint256, address) external view returns (uint256);
 
@@ -93,20 +54,11 @@ interface IPair {
 
     function balanceOf(address) external view returns (uint256);
 
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     function approve(address spender, uint256 value) external returns (bool);
 

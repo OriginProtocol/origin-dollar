@@ -3,13 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IDepositContract {
     /// @notice A processed deposit event.
-    event DepositEvent(
-        bytes pubkey,
-        bytes withdrawal_credentials,
-        bytes amount,
-        bytes signature,
-        bytes index
-    );
+    event DepositEvent(bytes pubkey, bytes withdrawal_credentials, bytes amount, bytes signature, bytes index);
 
     /// @notice Submit a Phase 0 DepositData object.
     /// @param pubkey A BLS12-381 public key.

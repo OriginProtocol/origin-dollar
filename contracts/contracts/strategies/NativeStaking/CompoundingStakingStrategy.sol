@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
-import { Governable } from "../../governance/Governable.sol";
-import { IDepositContract } from "../../interfaces/IDepositContract.sol";
-import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
-import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
-import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
-import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {Governable} from "../../governance/Governable.sol";
+import {IDepositContract} from "../../interfaces/IDepositContract.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {BeaconRoots} from "../../beacon/BeaconRoots.sol";
+import {PartialWithdrawal} from "../../beacon/PartialWithdrawal.sol";
+import {IBeaconProofs} from "../../interfaces/IBeaconProofs.sol";
+import {InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
 
 /**
  * @title Compounding validator strategy
@@ -190,17 +190,11 @@ abstract contract CompoundingValidatorStorage is Governable, Pausable {
         BEACON_PROOFS = _beaconProofs;
         BEACON_GENESIS_TIMESTAMP = _beaconGenesisTimestamp;
 
-        require(
-            block.timestamp > _beaconGenesisTimestamp,
-            "Invalid genesis timestamp"
-        );
+        require(block.timestamp > _beaconGenesisTimestamp, "Invalid genesis timestamp");
     }
 }
 
-contract CompoundingStakingStrategy is
-    CompoundingValidatorStorage,
-    InitializableAbstractStrategy
-{
+contract CompoundingStakingStrategy is CompoundingValidatorStorage, InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     /// @param _baseConfig Base strategy config with
@@ -219,11 +213,7 @@ contract CompoundingStakingStrategy is
     )
         InitializableAbstractStrategy(_baseConfig)
         CompoundingValidatorStorage(
-            _wethAddress,
-            _baseConfig.vaultAddress,
-            _beaconChainDepositContract,
-            _beaconProofs,
-            _beaconGenesisTimestamp
+            _wethAddress, _baseConfig.vaultAddress, _beaconChainDepositContract, _beaconProofs, _beaconGenesisTimestamp
         )
     {
         // Make sure nobody owns the implementation contract
@@ -233,28 +223,14 @@ contract CompoundingStakingStrategy is
     event RegistratorChanged(address indexed newAddress);
     event InitialDepositAmountChanged(uint256 amountWei);
     event FirstDepositReset();
-    event ETHStaked(
-        bytes32 indexed pubKeyHash,
-        bytes32 indexed pendingDepositRoot,
-        bytes pubKey,
-        uint256 amountWei
-    );
-    event ValidatorVerified(
-        bytes32 indexed pubKeyHash,
-        uint40 indexed validatorIndex
-    );
+    event ETHStaked(bytes32 indexed pubKeyHash, bytes32 indexed pendingDepositRoot, bytes pubKey, uint256 amountWei);
+    event ValidatorVerified(bytes32 indexed pubKeyHash, uint40 indexed validatorIndex);
     event ValidatorInvalid(bytes32 indexed pubKeyHash);
-    event DepositVerified(
-        bytes32 indexed pendingDepositRoot,
-        uint256 amountWei
-    );
+    event DepositVerified(bytes32 indexed pendingDepositRoot, uint256 amountWei);
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
-        uint64 indexed timestamp,
-        uint256 totalDepositsWei,
-        uint256 totalValidatorBalance,
-        uint256 ethBalance
+        uint64 indexed timestamp, uint256 totalDepositsWei, uint256 totalValidatorBalance, uint256 ethBalance
     );
 
     error NotRegistratorOrGovernor(); // 0xbf454a2d
@@ -296,11 +272,7 @@ contract CompoundingStakingStrategy is
         address[] memory _pTokens,
         uint256 _initialDepositAmountWei
     ) external onlyGovernor initializer {
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
         _setInitialDepositAmountWei(_initialDepositAmountWei);
     }
 
@@ -317,10 +289,7 @@ contract CompoundingStakingStrategy is
     }
 
     /// @notice Set the amount of ETH required for the first deposit to a new validator.
-    function setInitialDepositAmount(uint256 _initialDepositAmountWei)
-        external
-        onlyGovernor
-    {
+    function setInitialDepositAmount(uint256 _initialDepositAmountWei) external onlyGovernor {
         _setInitialDepositAmountWei(_initialDepositAmountWei);
     }
 
@@ -368,18 +337,16 @@ contract CompoundingStakingStrategy is
     /// Only the registrator can call this function.
     /// @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
     // slither-disable-start reentrancy-eth,reentrancy-no-eth
-    function stakeEth(
-        ValidatorStakeData calldata validatorStakeData,
-        uint64 depositAmountGwei
-    ) external onlyRegistrator whenNotPaused {
+    function stakeEth(ValidatorStakeData calldata validatorStakeData, uint64 depositAmountGwei)
+        external
+        onlyRegistrator
+        whenNotPaused
+    {
         uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
         // the ETH can be withdrawn and then deposited back to the strategy.
-        require(
-            depositAmountWei <= IWETH9(WETH).balanceOf(address(this)),
-            "Insufficient WETH"
-        );
+        require(depositAmountWei <= IWETH9(WETH).balanceOf(address(this)), "Insufficient WETH");
         require(depositList.length < MAX_DEPOSITS, "Max deposits");
 
         // Convert required ETH from WETH and do the necessary accounting
@@ -397,34 +364,22 @@ contract CompoundingStakingStrategy is
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
-        bytes memory withdrawalCredentials = abi.encodePacked(
-            bytes1(0x02),
-            bytes11(0),
-            address(this)
-        );
+        bytes memory withdrawalCredentials = abi.encodePacked(bytes1(0x02), bytes11(0), address(this));
 
         /// After the Pectra upgrade the validators have a new restriction when proposing
         /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
         /// forward. Each slot is created at strict 12 second intervals and those slots can
         /// either have blocks attached to them or not. This way using the block.timestamp
         /// the slot number can easily be calculated.
-        uint64 depositSlot = (SafeCast.toUint64(block.timestamp) -
-            BEACON_GENESIS_TIMESTAMP) / SLOT_DURATION;
+        uint64 depositSlot = (SafeCast.toUint64(block.timestamp) - BEACON_GENESIS_TIMESTAMP) / SLOT_DURATION;
 
         // Calculate the merkle root of the beacon chain pending deposit data.
         // This is used as the unique ID of the deposit.
         bytes32 pendingDepositRoot = IBeaconProofs(BEACON_PROOFS)
             .merkleizePendingDeposit(
-                pubKeyHash,
-                withdrawalCredentials,
-                depositAmountGwei,
-                validatorStakeData.signature,
-                depositSlot
+                pubKeyHash, withdrawalCredentials, depositAmountGwei, validatorStakeData.signature, depositSlot
             );
-        require(
-            deposits[pendingDepositRoot].status == DepositStatus.UNKNOWN,
-            "Duplicate deposit"
-        );
+        require(deposits[pendingDepositRoot].status == DepositStatus.UNKNOWN, "Duplicate deposit");
 
         // Store the deposit data for verifyDeposit and verifyBalances
         deposits[pendingDepositRoot] = DepositData({
@@ -438,34 +393,23 @@ contract CompoundingStakingStrategy is
 
         // Deposit to the Beacon Chain deposit contract.
         // This will create a deposit in the beacon chain's pending deposit queue.
-        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-            value: depositAmountWei
-        }(
+        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{value: depositAmountWei}(
             validatorStakeData.pubkey,
             withdrawalCredentials,
             validatorStakeData.signature,
             validatorStakeData.depositDataRoot
         );
 
-        emit ETHStaked(
-            pubKeyHash,
-            pendingDepositRoot,
-            validatorStakeData.pubkey,
-            depositAmountWei
-        );
+        emit ETHStaked(pubKeyHash, pendingDepositRoot, validatorStakeData.pubkey, depositAmountWei);
     }
 
     // slither-disable-end reentrancy-eth,reentrancy-no-eth
 
-    function _admitStake(bytes32 pubKeyHash, uint256 depositAmountWei)
-        internal
-        virtual
-    {
+    function _admitStake(bytes32 pubKeyHash, uint256 depositAmountWei) internal virtual {
         ValidatorState currentState = validator[pubKeyHash].state;
         require(
-            currentState == ValidatorState.NON_REGISTERED ||
-                currentState == ValidatorState.VERIFIED ||
-                currentState == ValidatorState.ACTIVE,
+            currentState == ValidatorState.NON_REGISTERED || currentState == ValidatorState.VERIFIED
+                || currentState == ValidatorState.ACTIVE,
             "Not registered or verified"
         );
 
@@ -474,9 +418,7 @@ contract CompoundingStakingStrategy is
         }
     }
 
-    function _recordFirstDeposit(bytes32 pubKeyHash, uint256 depositAmountWei)
-        internal
-    {
+    function _recordFirstDeposit(bytes32 pubKeyHash, uint256 depositAmountWei) internal {
         // Can only have one pending deposit to an unverified validator at a time.
         // This is to limit front-running deposit attacks to a single deposit.
         // The existing deposit needs to be verified before another deposit can be made.
@@ -488,10 +430,7 @@ contract CompoundingStakingStrategy is
             revert InvalidFirstDepositAmount();
         }
         // Limits the number of validator balance proofs to verifyBalances
-        require(
-            verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS,
-            "Max validators"
-        );
+        require(verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS, "Max validators");
 
         // Flag a deposit to an unverified validator so no other deposits can be made
         // to an unverified validator.
@@ -510,11 +449,7 @@ contract CompoundingStakingStrategy is
     /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
     /// A zero amount will trigger a full withdrawal.
     // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
-        external
-        payable
-        onlyRegistrator
-    {
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei) external payable onlyRegistrator {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         ValidatorData memory validatorDataMem = validator[pubKeyHash];
@@ -527,8 +462,7 @@ contract CompoundingStakingStrategy is
         // of adding complexity of verifying if a validator is eligible for a full exit, we allow
         // multiple full withdrawal requests per validator.
         require(
-            validatorDataMem.state == ValidatorState.ACTIVE ||
-                validatorDataMem.state == ValidatorState.EXITING,
+            validatorDataMem.state == ValidatorState.ACTIVE || validatorDataMem.state == ValidatorState.EXITING,
             "Validator not active/exiting"
         );
 
@@ -539,10 +473,7 @@ contract CompoundingStakingStrategy is
             for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 pendingDepositRoot = depositList[i];
                 // Check there is no pending deposits to the exiting validator
-                require(
-                    pubKeyHash != deposits[pendingDepositRoot].pubKeyHash,
-                    "Pending deposit"
-                );
+                require(pubKeyHash != deposits[pendingDepositRoot].pubKeyHash, "Pending deposit");
             }
 
             // Store the validator state as exiting so no more deposits can be made to it.
@@ -589,10 +520,7 @@ contract CompoundingStakingStrategy is
         bytes32 withdrawalCredentials,
         bytes calldata validatorPubKeyProof
     ) external {
-        require(
-            validator[pubKeyHash].state == ValidatorState.STAKED,
-            "Validator not staked"
-        );
+        require(validator[pubKeyHash].state == ValidatorState.STAKED, "Validator not staked");
 
         // Get the beacon block root of the slot we are verifying the validator in.
         // The parent beacon block root of the next block is the beacon block root of the slot we are verifying.
@@ -600,23 +528,13 @@ contract CompoundingStakingStrategy is
 
         // Verify the validator index is for the validator with the given public key.
         // Also verify the validator's withdrawal credentials
-        IBeaconProofs(BEACON_PROOFS).verifyValidator(
-            blockRoot,
-            pubKeyHash,
-            validatorPubKeyProof,
-            validatorIndex,
-            withdrawalCredentials
-        );
+        IBeaconProofs(BEACON_PROOFS)
+            .verifyValidator(blockRoot, pubKeyHash, validatorPubKeyProof, validatorIndex, withdrawalCredentials);
 
         // Store the validator state as verified
-        validator[pubKeyHash] = ValidatorData({
-            state: ValidatorState.VERIFIED,
-            index: validatorIndex
-        });
+        validator[pubKeyHash] = ValidatorData({state: ValidatorState.VERIFIED, index: validatorIndex});
 
-        bytes32 expectedWithdrawalCredentials = bytes32(
-            abi.encodePacked(bytes1(0x02), bytes11(0), address(this))
-        );
+        bytes32 expectedWithdrawalCredentials = bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), address(this)));
 
         // If the initial deposit was front-run and the withdrawal address is not this strategy
         // or the validator type is not a compounding validator (0x02)
@@ -631,10 +549,7 @@ contract CompoundingStakingStrategy is
                 if (depositData.pubKeyHash == pubKeyHash) {
                     // next verifyBalances will correctly account for the loss of a front-run
                     // deposit. Doing it here accounts for the loss as soon as possible
-                    lastVerifiedEthBalance -= Math.min(
-                        lastVerifiedEthBalance,
-                        uint256(depositData.amountGwei) * 1 gwei
-                    );
+                    lastVerifiedEthBalance -= Math.min(lastVerifiedEthBalance, uint256(depositData.amountGwei) * 1 gwei);
                     _removeDeposit(depositList[i], depositData);
                     break;
                 }
@@ -703,13 +618,8 @@ contract CompoundingStakingStrategy is
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory depositData = deposits[pendingDepositRoot];
-        ValidatorData memory strategyValidator = validator[
-            depositData.pubKeyHash
-        ];
-        require(
-            depositData.status == DepositStatus.PENDING,
-            "Deposit not pending"
-        );
+        ValidatorData memory strategyValidator = validator[depositData.pubKeyHash];
+        require(depositData.status == DepositStatus.PENDING, "Deposit not pending");
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
 
         // We should allow the verification of deposits for validators that have been marked as exiting
@@ -719,17 +629,13 @@ contract CompoundingStakingStrategy is
         //  - when verifyDeposit is called for the first deposit it sets the Validator state to EXITING
         //  - verifyDeposit should allow a secondary call for the other deposit to a slashed validator
         require(
-            strategyValidator.state == ValidatorState.VERIFIED ||
-                strategyValidator.state == ValidatorState.ACTIVE ||
-                strategyValidator.state == ValidatorState.EXITING,
+            strategyValidator.state == ValidatorState.VERIFIED || strategyValidator.state == ValidatorState.ACTIVE
+                || strategyValidator.state == ValidatorState.EXITING,
             "Not verified/active/exiting"
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
-        require(
-            depositData.slot < depositProcessedSlot,
-            "Slot not after deposit"
-        );
+        require(depositData.slot < depositProcessedSlot, "Slot not after deposit");
 
         uint64 snapTimestamp = snappedBalance.timestamp;
 
@@ -740,35 +646,28 @@ contract CompoundingStakingStrategy is
         //    and deposit balance from totalDepositsWei
         //  - verifyBalances is called under-reporting the strategy's balance
         require(
-            (_calcNextBlockTimestamp(depositProcessedSlot) <= snapTimestamp) ||
-                snapTimestamp == 0,
+            (_calcNextBlockTimestamp(depositProcessedSlot) <= snapTimestamp) || snapTimestamp == 0,
             "Deposit after balance snapshot"
         );
 
         // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
         // This will revert if the slot after the verification slot was missed.
-        bytes32 depositBlockRoot = BeaconRoots.parentBlockRoot(
-            _calcNextBlockTimestamp(depositProcessedSlot)
-        );
+        bytes32 depositBlockRoot = BeaconRoots.parentBlockRoot(_calcNextBlockTimestamp(depositProcessedSlot));
 
         // Verify the slot of the first pending deposit matches the beacon chain
         bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
-            .verifyFirstPendingDeposit(
-                depositBlockRoot,
-                firstPendingDeposit.slot,
-                firstPendingDeposit.proof
-            );
+            .verifyFirstPendingDeposit(depositBlockRoot, firstPendingDeposit.slot, firstPendingDeposit.proof);
 
         // Verify the withdrawableEpoch on the validator of the strategy's deposit
-        IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
-            depositBlockRoot,
-            strategyValidator.index,
-            strategyValidatorData.withdrawableEpoch,
-            strategyValidatorData.withdrawableEpochProof
-        );
+        IBeaconProofs(BEACON_PROOFS)
+            .verifyValidatorWithdrawable(
+                depositBlockRoot,
+                strategyValidator.index,
+                strategyValidatorData.withdrawableEpoch,
+                strategyValidatorData.withdrawableEpochProof
+            );
 
-        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
-            SLOTS_PER_EPOCH;
+        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot / SLOTS_PER_EPOCH;
 
         // If deposit queue is empty all deposits have certainly been processed. If not
         // a validator can either be not exiting and no further checks are required.
@@ -783,10 +682,8 @@ contract CompoundingStakingStrategy is
         // postponed. And any new deposits created (and present in the deposit queue)
         // will have an equal or larger withdrawableEpoch.
         require(
-            strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
-                strategyValidatorData.withdrawableEpoch <=
-                firstPendingDepositEpoch ||
-                isDepositQueueEmpty,
+            strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH
+                || strategyValidatorData.withdrawableEpoch <= firstPendingDepositEpoch || isDepositQueueEmpty,
             "Exit Deposit likely not proc."
         );
 
@@ -803,24 +700,15 @@ contract CompoundingStakingStrategy is
         // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
         // We can not guarantee that the deposit has been processed in that case.
         // solhint-enable max-line-length
-        require(
-            depositData.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
-            "Deposit likely not processed"
-        );
+        require(depositData.slot < firstPendingDeposit.slot || isDepositQueueEmpty, "Deposit likely not processed");
 
         // Remove the deposit now it has been verified as processed on the beacon chain.
         _removeDeposit(pendingDepositRoot, depositData);
 
-        emit DepositVerified(
-            pendingDepositRoot,
-            uint256(depositData.amountGwei) * 1 gwei
-        );
+        emit DepositVerified(pendingDepositRoot, uint256(depositData.amountGwei) * 1 gwei);
     }
 
-    function _removeDeposit(
-        bytes32 pendingDepositRoot,
-        DepositData memory depositData
-    ) internal {
+    function _removeDeposit(bytes32 pendingDepositRoot, DepositData memory depositData) internal {
         // After verifying the proof, update the contract storage
         deposits[pendingDepositRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
@@ -833,11 +721,7 @@ contract CompoundingStakingStrategy is
 
     /// @dev Calculates the timestamp of the next execution block from the given slot.
     /// @param slot The beacon chain slot number used for merkle proof verification.
-    function _calcNextBlockTimestamp(uint64 slot)
-        internal
-        view
-        returns (uint64)
-    {
+    function _calcNextBlockTimestamp(uint64 slot) internal view returns (uint64) {
         // Calculate the next block timestamp from the slot.
         return SLOT_DURATION * slot + BEACON_GENESIS_TIMESTAMP + SLOT_DURATION;
     }
@@ -945,21 +829,15 @@ contract CompoundingStakingStrategy is
     /// snapshots before their balance proofs can be submitted.
     function snapBalances() external {
         uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
-        require(
-            snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp,
-            "Snap too soon"
-        );
+        require(snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp, "Snap too soon");
 
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(currentTimestamp);
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
 
         // Store the snapped balance
-        snappedBalance = Balances({
-            blockRoot: blockRoot,
-            timestamp: currentTimestamp,
-            ethBalance: SafeCast.toUint128(ethBalance)
-        });
+        snappedBalance =
+            Balances({blockRoot: blockRoot, timestamp: currentTimestamp, ethBalance: SafeCast.toUint128(ethBalance)});
 
         emit BalancesSnapped(blockRoot, ethBalance);
     }
@@ -1002,10 +880,9 @@ contract CompoundingStakingStrategy is
     ///    beacon chain's pending deposit list container to the pending deposits list container root.
     ///    These are 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
-    function verifyBalances(
-        BalanceProofs calldata balanceProofs,
-        PendingDepositProofs calldata pendingDepositProofs
-    ) external {
+    function verifyBalances(BalanceProofs calldata balanceProofs, PendingDepositProofs calldata pendingDepositProofs)
+        external
+    {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest
@@ -1017,34 +894,20 @@ contract CompoundingStakingStrategy is
 
         // If there are no verified validators then we can skip the balance verification
         if (verifiedValidatorsCount > 0) {
-            require(
-                balanceProofs.validatorBalanceProofs.length ==
-                    verifiedValidatorsCount,
-                "Invalid balance proofs"
-            );
-            require(
-                balanceProofs.validatorBalanceLeaves.length ==
-                    verifiedValidatorsCount,
-                "Invalid balance leaves"
-            );
+            require(balanceProofs.validatorBalanceProofs.length == verifiedValidatorsCount, "Invalid balance proofs");
+            require(balanceProofs.validatorBalanceLeaves.length == verifiedValidatorsCount, "Invalid balance leaves");
             // verify beaconBlock.state.balances root to beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-                balancesMem.blockRoot,
-                balanceProofs.balancesContainerRoot,
-                balanceProofs.balancesContainerProof
-            );
-
-            bytes32[]
-                memory validatorHashesMem = _getPendingDepositValidatorHashes(
-                    depositsCount
+            IBeaconProofs(BEACON_PROOFS)
+                .verifyBalancesContainer(
+                    balancesMem.blockRoot, balanceProofs.balancesContainerRoot, balanceProofs.balancesContainerProof
                 );
 
+            bytes32[] memory validatorHashesMem = _getPendingDepositValidatorHashes(depositsCount);
+
             // for each validator in reverse order so we can pop off exited validators at the end
-            for (uint256 i = verifiedValidatorsCount; i > 0; ) {
+            for (uint256 i = verifiedValidatorsCount; i > 0;) {
                 --i;
-                ValidatorData memory validatorDataMem = validator[
-                    verifiedValidators[i]
-                ];
+                ValidatorData memory validatorDataMem = validator[verifiedValidators[i]];
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
@@ -1078,8 +941,7 @@ contract CompoundingStakingStrategy is
                     if (!depositPending) {
                         // Store the validator state as exited
                         // This could have been in VERIFIED, ACTIVE or EXITING state
-                        validator[verifiedValidators[i]].state = ValidatorState
-                            .EXITED;
+                        validator[verifiedValidators[i]].state = ValidatorState.EXITED;
 
                         // Remove the validator with a zero balance from the list of verified validators
 
@@ -1089,9 +951,7 @@ contract CompoundingStakingStrategy is
                         // Move the last validator that has already been verified to the current index.
                         // There's an extra SSTORE if i is the last active validator but that's fine,
                         // It's not a common case and the code is simpler this way.
-                        verifiedValidators[i] = verifiedValidators[
-                            verifiedValidatorsCount
-                        ];
+                        verifiedValidators[i] = verifiedValidators[verifiedValidatorsCount];
                         // Delete the last validator from the list
                         verifiedValidators.pop();
                     }
@@ -1099,14 +959,13 @@ contract CompoundingStakingStrategy is
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
                 } else if (
-                    validatorDataMem.state == ValidatorState.VERIFIED &&
-                    validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI
+                    validatorDataMem.state == ValidatorState.VERIFIED
+                        && validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI
                 ) {
                     // Store the validator state as active. This does not necessarily mean the
                     // validator is active on the beacon chain yet. It just means the validator has
                     // enough balance that it can become active.
-                    validator[verifiedValidators[i]].state = ValidatorState
-                        .ACTIVE;
+                    validator[verifiedValidators[i]].state = ValidatorState.ACTIVE;
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
@@ -1124,59 +983,43 @@ contract CompoundingStakingStrategy is
         // its balance again. In such case the contract will erroneously consider a deposit applied before it
         // has been applied on the beacon chain showing a smaller than real `totalValidatorBalance`.
         if (depositsCount > 0) {
-            require(
-                pendingDepositProofs.pendingDepositProofs.length ==
-                    depositsCount,
-                "Invalid deposit proofs"
-            );
-            require(
-                pendingDepositProofs.pendingDepositIndexes.length ==
-                    depositsCount,
-                "Invalid deposit indexes"
-            );
+            require(pendingDepositProofs.pendingDepositProofs.length == depositsCount, "Invalid deposit proofs");
+            require(pendingDepositProofs.pendingDepositIndexes.length == depositsCount, "Invalid deposit indexes");
 
             // Verify from the root of the pending deposit list container to the beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyPendingDepositsContainer(
-                balancesMem.blockRoot,
-                pendingDepositProofs.pendingDepositContainerRoot,
-                pendingDepositProofs.pendingDepositContainerProof
-            );
+            IBeaconProofs(BEACON_PROOFS)
+                .verifyPendingDepositsContainer(
+                    balancesMem.blockRoot,
+                    pendingDepositProofs.pendingDepositContainerRoot,
+                    pendingDepositProofs.pendingDepositContainerProof
+                );
 
             // For each staking strategy's deposit.
             for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 pendingDepositRoot = depositList[i];
 
                 // Verify the strategy's deposit is still pending on the beacon chain.
-                IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
-                    pendingDepositProofs.pendingDepositContainerRoot,
-                    pendingDepositRoot,
-                    pendingDepositProofs.pendingDepositProofs[i],
-                    pendingDepositProofs.pendingDepositIndexes[i]
-                );
+                IBeaconProofs(BEACON_PROOFS)
+                    .verifyPendingDeposit(
+                        pendingDepositProofs.pendingDepositContainerRoot,
+                        pendingDepositRoot,
+                        pendingDepositProofs.pendingDepositProofs[i],
+                        pendingDepositProofs.pendingDepositIndexes[i]
+                    );
 
                 // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei +=
-                    uint256(deposits[pendingDepositRoot].amountGwei) *
-                    1 gwei;
+                totalDepositsWei += uint256(deposits[pendingDepositRoot].amountGwei) * 1 gwei;
             }
         }
 
         // Store the verified balance in storage
-        lastVerifiedEthBalance =
-            totalDepositsWei +
-            totalValidatorBalance +
-            balancesMem.ethBalance;
+        lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
         // Store the timestamp of the snapshot whose beacon chain data was successfully verified.
         lastVerifiedBalanceTimestamp = balancesMem.timestamp;
         // Reset the last snap timestamp so a new snapBalances has to be made
         snappedBalance.timestamp = 0;
 
-        emit BalancesVerified(
-            balancesMem.timestamp,
-            totalDepositsWei,
-            totalValidatorBalance,
-            balancesMem.ethBalance
-        );
+        emit BalancesVerified(balancesMem.timestamp, totalDepositsWei, totalValidatorBalance, balancesMem.ethBalance);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -1194,14 +1037,9 @@ contract CompoundingStakingStrategy is
         }
     }
 
-    function _setInitialDepositAmountWei(uint256 _initialDepositAmountWei)
-        internal
-    {
+    function _setInitialDepositAmountWei(uint256 _initialDepositAmountWei) internal {
         require(_initialDepositAmountWei >= 1 ether, "Deposit too small");
-        require(
-            _initialDepositAmountWei <= MAX_INITIAL_DEPOSIT_AMOUNT_WEI,
-            "Deposit too large"
-        );
+        require(_initialDepositAmountWei <= MAX_INITIAL_DEPOSIT_AMOUNT_WEI, "Deposit too large");
 
         initialDepositAmountWei = _initialDepositAmountWei;
         emit InitialDepositAmountChanged(_initialDepositAmountWei);
@@ -1237,7 +1075,7 @@ contract CompoundingStakingStrategy is
     /// @param _ethAmount The amount of ETH in wei.
     function _convertEthToWeth(uint256 _ethAmount) internal {
         // slither-disable-next-line arbitrary-send-eth
-        IWETH9(WETH).deposit{ value: _ethAmount }();
+        IWETH9(WETH).deposit{value: _ethAmount}();
 
         depositedWethAccountedFor += _ethAmount;
 
@@ -1289,12 +1127,7 @@ contract CompoundingStakingStrategy is
     /// To deposit WETH into validators, `stakeEth` must be used.
     /// @param _asset Address of the WETH token.
     /// @param _amount Amount of WETH that was transferred to the strategy by the vault.
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         if (_asset != WETH) {
             revert UnsupportedAsset();
         }
@@ -1325,27 +1158,16 @@ contract CompoundingStakingStrategy is
     /// @param _recipient Address to receive withdrawn assets.
     /// @param _asset Address of the WETH token.
     /// @param _amount Amount of WETH to withdraw.
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override nonReentrant {
         if (_asset != WETH) {
             revert UnsupportedAsset();
         }
-        require(
-            msg.sender == vaultAddress || msg.sender == validatorRegistrator,
-            "Caller not Vault or Registrator"
-        );
+        require(msg.sender == vaultAddress || msg.sender == validatorRegistrator, "Caller not Vault or Registrator");
 
         _withdraw(_recipient, _amount, address(this).balance);
     }
 
-    function _withdraw(
-        address _recipient,
-        uint256 _withdrawAmount,
-        uint256 _ethBalance
-    ) internal {
+    function _withdraw(address _recipient, uint256 _withdrawAmount, uint256 _ethBalance) internal {
         require(_withdrawAmount > 0, "Must withdraw something");
         require(_recipient == vaultAddress, "Recipient not Vault");
 
@@ -1365,8 +1187,7 @@ contract CompoundingStakingStrategy is
     /// `validatorWithdrawal` operation.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 ethBalance = address(this).balance;
-        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
-            ethBalance;
+        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) + ethBalance;
 
         if (withdrawAmount > 0) {
             _withdraw(vaultAddress, withdrawAmount, ethBalance);
@@ -1378,21 +1199,14 @@ contract CompoundingStakingStrategy is
     /// 2. The last verified ETH balance, total deposits and total validator balances
     /// @param _asset      Address of WETH asset.
     /// @return balance    Total value in ETH
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) external view override returns (uint256 balance) {
         if (_asset != WETH) {
             revert UnsupportedAsset();
         }
 
         // Load the last verified balance from the storage
         // and add to the latest WETH balance of this strategy.
-        balance =
-            lastVerifiedEthBalance +
-            IWETH9(WETH).balanceOf(address(this));
+        balance = lastVerifiedEthBalance + IWETH9(WETH).balanceOf(address(this));
     }
 
     /// @notice Returns bool indicating whether asset is supported by the strategy.

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Governable } from "../governance/Governable.sol";
-import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
-import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {Governable} from "../governance/Governable.sol";
+import {IPoolBooster} from "../interfaces/poolBooster/IPoolBooster.sol";
+import {IPoolBoostCentralRegistry} from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /**
  * @title Abstract Pool booster factory
@@ -29,17 +29,10 @@ contract AbstractPoolBoosterFactory is Governable {
     // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
-    constructor(
-        address _oToken,
-        address _governor,
-        address _centralRegistry
-    ) {
+    constructor(address _oToken, address _governor, address _centralRegistry) {
         require(_oToken != address(0), "Invalid oToken address");
         require(_governor != address(0), "Invalid governor address");
-        require(
-            _centralRegistry != address(0),
-            "Invalid central registry address"
-        );
+        require(_centralRegistry != address(0), "Invalid central registry address");
 
         oToken = _oToken;
         centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
@@ -78,11 +71,7 @@ contract AbstractPoolBoosterFactory is Governable {
      *      stop the yield delegation to it.
      * @param _poolBoosterAddress address of the pool booster
      */
-    function removePoolBooster(address _poolBoosterAddress)
-        external
-        virtual
-        onlyGovernor
-    {
+    function removePoolBooster(address _poolBoosterAddress) external virtual onlyGovernor {
         uint256 boostersLen = poolBoosters.length;
         for (uint256 i = 0; i < boostersLen; ++i) {
             if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {
@@ -105,58 +94,28 @@ contract AbstractPoolBoosterFactory is Governable {
         address _ammPoolAddress,
         IPoolBoostCentralRegistry.PoolBoosterType _boosterType
     ) internal {
-        PoolBoosterEntry memory entry = PoolBoosterEntry(
-            _poolBoosterAddress,
-            _ammPoolAddress,
-            _boosterType
-        );
+        PoolBoosterEntry memory entry = PoolBoosterEntry(_poolBoosterAddress, _ammPoolAddress, _boosterType);
 
         poolBoosters.push(entry);
         poolBoosterFromPool[_ammPoolAddress] = entry;
 
         // emit the events of the pool booster created
-        centralRegistry.emitPoolBoosterCreated(
-            _poolBoosterAddress,
-            _ammPoolAddress,
-            _boosterType
-        );
+        centralRegistry.emitPoolBoosterCreated(_poolBoosterAddress, _ammPoolAddress, _boosterType);
     }
 
-    function _deployContract(bytes memory _bytecode, uint256 _salt)
-        internal
-        returns (address _address)
-    {
+    function _deployContract(bytes memory _bytecode, uint256 _salt) internal returns (address _address) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            _address := create2(
-                0,
-                add(_bytecode, 0x20),
-                mload(_bytecode),
-                _salt
-            )
+            _address := create2(0, add(_bytecode, 0x20), mload(_bytecode), _salt)
         }
 
-        require(
-            _address.code.length > 0 && _address != address(0),
-            "Failed creating a pool booster"
-        );
+        require(_address.code.length > 0 && _address != address(0), "Failed creating a pool booster");
     }
 
     // pre-compute the address of the deployed contract that will be
     // created when create2 is called
-    function _computeAddress(bytes memory _bytecode, uint256 _salt)
-        internal
-        view
-        returns (address)
-    {
-        bytes32 hash = keccak256(
-            abi.encodePacked(
-                bytes1(0xff),
-                address(this),
-                _salt,
-                keccak256(_bytecode)
-            )
-        );
+    function _computeAddress(bytes memory _bytecode, uint256 _salt) internal view returns (address) {
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), _salt, keccak256(_bytecode)));
 
         // cast last 20 bytes of hash to address
         return address(uint160(uint256(hash)));
