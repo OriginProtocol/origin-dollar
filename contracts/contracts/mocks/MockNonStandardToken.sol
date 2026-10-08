@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./MintableERC20.sol";
 
@@ -18,7 +18,11 @@ contract MockNonStandardToken is MintableERC20 {
         return 6;
     }
 
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
+    function transfer(address recipient, uint256 amount)
+        public
+        override
+        returns (bool)
+    {
         if (balanceOf(msg.sender) < amount) {
             // Fail silently
             return false;
@@ -28,7 +32,11 @@ contract MockNonStandardToken is MintableERC20 {
         return true;
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override returns (bool) {
         if (balanceOf(sender) < amount) {
             // Fail silently
             return false;
@@ -38,7 +46,10 @@ contract MockNonStandardToken is MintableERC20 {
         _approve(
             sender,
             _msgSender(),
-            allowance(sender, _msgSender()).sub(amount, "ERC20: transfer amount exceeds allowance")
+            allowance(sender, _msgSender()).sub(
+                amount,
+                "ERC20: transfer amount exceeds allowance"
+            )
         );
         return true;
     }

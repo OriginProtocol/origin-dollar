@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
-import {IVault} from "../interfaces/IVault.sol";
-import {VaultStorage} from "../vault/VaultStorage.sol";
-import {IStrategy} from "../interfaces/IStrategy.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { VaultStorage } from "../vault/VaultStorage.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 /**
  * @title Auto Withdrawal Module
@@ -42,11 +42,19 @@ contract AutoWithdrawalModule is AbstractSafeModule {
     // ─────────────────────────────────────────────────────────── Events ──
 
     /// @notice Emitted when liquidity is successfully moved from strategy to vault.
-    event LiquidityWithdrawn(address indexed strategy, uint256 amount, uint256 remainingShortfall);
+    event LiquidityWithdrawn(
+        address indexed strategy,
+        uint256 amount,
+        uint256 remainingShortfall
+    );
 
     /// @notice Emitted when the strategy does not hold enough funds to cover the shortfall.
     ///         No withdrawal is attempted; an operator alert should fire on this event.
-    event InsufficientStrategyLiquidity(address indexed strategy, uint256 shortfall, uint256 available);
+    event InsufficientStrategyLiquidity(
+        address indexed strategy,
+        uint256 shortfall,
+        uint256 available
+    );
 
     /// @notice Emitted when the Safe exec call to withdrawFromStrategy fails.
     event WithdrawalFailed(address indexed strategy, uint256 attemptedAmount);
@@ -62,9 +70,12 @@ contract AutoWithdrawalModule is AbstractSafeModule {
      * @param _vault        Address of the OUSD/OETH vault.
      * @param _strategy     Initial strategy to pull liquidity from.
      */
-    constructor(address _safeContract, address _operator, address _vault, address _strategy)
-        AbstractSafeModule(_safeContract)
-    {
+    constructor(
+        address _safeContract,
+        address _operator,
+        address _vault,
+        address _strategy
+    ) AbstractSafeModule(_safeContract) {
         require(_vault != address(0), "Invalid vault");
         require(_strategy != address(0), "Invalid strategy");
 
@@ -108,10 +119,16 @@ contract AutoWithdrawalModule is AbstractSafeModule {
         uint256 strategyBalance = IStrategy(strategy).checkBalance(asset);
 
         // Withdraw the lesser of the shortfall and what the strategy holds.
-        uint256 toWithdraw = shortfall < strategyBalance ? shortfall : strategyBalance;
+        uint256 toWithdraw = shortfall < strategyBalance
+            ? shortfall
+            : strategyBalance;
 
         if (toWithdraw == 0) {
-            emit InsufficientStrategyLiquidity(strategy, shortfall, strategyBalance);
+            emit InsufficientStrategyLiquidity(
+                strategy,
+                shortfall,
+                strategyBalance
+            );
             return;
         }
 
@@ -124,7 +141,12 @@ contract AutoWithdrawalModule is AbstractSafeModule {
         bool success = safeContract.execTransactionFromModule(
             address(vault),
             0,
-            abi.encodeWithSelector(IVault.withdrawFromStrategy.selector, strategy, assets, amounts),
+            abi.encodeWithSelector(
+                IVault.withdrawFromStrategy.selector,
+                strategy,
+                assets,
+                amounts
+            ),
             0 // Call (not delegatecall)
         );
 
@@ -163,7 +185,8 @@ contract AutoWithdrawalModule is AbstractSafeModule {
      * @return shortfall Queue shortfall in asset units (vault asset decimals).
      */
     function pendingShortfall() public view returns (uint256 shortfall) {
-        VaultStorage.WithdrawalQueueMetadata memory meta = vault.withdrawalQueueMetadata();
+        VaultStorage.WithdrawalQueueMetadata memory meta = vault
+            .withdrawalQueueMetadata();
         shortfall = meta.queued - meta.claimable;
     }
 }

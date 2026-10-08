@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.25;
 
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
 
 interface IMaverickV2Quoter {
     error QuoterInvalidSwap();
@@ -22,9 +22,19 @@ interface IMaverickV2Quoter {
      * this tick, it will stop and return the output amount swapped up to that
      * tick.
      */
-    function calculateSwap(IMaverickV2Pool pool, uint128 amount, bool tokenAIn, bool exactOutput, int32 tickLimit)
+    function calculateSwap(
+        IMaverickV2Pool pool,
+        uint128 amount,
+        bool tokenAIn,
+        bool exactOutput,
+        int32 tickLimit
+    )
         external
-        returns (uint256 amountIn, uint256 amountOut, uint256 gasEstimate);
+        returns (
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 gasEstimate
+        );
 
     /**
      * @notice Calculates a multihop swap and returns the resulting amount and
@@ -36,21 +46,33 @@ interface IMaverickV2Quoter {
      * @param amount The input amount.
      * @param exactOutput A boolean indicating if exact output is required.
      */
-    function calculateMultiHopSwap(bytes memory path, uint256 amount, bool exactOutput)
-        external
-        returns (uint256 returnAmount, uint256 gasEstimate);
+    function calculateMultiHopSwap(
+        bytes memory path,
+        uint256 amount,
+        bool exactOutput
+    ) external returns (uint256 returnAmount, uint256 gasEstimate);
 
     /**
      * @notice Computes the token amounts required for a given set of
      * addLiquidity parameters. The gas estimate is only a rough estimate and
      * may not match a add's gas.
      */
-    function calculateAddLiquidity(IMaverickV2Pool pool, IMaverickV2Pool.AddLiquidityParams calldata params)
+    function calculateAddLiquidity(
+        IMaverickV2Pool pool,
+        IMaverickV2Pool.AddLiquidityParams calldata params
+    )
         external
-        returns (uint256 amountA, uint256 amountB, uint256 gasEstimate);
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 gasEstimate
+        );
 
     /**
      * @notice Pool's sqrt price.
      */
-    function poolSqrtPrice(IMaverickV2Pool pool) external view returns (uint256 sqrtPrice);
+    function poolSqrtPrice(IMaverickV2Pool pool)
+        external
+        view
+        returns (uint256 sqrtPrice);
 }

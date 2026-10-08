@@ -2,7 +2,11 @@
 pragma solidity ^0.8.0;
 
 interface IFeeSplitter {
-    event Distributed(address indexed asset, uint256 opsAmount, uint256 buybackAmount);
+    event Distributed(
+        address indexed asset,
+        uint256 opsAmount,
+        uint256 buybackAmount
+    );
     event OperationsBpsUpdated(uint16 bps);
     event OperationsWalletUpdated(address wallet);
     event HarvesterUpdated(address harvester);
@@ -11,8 +15,14 @@ interface IFeeSplitter {
     event AssetRemoved(address indexed asset);
     event MinDistributeUpdated(address indexed asset, uint256 minAmount);
     event Rescued(address indexed token, uint256 amount);
-    event GovernorshipTransferred(address indexed previousGovernor, address indexed newGovernor);
-    event PendingGovernorshipTransfer(address indexed previousGovernor, address indexed newGovernor);
+    event GovernorshipTransferred(
+        address indexed previousGovernor,
+        address indexed newGovernor
+    );
+    event PendingGovernorshipTransfer(
+        address indexed previousGovernor,
+        address indexed newGovernor
+    );
     event StrategistUpdated(address _address);
 
     function MAX_OPERATIONS_BPS() external view returns (uint16);
@@ -33,7 +43,10 @@ interface IFeeSplitter {
 
     function getSupportedAssets() external view returns (address[] memory);
 
-    function previewDistribute(address asset) external view returns (uint256 opsAmount, uint256 buybackAmount);
+    function previewDistribute(address asset)
+        external
+        view
+        returns (uint256 opsAmount, uint256 buybackAmount);
 
     function distribute() external;
 

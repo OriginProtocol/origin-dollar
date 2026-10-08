@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {SimpleHarvester, IERC20, IStrategy, SafeERC20} from "./SimpleHarvester.sol";
+import { SimpleHarvester, IERC20, IStrategy, SafeERC20 } from "./SimpleHarvester.sol";
 
 contract SuperOETHHarvester is SimpleHarvester {
     using SafeERC20 for IERC20;
 
-    constructor(address _wrappedNativeToken) SimpleHarvester(_wrappedNativeToken) {}
+    constructor(address _wrappedNativeToken)
+        SimpleHarvester(_wrappedNativeToken)
+    {}
 
     /// @inheritdoc SimpleHarvester
     function _harvestAndTransfer(address _strategy) internal virtual override {
@@ -20,7 +22,8 @@ contract SuperOETHHarvester is SimpleHarvester {
         IStrategy(_strategy).collectRewardTokens();
 
         // Cache reward tokens
-        address[] memory rewardTokens = IStrategy(_strategy).getRewardTokenAddresses();
+        address[] memory rewardTokens = IStrategy(_strategy)
+            .getRewardTokenAddresses();
 
         uint256 len = rewardTokens.length;
         for (uint256 i = 0; i < len; i++) {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "../utils/InitializableAbstractStrategy.sol";
-import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import {IVaultV2} from "../interfaces/morpho/IVaultV2.sol";
-import {IMorphoV2Adapter} from "../interfaces/morpho/IMorphoV2Adapter.sol";
+import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { IVaultV2 } from "../interfaces/morpho/IVaultV2.sol";
+import { IMorphoV2Adapter } from "../interfaces/morpho/IMorphoV2Adapter.sol";
 
 library MorphoV2VaultUtils {
     error IncompatibleAdapter(address adapter);
@@ -25,8 +25,12 @@ library MorphoV2VaultUtils {
 
         address liquidityAdapter = IVaultV2(platformAddress).liquidityAdapter();
         // this is a sufficient check to ensure the adapter is Morpho V1
-        try IMorphoV2Adapter(liquidityAdapter).morphoVaultV1() returns (address underlyingVault) {
-            availableAssetLiquidity += IERC4626(underlyingVault).maxWithdraw(liquidityAdapter);
+        try IMorphoV2Adapter(liquidityAdapter).morphoVaultV1() returns (
+            address underlyingVault
+        ) {
+            availableAssetLiquidity += IERC4626(underlyingVault).maxWithdraw(
+                liquidityAdapter
+            );
         } catch {
             revert IncompatibleAdapter(liquidityAdapter);
         }

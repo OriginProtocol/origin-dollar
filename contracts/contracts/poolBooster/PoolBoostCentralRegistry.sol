@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Governable} from "../governance/Governable.sol";
-import {IPoolBoostCentralRegistry} from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { Governable } from "../governance/Governable.sol";
+import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /**
  * @title Contract that holds all governance approved pool booster Factory
@@ -32,7 +32,10 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
      */
     function approveFactory(address _factoryAddress) external onlyGovernor {
         require(_factoryAddress != address(0), "Invalid address");
-        require(!isApprovedFactory(_factoryAddress), "Factory already approved");
+        require(
+            !isApprovedFactory(_factoryAddress),
+            "Factory already approved"
+        );
 
         factories.push(_factoryAddress);
         emit FactoryApproved(_factoryAddress);
@@ -72,10 +75,11 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
      * @param _ammPoolAddress address of the AMM pool forwarding yield to the pool booster
      * @param _boosterType PoolBoosterType the type of the pool booster
      */
-    function emitPoolBoosterCreated(address _poolBoosterAddress, address _ammPoolAddress, PoolBoosterType _boosterType)
-        external
-        onlyApprovedFactories
-    {
+    function emitPoolBoosterCreated(
+        address _poolBoosterAddress,
+        address _ammPoolAddress,
+        PoolBoosterType _boosterType
+    ) external onlyApprovedFactories {
         emit PoolBoosterCreated(
             _poolBoosterAddress,
             _ammPoolAddress,
@@ -91,7 +95,10 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
      *         events of this contract.
      * @param _poolBoosterAddress address of the pool booster to be removed
      */
-    function emitPoolBoosterRemoved(address _poolBoosterAddress) external onlyApprovedFactories {
+    function emitPoolBoosterRemoved(address _poolBoosterAddress)
+        external
+        onlyApprovedFactories
+    {
         emit PoolBoosterRemoved(_poolBoosterAddress);
     }
 
@@ -99,7 +106,11 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
      * @notice Returns true if the factory is approved
      * @param _factoryAddress address of the factory
      */
-    function isApprovedFactory(address _factoryAddress) public view returns (bool) {
+    function isApprovedFactory(address _factoryAddress)
+        public
+        view
+        returns (bool)
+    {
         uint256 length = factories.length;
         for (uint256 i = 0; i < length; i++) {
             if (factories[i] == _factoryAddress) {

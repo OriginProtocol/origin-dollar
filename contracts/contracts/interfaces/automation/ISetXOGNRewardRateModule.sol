@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
+import { IAbstractSafeModule } from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 
 interface ISetXOGNRewardRateModule is IAbstractSafeModule {
     event RewardRateSet(uint192 newRate, uint256 available);
-    event BoundsSet(uint192 minRate, uint192 maxRate, uint16 maxStepBps, uint256 minRunway, uint32 stepPeriod);
+    event BoundsSet(
+        uint192 minRate,
+        uint192 maxRate,
+        uint16 maxStepBps,
+        uint256 minRunway,
+        uint32 stepPeriod
+    );
 
     function rewardsSource() external view returns (address);
 
@@ -29,6 +35,11 @@ interface ISetXOGNRewardRateModule is IAbstractSafeModule {
 
     function setRewardRate(uint192 newRate) external;
 
-    function setBounds(uint192 minRate, uint192 maxRate, uint16 maxStepBps, uint256 minRunway, uint32 stepPeriod)
-        external;
+    function setBounds(
+        uint192 minRate,
+        uint192 maxRate,
+        uint16 maxStepBps,
+        uint256 minRunway,
+        uint32 stepPeriod
+    ) external;
 }

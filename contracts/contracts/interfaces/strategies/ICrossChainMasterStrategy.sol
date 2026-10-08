@@ -5,11 +5,21 @@ interface ICrossChainMasterStrategy {
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
     event PTokenAdded(address indexed _asset, address _pToken);
     event PTokenRemoved(address indexed _asset, address _pToken);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     // Events (from AbstractCCTPIntegrator)
     event LastTransferNonceUpdated(uint64 lastTransferNonce);
@@ -25,7 +35,12 @@ interface ICrossChainMasterStrategy {
         uint256 minFinalityThreshold,
         uint256 maxFee
     );
-    event MessageTransmitted(uint64 nonce, uint32 destinationDomain, bytes32 recipient, uint256 minFinalityThreshold);
+    event MessageTransmitted(
+        uint64 nonce,
+        uint32 destinationDomain,
+        bytes32 recipient,
+        uint256 minFinalityThreshold
+    );
 
     // Events (CrossChainMasterStrategy-specific)
     event RemoteStrategyBalanceUpdated(uint256 balance);
@@ -38,11 +53,18 @@ interface ICrossChainMasterStrategy {
 
     function depositAll() external;
 
-    function withdraw(address _recipient, address _asset, uint256 _amount) external;
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external;
 
     function withdrawAll() external;
 
-    function checkBalance(address _asset) external view returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
 
     function supportsAsset(address _asset) external view returns (bool);
 
@@ -54,7 +76,8 @@ interface ICrossChainMasterStrategy {
 
     function transferToken(address token, uint256 amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 
     // InitializableAbstractStrategy functions
     function platformAddress() external view returns (address);
@@ -65,7 +88,10 @@ interface ICrossChainMasterStrategy {
 
     function safeApproveAllTokens() external;
 
-    function rewardTokenAddresses(uint256 _index) external view returns (address);
+    function rewardTokenAddresses(uint256 _index)
+        external
+        view
+        returns (address);
 
     function setPTokenAddress(address _asset, address _pToken) external;
 
@@ -129,7 +155,11 @@ interface ICrossChainMasterStrategy {
     function relay(bytes memory message, bytes memory attestation) external;
 
     // CrossChainMasterStrategy-specific functions
-    function initialize(address _operator, uint16 _minFinalityThreshold, uint16 _feePremiumBps) external;
+    function initialize(
+        address _operator,
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
+    ) external;
 
     function remoteStrategyBalance() external view returns (uint256);
 

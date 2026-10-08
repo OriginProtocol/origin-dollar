@@ -9,13 +9,14 @@ pragma solidity ^0.8.0;
  *      maxRedeem() functions and rather return 0 when any of them is called.
  * @author Origin Protocol Inc
  */
-import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
-import {IDistributor} from "../interfaces/IMerkl.sol";
+import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { IDistributor } from "../interfaces/IMerkl.sol";
 
 contract Generalized4626Strategy is InitializableAbstractStrategy {
     /// @notice The address of the Merkle Distributor contract.
-    IDistributor public constant merkleDistributor = IDistributor(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae);
+    IDistributor public constant merkleDistributor =
+        IDistributor(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae);
 
     /// @dev Replaced with an immutable variable
     // slither-disable-next-line constable-states
@@ -37,7 +38,9 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
      * @param _assetToken Address of the ERC-4626 asset token. eg frxETH or DAI
      */
-    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken) InitializableAbstractStrategy(_baseConfig) {
+    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
+        InitializableAbstractStrategy(_baseConfig)
+    {
         shareToken = IERC20(_baseConfig.platformAddress);
         assetToken = IERC20(_assetToken);
     }
@@ -50,7 +53,11 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         assets[0] = address(assetToken);
         pTokens[0] = address(platformAddress);
 
-        InitializableAbstractStrategy._initialize(rewardTokens, assets, pTokens);
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
     }
 
     /**
@@ -58,7 +65,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount) external virtual override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        virtual
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_asset, _amount);
     }
 
@@ -92,17 +105,19 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function withdraw(address _recipient, address _asset, uint256 _amount)
-        external
-        virtual
-        override
-        onlyVault
-        nonReentrant
-    {
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external virtual override onlyVault nonReentrant {
         _withdraw(_recipient, _asset, _amount);
     }
 
-    function _withdraw(address _recipient, address _asset, uint256 _amount) internal virtual {
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal virtual {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
@@ -122,14 +137,30 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external virtual override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         // @dev Don't use for Morpho V2 Vaults as below line will return 0
-        uint256 sharesToRedeem = IERC4626(platformAddress).maxRedeem(address(this));
+        uint256 sharesToRedeem = IERC4626(platformAddress).maxRedeem(
+            address(this)
+        );
 
         uint256 assetAmount = 0;
         if (sharesToRedeem > 0) {
-            assetAmount = IERC4626(platformAddress).redeem(sharesToRedeem, vaultAddress, address(this));
-            emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
+            assetAmount = IERC4626(platformAddress).redeem(
+                sharesToRedeem,
+                vaultAddress,
+                address(this)
+            );
+            emit Withdrawal(
+                address(assetToken),
+                address(shareToken),
+                assetAmount
+            );
         }
     }
 
@@ -138,7 +169,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) public view virtual override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        virtual
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(assetToken), "Unexpected asset address");
         /* We are intentionally not counting the amount of assetToken parked on the
          * contract toward the checkBalance. The deposit and withdraw functions
@@ -167,7 +204,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) public view virtual override returns (bool) {
+    function supportsAsset(address _asset)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _asset == address(assetToken);
     }
 
@@ -195,7 +238,11 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     /// @param token The address of the token to claim.
     /// @param amount The amount of tokens to claim.
     /// @param proof The Merkle proof to validate the claim.
-    function merkleClaim(address token, uint256 amount, bytes32[] calldata proof) external {
+    function merkleClaim(
+        address token,
+        uint256 amount,
+        bytes32[] calldata proof
+    ) external {
         address[] memory users = new address[](1);
         users[0] = address(this);
 

@@ -5,11 +5,21 @@ interface IBaseCurveAMOStrategy {
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
     event PTokenAdded(address indexed _asset, address _pToken);
     event PTokenRemoved(address indexed _asset, address _pToken);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     // Events (BaseCurveAMOStrategy-specific)
     event MaxSlippageUpdated(uint256 newMaxSlippage);
@@ -19,11 +29,18 @@ interface IBaseCurveAMOStrategy {
 
     function depositAll() external;
 
-    function withdraw(address _recipient, address _asset, uint256 _amount) external;
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external;
 
     function withdrawAll() external;
 
-    function checkBalance(address _asset) external view returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
 
     function supportsAsset(address _asset) external view returns (bool);
 
@@ -35,7 +52,8 @@ interface IBaseCurveAMOStrategy {
 
     function transferToken(address token, uint256 amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 
     // InitializableAbstractStrategy functions
     function platformAddress() external view returns (address);
@@ -46,7 +64,10 @@ interface IBaseCurveAMOStrategy {
 
     function safeApproveAllTokens() external;
 
-    function rewardTokenAddresses(uint256 _index) external view returns (address);
+    function rewardTokenAddresses(uint256 _index)
+        external
+        view
+        returns (address);
 
     // Governable
     function governor() external view returns (address);
@@ -54,7 +75,10 @@ interface IBaseCurveAMOStrategy {
     function isGovernor() external view returns (bool);
 
     // BaseCurveAMOStrategy-specific functions
-    function initialize(address[] calldata _rewardTokenAddresses, uint256 _maxSlippage) external;
+    function initialize(
+        address[] calldata _rewardTokenAddresses,
+        uint256 _maxSlippage
+    ) external;
 
     function mintAndAddOTokens(uint256 _oTokens) external;
 

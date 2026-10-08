@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ERC4626} from "../../lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC4626 } from "../../lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Governable} from "../governance/Governable.sol";
-import {Initializable} from "../utils/Initializable.sol";
-import {OETH} from "./OETH.sol";
+import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { OETH } from "./OETH.sol";
 
 /**
  * @title Wrapped OETH Token Contract
@@ -64,15 +64,30 @@ contract WOETH is ERC4626, Governable, Initializable {
         if (totalSupply() == 0) {
             adjuster = 1e27;
         } else {
-            adjuster = (rebasingCreditsPerTokenHighres() * ERC20(asset()).balanceOf(address(this))) / totalSupply();
+            adjuster =
+                (rebasingCreditsPerTokenHighres() *
+                    ERC20(asset()).balanceOf(address(this))) /
+                totalSupply();
         }
     }
 
-    function name() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
+    function name()
+        public
+        view
+        virtual
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "Wrapped OETH";
     }
 
-    function symbol() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
+    function symbol()
+        public
+        view
+        virtual
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "wOETH";
     }
 
@@ -82,18 +97,33 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @param asset_ Address for the asset
      * @param amount_ Amount of the asset to transfer
      */
-    function transferToken(address asset_, uint256 amount_) external onlyGovernor {
+    function transferToken(address asset_, uint256 amount_)
+        external
+        onlyGovernor
+    {
         require(asset_ != address(asset()), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
     /// @inheritdoc ERC4626
-    function convertToShares(uint256 assets) public view virtual override returns (uint256 shares) {
+    function convertToShares(uint256 assets)
+        public
+        view
+        virtual
+        override
+        returns (uint256 shares)
+    {
         return (assets * rebasingCreditsPerTokenHighres()) / adjuster;
     }
 
     /// @inheritdoc ERC4626
-    function convertToAssets(uint256 shares) public view virtual override returns (uint256 assets) {
+    function convertToAssets(uint256 shares)
+        public
+        view
+        virtual
+        override
+        returns (uint256 assets)
+    {
         return (shares * adjuster) / rebasingCreditsPerTokenHighres();
     }
 

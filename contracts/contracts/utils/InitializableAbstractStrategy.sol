@@ -5,12 +5,12 @@ pragma solidity ^0.8.0;
  * @title Base contract for vault strategies.
  * @author Origin Protocol Inc
  */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Initializable} from "../utils/Initializable.sol";
-import {Governable} from "../governance/Governable.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { Governable } from "../governance/Governable.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
@@ -19,9 +19,19 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     event PTokenRemoved(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     /// @notice Address of the underlying platform
     address public immutable platformAddress;
@@ -93,9 +103,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
-    function _initialize(address[] memory _rewardTokenAddresses, address[] memory _assets, address[] memory _pTokens)
-        internal
-    {
+    function _initialize(
+        address[] memory _rewardTokenAddresses,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) internal {
         rewardTokenAddresses = _rewardTokenAddresses;
 
         uint256 assetCount = _assets.length;
@@ -109,7 +121,12 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Collect accumulated reward token and send to Vault.
      *         No-ops when the harvester address is not set.
      */
-    function collectRewardTokens() external virtual onlyHarvesterOrStrategist nonReentrant {
+    function collectRewardTokens()
+        external
+        virtual
+        onlyHarvesterOrStrategist
+        nonReentrant
+    {
         if (harvesterAddress == address(0)) {
             return;
         }
@@ -129,7 +146,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
             if (balance > 0) {
-                emit RewardTokenCollected(harvesterAddress, address(rewardToken), balance);
+                emit RewardTokenCollected(
+                    harvesterAddress,
+                    address(rewardToken),
+                    balance
+                );
                 rewardToken.safeTransfer(harvesterAddress, balance);
             }
         }
@@ -148,7 +169,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     modifier onlyHarvesterOrStrategist() {
         require(
-            msg.sender == harvesterAddress || msg.sender == IVault(vaultAddress).strategistAddr(),
+            msg.sender == harvesterAddress ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Harvester or Strategist"
         );
         _;
@@ -158,7 +180,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Verifies that the caller is the Vault or Governor.
      */
     modifier onlyVaultOrGovernor() {
-        require(msg.sender == vaultAddress || msg.sender == governor(), "Caller is not the Vault or Governor");
+        require(
+            msg.sender == vaultAddress || msg.sender == governor(),
+            "Caller is not the Vault or Governor"
+        );
         _;
     }
 
@@ -167,8 +192,9 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     modifier onlyVaultOrGovernorOrStrategist() {
         require(
-            msg.sender == vaultAddress || msg.sender == governor()
-                || msg.sender == IVault(vaultAddress).strategistAddr(),
+            msg.sender == vaultAddress ||
+                msg.sender == governor() ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Vault, Governor, or Strategist"
         );
         _;
@@ -178,13 +204,22 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Set the reward token addresses. Any old addresses will be overwritten.
      * @param _rewardTokenAddresses Array of reward token addresses
      */
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external onlyGovernor {
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external
+        onlyGovernor
+    {
         uint256 rewardTokenCount = _rewardTokenAddresses.length;
         for (uint256 i = 0; i < rewardTokenCount; ++i) {
-            require(_rewardTokenAddresses[i] != address(0), "Can not set an empty address as a reward token");
+            require(
+                _rewardTokenAddresses[i] != address(0),
+                "Can not set an empty address as a reward token"
+            );
         }
 
-        emit RewardTokenAddressesUpdated(rewardTokenAddresses, _rewardTokenAddresses);
+        emit RewardTokenAddressesUpdated(
+            rewardTokenAddresses,
+            _rewardTokenAddresses
+        );
         rewardTokenAddresses = _rewardTokenAddresses;
     }
 
@@ -192,7 +227,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Get the reward token addresses.
      * @return address[] the reward token addresses.
      */
-    function getRewardTokenAddresses() external view returns (address[] memory) {
+    function getRewardTokenAddresses()
+        external
+        view
+        returns (address[] memory)
+    {
         return rewardTokenAddresses;
     }
 
@@ -202,7 +241,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
      */
-    function setPTokenAddress(address _asset, address _pToken) external virtual onlyGovernor {
+    function setPTokenAddress(address _asset, address _pToken)
+        external
+        virtual
+        onlyGovernor
+    {
         _setPTokenAddress(_asset, _pToken);
     }
 
@@ -234,7 +277,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function _setPTokenAddress(address _asset, address _pToken) internal {
         require(assetToPToken[_asset] == address(0), "pToken already set");
-        require(_asset != address(0) && _pToken != address(0), "Invalid addresses");
+        require(
+            _asset != address(0) && _pToken != address(0),
+            "Invalid addresses"
+        );
 
         assetToPToken[_asset] = _pToken;
         assetsMapped.push(_asset);
@@ -250,7 +296,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount) public virtual onlyGovernor {
+    function transferToken(address _asset, uint256 _amount)
+        public
+        virtual
+        onlyGovernor
+    {
         require(!supportsAsset(_asset), "Cannot transfer supported asset");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
@@ -259,7 +309,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Set the Harvester contract that can collect rewards.
      * @param _harvesterAddress Address of the harvester contract.
      */
-    function setHarvesterAddress(address _harvesterAddress) external onlyGovernorOrStrategist {
+    function setHarvesterAddress(address _harvesterAddress)
+        external
+        onlyGovernorOrStrategist
+    {
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
         harvesterAddress = _harvesterAddress;
     }
@@ -268,7 +321,9 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
                  Abstract
     ****************************************/
 
-    function _abstractSetPToken(address _asset, address _pToken) internal virtual;
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        virtual;
 
     function safeApproveAllTokens() external virtual;
 
@@ -291,7 +346,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
      */
-    function withdraw(address _recipient, address _asset, uint256 _amount) external virtual;
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external virtual;
 
     /**
      * @notice Withdraw all supported assets from platform and
@@ -305,7 +364,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view virtual returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        virtual
+        returns (uint256 balance);
 
     /**
      * @notice Check if an asset is supported.

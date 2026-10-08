@@ -4,12 +4,25 @@ pragma solidity ^0.8.0;
 interface IWOToken {
     // Events (ERC20)
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     // Events (ERC4626)
-    event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
+    event Deposit(
+        address indexed sender,
+        address indexed owner,
+        uint256 assets,
+        uint256 shares
+    );
     event Withdraw(
-        address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares
+        address indexed sender,
+        address indexed receiver,
+        address indexed owner,
+        uint256 assets,
+        uint256 shares
     );
 
     // ERC20 view functions
@@ -23,14 +36,21 @@ interface IWOToken {
 
     function balanceOf(address account) external view returns (uint256);
 
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     // ERC20 state-changing functions
     function transfer(address to, uint256 amount) external returns (bool);
 
     function approve(address spender, uint256 amount) external returns (bool);
 
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
 
     // ERC4626 view functions
     function asset() external view returns (address);
@@ -58,13 +78,25 @@ interface IWOToken {
     function previewRedeem(uint256 shares) external view returns (uint256);
 
     // ERC4626 state-changing functions
-    function deposit(uint256 assets, address receiver) external returns (uint256 shares);
+    function deposit(uint256 assets, address receiver)
+        external
+        returns (uint256 shares);
 
-    function mint(uint256 shares, address receiver) external returns (uint256 assets);
+    function mint(uint256 shares, address receiver)
+        external
+        returns (uint256 assets);
 
-    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares);
+    function withdraw(
+        uint256 assets,
+        address receiver,
+        address owner
+    ) external returns (uint256 shares);
 
-    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
+    function redeem(
+        uint256 shares,
+        address receiver,
+        address owner
+    ) external returns (uint256 assets);
 
     // Governable
     function governor() external view returns (address);

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolBoosterSwapxDouble} from "./PoolBoosterSwapxDouble.sol";
-import {AbstractPoolBoosterFactory, IPoolBoostCentralRegistry} from "./AbstractPoolBoosterFactory.sol";
+import { PoolBoosterSwapxDouble } from "./PoolBoosterSwapxDouble.sol";
+import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
 /**
  * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the
@@ -15,9 +15,11 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
     // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
-    constructor(address _oToken, address _governor, address _centralRegistry)
-        AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry)
-    {}
+    constructor(
+        address _oToken,
+        address _governor,
+        address _centralRegistry
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {}
 
     /**
      * @dev Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be
@@ -38,7 +40,10 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
         uint256 _split,
         uint256 _salt
     ) external onlyGovernor {
-        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
         require(_salt > 0, "Invalid salt");
 
         address poolBoosterAddress = _deployContract(
@@ -50,7 +55,9 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
         );
 
         _storePoolBoosterEntry(
-            poolBoosterAddress, _ammPoolAddress, IPoolBoostCentralRegistry.PoolBoosterType.SwapXDoubleBooster
+            poolBoosterAddress,
+            _ammPoolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXDoubleBooster
         );
     }
 
@@ -72,15 +79,24 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
         uint256 _split,
         uint256 _salt
     ) external view returns (address) {
-        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
         require(_salt > 0, "Invalid salt");
 
-        return _computeAddress(
-            abi.encodePacked(
-                type(PoolBoosterSwapxDouble).creationCode,
-                abi.encode(_bribeAddressOS, _bribeAddressOther, oToken, _split)
-            ),
-            _salt
-        );
+        return
+            _computeAddress(
+                abi.encodePacked(
+                    type(PoolBoosterSwapxDouble).creationCode,
+                    abi.encode(
+                        _bribeAddressOS,
+                        _bribeAddressOther,
+                        oToken,
+                        _split
+                    )
+                ),
+                _salt
+            );
     }
 }

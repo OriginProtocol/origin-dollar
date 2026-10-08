@@ -6,8 +6,8 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the SwapX OS/wS stable pool
  * @author Origin Protocol Inc
  */
-import {StableSwapAMMStrategy} from "../algebra/StableSwapAMMStrategy.sol";
-import {IGauge} from "../../interfaces/algebra/IAlgebraGauge.sol";
+import { StableSwapAMMStrategy } from "../algebra/StableSwapAMMStrategy.sol";
+import { IGauge } from "../../interfaces/algebra/IAlgebraGauge.sol";
 
 contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
     /**

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolBoosterSwapxSingle} from "./PoolBoosterSwapxSingle.sol";
-import {AbstractPoolBoosterFactory, IPoolBoostCentralRegistry} from "./AbstractPoolBoosterFactory.sol";
+import { PoolBoosterSwapxSingle } from "./PoolBoosterSwapxSingle.sol";
+import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
 /**
  * @title Pool booster factory for creating Swapx Single pool boosters - where a single
@@ -16,9 +16,11 @@ contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
     // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
-    constructor(address _oToken, address _governor, address _centralRegistry)
-        AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry)
-    {}
+    constructor(
+        address _oToken,
+        address _governor,
+        address _centralRegistry
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {}
 
     /**
      * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools where
@@ -29,19 +31,29 @@ contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
      *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
      *        and pre-computed address to match
      */
-    function createPoolBoosterSwapxSingle(address _bribeAddress, address _ammPoolAddress, uint256 _salt)
-        external
-        onlyGovernor
-    {
-        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
+    function createPoolBoosterSwapxSingle(
+        address _bribeAddress,
+        address _ammPoolAddress,
+        uint256 _salt
+    ) external onlyGovernor {
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
         require(_salt > 0, "Invalid salt");
 
         address poolBoosterAddress = _deployContract(
-            abi.encodePacked(type(PoolBoosterSwapxSingle).creationCode, abi.encode(_bribeAddress, oToken)), _salt
+            abi.encodePacked(
+                type(PoolBoosterSwapxSingle).creationCode,
+                abi.encode(_bribeAddress, oToken)
+            ),
+            _salt
         );
 
         _storePoolBoosterEntry(
-            poolBoosterAddress, _ammPoolAddress, IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
+            poolBoosterAddress,
+            _ammPoolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
         );
     }
 
@@ -54,16 +66,24 @@ contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
      *        should match the one from `createPoolBoosterSwapxSingle` in order for the final deployed address
      *        and pre-computed address to match
      */
-    function computePoolBoosterAddress(address _bribeAddress, address _ammPoolAddress, uint256 _salt)
-        external
-        view
-        returns (address)
-    {
-        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
+    function computePoolBoosterAddress(
+        address _bribeAddress,
+        address _ammPoolAddress,
+        uint256 _salt
+    ) external view returns (address) {
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
         require(_salt > 0, "Invalid salt");
 
-        return _computeAddress(
-            abi.encodePacked(type(PoolBoosterSwapxSingle).creationCode, abi.encode(_bribeAddress, oToken)), _salt
-        );
+        return
+            _computeAddress(
+                abi.encodePacked(
+                    type(PoolBoosterSwapxSingle).creationCode,
+                    abi.encode(_bribeAddress, oToken)
+                ),
+                _salt
+            );
     }
 }

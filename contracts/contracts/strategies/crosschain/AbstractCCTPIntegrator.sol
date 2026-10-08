@@ -8,14 +8,14 @@ pragma solidity ^0.8.0;
  * @dev Abstract contract that contains all the logic used to integrate with CCTP.
  */
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "../../utils/InitializableAbstractStrategy.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
-import {ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2} from "../../interfaces/cctp/ICCTP.sol";
+import { ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
 
-import {CrossChainStrategyHelper} from "./CrossChainStrategyHelper.sol";
-import {Governable} from "../../governance/Governable.sol";
-import {BytesHelper} from "../../utils/BytesHelper.sol";
+import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
+import { Governable } from "../../governance/Governable.sol";
+import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
 
 abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
@@ -40,7 +40,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         bytes hookData
     );
     event MessageTransmitted(
-        uint32 destinationDomain, address peerStrategy, uint32 minFinalityThreshold, bytes message
+        uint32 destinationDomain,
+        address peerStrategy,
+        uint32 minFinalityThreshold,
+        bytes message
     );
 
     // Message body V2 fields
@@ -66,10 +69,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *          to a standard transfer. Reference section 4.3 in the whitepaper:
      *          https://6778953.fs1.hubspotusercontent-na1.net/hubfs/6778953/PDFs/Whitepapers/CCTPV2_White_Paper.pdf
      */
-    uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10 ** 6; // 10M USDC
+    uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
     /// @notice Minimum transfer amount to avoid zero or dust transfers
-    uint256 public constant MIN_TRANSFER_AMOUNT = 10 ** 6;
+    uint256 public constant MIN_TRANSFER_AMOUNT = 10**6;
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
@@ -117,7 +120,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     uint256[48] private __gap;
 
     modifier onlyCCTPMessageTransmitter() {
-        require(msg.sender == address(cctpMessageTransmitter), "Caller is not CCTP transmitter");
+        require(
+            msg.sender == address(cctpMessageTransmitter),
+            "Caller is not CCTP transmitter"
+        );
         _;
     }
 
@@ -147,12 +153,26 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     constructor(CCTPIntegrationConfig memory _config) {
         require(_config.usdcToken != address(0), "Invalid USDC address");
-        require(_config.peerUsdcToken != address(0), "Invalid peer USDC address");
-        require(_config.cctpTokenMessenger != address(0), "Invalid CCTP config");
-        require(_config.cctpMessageTransmitter != address(0), "Invalid CCTP config");
-        require(_config.peerStrategy != address(0), "Invalid peer strategy address");
+        require(
+            _config.peerUsdcToken != address(0),
+            "Invalid peer USDC address"
+        );
+        require(
+            _config.cctpTokenMessenger != address(0),
+            "Invalid CCTP config"
+        );
+        require(
+            _config.cctpMessageTransmitter != address(0),
+            "Invalid CCTP config"
+        );
+        require(
+            _config.peerStrategy != address(0),
+            "Invalid peer strategy address"
+        );
 
-        cctpMessageTransmitter = ICCTPMessageTransmitter(_config.cctpMessageTransmitter);
+        cctpMessageTransmitter = ICCTPMessageTransmitter(
+            _config.cctpMessageTransmitter
+        );
         cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
 
         // Domain ID of the chain from which messages are accepted
@@ -170,7 +190,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         string memory _usdcTokenSymbol = Helpers.getSymbol(_config.usdcToken);
         require(_usdcTokenDecimals == 6, "Base token decimals must be 6");
         require(
-            keccak256(abi.encodePacked(_usdcTokenSymbol)) == keccak256(abi.encodePacked("USDC")),
+            keccak256(abi.encodePacked(_usdcTokenSymbol)) ==
+                keccak256(abi.encodePacked("USDC")),
             "Token symbol must be USDC"
         );
 
@@ -184,7 +205,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param _minFinalityThreshold Minimum finality threshold
      * @param _feePremiumBps Fee premium in basis points
      */
-    function _initialize(address _operator, uint16 _minFinalityThreshold, uint16 _feePremiumBps) internal {
+    function _initialize(
+        address _operator,
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
+    ) internal {
         _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
         _setFeePremiumBps(_feePremiumBps);
@@ -222,7 +247,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *      2000 (Finalized, after 2 epochs).
      * @param _minFinalityThreshold Minimum finality threshold
      */
-    function setMinFinalityThreshold(uint16 _minFinalityThreshold) external onlyGovernor {
+    function setMinFinalityThreshold(uint16 _minFinalityThreshold)
+        external
+        onlyGovernor
+    {
         _setMinFinalityThreshold(_minFinalityThreshold);
     }
 
@@ -232,7 +260,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      */
     function _setMinFinalityThreshold(uint16 _minFinalityThreshold) internal {
         // 1000 for fast transfer and 2000 for standard transfer
-        require(_minFinalityThreshold == 1000 || _minFinalityThreshold == 2000, "Invalid threshold");
+        require(
+            _minFinalityThreshold == 1000 || _minFinalityThreshold == 2000,
+            "Invalid threshold"
+        );
 
         minFinalityThreshold = _minFinalityThreshold;
         emit CCTPMinFinalityThresholdSet(_minFinalityThreshold);
@@ -278,7 +309,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         bytes memory messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
         // Make sure the finality threshold at execution is at least 2000
-        require(finalityThresholdExecuted >= 2000, "Finality threshold too low");
+        require(
+            finalityThresholdExecuted >= 2000,
+            "Finality threshold too low"
+        );
 
         return _handleReceivedMessage(sourceDomain, sender, messageBody);
     }
@@ -297,9 +331,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         bytes memory messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
         // Make sure the contract is configured to handle unfinalized messages
-        require(minFinalityThreshold == 1000, "Unfinalized messages are not supported");
+        require(
+            minFinalityThreshold == 1000,
+            "Unfinalized messages are not supported"
+        );
         // Make sure the finality threshold at execution is at least 1000
-        require(finalityThresholdExecuted >= 1000, "Finality threshold too low");
+        require(
+            finalityThresholdExecuted >= 1000,
+            "Finality threshold too low"
+        );
 
         return _handleReceivedMessage(sourceDomain, sender, messageBody);
     }
@@ -310,10 +350,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param sender Sender of the message
      * @param messageBody Message body
      */
-    function _handleReceivedMessage(uint32 sourceDomain, bytes32 sender, bytes memory messageBody)
-        internal
-        returns (bool)
-    {
+    function _handleReceivedMessage(
+        uint32 sourceDomain,
+        bytes32 sender,
+        bytes memory messageBody
+    ) internal returns (bool) {
         require(sourceDomain == peerDomainID, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
@@ -330,7 +371,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param tokenAmount Amount of tokens to send
      * @param hookData Hook data
      */
-    function _sendTokens(uint256 tokenAmount, bytes memory hookData) internal virtual {
+    function _sendTokens(uint256 tokenAmount, bytes memory hookData)
+        internal
+        virtual
+    {
         // CCTP has a maximum transfer amount of 10M USDC per tx
         require(tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
 
@@ -345,7 +389,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // We will only be using standard transfers and fee on those is 0 for now. If they
         // ever start implementing fee for standard transfers or if we decide to use fast
         // trasnfer, we can use feePremiumBps as a workaround.
-        uint256 maxFee = feePremiumBps > 0 ? (tokenAmount * feePremiumBps) / 10000 : 0;
+        uint256 maxFee = feePremiumBps > 0
+            ? (tokenAmount * feePremiumBps) / 10000
+            : 0;
 
         // Send tokens to the peer strategy using CCTP Token Messenger
         cctpTokenMessenger.depositForBurnWithHook(
@@ -360,7 +406,13 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
 
         emit TokensBridged(
-            peerDomainID, peerStrategy, usdcToken, tokenAmount, maxFee, uint32(minFinalityThreshold), hookData
+            peerDomainID,
+            peerStrategy,
+            usdcToken,
+            tokenAmount,
+            maxFee,
+            uint32(minFinalityThreshold),
+            hookData
         );
     }
 
@@ -377,7 +429,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             message
         );
 
-        emit MessageTransmitted(peerDomainID, peerStrategy, uint32(minFinalityThreshold), message);
+        emit MessageTransmitted(
+            peerDomainID,
+            peerStrategy,
+            uint32(minFinalityThreshold),
+            message
+        );
     }
 
     /**
@@ -388,12 +445,23 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param message Payload of the message to send
      * @param attestation Attestation of the message
      */
-    function relay(bytes memory message, bytes memory attestation) external onlyOperator {
-        (uint32 version, uint32 sourceDomainID, address sender, address recipient, bytes memory messageBody) =
-            message.decodeMessageHeader();
+    function relay(bytes memory message, bytes memory attestation)
+        external
+        onlyOperator
+    {
+        (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        ) = message.decodeMessageHeader();
 
         // Ensure that it's a CCTP message
-        require(version == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION, "Invalid CCTP message version");
+        require(
+            version == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION,
+            "Invalid CCTP message version"
+        );
 
         // Ensure that the source domain is the peer domain
         require(sourceDomainID == peerDomainID, "Unknown Source Domain");
@@ -413,19 +481,32 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         if (isBurnMessageV1) {
             // Handle burn message
-            require(version == 1 && messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX, "Invalid burn message");
+            require(
+                version == 1 &&
+                    messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX,
+                "Invalid burn message"
+            );
 
             // Ensure the burn token is USDC
-            address burnToken = messageBody.extractAddress(BURN_MESSAGE_V2_BURN_TOKEN_INDEX);
+            address burnToken = messageBody.extractAddress(
+                BURN_MESSAGE_V2_BURN_TOKEN_INDEX
+            );
             require(burnToken == peerUsdcToken, "Invalid burn token");
 
             // Address of caller of depositForBurn (or depositForBurnWithCaller) on source domain
-            sender = messageBody.extractAddress(BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX);
+            sender = messageBody.extractAddress(
+                BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX
+            );
 
-            recipient = messageBody.extractAddress(BURN_MESSAGE_V2_RECIPIENT_INDEX);
+            recipient = messageBody.extractAddress(
+                BURN_MESSAGE_V2_RECIPIENT_INDEX
+            );
         } else {
             // We handle only Burn message or our custom messagee
-            require(version == CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION, "Unsupported message version");
+            require(
+                version == CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION,
+                "Unsupported message version"
+            );
         }
 
         // Ensure the recipient is this contract
@@ -435,18 +516,28 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         // Relay the message
         // This step also mints USDC and transfers it to the recipient wallet
-        bool relaySuccess = cctpMessageTransmitter.receiveMessage(message, attestation);
+        bool relaySuccess = cctpMessageTransmitter.receiveMessage(
+            message,
+            attestation
+        );
         require(relaySuccess, "Receive message failed");
 
         if (isBurnMessageV1) {
             // Extract the hook data from the message body
-            bytes memory hookData = messageBody.extractSlice(BURN_MESSAGE_V2_HOOK_DATA_INDEX, messageBody.length);
+            bytes memory hookData = messageBody.extractSlice(
+                BURN_MESSAGE_V2_HOOK_DATA_INDEX,
+                messageBody.length
+            );
 
             // Extract the token amount from the message body
-            uint256 tokenAmount = messageBody.extractUint256(BURN_MESSAGE_V2_AMOUNT_INDEX);
+            uint256 tokenAmount = messageBody.extractUint256(
+                BURN_MESSAGE_V2_AMOUNT_INDEX
+            );
 
             // Extract the fee executed from the message body
-            uint256 feeExecuted = messageBody.extractUint256(BURN_MESSAGE_V2_FEE_EXECUTED_INDEX);
+            uint256 feeExecuted = messageBody.extractUint256(
+                BURN_MESSAGE_V2_FEE_EXECUTED_INDEX
+            );
 
             // Call the _onTokenReceived function
             _onTokenReceived(tokenAmount - feeExecuted, feeExecuted, hookData);
@@ -537,7 +628,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param feeExecuted The fee executed
      * @param payload The payload of the message (hook data)
      */
-    function _onTokenReceived(uint256 tokenAmount, uint256 feeExecuted, bytes memory payload) internal virtual;
+    function _onTokenReceived(
+        uint256 tokenAmount,
+        uint256 feeExecuted,
+        bytes memory payload
+    ) internal virtual;
 
     /**
      * @dev Called when the message is received

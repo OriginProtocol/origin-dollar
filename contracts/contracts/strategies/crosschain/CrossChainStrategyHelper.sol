@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
  *      It is used to ensure that the messages are valid and to get the message version and type.
  */
 
-import {BytesHelper} from "../../utils/BytesHelper.sol";
+import { BytesHelper } from "../../utils/BytesHelper.sol";
 
 library CrossChainStrategyHelper {
     using BytesHelper for bytes;
@@ -35,7 +35,11 @@ library CrossChainStrategyHelper {
      * @param message The message to get the version from
      * @return The message version
      */
-    function getMessageVersion(bytes memory message) internal pure returns (uint32) {
+    function getMessageVersion(bytes memory message)
+        internal
+        pure
+        returns (uint32)
+    {
         // uint32 bytes 0 to 4 is Origin message version
         // uint32 bytes 4 to 8 is Message type
         return message.extractUint32(0);
@@ -48,7 +52,11 @@ library CrossChainStrategyHelper {
      * @param message The message to get the type from
      * @return The message type
      */
-    function getMessageType(bytes memory message) internal pure returns (uint32) {
+    function getMessageType(bytes memory message)
+        internal
+        pure
+        returns (uint32)
+    {
         // uint32 bytes 0 to 4 is Origin message version
         // uint32 bytes 4 to 8 is Message type
         return message.extractUint32(4);
@@ -61,8 +69,14 @@ library CrossChainStrategyHelper {
      * @param _message The message to verify
      * @param _type The expected message type
      */
-    function verifyMessageVersionAndType(bytes memory _message, uint32 _type) internal pure {
-        require(getMessageVersion(_message) == ORIGIN_MESSAGE_VERSION, "Invalid Origin Message Version");
+    function verifyMessageVersionAndType(bytes memory _message, uint32 _type)
+        internal
+        pure
+    {
+        require(
+            getMessageVersion(_message) == ORIGIN_MESSAGE_VERSION,
+            "Invalid Origin Message Version"
+        );
         require(getMessageType(_message) == _type, "Invalid Message type");
     }
 
@@ -72,7 +86,11 @@ library CrossChainStrategyHelper {
      * @param message The message to get the payload from
      * @return The message payload
      */
-    function getMessagePayload(bytes memory message) internal pure returns (bytes memory) {
+    function getMessagePayload(bytes memory message)
+        internal
+        pure
+        returns (bytes memory)
+    {
         // uint32 bytes 0 to 4 is Origin message version
         // uint32 bytes 4 to 8 is Message type
         // Payload starts at byte 8
@@ -86,8 +104,17 @@ library CrossChainStrategyHelper {
      * @param depositAmount The amount of the deposit
      * @return The encoded deposit message
      */
-    function encodeDepositMessage(uint64 nonce, uint256 depositAmount) internal pure returns (bytes memory) {
-        return abi.encodePacked(ORIGIN_MESSAGE_VERSION, DEPOSIT_MESSAGE, abi.encode(nonce, depositAmount));
+    function encodeDepositMessage(uint64 nonce, uint256 depositAmount)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodePacked(
+                ORIGIN_MESSAGE_VERSION,
+                DEPOSIT_MESSAGE,
+                abi.encode(nonce, depositAmount)
+            );
     }
 
     /**
@@ -96,10 +123,17 @@ library CrossChainStrategyHelper {
      * @param message The message to decode
      * @return The nonce and the amount of the deposit
      */
-    function decodeDepositMessage(bytes memory message) internal pure returns (uint64, uint256) {
+    function decodeDepositMessage(bytes memory message)
+        internal
+        pure
+        returns (uint64, uint256)
+    {
         verifyMessageVersionAndType(message, DEPOSIT_MESSAGE);
 
-        (uint64 nonce, uint256 depositAmount) = abi.decode(getMessagePayload(message), (uint64, uint256));
+        (uint64 nonce, uint256 depositAmount) = abi.decode(
+            getMessagePayload(message),
+            (uint64, uint256)
+        );
         return (nonce, depositAmount);
     }
 
@@ -110,8 +144,17 @@ library CrossChainStrategyHelper {
      * @param withdrawAmount The amount of the withdrawal
      * @return The encoded withdrawal message
      */
-    function encodeWithdrawMessage(uint64 nonce, uint256 withdrawAmount) internal pure returns (bytes memory) {
-        return abi.encodePacked(ORIGIN_MESSAGE_VERSION, WITHDRAW_MESSAGE, abi.encode(nonce, withdrawAmount));
+    function encodeWithdrawMessage(uint64 nonce, uint256 withdrawAmount)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodePacked(
+                ORIGIN_MESSAGE_VERSION,
+                WITHDRAW_MESSAGE,
+                abi.encode(nonce, withdrawAmount)
+            );
     }
 
     /**
@@ -120,10 +163,17 @@ library CrossChainStrategyHelper {
      * @param message The message to decode
      * @return The nonce and the amount of the withdrawal
      */
-    function decodeWithdrawMessage(bytes memory message) internal pure returns (uint64, uint256) {
+    function decodeWithdrawMessage(bytes memory message)
+        internal
+        pure
+        returns (uint64, uint256)
+    {
         verifyMessageVersionAndType(message, WITHDRAW_MESSAGE);
 
-        (uint64 nonce, uint256 withdrawAmount) = abi.decode(getMessagePayload(message), (uint64, uint256));
+        (uint64 nonce, uint256 withdrawAmount) = abi.decode(
+            getMessagePayload(message),
+            (uint64, uint256)
+        );
         return (nonce, withdrawAmount);
     }
 
@@ -136,14 +186,18 @@ library CrossChainStrategyHelper {
      *                            when the message is a result of a deposit or a withdrawal.
      * @return The encoded balance check message
      */
-    function encodeBalanceCheckMessage(uint64 nonce, uint256 balance, bool transferConfirmation, uint256 timestamp)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodePacked(
-            ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE, abi.encode(nonce, balance, transferConfirmation, timestamp)
-        );
+    function encodeBalanceCheckMessage(
+        uint64 nonce,
+        uint256 balance,
+        bool transferConfirmation,
+        uint256 timestamp
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                ORIGIN_MESSAGE_VERSION,
+                BALANCE_CHECK_MESSAGE,
+                abi.encode(nonce, balance, transferConfirmation, timestamp)
+            );
     }
 
     /**
@@ -152,11 +206,27 @@ library CrossChainStrategyHelper {
      * @param message The message to decode
      * @return The nonce, the balance and indicates if the message is a transfer confirmation
      */
-    function decodeBalanceCheckMessage(bytes memory message) internal pure returns (uint64, uint256, bool, uint256) {
+    function decodeBalanceCheckMessage(bytes memory message)
+        internal
+        pure
+        returns (
+            uint64,
+            uint256,
+            bool,
+            uint256
+        )
+    {
         verifyMessageVersionAndType(message, BALANCE_CHECK_MESSAGE);
 
-        (uint64 nonce, uint256 balance, bool transferConfirmation, uint256 timestamp) =
-            abi.decode(getMessagePayload(message), (uint64, uint256, bool, uint256));
+        (
+            uint64 nonce,
+            uint256 balance,
+            bool transferConfirmation,
+            uint256 timestamp
+        ) = abi.decode(
+                getMessagePayload(message),
+                (uint64, uint256, bool, uint256)
+            );
         return (nonce, balance, transferConfirmation, timestamp);
     }
 
@@ -172,7 +242,13 @@ library CrossChainStrategyHelper {
     function decodeMessageHeader(bytes memory message)
         internal
         pure
-        returns (uint32 version, uint32 sourceDomainID, address sender, address recipient, bytes memory messageBody)
+        returns (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        )
     {
         version = message.extractUint32(VERSION_INDEX);
         sourceDomainID = message.extractUint32(SOURCE_DOMAIN_INDEX);

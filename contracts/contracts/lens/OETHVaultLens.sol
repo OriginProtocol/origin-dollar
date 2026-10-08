@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ICompoundingStakingStrategy} from "../interfaces/strategies/ICompoundingStakingStrategy.sol";
-import {IOETHVaultLens} from "../interfaces/IOETHVaultLens.sol";
-import {IOToken} from "../interfaces/IOToken.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import { ICompoundingStakingStrategy } from "../interfaces/strategies/ICompoundingStakingStrategy.sol";
+import { IOETHVaultLens } from "../interfaces/IOETHVaultLens.sol";
+import { IOToken } from "../interfaces/IOToken.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 /**
  * @title OETH Vault Lens
@@ -61,8 +61,10 @@ contract OETHVaultLens is IOETHVaultLens {
         // The uint64 timestamp is promoted to uint256 by the constant,
         // so the comparison can neither overflow nor underflow.
         require(
-            ICompoundingStakingStrategy(stakingStrategy).lastVerifiedBalanceTimestamp() + MAX_VERIFIED_BALANCE_AGE
-                >= block.timestamp,
+            ICompoundingStakingStrategy(stakingStrategy)
+                .lastVerifiedBalanceTimestamp() +
+                MAX_VERIFIED_BALANCE_AGE >=
+                block.timestamp,
             "Stale verified balance"
         );
 

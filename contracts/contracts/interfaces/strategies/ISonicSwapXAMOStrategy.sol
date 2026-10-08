@@ -5,17 +5,34 @@ interface ISonicSwapXAMOStrategy {
     // Events (from InitializableAbstractStrategy)
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
     event PTokenAdded(address indexed _asset, address _pToken);
     event PTokenRemoved(address indexed _asset, address _pToken);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event HarvesterAddressesUpdated(address _oldHarvesterAddress, address _newHarvesterAddress);
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     // Events (from StableSwapAMMStrategy)
     event SwapOTokensToPool(
-        uint256 oTokenMinted, uint256 assetDepositAmount, uint256 oTokenDepositAmount, uint256 lpTokens
+        uint256 oTokenMinted,
+        uint256 assetDepositAmount,
+        uint256 oTokenDepositAmount,
+        uint256 lpTokens
     );
-    event SwapAssetsToPool(uint256 assetSwapped, uint256 lpTokens, uint256 oTokenBurnt);
+    event SwapAssetsToPool(
+        uint256 assetSwapped,
+        uint256 lpTokens,
+        uint256 oTokenBurnt
+    );
     event MaxDepegUpdated(uint256 maxDepeg);
 
     // IStrategy functions
@@ -23,11 +40,18 @@ interface ISonicSwapXAMOStrategy {
 
     function depositAll() external;
 
-    function withdraw(address _recipient, address _asset, uint256 _amount) external;
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external;
 
     function withdrawAll() external;
 
-    function checkBalance(address _asset) external view returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
 
     function supportsAsset(address _asset) external view returns (bool);
 
@@ -39,7 +63,8 @@ interface ISonicSwapXAMOStrategy {
 
     function transferToken(address token, uint256 amount) external;
 
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses) external;
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 
     // InitializableAbstractStrategy functions
     function platformAddress() external view returns (address);
@@ -54,7 +79,10 @@ interface ISonicSwapXAMOStrategy {
 
     function removePToken(uint256 _index) external;
 
-    function rewardTokenAddresses(uint256 _index) external view returns (address);
+    function rewardTokenAddresses(uint256 _index)
+        external
+        view
+        returns (address);
 
     function assetToPToken(address _asset) external view returns (address);
 
@@ -68,7 +96,10 @@ interface ISonicSwapXAMOStrategy {
     function claimGovernance() external;
 
     // StableSwapAMMStrategy-specific: initialize
-    function initialize(address[] calldata _rewardTokenAddresses, uint256 _maxDepeg) external;
+    function initialize(
+        address[] calldata _rewardTokenAddresses,
+        uint256 _maxDepeg
+    ) external;
 
     // StableSwapAMMStrategy view functions
     function SOLVENCY_THRESHOLD() external view returns (uint256);

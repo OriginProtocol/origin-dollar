@@ -12,7 +12,8 @@ contract MockSFC {
     // Mapping of delegator address to validator ID to amount delegated
     mapping(address => mapping(uint256 => uint256)) public delegations;
     // Mapping of delegator address to validator ID to withdrawal request ID to amount
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) public withdraws;
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256)))
+        public withdraws;
     // validator ID -> slashing refund ratio (allows to withdraw slashed stake)
     mapping(uint256 => uint256) public slashingRefundRatio;
     // Mapping of delegator address to validator ID to pending reward amount
@@ -20,7 +21,11 @@ contract MockSFC {
     // Flag to force withdraw to revert with a non-StakeIsFullySlashed error
     bool public forceWithdrawRevert;
 
-    function getStake(address delegator, uint256 validatorID) external view returns (uint256) {
+    function getStake(address delegator, uint256 validatorID)
+        external
+        view
+        returns (uint256)
+    {
         return delegations[delegator][validatorID];
     }
 
@@ -31,9 +36,19 @@ contract MockSFC {
         delegations[msg.sender][validatorID] += msg.value;
     }
 
-    function undelegate(uint256 validatorID, uint256 wrID, uint256 amount) external {
-        require(delegations[msg.sender][validatorID] >= amount, "insufficient stake");
-        require(withdraws[msg.sender][validatorID][wrID] == 0, "withdrawal request already exists");
+    function undelegate(
+        uint256 validatorID,
+        uint256 wrID,
+        uint256 amount
+    ) external {
+        require(
+            delegations[msg.sender][validatorID] >= amount,
+            "insufficient stake"
+        );
+        require(
+            withdraws[msg.sender][validatorID][wrID] == 0,
+            "withdrawal request already exists"
+        );
 
         delegations[msg.sender][validatorID] -= amount;
         withdraws[msg.sender][validatorID][wrID] = amount;
@@ -48,19 +63,24 @@ contract MockSFC {
         if (forceWithdrawRevert) revert NotEnoughTimePassed();
 
         uint256 withdrawAmount = withdraws[msg.sender][validatorID][wrID];
-        uint256 penalty = (withdrawAmount * (1e18 - slashingRefundRatio[validatorID])) / 1e18;
+        uint256 penalty = (withdrawAmount *
+            (1e18 - slashingRefundRatio[validatorID])) / 1e18;
 
         if (penalty >= withdrawAmount) {
             revert StakeIsFullySlashed();
         }
 
-        (bool sent,) = msg.sender.call{value: withdrawAmount - penalty}("");
+        (bool sent, ) = msg.sender.call{ value: withdrawAmount - penalty }("");
         if (!sent) {
             revert TransferFailed();
         }
     }
 
-    function pendingRewards(address delegator, uint256 validatorID) external view returns (uint256) {
+    function pendingRewards(address delegator, uint256 validatorID)
+        external
+        view
+        returns (uint256)
+    {
         return rewards[delegator][validatorID];
     }
 
@@ -68,7 +88,7 @@ contract MockSFC {
         uint256 reward = rewards[msg.sender][validatorID];
         require(reward > 0, "no rewards");
         rewards[msg.sender][validatorID] = 0;
-        (bool sent,) = msg.sender.call{value: reward}("");
+        (bool sent, ) = msg.sender.call{ value: reward }("");
         if (!sent) {
             revert TransferFailed();
         }
@@ -81,7 +101,11 @@ contract MockSFC {
         delegations[msg.sender][validatorID] += reward;
     }
 
-    function setRewards(address delegator, uint256 validatorID, uint256 amount) external {
+    function setRewards(
+        address delegator,
+        uint256 validatorID,
+        uint256 amount
+    ) external {
         rewards[delegator][validatorID] = amount;
     }
 

@@ -39,7 +39,13 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
     {
         roundId = _roundId;
         answer = price;
@@ -52,7 +58,13 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
     {
         roundId = 0;
         answer = price;

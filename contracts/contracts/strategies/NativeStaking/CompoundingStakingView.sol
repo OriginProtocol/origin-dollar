@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {CompoundingStakingStrategy} from "./CompoundingStakingStrategy.sol";
+import { CompoundingStakingStrategy } from "./CompoundingStakingStrategy.sol";
 
 /**
  * @title Viewing contract for the Compounding Staking Strategy.
@@ -31,13 +31,21 @@ contract CompoundingStakingStrategyView {
     /// @notice Returns the strategy's active validators.
     /// These are the ones that have been verified and have a non-zero balance.
     /// @return validators An array of `ValidatorView` containing the public key hash, validator index and state.
-    function getVerifiedValidators() external view returns (ValidatorView[] memory validators) {
+    function getVerifiedValidators()
+        external
+        view
+        returns (ValidatorView[] memory validators)
+    {
         uint256 validatorCount = stakingStrategy.verifiedValidatorsLength();
         validators = new ValidatorView[](validatorCount);
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
             (uint8 state, uint64 index) = _validator(pubKeyHash);
-            validators[i] = ValidatorView({pubKeyHash: pubKeyHash, index: index, state: state});
+            validators[i] = ValidatorView({
+                pubKeyHash: pubKeyHash,
+                index: index,
+                state: state
+            });
         }
     }
 
@@ -45,12 +53,21 @@ contract CompoundingStakingStrategyView {
     /// These may or may not have been processed by the beacon chain.
     /// @return pendingDeposits An array of `DepositView` containing the deposit ID, public key hash,
     /// amount in Gwei and the slot of the deposit.
-    function getPendingDeposits() external view returns (DepositView[] memory pendingDeposits) {
+    function getPendingDeposits()
+        external
+        view
+        returns (DepositView[] memory pendingDeposits)
+    {
         uint256 depositsCount = stakingStrategy.depositListLength();
         pendingDeposits = new DepositView[](depositsCount);
         for (uint256 i = 0; i < depositsCount; ++i) {
-            (bytes32 pubKeyHash, uint64 amountGwei, uint64 slot,,) =
-                stakingStrategy.deposits(stakingStrategy.depositList(i));
+            (
+                bytes32 pubKeyHash,
+                uint64 amountGwei,
+                uint64 slot,
+                ,
+
+            ) = stakingStrategy.deposits(stakingStrategy.depositList(i));
             pendingDeposits[i] = DepositView({
                 pendingDepositRoot: stakingStrategy.depositList(i),
                 pubKeyHash: pubKeyHash,
@@ -60,9 +77,17 @@ contract CompoundingStakingStrategyView {
         }
     }
 
-    function _validator(bytes32 pubKeyHash) internal view returns (uint8 state, uint64 index) {
-        (bool success, bytes memory data) =
-            address(stakingStrategy).staticcall(abi.encodeWithSelector(stakingStrategy.validator.selector, pubKeyHash));
+    function _validator(bytes32 pubKeyHash)
+        internal
+        view
+        returns (uint8 state, uint64 index)
+    {
+        (bool success, bytes memory data) = address(stakingStrategy).staticcall(
+            abi.encodeWithSelector(
+                stakingStrategy.validator.selector,
+                pubKeyHash
+            )
+        );
         require(success, "validator call failed");
         return abi.decode(data, (uint8, uint64));
     }

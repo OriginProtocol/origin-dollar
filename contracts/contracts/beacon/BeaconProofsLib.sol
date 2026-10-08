@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Merkle} from "./Merkle.sol";
-import {Endian} from "./Endian.sol";
+import { Merkle } from "./Merkle.sol";
+import { Endian } from "./Endian.sol";
 
 /**
  * @title Library to verify merkle proofs of beacon chain data.
@@ -15,11 +15,13 @@ library BeaconProofsLib {
     /// Beacon state container: height 6, pending deposits at index 34
     /// Pending deposits container: height 28, first deposit at index 0
     /// ((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0 = 198105366528
-    uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX = 198105366528;
+    uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
+        198105366528;
     /// @dev BeaconBlock.state.PendingDeposits[0].slot
     /// Pending Deposit container: height 3, slot at index 4
     /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 4  = 1584842932228
-    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX = 1584842932228;
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
+        1584842932228;
     /// @dev BeaconBlock.state.validators
     /// Beacon block container: height 3, state at at index 3
     /// Beacon state container: height 6, validators at index 11
@@ -35,7 +37,8 @@ library BeaconProofsLib {
     /// Beacon block container: height 3, state at at index 3
     /// Beacon state container: height 6, pending_deposits at index 34
     /// (2 ^ 3 + 3) * 2 ^ 6 + 34 = 738
-    uint256 internal constant PENDING_DEPOSITS_CONTAINER_GENERALIZED_INDEX = 738;
+    uint256 internal constant PENDING_DEPOSITS_CONTAINER_GENERALIZED_INDEX =
+        738;
 
     /// @dev Number of bytes in the proof to the first pending deposit.
     /// 37 witness hashes of 32 bytes each concatenated together.
@@ -87,21 +90,34 @@ library BeaconProofsLib {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
         // BeaconBlock.state.validators[validatorIndex]
-        uint256 generalizedIndex =
-            concatGenIndices(VALIDATORS_CONTAINER_GENERALIZED_INDEX, VALIDATORS_LIST_HEIGHT, validatorIndex);
+        uint256 generalizedIndex = concatGenIndices(
+            VALIDATORS_CONTAINER_GENERALIZED_INDEX,
+            VALIDATORS_LIST_HEIGHT,
+            validatorIndex
+        );
         // BeaconBlock.state.validators[validatorIndex].pubkey
-        generalizedIndex = concatGenIndices(generalizedIndex, VALIDATOR_CONTAINER_HEIGHT, VALIDATOR_PUBKEY_INDEX);
+        generalizedIndex = concatGenIndices(
+            generalizedIndex,
+            VALIDATOR_CONTAINER_HEIGHT,
+            VALIDATOR_PUBKEY_INDEX
+        );
 
         // Get the withdrawal credentials from the first witness in the pubkey merkle proof.
         bytes32 withdrawalCredentialsFromProof = bytes32(proof[:32]);
 
-        require(withdrawalCredentialsFromProof == withdrawalCredentials, "Invalid withdrawal cred");
+        require(
+            withdrawalCredentialsFromProof == withdrawalCredentials,
+            "Invalid withdrawal cred"
+        );
 
         require(
             // 53 * 32 bytes = 1696 bytes
-            proof.length == 1696
-                && Merkle.verifyInclusionSha256({
-                    proof: proof, root: beaconBlockRoot, leaf: pubKeyHash, index: generalizedIndex
+            proof.length == 1696 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: beaconBlockRoot,
+                    leaf: pubKeyHash,
+                    index: generalizedIndex
                 }),
             "Invalid validator proof"
         );
@@ -124,16 +140,22 @@ library BeaconProofsLib {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
         // BeaconBlock.state.validators[validatorIndex]
-        uint256 exitEpochGenIndex =
-            concatGenIndices(VALIDATORS_CONTAINER_GENERALIZED_INDEX, VALIDATORS_LIST_HEIGHT, validatorIndex);
+        uint256 exitEpochGenIndex = concatGenIndices(
+            VALIDATORS_CONTAINER_GENERALIZED_INDEX,
+            VALIDATORS_LIST_HEIGHT,
+            validatorIndex
+        );
         // BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
-        exitEpochGenIndex =
-            concatGenIndices(exitEpochGenIndex, VALIDATOR_CONTAINER_HEIGHT, VALIDATOR_WITHDRAWABLE_EPOCH_INDEX);
+        exitEpochGenIndex = concatGenIndices(
+            exitEpochGenIndex,
+            VALIDATOR_CONTAINER_HEIGHT,
+            VALIDATOR_WITHDRAWABLE_EPOCH_INDEX
+        );
 
         require(
             // 53 * 32 bytes = 1696 bytes
-            proof.length == 1696
-                && Merkle.verifyInclusionSha256({
+            proof.length == 1696 &&
+                Merkle.verifyInclusionSha256({
                     proof: proof,
                     root: beaconBlockRoot,
                     leaf: Endian.toLittleEndianUint64(withdrawableEpoch),
@@ -149,17 +171,18 @@ library BeaconProofsLib {
     /// @param balancesContainerRoot The merkle root of the the balances container.
     /// @param proof The merkle proof for the balances container to the beacon block root.
     /// This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    function verifyBalancesContainer(bytes32 beaconBlockRoot, bytes32 balancesContainerRoot, bytes calldata proof)
-        internal
-        view
-    {
+    function verifyBalancesContainer(
+        bytes32 beaconBlockRoot,
+        bytes32 balancesContainerRoot,
+        bytes calldata proof
+    ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
         // BeaconBlock.state.balances
         require(
             // 9 * 32 bytes = 288 bytes
-            proof.length == 288
-                && Merkle.verifyInclusionSha256({
+            proof.length == 288 &&
+                Merkle.verifyInclusionSha256({
                     proof: proof,
                     root: beaconBlockRoot,
                     leaf: balancesContainerRoot,
@@ -189,15 +212,25 @@ library BeaconProofsLib {
 
         // Get the index within the balances container, not the Beacon Block
         // BeaconBlock.state.balances[balanceIndex]
-        uint256 generalizedIndex = concatGenIndices(1, BALANCES_HEIGHT, balanceIndex);
+        uint256 generalizedIndex = concatGenIndices(
+            1,
+            BALANCES_HEIGHT,
+            balanceIndex
+        );
 
-        validatorBalanceGwei = balanceAtIndex(validatorBalanceLeaf, validatorIndex);
+        validatorBalanceGwei = balanceAtIndex(
+            validatorBalanceLeaf,
+            validatorIndex
+        );
 
         require(
             // 39 * 32 bytes = 1248 bytes
-            proof.length == 1248
-                && Merkle.verifyInclusionSha256({
-                    proof: proof, root: balancesContainerRoot, leaf: validatorBalanceLeaf, index: generalizedIndex
+            proof.length == 1248 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: balancesContainerRoot,
+                    leaf: validatorBalanceLeaf,
+                    index: generalizedIndex
                 }),
             "Invalid balance proof"
         );
@@ -219,8 +252,8 @@ library BeaconProofsLib {
         // BeaconBlock.state.pendingDeposits
         require(
             // 9 * 32 bytes = 288 bytes
-            proof.length == 288
-                && Merkle.verifyInclusionSha256({
+            proof.length == 288 &&
+                Merkle.verifyInclusionSha256({
                     proof: proof,
                     root: beaconBlockRoot,
                     leaf: pendingDepositsContainerRoot,
@@ -247,16 +280,26 @@ library BeaconProofsLib {
         // ssz-merkleizing a list which has a variable length, an additional
         // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the
         // actual pending deposits root so the max pending deposit index is 2^(28 - 1)
-        require(pendingDepositIndex < 2 ** (PENDING_DEPOSITS_LIST_HEIGHT - 1), "Invalid deposit index");
+        require(
+            pendingDepositIndex < 2**(PENDING_DEPOSITS_LIST_HEIGHT - 1),
+            "Invalid deposit index"
+        );
 
         // BeaconBlock.state.pendingDeposits[depositIndex]
-        uint256 generalizedIndex = concatGenIndices(1, PENDING_DEPOSITS_LIST_HEIGHT, pendingDepositIndex);
+        uint256 generalizedIndex = concatGenIndices(
+            1,
+            PENDING_DEPOSITS_LIST_HEIGHT,
+            pendingDepositIndex
+        );
 
         require(
             // 28 * 32 bytes = 896 bytes
-            proof.length == 896
-                && Merkle.verifyInclusionSha256({
-                    proof: proof, root: pendingDepositsContainerRoot, leaf: pendingDepositRoot, index: generalizedIndex
+            proof.length == 896 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: pendingDepositsContainerRoot,
+                    leaf: pendingDepositRoot,
+                    index: generalizedIndex
                 }),
             "Invalid deposit proof"
         );
@@ -275,11 +318,11 @@ library BeaconProofsLib {
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
-    function verifyFirstPendingDeposit(bytes32 beaconBlockRoot, uint64 slot, bytes calldata proof)
-        internal
-        view
-        returns (bool isEmptyDepositQueue)
-    {
+    function verifyFirstPendingDeposit(
+        bytes32 beaconBlockRoot,
+        uint64 slot,
+        bytes calldata proof
+    ) internal view returns (bool isEmptyDepositQueue) {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
         // If the deposit queue is empty
@@ -299,8 +342,8 @@ library BeaconProofsLib {
         // Verify the slot of the first pending deposit
         // BeaconBlock.state.PendingDeposits[0].slot
         require(
-            proof.length == FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH
-                && Merkle.verifyInclusionSha256({
+            proof.length == FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH &&
+                Merkle.verifyInclusionSha256({
                     proof: proof,
                     root: beaconBlockRoot,
                     leaf: Endian.toLittleEndianUint64(slot),
@@ -340,7 +383,11 @@ library BeaconProofsLib {
     /// @notice Merkleizes a BLS signature used for validator deposits.
     /// @param signature The 96 byte BLS signature.
     /// @return root The merkle root of the signature.
-    function merkleizeSignature(bytes calldata signature) internal pure returns (bytes32) {
+    function merkleizeSignature(bytes calldata signature)
+        internal
+        pure
+        returns (bytes32)
+    {
         require(signature.length == 96, "Invalid signature");
 
         bytes32[] memory leaves = new bytes32[](4);
@@ -356,9 +403,16 @@ library BeaconProofsLib {
     ///       Internal Helper Functions
     ////////////////////////////////////////////////////
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex) internal pure returns (uint256) {
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 bitShiftAmount = (validatorIndex % 4) * 64;
-        return Endian.fromLittleEndianUint64(bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount)));
+        return
+            Endian.fromLittleEndianUint64(
+                bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount))
+            );
     }
 
     /// @notice Concatenates two beacon chain generalized indices into one.
@@ -366,7 +420,11 @@ library BeaconProofsLib {
     /// @param height The merkle tree height of the second container. eg 39 for balances, 41 for validators.
     /// @param index The index within the second container. eg the validator index.
     /// @return genIndex The concatenated generalized index.
-    function concatGenIndices(uint256 genIndex, uint256 height, uint256 index) internal pure returns (uint256) {
+    function concatGenIndices(
+        uint256 genIndex,
+        uint256 height,
+        uint256 index
+    ) internal pure returns (uint256) {
         return (genIndex << height) | index;
     }
 }

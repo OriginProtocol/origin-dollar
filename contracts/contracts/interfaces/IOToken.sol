@@ -3,11 +3,19 @@ pragma solidity ^0.8.0;
 
 interface IOToken {
     // Events
-    event TotalSupplyUpdatedHighres(uint256 totalSupply, uint256 rebasingCredits, uint256 rebasingCreditsPerToken);
+    event TotalSupplyUpdatedHighres(
+        uint256 totalSupply,
+        uint256 rebasingCredits,
+        uint256 rebasingCreditsPerToken
+    );
     event AccountRebasingEnabled(address account);
     event AccountRebasingDisabled(address account);
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
     event YieldDelegated(address source, address target);
     event YieldUndelegated(address source, address target);
 
@@ -34,13 +42,29 @@ interface IOToken {
 
     function balanceOf(address _account) external view returns (uint256);
 
-    function creditsBalanceOf(address _account) external view returns (uint256, uint256);
+    function creditsBalanceOf(address _account)
+        external
+        view
+        returns (uint256, uint256);
 
-    function creditsBalanceOfHighres(address _account) external view returns (uint256, uint256, bool);
+    function creditsBalanceOfHighres(address _account)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            bool
+        );
 
-    function nonRebasingCreditsPerToken(address _account) external view returns (uint256);
+    function nonRebasingCreditsPerToken(address _account)
+        external
+        view
+        returns (uint256);
 
-    function allowance(address _owner, address _spender) external view returns (uint256);
+    function allowance(address _owner, address _spender)
+        external
+        view
+        returns (uint256);
 
     function rebaseState(address _account) external view returns (uint8);
 
@@ -49,11 +73,16 @@ interface IOToken {
     function yieldFrom(address _account) external view returns (address);
 
     // State-changing functions
-    function initialize(address _vaultAddress, uint256 _initialCreditsPerToken) external;
+    function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
+        external;
 
     function transfer(address _to, uint256 _value) external returns (bool);
 
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) external returns (bool);
 
     function approve(address _spender, uint256 _value) external returns (bool);
 

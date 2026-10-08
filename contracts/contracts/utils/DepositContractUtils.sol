@@ -14,7 +14,8 @@ contract DepositContractUtils {
         bytes32 pubkey_root = sha256(abi.encodePacked(pubkey, bytes16(0)));
         bytes32 signature_root = sha256(
             abi.encodePacked(
-                sha256(abi.encodePacked(signature[:64])), sha256(abi.encodePacked(signature[64:], bytes32(0)))
+                sha256(abi.encodePacked(signature[:64])),
+                sha256(abi.encodePacked(signature[64:], bytes32(0)))
             )
         );
         node = sha256(
@@ -25,7 +26,11 @@ contract DepositContractUtils {
         );
     }
 
-    function to_little_endian_64(uint64 value) internal pure returns (bytes memory ret) {
+    function to_little_endian_64(uint64 value)
+        internal
+        pure
+        returns (bytes memory ret)
+    {
         ret = new bytes(8);
         bytes8 bytesValue = bytes8(value);
         // Byteswapping during copying to bytes.

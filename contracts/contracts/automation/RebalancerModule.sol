@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
-import {IVault} from "../interfaces/IVault.sol";
-import {VaultStorage} from "../vault/VaultStorage.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { VaultStorage } from "../vault/VaultStorage.sol";
 
 /**
  * @title Rebalancer Module
@@ -56,7 +56,11 @@ contract RebalancerModule is AbstractSafeModule {
     // ─────────────────────────────────────────────────────────── Events ──
 
     /// @notice Emitted after processWithdrawals completes (even if some failed).
-    event WithdrawalsProcessed(address[] strategies, uint256[] amounts, uint256 remainingShortfall);
+    event WithdrawalsProcessed(
+        address[] strategies,
+        uint256[] amounts,
+        uint256 remainingShortfall
+    );
 
     /// @notice Emitted after processDeposits completes (even if some failed).
     event DepositsProcessed(address[] strategies, uint256[] amounts);
@@ -86,7 +90,11 @@ contract RebalancerModule is AbstractSafeModule {
      * @param _operator     Address of the off-chain operator.
      * @param _vault        Address of the OUSD vault.
      */
-    constructor(address _safeContract, address _operator, address _vault) AbstractSafeModule(_safeContract) {
+    constructor(
+        address _safeContract,
+        address _operator,
+        address _vault
+    ) AbstractSafeModule(_safeContract) {
         require(_vault != address(0), "Invalid vault");
 
         vault = IVault(_vault);
@@ -122,14 +130,24 @@ contract RebalancerModule is AbstractSafeModule {
         address[] calldata _depositStrategies,
         uint256[] calldata _depositAmounts
     ) external onlyOperator whenNotPaused {
-        require(_withdrawStrategies.length == _withdrawAmounts.length, "Withdraw array length mismatch");
-        require(_depositStrategies.length == _depositAmounts.length, "Deposit array length mismatch");
+        require(
+            _withdrawStrategies.length == _withdrawAmounts.length,
+            "Withdraw array length mismatch"
+        );
+        require(
+            _depositStrategies.length == _depositAmounts.length,
+            "Deposit array length mismatch"
+        );
         // This is a permissionless call; no Safe exec needed.
         vault.addWithdrawalQueueLiquidity();
         uint256 _limit = dailyLimit();
         _executeWithdrawals(_withdrawStrategies, _withdrawAmounts, _limit);
         _executeDeposits(_depositStrategies, _depositAmounts, _limit);
-        emit WithdrawalsProcessed(_withdrawStrategies, _withdrawAmounts, pendingShortfall());
+        emit WithdrawalsProcessed(
+            _withdrawStrategies,
+            _withdrawAmounts,
+            pendingShortfall()
+        );
         emit DepositsProcessed(_depositStrategies, _depositAmounts);
     }
 
@@ -169,7 +187,10 @@ contract RebalancerModule is AbstractSafeModule {
      * @param _maxDailyMovementBps Limit in basis points (e.g. 20000 = 200%).
      *        Set to 0 for unlimited daily movement.
      */
-    function setMaxDailyMovementBps(uint256 _maxDailyMovementBps) external onlySafe {
+    function setMaxDailyMovementBps(uint256 _maxDailyMovementBps)
+        external
+        onlySafe
+    {
         maxDailyMovementBps = _maxDailyMovementBps;
         emit MaxDailyMovementBpsSet(_maxDailyMovementBps);
     }
@@ -185,7 +206,8 @@ contract RebalancerModule is AbstractSafeModule {
      * @return shortfall Queue shortfall in asset units (vault asset decimals).
      */
     function pendingShortfall() public view returns (uint256 shortfall) {
-        VaultStorage.WithdrawalQueueMetadata memory meta = vault.withdrawalQueueMetadata();
+        VaultStorage.WithdrawalQueueMetadata memory meta = vault
+            .withdrawalQueueMetadata();
         shortfall = meta.queued - meta.claimable;
     }
 
@@ -227,13 +249,18 @@ contract RebalancerModule is AbstractSafeModule {
         uint256 dayKey = block.timestamp / 1 days;
         amountMovedPerDay[dayKey] += _amount;
 
-        require(amountMovedPerDay[dayKey] <= _dailyLimit, "Daily movement limit exceeded");
+        require(
+            amountMovedPerDay[dayKey] <= _dailyLimit,
+            "Daily movement limit exceeded"
+        );
     }
 
     /// @dev Execute withdrawFromStrategy for each (strategy, amount) pair via the Safe.
-    function _executeWithdrawals(address[] calldata _strategies, uint256[] calldata _amounts, uint256 _dailyLimit)
-        internal
-    {
+    function _executeWithdrawals(
+        address[] calldata _strategies,
+        uint256[] calldata _amounts,
+        uint256 _dailyLimit
+    ) internal {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
@@ -242,7 +269,10 @@ contract RebalancerModule is AbstractSafeModule {
                 address(vault),
                 0,
                 abi.encodeWithSelector(
-                    IVault.withdrawFromStrategy.selector, _strategies[i], assets, _toUint256Array(_amounts[i])
+                    IVault.withdrawFromStrategy.selector,
+                    _strategies[i],
+                    assets,
+                    _toUint256Array(_amounts[i])
                 ),
                 0
             );
@@ -255,9 +285,11 @@ contract RebalancerModule is AbstractSafeModule {
     }
 
     /// @dev Execute depositToStrategy for each (strategy, amount) pair via the Safe.
-    function _executeDeposits(address[] calldata _strategies, uint256[] calldata _amounts, uint256 _dailyLimit)
-        internal
-    {
+    function _executeDeposits(
+        address[] calldata _strategies,
+        uint256[] calldata _amounts,
+        uint256 _dailyLimit
+    ) internal {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
@@ -266,7 +298,10 @@ contract RebalancerModule is AbstractSafeModule {
                 address(vault),
                 0,
                 abi.encodeWithSelector(
-                    IVault.depositToStrategy.selector, _strategies[i], assets, _toUint256Array(_amounts[i])
+                    IVault.depositToStrategy.selector,
+                    _strategies[i],
+                    assets,
+                    _toUint256Array(_amounts[i])
                 ),
                 0
             );
@@ -280,12 +315,20 @@ contract RebalancerModule is AbstractSafeModule {
 
     // slither-disable-end reentrancy-no-eth
 
-    function _toAddressArray(address _addr) internal pure returns (address[] memory arr) {
+    function _toAddressArray(address _addr)
+        internal
+        pure
+        returns (address[] memory arr)
+    {
         arr = new address[](1);
         arr[0] = _addr;
     }
 
-    function _toUint256Array(uint256 _val) internal pure returns (uint256[] memory arr) {
+    function _toUint256Array(uint256 _val)
+        internal
+        pure
+        returns (uint256[] memory arr)
+    {
         arr = new uint256[](1);
         arr[0] = _val;
     }
