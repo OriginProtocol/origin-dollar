@@ -54,8 +54,8 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 | Interface | File | Used for |
 |-----------|------|----------|
 | `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
-| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
-| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WrappedOusd) |
 | `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
 
 **Key rules:**
@@ -73,12 +73,10 @@ Each product has its own vault contract. **Always use the correct vault type** �
 |---------|-------|-------------|---------------------|
 | OUSD | `OUSD` | `OUSDVault` | `Vaults.OUSD` |
 | OETH | `OETH` | `OETHVault` | `Vaults.OETH` |
-| OSonic | `OSonic` | **`OSVault`** | `Vaults.OS` |
 | OETHBase | `OETHBase` | `OETHBaseVault` | `Vaults.OETH_BASE` |
 
 Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
 
-`OSVault` lives at `contracts/vault/OSVault.sol`. Never use `OETHVault` for Sonic products.
 - `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic.
 - Concrete and fuzz test contracts inherit `Unit_Shared_Test` directly — no extra layers.
 
@@ -110,8 +108,8 @@ function setUp() public virtual override {
 
 ## 3b. Mock Contracts
 
-- **Test-only mocks** (e.g. `MockSwapXPair`, `MockSwapXGauge`, `MockWrappedSonic`) go in `tests/mocks/`.
-- **Production mocks** (e.g. `MockSFC`, `MockStrategy`) that already exist under `contracts/mocks/` stay there — enhance them in-place if needed.
+- **Test-only mocks** (e.g. `MockCurvePool`, `MockAerodromeVoter`) go in `tests/mocks/`.
+- **Production mocks** (e.g. `MockStrategy`) that already exist under `contracts/mocks/` stay there — enhance them in-place if needed.
 - Mock state variables are declared in `Base.t.sol` like all other contracts.
 
 ### Common mock pitfalls

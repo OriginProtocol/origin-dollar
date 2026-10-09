@@ -9,7 +9,7 @@ library CrossChain {
     address internal constant multichainStrategist = 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971;
     address internal constant multichainBuybackOperator = 0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c;
     /// @dev Talos signer. Set as the vaults' `operatorAddr` (the permissioned rebase caller)
-    ///      on every chain by deploys mainnet/196, base/051 and sonic/030.
+    ///      on every chain by deploys mainnet/196 and base/051 (and sonic/030, since removed).
     address internal constant talosRelayer = 0x739212d5bAfE6AAC8Be49a60B7d003bD41DBf38b;
     address internal constant votemarket = 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9;
     address internal constant CCTPTokenMessengerV2 = 0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d;
@@ -330,119 +330,6 @@ library Base {
 
     // Crosschain
     address internal constant CrossChainRemoteStrategy = 0xB1d624fc40824683e2bFBEfd19eB208DbBE00866;
-}
-
-library Sonic {
-    address internal constant wS = 0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38;
-    address internal constant WETH = 0x309C92261178fA0CF748A855e90Ae73FDb79EBc7;
-    address internal constant SFC = 0xFC00FACE00000000000000000000000000000000;
-    address internal constant nodeDriver = 0xD100a01e00000000000000000000000000000001;
-    address internal constant nodeDriveAuth = 0xD100ae0000000000000000000000000000000000;
-    address internal constant validatorRegistrator = 0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825;
-    address internal constant admin = 0xAdDEA7933Db7d83855786EB43a238111C69B00b6;
-    address internal constant guardian = 0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a;
-    address internal constant timelock = 0x31a91336414d3B955E494E7d485a6B06b55FC8fB;
-
-    address internal constant OSonicProxy = 0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794;
-    address internal constant WOSonicProxy = 0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1;
-    address internal constant OSonicVaultProxy = 0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186;
-    address internal constant SonicStakingStrategy = 0x596B0401479f6DfE1cAF8c12838311FeE742B95c;
-    address internal constant SonicSwapXAMOStrategyProxy = 0xbE19cC5654e30dAF04AD3B5E06213D70F4e882eE;
-
-    // SwapX
-    address internal constant SWPx = 0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70;
-    address internal constant SwapXOwner = 0xAdB5A1518713095C39dBcA08Da6656af7249Dd20;
-    address internal constant SwapXVoter = 0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2;
-    address internal constant SwapXPairFactory = 0x05c1be79d3aC21Cc4B727eeD58C9B2fF757F5663;
-    address internal constant SwapXSWPxOSPool = 0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16;
-    address internal constant SwapXTreasury = 0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8;
-
-    address internal constant SwapXOsUSDCe_pool = 0x84EA9fAfD41abAEc5a53248f79Fa05ADA0058a96;
-    address internal constant SwapXOsUSDCe_gaugeOS = 0x737938a25D811A3F324aC0257d75b5e88d0a6FC3;
-    address internal constant SwapXOsUSDCe_extBribeOS = 0x41688C9bb59ce191F6BB57c5829ac9D50A03E410;
-    address internal constant SwapXOsUSDCe_gaugeUSDC = 0xB660B984F80a89044Aa3841F1a1C78B2F596393f;
-    address internal constant SwapXOsUSDCe_extBribeUSDC = 0xBCF88f38865B7712da4DE0a8eFC286C601CAE5e7;
-
-    address internal constant SwapXOsGEMSx_pool = 0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5;
-
-    address internal constant SwapXWSOS_pool = 0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0;
-    address internal constant SwapXWSOS_gauge = 0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709;
-    address internal constant SwapXWSOS_fees = 0x9532392268eEd87959A1Cf346b14569c82b11090;
-
-    address internal constant SwapXOsUSDCeMultisigBooster = 0x4636269e7CDc253F6B0B210215C3601558FE80F6;
-    address internal constant SwapXOsGEMSxMultisigBooster = 0xE2c01Cc951E8322992673Fa2302054375636F7DE;
-
-    // Equalizer
-    address internal constant Equalizer_WsOs_pool = 0x99ff9d3E8B26Fea85a7a103D9e576EfdC38fB530;
-    address internal constant Equalizer_WsOs_extBribeOS = 0x2726Be050f22B9aFF2b582758aeEa504cDa6fA62;
-    address internal constant Equalizer_ThcOs_pool = 0xd6f5d565410c536e3e9C4FCf05560518C2C56440;
-    address internal constant Equalizer_ThcOs_extBribeOS = 0x9e566ce25A90A07125b7c697ca8f01bbC41Cb3B3;
-
-    // SwapX pools
-    address internal constant SwapX_OsSfrxUSD_pool = 0x9255F31eF9B35d085cED6fE29F9E077EB1f513C6;
-    address internal constant SwapX_OsSfrxUSD_gaugeOS = 0x99d8E114F1a6359c6048Ae5Cce163786c0Ce97DF;
-    address internal constant SwapX_OsSfrxUSD_extBribeOS = 0xb7A1a8AC3Cb1a40bbE73894c0b5e911d3a1ac075;
-    address internal constant SwapX_OsSfrxUSD_gaugeOther = 0x88d6c63f1EF23bDff2bD483831074dc23d8416d4;
-    address internal constant SwapX_OsSfrxUSD_extBribeOther = 0xD1ECb64C0C20F2500a259DF4d125d0e21Eaa24cD;
-
-    address internal constant SwapX_OsScUSD_pool = 0x370428430503B3b5970Ccaf530CbC71d02C3B61a;
-    address internal constant SwapX_OsScUSD_gaugeOS = 0x23bDc38a3bA72DE7B32A1bC01DFfB99Ce4CF8b2b;
-    address internal constant SwapX_OsScUSD_extBribeOS = 0xF22ea5dEE8FC4A12Dd4263448e2c1C2494c1E6f4;
-    address internal constant SwapX_OsScUSD_gaugeOther = 0x1FFCD52e4E452F35a92ED58CE94629E8d9DC09CF;
-    address internal constant SwapX_OsScUSD_extBribeOther = 0xBD365648bEbe932f8394F726D4A83FBd684E6b72;
-
-    address internal constant SwapX_OsSilo_pool = 0x2ab09e10F75965Ccc369C8B86071f351141Dc0a1;
-    address internal constant SwapX_OsSilo_gaugeOS = 0x016889e5E0F026c030D28321f3190A39206120AD;
-    address internal constant SwapX_OsSilo_extBribeOS = 0x91BF8dc9D93ed1aC1aFaD78bB9B48F04bDF01F36;
-    address internal constant SwapX_OsSilo_gaugeOther = 0x6e4e2e895223f62Cc53bA56128a58bC58D79BEa0;
-    address internal constant SwapX_OsSilo_extBribeOther = 0xe0fd09bae2A254e19fc75fCEC967a373E0b63909;
-
-    address internal constant SwapX_OsFiery_pool = 0xC3a185226d594B56d3e5cF52308d07FE972cA769;
-    address internal constant SwapX_OsFiery_gaugeOS = 0xBb3cFc4f69ecfaeb9fd4d263bD8549C8CCFd25d7;
-    address internal constant SwapX_OsFiery_extBribeOS = 0x5ee96bE5747867560D18F042991E045401601b01;
-
-    address internal constant SwapX_OsHedgy_pool = 0x1695D6BD8D8ADC8B87c6204bE34D34d19A3Fe1d6;
-    address internal constant SwapX_OsHedgy_yf_treasury = 0x4C884677427A975d1b99286E99188c82D71223C8;
-
-    address internal constant SwapX_OsMYRD_pool = 0x6228739b26f49AE9Cd953D82366934e209175E81;
-    address internal constant SwapX_OsMYRD_gaugeOS = 0xA9Bb2b8B92a546a53466B5E7d8D8f2F03032FB41;
-    address internal constant SwapX_OsMYRD_extBribeOS = 0x5599bfd59a9EE0E8b65aB2d2449F4bdf28c75edc;
-
-    address internal constant SwapX_OsBes_pool = 0x97fE831cC56da84321f404a300e2Be81b5bd668A;
-    address internal constant SwapX_OsBes_gaugeOS = 0x77546B40445d3eca6111944DFe902de0514A4F80;
-    address internal constant SwapX_OsBes_extBribeOS = 0x19582ff8ffD7695eE177061eb4AC3fCA520F3638;
-    address internal constant SwapX_OsBes_gaugeOther = 0xfBA3606310f3d492031176eC85DFbeD67F5799F2;
-    address internal constant SwapX_OsBes_extBribeOther = 0x298B8934bC89d19F89A1F8Eb620659E6678e3539;
-
-    address internal constant SwapX_OsBRNx_pool = 0x12dAb9825B85B07f8DdDe746066B7Ed6Bc4c06F8;
-    address internal constant SwapX_OsBRNx_gaugeOS = 0xBd896eB3503A2eC0f246B3C0B7D8D434F7c697Fc;
-    address internal constant SwapX_OsBRNx_extBribeOS = 0x0B2d62B1B025751249543d47765f55a66Dd526c7;
-    address internal constant SwapX_OsBRNx_gaugeOther = 0xaE519dE817775E394Fc854d966065a97Facfc934;
-    address internal constant SwapX_OsBRNx_extBribeOther = 0xC9FA26E55e92e1D9c63A6FDF9b91FaC794523203;
-
-    // Shadow
-    address internal constant Shadow_OsEco_pool = 0xFd0Cee796348Fd99AB792C471f4419b4c56cf6b8;
-    address internal constant Shadow_OsEco_yf_treasury = 0x4B9919603170c77936D8ec2C08b604844E861699;
-    address internal constant Shadow_SWETH_pool = 0xB6d9B069F6B96A507243d501d1a23b3fCCFC85d3;
-    address internal constant Shadow_SWETH_gaugeV2 = 0xF5C7598C953E49755576CDA6b2B2A9dAaf89a837;
-
-    // Merkl
-    address internal constant MerklWhale = 0xA9DdD91249DFdd450E81E1c56Ab60E1A62651701;
-
-    // Metropolis
-    address internal constant Metropolis_Voter = 0x03A9896A464C515d13f2679df337bF95bc891fdA;
-    address internal constant Metropolis_RewarderFactory = 0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3;
-    address internal constant Metropolis_Pools_OsWOs = 0x3987a13D675c66570bC28c955685a9bcA2dCF26e;
-    address internal constant Metropolis_Pools_OsMoon = 0xc0aac9BB9fb72a77e3bc8beE46D3E227C84a54C0;
-    address internal constant Metropolis_OsWs_pool = 0x3987a13D675c66570bC28c955685a9bcA2dCF26e;
-
-    // Curve
-    address internal constant CRV = 0x5Af79133999f7908953E94b7A5CF367740Ebee35;
-    address internal constant WS_OS_pool = 0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9;
-    address internal constant WS_OS_gauge = 0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207;
-    address internal constant childLiquidityGaugeFactory = 0xf3A431008396df8A8b2DF492C913706BDB0874ef;
-
-    address internal constant MerklDistributor = 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd;
 }
 
 library Hoodi {

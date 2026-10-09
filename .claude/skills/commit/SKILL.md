@@ -105,7 +105,6 @@ Analyze the staged diff (`git diff --cached`) and generate a Conventional Commit
 - `zapper` — Zapper contracts
 - `market` — market adapters (Morpho, Silo)
 - `pendle` — Pendle integration
-- `sonic` — Sonic chain specific
 - `skill` — Claude Code skills
 
 If changes span multiple areas, use the most significant one. For mixed changes, omit the scope.

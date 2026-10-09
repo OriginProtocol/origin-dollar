@@ -196,11 +196,15 @@ describe("structural invariants", () => {
 describe("the reader refuses to pass vacuously", () => {
   test("an artifact with no storageLayout throws instead of reading zero rows", () => {
     // A targeted `forge build <path>` omits storageLayout even though
-    // foundry.toml sets extra_output. Observed on OSVault and OETHBaseVault.
+    // foundry.toml sets extra_output. Observed on OETHBaseVault.
     // Treating the missing key as an empty layout would silently disable every
     // pin above, so this must throw.
     assert.throws(
-      () => canonicalise({ abi: [] }, "contracts/vault/OSVault.sol:OSVault"),
+      () =>
+        canonicalise(
+          { abi: [] },
+          "contracts/vault/OETHBaseVault.sol:OETHBaseVault"
+        ),
       /built without a storageLayout/
     );
   });

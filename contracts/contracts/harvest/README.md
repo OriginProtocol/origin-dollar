@@ -18,7 +18,7 @@ Used by OUSD on Mainnet.
 
 ## Fixed Rate Dripper
 
-Used on Mainnet for OETH, Base and Sonic.
+Used on Mainnet for OETH and Base.
 
 ### Hierarchy
 
@@ -47,17 +47,3 @@ Used on Mainnet for OETH.
 ### Storage
 
 ![OETH Simple Harvester Storage](../../docs/OETHHarvesterSimpleStorage.svg)
-
-## Sonic Harvester
-
-### Hierarchy
-
-![Sonic Harvester Hierarchy](../../docs/OSonicHarvesterHierarchy.svg)
-
-### Squashed
-
-![Sonic Harvester Squashed](../../docs/OSonicHarvesterSquashed.svg)
-
-### Storage
-
-![Sonic Harvester Storage](../../docs/OSonicHarvesterStorage.svg)

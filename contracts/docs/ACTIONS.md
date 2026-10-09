@@ -21,14 +21,12 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OUSD on mainnet                                                                                           |
 | `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OETH on mainnet                                                                                           |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
-| `otokenOsRebase`       | sonic   | `45 11,23 * * *` | Collect the OS dripper and rebase OS on Sonic                                                                                             |
 | `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
 
 ## OToken operations
 
 | Action                              | Network | Cron             | Description                                                                                         |
 | ----------------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `otokenOsCollectAndRelease`         | sonic   | `55 23 * * *`    | Rebase the OS vault and harvest on Sonic                                                            |
 | `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule                                          |
 | `otokenAddWithdrawalQueueLiquidity` | mainnet | `*/10 * * * *`   | Call `addWithdrawalQueueLiquidity` on each OToken vault, only when it would add claimable liquidity |
 | `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
@@ -36,7 +34,6 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
 | `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
-| `otokenOsSonicRestakeRewards`       | sonic   | `52 22 * * *`    | Restake rewards for Sonic validators                                                                |
 
 ## Native staking (Ethereum validators)
 
@@ -47,13 +44,6 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `verifyDeposits`           | mainnet | `11 */4 * * *`   | Verify any processed deposit on the Beacon chain                                                    |
 | `autoValidatorDeposits`    | mainnet | `14 1 * * *`     | Deposit WETH to under-funded validators (withdrawing from the strategy first if the Vault needs it) |
 | `autoValidatorWithdrawals` | mainnet | `24 1 * * *`     | Withdraw ETH from validators when the Vault needs WETH for user withdrawals                         |
-
-## Sonic staking
-
-| Action                  | Network | Cron                 | Description                                                |
-| ----------------------- | ------- | -------------------- | ---------------------------------------------------------- |
-| `sonicUndelegate`       | sonic   | `35 3,9,15,21 * * *` | Remove liquidity from a Sonic validator (request withdraw) |
-| `sonicClaimWithdrawals` | sonic   | `58 */2 * * *`       | Withdraw native S from a previously undelegated validator  |
 
 ## Cross-chain
 

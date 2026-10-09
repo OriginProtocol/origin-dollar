@@ -46,7 +46,6 @@ Place scripts under the chain-specific directory:
 scripts/deploy/
 ├── mainnet/
 ├── base/
-├── sonic/
 └── hyperevm/
 ```
 
@@ -63,9 +62,7 @@ new address with `_recordDeployment("NAME", address)`, and resolve prior entries
 with `resolver.resolve("NAME")`.
 
 Mainnet governance proposals use GovernorSix. Base and HyperEVM proposals use
-their chain TimelockController. Sonic scripts currently apply fork-only
-governance effects explicitly in `_fork()`; follow the existing Sonic script
-pattern rather than copying a Mainnet proposal.
+their chain TimelockController.
 
 ## Build and test
 
@@ -118,9 +115,6 @@ For a local node:
 ```bash
 make deploy-local
 ```
-
-There is currently no `deploy-sonic` Make target. Add and review a target before
-attempting another Sonic Foundry deployment.
 
 ## After deployment
 

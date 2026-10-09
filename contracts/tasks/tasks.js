@@ -71,7 +71,6 @@ const {
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
-const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const {
   requestValidatorWithdraw,
@@ -267,8 +266,7 @@ subtask("depositWETH", "Deposit ETH into WETH")
     const signer = await getSigner();
 
     const networkName = await getNetworkName();
-    const symbol = networkName == "sonic" ? "wS" : "WETH";
-    const wethAddress = addresses[networkName][symbol];
+    const wethAddress = addresses[networkName].WETH;
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await depositWETH({ ...taskArgs, weth, signer });
@@ -1104,29 +1102,6 @@ subtask("mine", "Mines a number of blocks")
     await advanceBlocks(blocks);
   });
 task("mine").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-// Sonic Staking Operations
-subtask(
-  "sonicDefaultValidator",
-  "Set the default validator for the Sonic Staking Strategy"
-)
-  .addParam("id", "Validator identifier. eg 18", undefined, types.int)
-  .setAction(setDefaultValidator);
-task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
-  .addOptionalParam(
-    "block",
-    "Block number. (default: latest)",
-    undefined,
-    types.int
-  )
-  .setAction(snapSonicStaking);
-task("sonicStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

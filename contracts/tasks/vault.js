@@ -12,14 +12,8 @@ const log = require("../utils/logger")("task:vault");
 async function getContracts(hre, symbol, assetSymbol) {
   const networkName = await getNetworkName();
 
-  // If no symbol is provided, set to OSonic if Sonic network, else default to OETH
-  symbol = symbol
-    ? symbol.toUpperCase()
-    : networkName === "sonic"
-    ? "OSonic"
-    : "OETH";
-  // Convert OS to OSonic
-  symbol = symbol === "OS" || symbol === "OSONIC" ? "OSonic" : symbol;
+  // If no symbol is provided, default to OETH
+  symbol = symbol ? symbol.toUpperCase() : "OETH";
   const contractPrefix = symbol === "OUSD" ? "" : symbol;
 
   const networkPrefix = networkName === "base" ? "Base" : "";
@@ -31,14 +25,14 @@ async function getContracts(hre, symbol, assetSymbol) {
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
   log(`Resolved ${networkName} ${symbol} Vault to address ${vault.address}`);
 
-  // Resolve the OToken. eg OUSD, OETH or OSonic
+  // Resolve the OToken. eg OUSD or OETH
   const oTokenProxy = await ethers.getContract(
     `${symbol}${networkPrefix}Proxy`
   );
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
   log(`Resolved ${networkName} ${symbol} OToken to address ${oToken.address}`);
 
-  // Resolve the wrapped OToken. eg wOETH, wOSonic
+  // Resolve the wrapped OToken. eg wOUSD or wOETH
   let wOToken;
   if (networkName !== "hoodi") {
     const wrappedProxyPrefix = symbol === "OUSD" ? "WrappedOUSD" : `W${symbol}`;
@@ -53,11 +47,9 @@ async function getContracts(hre, symbol, assetSymbol) {
     );
   }
 
-  // Resolve the Asset. eg WETH or wS
+  // Resolve the Asset. eg WETH or USDC
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
-  assetSymbol =
-    assetSymbol ||
-    (networkName === "sonic" ? "wS" : symbol === "OUSD" ? "USDC" : "WETH");
+  assetSymbol = assetSymbol || (symbol === "OUSD" ? "USDC" : "WETH");
   const asset = await resolveAsset(assetSymbol);
   log(
     `Resolved ${networkName} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`

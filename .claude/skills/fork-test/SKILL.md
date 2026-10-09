@@ -43,7 +43,7 @@ forge-std/Test
                  └─ Fork_Concrete_<Contract>_<Feature>_Test  (concrete/*.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares constants, IERC20 external token refs, and fork IDs (`forkIdMainnet`, `forkIdBase`, `forkIdSonic`, `forkIdArbitrum`). **`Base` only contains actors, constants, IERC20 external tokens, fork IDs, and setUp().** All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` file.
+- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares constants, IERC20 external token refs, and fork IDs (`forkIdMainnet`, `forkIdBase`, `forkIdArbitrum`). **`Base` only contains actors, constants, IERC20 external tokens, fork IDs, and setUp().** All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` file.
 - `BaseFork` provides `_createAndSelectFork<Chain>()` helpers that read RPC URLs from environment variables and create Foundry forks.
 - `Fork_<Contract>_Shared_Test` is **abstract** and owns all deployment + configuration logic on top of the fork.
 - Concrete test contracts inherit `Fork_<Contract>_Shared_Test` directly — no extra layers.
@@ -57,7 +57,7 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 | Interface | File | Used for |
 |-----------|------|----------|
 | `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
-| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase) |
 | `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens |
 | `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
 | Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces |
@@ -77,12 +77,9 @@ Each product has its own vault contract. **Always use the correct vault type**:
 |---------|-------|-------|-------|---------------------|
 | OUSD | `OUSD` | `OUSDVault` | Mainnet | `Vaults.OUSD` |
 | OETH | `OETH` | `OETHVault` | Mainnet | `Vaults.OETH` |
-| OSonic | `OSonic` | **`OSVault`** | Sonic | `Vaults.OS` |
 | OETHBase | `OETHBase` | `OETHBaseVault` | Base | `Vaults.OETH_BASE` |
 
 Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
-
-`OSVault` lives at `contracts/vault/OSVault.sol`. **NEVER use `OETHVault` for Sonic products.**
 
 ## 3. Shared Test Contract (`shared/Shared.t.sol`)
 
@@ -91,7 +88,7 @@ The `setUp()` function follows this exact order:
 ```solidity
 function setUp() public virtual override {
     super.setUp();                        // Base actors + BaseFork helpers
-    _createAndSelectFork<Chain>();        // Create fork (e.g. _createAndSelectForkSonic())
+    _createAndSelectFork<Chain>();        // Create fork (e.g. _createAndSelectForkBase())
     _deployFreshContracts();             // Deploy fresh contracts on top of fork
     _configureContracts();               // Governor calls: set params, approve strategies
     label();                             // vm.label every contract
@@ -114,19 +111,18 @@ Use the address libraries from `tests/utils/Addresses.sol`:
 
 ```solidity
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
 // In setUp:
 address weth = Mainnet.WETH;
-address pool = Sonic.SwapXWSOS_pool;
+address aero = BaseAddresses.AERO;
 ```
 
 ### Key rules
 
 - Deploy fresh **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode(Proxies.IG_PROXY)`. All artifact paths (including the proxy) come from `tests/utils/Artifacts.sol` — never inline a `"contracts/...sol:Name"` string in a test file.
 - Initialize via `proxy.initialize(impl, governor, initData)`.
-- Cast proxies to interface types: `oSonic = IOToken(address(oSonicProxy))`.
+- Cast proxies to interface types: `oeth = IOToken(address(oethProxy))`.
 - Cast forked addresses to interfaces: `oethVault = IVault(Mainnet.OETH_VAULT)`.
 - Configuration block uses `vm.startPrank(governor)` / `vm.stopPrank()`.
 - `label()` at the bottom labels every deployed address **and** key forked addresses for trace readability.
@@ -255,9 +251,6 @@ test_withdraw_RevertWhen_insufficientLPTokens()  // calcTokenToBurn uses real vi
 | AerodromeAMOStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
 | BaseCurveAMOStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
 | BridgedWOETHStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
-| OSonic / OSVault | Sonic | `_createAndSelectForkSonic()` | `Sonic` |
-| SonicStakingStrategy | Sonic | `_createAndSelectForkSonic()` | `Sonic` |
-| SonicSwapXAMOStrategy | Sonic | `_createAndSelectForkSonic()` | `Sonic` |
 | WOETH (Arbitrum) | Arbitrum | `_createAndSelectForkArbitrum()` | `ArbitrumOne` |
 
 **IMPORTANT:** When importing the `Base` address library, alias it to avoid collision with the `Base` test contract:
@@ -273,7 +266,6 @@ The fork helpers in `BaseFork.t.sol` read these env vars:
 |-------|----------------|-------------------------------|
 | Mainnet | `MAINNET_PROVIDER_URL` | `FORK_BLOCK_NUMBER_MAINNET` |
 | Base | `BASE_PROVIDER_URL` | `FORK_BLOCK_NUMBER_BASE` |
-| Sonic | `SONIC_PROVIDER_URL` | `FORK_BLOCK_NUMBER_SONIC` |
 | Arbitrum | `ARBITRUM_PROVIDER_URL` | `FORK_BLOCK_NUMBER_ARBITRUM` |
 
 Configure these in `foundry.toml` under `[rpc_endpoints]` or pass via environment.
@@ -398,7 +390,7 @@ After writing fork tests, re-run coverage to see if previously uncovered integra
 - [ ] `setUp()` follows the exact order: super → fork creation → fresh deploy → configure → label
 - [ ] Fresh vs fork decision is correct: contract under test is fresh, external infrastructure is from fork
 - [ ] Address constants use the correct library from `tests/utils/Addresses.sol`
-- [ ] Correct vault type is used for the product (OSVault for Sonic, OETHVault for OETH, etc.)
+- [ ] Correct vault type is used for the product (OETHVault for OETH, OETHBaseVault for OETHBase, etc.)
 - [ ] Concrete contracts use `Fork_Concrete_<Contract>_<Function>_Test`
 - [ ] No fuzz tests (fork tests are concrete only)
 - [ ] No simple revert tests (access control, input validation, simple setters) — these belong in unit tests

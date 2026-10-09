@@ -47,9 +47,9 @@ block explorer (via `sol2uml`/Etherscan) or a read-only RPC.
 2. Find the changed Foundry deploy script(s):
    `git diff --name-only origin/master...HEAD -- 'contracts/scripts/deploy/**/*.s.sol'`
    (or read the PR `files`). Ignore `000_Example.s.sol`. The folder under
-   `scripts/deploy/<network>/` gives the **network** (mainnet, base, sonic, hyperevm,
+   `scripts/deploy/<network>/` gives the **network** (mainnet, base, hyperevm,
    …) — use it for `sol2uml --network <net>` and map it to the chain deployment file
-   (`build/deployments-1.json`, `-8453.json`, `-146.json`, `-999.json`, etc.).
+   (`build/deployments-1.json`, `-8453.json`, `-999.json`, etc.).
 3. From each script's `_execute()`, enumerate every contract creation (`new <Contract>(args)`)
    and every `_recordDeployment("<KEY>", address(...), type(<Contract>).name)` call.
    Resolve `<KEY>` → address from the matching entry in the chain deployment JSON's
@@ -156,7 +156,7 @@ Verdict: <VERIFIED | BLOCKERS FOUND>
 ## Notes / common false positives
 
 - For `sol2uml diff`, run from `contracts/` and source `.env` first so `$ETHERSCAN_API_KEY`
-  is set; use `--network` matching the deploy folder (base→`base`, sonic→`sonic`, etc.).
+  is set; use `--network` matching the deploy folder (base→`base`, hyperevm→`hyperevm`, etc.).
 - A **proxy address will not match an implementation's source** — diff a `*Proxy` against
   the proxy contract, not the impl.
 - A clean `sol2uml diff` (no file differences) is the pass signal for check 2; treat any

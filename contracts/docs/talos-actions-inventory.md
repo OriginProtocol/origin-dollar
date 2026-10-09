@@ -7,13 +7,11 @@
 | chains | actions |
 |---|---|
 | eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
-| sonic | manageBribeOnSonic, otokenOsCollectAndRelease, otokenOsRebase, otokenOsSonicRestakeRewards, sonicClaimWithdrawals, sonicUndelegate |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
-| eth, hoodi | doAccounting, registerValidators, stakeValidators |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 
@@ -26,8 +24,8 @@
 | `tasks/lib/network` | 6 | eth, sonic, hyper, base, arb, plume |
 | `utils/logger` | 6 | eth, sonic, hyper, base, arb, plume |
 | `tasks/lib/contracts` | 5 | eth, sonic, hyper, base, plume |
-| `utils/addresses` | 5 | eth, sonic, hyper, base, arb |
 | `utils/txLogger` | 5 | eth, sonic, hyper, base, plume |
+| `utils/addresses` | 4 | eth, hyper, base, arb |
 | `tasks/lib/signer` | 3 | eth, base, arb |
 | `utils/cctp` | 3 | eth, hyper, base |
 | `utils/localKeyValueStore` | 3 | eth, hyper, base |
@@ -38,12 +36,7 @@
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `utils/resolvers` | 2 | eth, base |
 | `abi/claim-rewards-module.json` | 1 | eth |
-| `abi/erc20.json` | 1 | sonic |
 | `abi/passThrough.json` | 1 | eth |
-| `abi/poolBoosterCentralRegistry.json` | 1 | sonic |
-| `abi/poolBoosterSwapX.json` | 1 | sonic |
-| `abi/sonic_staking_strategy.json` | 1 | sonic |
-| `abi/vault.json` | 1 | sonic |
 | `tasks/lib/cowHarvest` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
 | `utils/anvil` | 1 | eth |
@@ -57,6 +50,5 @@
 | `utils/proofs` | 1 | eth |
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |
-| `utils/sonicActions` | 1 | sonic |
 | `utils/units` | 1 | eth |
 | `utils/vault` | 1 | eth |

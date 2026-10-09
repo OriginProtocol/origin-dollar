@@ -148,8 +148,8 @@ When adding new vault functionality (functions, events, or public state variable
 | Interface | File | Used for |
 |-----------|------|----------|
 | `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts (OUSDVault, OETHVault, etc.) |
-| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
-| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WrappedOusd) |
 | `IProxy` | `contracts/interfaces/IProxy.sol` | All InitializeGovernedUpgradeabilityProxy instances |
 
 ### Scope

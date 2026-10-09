@@ -39,7 +39,7 @@ contracts/tests/smoke/<category>/<Product>/
 
 **One file per feature area**, not per function. Group tests by what they verify. The feature groupings depend on the contract being tested:
 
-- **OTokens (OUSD, OETH, OSonic):** ViewFunctions, Mint, Redeem, Transfer, Rebasing, YieldDelegation
+- **OTokens (OUSD, OETH, OETHBase):** ViewFunctions, Mint, Redeem, Transfer, Rebasing, YieldDelegation
 - **Vaults:** Mint, Redeem, Rebase, Allocate, WithdrawalQueue
 - **Strategies:** Deposit, Withdraw, Harvest, Rebalance
 
@@ -75,7 +75,7 @@ Smoke tests follow the same interface-only pattern as unit and fork tests — se
 | Interface | File | Used for |
 |-----------|------|----------|
 | `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
-| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase) |
 | `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens |
 | `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
 | Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces |
@@ -92,10 +92,7 @@ Smoke tests follow the same interface-only pattern as unit and fork tests — se
 |---------|-------|-------|-------|-------------|
 | OUSD | `OUSD` | `OUSDVault` | Mainnet | `_createAndSelectForkMainnet()` |
 | OETH | `OETH` | `OETHVault` | Mainnet | `_createAndSelectForkMainnet()` |
-| OSonic | `OSonic` | **`OSVault`** | Sonic | `_createAndSelectForkSonic()` |
 | OETHBase | `OETHBase` | `OETHBaseVault` | Base | `_createAndSelectForkBase()` |
-
-**NEVER use `OETHVault` for Sonic products.** `OSVault` lives at `contracts/vault/OSVault.sol`.
 
 ## 3. Shared Test Contract (`shared/Shared.t.sol`)
 
@@ -124,7 +121,7 @@ function setUp() public virtual override {
 ### Key rules
 
 - **No fresh deploys** — everything comes from the Resolver or fork state.
-- **Resolve contracts by name** using `resolver.resolve("OUSD_PROXY")`, `resolver.resolve("VAULT_PROXY")`, etc. **ALL** origin related contract addresses must come from the Resolver. **DO NOT** deploy new instances, use hardcoded addresses or fetch from Mainnet/Base/Sonic Addresses.sol book. In case one address is missing from the Resolver, add it to the deployment pipeline and re-run the smoke test. In case you don't have the address at all, ask the team for help.
+- **Resolve contracts by name** using `resolver.resolve("OUSD_PROXY")`, `resolver.resolve("VAULT_PROXY")`, etc. **ALL** origin related contract addresses must come from the Resolver. **DO NOT** deploy new instances, use hardcoded addresses or fetch from Mainnet/Base Addresses.sol book. In case one address is missing from the Resolver, add it to the deployment pipeline and re-run the smoke test. In case you don't have the address at all, ask the team for help.
 - **Cast resolved addresses to interfaces** — `ousd = IOToken(resolver.resolve("OUSD_PROXY"))`, not concrete types.
 - **Resolve actors from contracts** — `governor = ousd.governor()`, `strategist = ousdVault.strategistAddr()`. Never use `makeAddr()` for governance actors.
 - **Sanity-check the Resolver** in `_fetchContracts()`:
