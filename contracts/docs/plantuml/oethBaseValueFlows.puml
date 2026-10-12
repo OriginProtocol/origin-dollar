@@ -12,7 +12,6 @@ participant "Bridged WOETH\nStrategy" as woethStrat <<Origin>> #DeepSkyBlue
 
 participant "Bridged\nWrapped ETH" as weth <<WETH>>
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
-participant "Dripper" as drip <<Origin>> #DeepSkyBlue
 
 participant "SuperOETH /\nWETH" as aeroPool <<Aerodrome>>
 end box
@@ -150,9 +149,6 @@ end
 
 ' Collect and Rebase
 group Collect and Rebase
-
-drip -> vault : WETH
-note left : stream harvested WETH\nto Vault over 14 days
 
 group Rebase [increase in underlying assets]
 vault o-> vault : SuperOETH

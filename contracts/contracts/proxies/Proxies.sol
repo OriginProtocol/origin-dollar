@@ -33,13 +33,6 @@ contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice DripperProxy delegates calls to a Dripper implementation
- */
-contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice OETHProxy delegates calls to nowhere for now
  */
 contract OETHProxy is InitializeGovernedUpgradeabilityProxy {

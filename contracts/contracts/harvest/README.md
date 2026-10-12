@@ -1,37 +1,5 @@
 # Diagrams
 
-## Dripper
-
-Used by OUSD on Mainnet.
-
-### Hierarchy
-
-![Dripper Hierarchy](../../docs/DripperHierarchy.svg)
-
-### Squashed
-
-![Dripper Squashed](../../docs/DripperSquashed.svg)
-
-### Storage
-
-![Dripper Storage](../../docs/DripperStorage.svg)
-
-## Fixed Rate Dripper
-
-Used on Mainnet for OETH and Base.
-
-### Hierarchy
-
-![Fixed Rate Dripper Hierarchy](../../docs/OETHFixedRateDripperHierarchy.svg)
-
-### Squashed
-
-![Fixed Rate Dripper Squashed](../../docs/OETHFixedRateDripperSquashed.svg)
-
-### Storage
-
-![Fixed Rate Dripper Storage](../../docs/OETHFixedRateDripperStorage.svg)
-
 ## OETH Simple Harvester
 
 Used on Mainnet for OETH.

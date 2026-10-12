@@ -30,10 +30,6 @@ object "WOETHBase" as woeth <<Origin>><<Proxy>> #$originColor {
     name: Wrapped Super OETH
 }
 
-' object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
-'     asset: WETH
-' }
-
 object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
 }
 
@@ -80,7 +76,6 @@ zap ..> oethv
 
 woeth ..> oeth
 oeth <.> oethv
-' oethv <.> drip
 oethv <..> bridgeStrat
 oethv <..> aeroStrat
 bridgeStrat ..> bridged
