@@ -202,6 +202,9 @@ Actions that propose transactions through the Safe Transaction Service require
 chain as a delegate for the target Safe. A delegate can submit a proposal but
 does not provide an owner confirmation or reduce the Safe threshold.
 
+`restartSquid` requires `SQD_API_TOKEN`, an SQD Cloud API token for the
+`origin` organization.
+
 ## Contract Verification
 
 ### Auto-verification
