@@ -12,7 +12,7 @@ Deployed on Ethereum Mainnet, Base, Arbitrum, Plume, Hoodi, and HyperEVM. Origin
 
 ## Toolchain
 
-**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, executes deployments, and generates the `@origin/defi` npm ABI package. `pnpm ops` runs operational commands and Anvil provides local forks. The committed `deployments/` descriptors are the shared address/ABI registry.
+**Foundry is the contract toolchain**: `forge` (driven by the `Makefile`) builds the contracts, runs the contract test suite, and executes deployments. `pnpm ops` runs operational commands and Anvil provides local forks. The committed `deployments/` descriptors are the shared address/ABI registry.
 
 ## Setup
 
