@@ -144,8 +144,8 @@ be as small as possible.
 
 Note the protocol-wide reach of the role addresses when evaluating option 1:
 `IVault.strategistAddr()` is the strategist source of truth for `OUSD.sol`,
-`InitializableAbstractStrategy` (so every strategy), the Curve/Aerodrome/Algebra
-AMO strategies, `ValidatorRegistrator` and `FixedRateDripper`. Re-pointing it is a cheap transaction but a wide blast
+`InitializableAbstractStrategy` (so every strategy), the Curve/Aerodrome
+AMO strategies and `ValidatorRegistrator`. Re-pointing it is a cheap transaction but a wide blast
 radius — enumerate the affected call sites before recommending it.
 
 Worked example: PR #2973 added an `adminAddr` role to `VaultAdmin`/`VaultStorage`
@@ -182,7 +182,7 @@ Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (
 `contracts/token/OUSD.sol` and `contracts/token/OETH.sol` - rebasing ERC-20 tokens. OUSD rebases to all holders; OETH uses a similar mechanism for ETH-denominated yield.
 
 ### Harvesters
-`contracts/harvest/` - collect reward tokens from strategies and swap to yield-bearing assets. `Harvester` for OUSD, `OETHHarvester` for OETH, network-specific variants exist.
+`contracts/harvest/` - collect reward tokens from strategies and swap to yield-bearing assets. `SuperOETHHarvester` (Base, built on the abstract `SimpleHarvester`) is run by the Talos `otokenOethbHarvest` action. `HarvestingEIP1271` validates the CoW Protocol orders used for CoW harvests, and `FeeSplitter` splits protocol fees between operations and the OGN buyback.
 
 ### Automation (Talos)
 The Talos runner's cron/manual actions live in `contracts/tasks/actions/*.ts`,

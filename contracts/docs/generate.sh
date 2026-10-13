@@ -1,8 +1,3 @@
-# contracts/harvest
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b Dripper -o DripperHierarchy.svg
-sol2uml .. -s -d 0 -b Dripper -o DripperSquashed.svg
-sol2uml storage .. -c Dripper -o DripperStorage.svg
-
 # contracts/proxies
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSDProxy -o OUSDProxyHierarchy.svg
 sol2uml .. -s -d 0 -b OUSDProxy -o OUSDProxySquashed.svg

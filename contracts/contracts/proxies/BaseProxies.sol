@@ -32,13 +32,6 @@ contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHBaseDripperProxy delegates calls to a FixedRateDripper implementation
- */
-contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice AerodromeAMOStrategyProxy delegates calls to AerodromeAMOStrategy implementation
  */
 contract AerodromeAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -63,12 +56,5 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice OETHBaseCurveAMOProxy delegates calls to a OETHBaseCurveAMO implementation
  */
 contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice OETHbHydrexAMOProxy delegates calls to an OETHbHydrexAMOStrategy implementation
- */
-contract OETHbHydrexAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
