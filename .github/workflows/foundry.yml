@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - master
-      - staging
-      - stable
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
