@@ -76,9 +76,10 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 
 ## System
 
-| Action        | Network | Cron          | Description                                                     |
-| ------------- | ------- | ------------- | --------------------------------------------------------------- |
-| `healthcheck` | mainnet | `*/5 * * * *` | Verify the action execution pipeline (signer, network, logging) |
+| Action         | Network | Cron          | Description                                                                                                      |
+| -------------- | ------- | ------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `healthcheck`  | mainnet | `*/5 * * * *` | Verify the action execution pipeline (signer, network, logging)                                                  |
+| `restartSquid` | mainnet | `15 3 * * *`  | Restart `origin-squid:prod` on SQD Cloud and fail the run unless the restart reaches `OK`. Needs `SQD_API_TOKEN` |
 
 ## Manual / on-demand — mainnet
 

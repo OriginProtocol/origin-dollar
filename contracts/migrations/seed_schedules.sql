@@ -50,6 +50,7 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'claim_bribes_base',                        'cd /app && pnpm exec tsx tasks/run.ts claimBribes --network base',                     '30 10 * * 4',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'manage_bribes_base',                       'cd /app && pnpm exec tsx tasks/run.ts manageMerklBribes --network base',               '35 13 * * 3',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'healthcheck',                              'cd /app && pnpm exec tsx tasks/run.ts healthcheck --network mainnet',                  '*/5 * * * *',           'UTC', false, NULL),
+('origin-dollar', 'restart_squid_prod',                       'cd /app && pnpm exec tsx tasks/run.ts restartSquid --network mainnet',                 '15 3 * * *',            'UTC', false, 'Daily restart of origin-squid:prod on SQD Cloud. Needs SQD_API_TOKEN.'),
 ('origin-dollar', 'daily_snap_balances',                      'cd /app && pnpm exec tsx tasks/run.ts snapBalances --network mainnet',                 '2 0 * * *',             'UTC', false, NULL),
 ('origin-dollar', 'daily_verify_balances',                    'cd /app && pnpm exec tsx tasks/run.ts verifyBalances --network mainnet',               '6 0 * * *',             'UTC', false, NULL),
 ('origin-dollar', 'daily_verify_deposits',                    'cd /app && pnpm exec tsx tasks/run.ts verifyDeposits --network mainnet',               '11 */4 * * *',          'UTC', false, 'Disabled until consolidations done'),
