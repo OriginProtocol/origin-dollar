@@ -12,9 +12,10 @@ on:
     - cron: "0 6 * * *"
   workflow_dispatch:
 
+# One group per event: a push to master no longer cancels the nightly run, and vice versa.
 concurrency:
   cancel-in-progress: true
-  group: foundry-${{ github.ref }}
+  group: foundry-${{ github.event_name }}-${{ github.ref }}
 
 jobs:
   # ── Formatting & Lint ───────────────────────────────────────
@@ -139,7 +140,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Mainnet fork tests
         working-directory: contracts
-        run: make test-fork-mainnet
+        run: make test-ci-fork-mainnet
 
   fork-tests-base:
     name: Fork Tests (Base)
@@ -153,7 +154,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Base fork tests
         working-directory: contracts
-        run: make test-fork-base
+        run: make test-ci-fork-base
 
   fork-tests-hyperevm:
     name: Fork Tests (HyperEVM)
@@ -167,7 +168,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run HyperEVM fork tests
         working-directory: contracts
-        run: make test-fork-hyperevm
+        run: make test-ci-fork-hyperevm
 
   # ── Smoke Tests ─────────────────────────────────────────────
   smoke-tests-mainnet:
@@ -182,7 +183,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Mainnet smoke tests
         working-directory: contracts
-        run: make test-smoke-mainnet
+        run: make test-ci-smoke-mainnet
 
   smoke-tests-base:
     name: Smoke Tests (Base)
@@ -196,7 +197,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Base smoke tests
         working-directory: contracts
-        run: make test-smoke-base
+        run: make test-ci-smoke-base
 
   smoke-tests-hyperevm:
     name: Smoke Tests (HyperEVM)
@@ -210,4 +211,4 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run HyperEVM smoke tests
         working-directory: contracts
-        run: make test-smoke-hyperevm
+        run: make test-ci-smoke-hyperevm

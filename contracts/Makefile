@@ -126,6 +126,21 @@ test-smoke-%:
 	forge build contracts/ tests/smoke/$*/ scripts/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/smoke/$*/**' $(MAKE) test-base
 
+# CI entry point for the fork and smoke suites: make test-ci-fork-mainnet, make test-ci-smoke-base...
+# Unless FORK_BLOCK_NUMBER_<CHAIN> is already set, every suite of the run forks the same block,
+# FORK_BLOCK_LAG blocks behind the head, so a reorg of the head cannot drop it mid-run. A failed
+# run is retried once: every nightly failure so far came from the RPC, not from the code.
+FORK_BLOCK_LAG ?= 20
+test-ci-%:
+	@chain=$$(echo "$*" | cut -d- -f2 | tr '[:lower:]' '[:upper:]'); \
+	rpc_var=$${chain}_PROVIDER_URL; block_var=FORK_BLOCK_NUMBER_$$chain; \
+	if [ -z "$${!block_var}" ]; then \
+		head=$$(cast block-number --rpc-url "$${!rpc_var:?$$rpc_var not set}") || exit 1; \
+		export $$block_var=$$((head - $(FORK_BLOCK_LAG))); \
+	fi; \
+	echo "$$block_var=$${!block_var}"; \
+	$(MAKE) test-$* || { echo "::warning title=test-ci-$*::first run failed, retrying once"; $(MAKE) test-$*; }
+
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                 COVERAGE                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
