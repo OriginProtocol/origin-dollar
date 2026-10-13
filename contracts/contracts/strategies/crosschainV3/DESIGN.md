@@ -469,8 +469,6 @@ pending list. Top of mind for the next PR:
 - **[`FLOWS.md`](./FLOWS.md)** — narrative walkthroughs of the three core
   flows (deposit, withdraw, balance report) with Mermaid sequence diagrams +
   fee model and adapter knob references.
-- **`.claude/skills/add-network/SKILL.md`** — checklist for adding a new
-  network to the repo.
 
 ---
 

@@ -54,38 +54,6 @@ contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
- */
-contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice OETHBalancerMetaPoolrEthStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
- */
-contract OETHBalancerMetaPoolrEthStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice OETHBalancerMetaPoolwstEthStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
- */
-contract OETHBalancerMetaPoolwstEthStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice MakerDsrStrategyProxy delegates calls to a Generalized4626Strategy implementation
- */
-contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice BridgedWOETHProxy delegates calls to BridgedWOETH implementation
  */
 contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
@@ -151,13 +119,6 @@ contract CompoundingStakingStrategyProxy is
  * @notice OUSDMorphoV2StrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice Legacy Supernova AMO proxy
- */
-contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
