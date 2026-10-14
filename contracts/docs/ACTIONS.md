@@ -185,55 +185,54 @@ Safe's 2/8 owner confirmations. A Safe module is not used.
 The OUSD v4 liquidity Safe (`0x13eb…eB26`) owns OUSD-only positions just above
 the price on the hookless, fee-0 OUSD/USDe pool, so they only ever buy USDe.
 The ranges are the bid prices and the Safe sets them, e.g. a small range near
-par and larger ones deeper, so a big seller walks into better prices. Every
-run, for each position configured on `UniswapV4RebalanceModule` (deepest range
-first):
+par and larger ones deeper, so a big seller walks into better prices.
+
+`UniswapV4RebalanceModule` only enforces guardrails (Safe positions in that one
+pool, tokens only to the Safe, OUSD-only adds and resets capped by `maxAmount0`,
+reset never below par); this action makes every decision. Every run, for each
+of `--token-ids` (deepest range first):
 
 1. **Pricing indicator.** Quote KyberSwap for selling `--quote-size` USDe for
-   USDC and the same size of OUSD for USDC, with our own pools excluded. The
-   bid that wins a seller routed through us (who then exits OUSD to USDC) is
+   USDC and the same size of OUSD for USDC, with our pool excluded. The bid
+   that wins a seller routed through us (who then exits OUSD to USDC) is
    `usdcPerUsde * (1 + offset) / usdcPerOusd`, capped at `1 - redeemCost`
    because the pricing assumes USDe always redeems 1:1 for USDC at Ethena. Its
    lower tick (1 tick = 1 bp) is logged, with a warning when it is at least
-   `--alert-tick-move` ticks from the position's range, for the Safe to move
-   it. The OUSD -> USDC leg falls back to `get_dy` on the Curve OUSD/USDC
-   pool, which is where KyberSwap routes it, if the KyberSwap quote fails.
-   Any other quote failure or an out-of-band rate only skips the indicator. A
-   range starting above the redeem-cost floor (`1 - redeemCost`, tick 1 at the
-   default 1 bp) is always warned about, quotes or not: it buys USDe for more
-   than redeeming it returns.
-2. **Pull and re-add.** If the position holds USDe, `rebalance` pulls it to
-   the Safe, swaps the price back to the range bottom if needed (price
-   limited, capped by `maxResetAmount0`) and puts the OUSD back.
+   `--alert-tick-move` ticks from the range, for the Safe to move it. The
+   OUSD -> USDC leg falls back to `get_dy` on the Curve OUSD/USDC pool, which
+   is where KyberSwap routes it, if the KyberSwap quote fails. Any other quote
+   failure or an out-of-band rate only skips the indicator. A range starting
+   above the redeem-cost floor (tick 1 at the default 1 bp) is always warned
+   about: it buys USDe for more than redeeming it returns.
+2. **Pull and re-add.** When the position holds at least `--min-token1` USDe,
+   call `rebalance(tokenId, target, reset, sqrtPrice(tickLower))`: pull it to
+   the Safe, swap the price back to the range bottom, re-add the target
+   liquidity. Below the range, top an emptied position back up. Once the
+   Safe would hold `--max-token1-in-safe` USDe, pull without re-adding. Every
+   call is simulated first; if the re-add would revert (the capped reset
+   cannot bring the price back, or the Safe is short of OUSD) the action
+   sends a pull only and warns.
 
-- `--quote-size <n>` (default `100000`): size of the reference quote in USDe.
-  The market discount grows with size. One value, or one per configured
-  position in `configuredTokenIds` order, comma separated (e.g.
-  `20000,100000` for a shallow and a deep range).
-- `--offset-bps <n>` (default `0.2`): how much better than the market the
-  reported bid is, as in the ARM's `setPrices`.
-- `--redeem-cost-bps <n>` (default `1`): cost of redeeming USDe for USDC at
-  Ethena; the reported bid never goes above `1 - this`. To confirm with
-  Ethena.
-- `--alert-tick-move <n>` (default `3`): distance that triggers the warning.
-- `--skip-pricing`: do not fetch quotes.
-- `--min-token1 <n>` (default `10`): smallest amount of USDe worth a pull;
-  below it the run skips as `Dust`.
+- `--token-ids <ids>` (default `457273`): Safe positions to manage.
+- `--target-liquidity <L>` (default the live position's): liquidity to keep,
+  one value or one per position.
+- `--reset-amount <n>` (default `1000`): max OUSD the reset swap sells.
+- `--max-token1-in-safe <n>` (default `1000000`): operational backstop, not
+  pricing.
+- `--min-token1 <n>` (default `10`): smallest amount of USDe worth a pull.
+- `--quote-size <n>` (default `100000`): size of the reference quote in USDe;
+  the market discount grows with size. One value or one per position.
+- `--offset-bps <n>` (default `0.2`), `--redeem-cost-bps <n>` (default `1`, to
+  confirm with Ethena), `--alert-tick-move <n>` (default `3`),
+  `--skip-pricing`: the indicator.
 - `--max-gas <n>` (default `25000000`): skip a rebalance estimated above this.
   A seller that pushes the price far above an otherwise empty range leaves it
   near the maximum tick, and the reset swap then walks every tick-bitmap word
-  back down (~19M gas). A normal rebalance is ~355k gas.
+  back down (~19M gas). A normal rebalance is ~350k gas.
 - `--dryrun` simulates and logs without sending. A non-operator signer
   simulates as the Safe.
 
-Skips the module reports as `ReAddSkipped(reason)`, all of which keep the pull:
-`Paused` (operator paused, only the Safe unpauses), `PriceInRange` (another
-LP's liquidity kept the price in range past the reset cap), `ExposureCap` (the
-Safe holds `maxToken1InSafe` USDe or more; an operational backstop, not
-pricing) and `AddFailed` (usually the Safe is short of the OUSD the add needs:
-keep a stock at least as large as the USDe bought since the last redemption).
-
 Operating it is manual for now: redeem the Safe's USDe for USDC at Ethena, mint
 OUSD at the Vault, leave it in the Safe for the next re-adds, and move a range
-(burn and mint from the Safe, then `configurePosition`) when the indicator says
-the market has moved.
+(burn and mint from the Safe, then pass the new token id) when the indicator
+says the market has moved.

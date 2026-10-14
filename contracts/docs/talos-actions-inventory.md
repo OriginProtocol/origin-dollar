@@ -40,6 +40,7 @@
 | `tasks/lib/cowHarvest` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
 | `tasks/lib/v4BidPricing` | 1 | eth |
+| `tasks/lib/v4TickMath` | 1 | eth |
 | `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
