@@ -3,6 +3,7 @@ const { BigNumber } = require("ethers");
 
 const {
   bidToTickLower,
+  curveRate,
   kyberRate,
   parseQuoteSizes,
   targetBidPrice,
@@ -163,6 +164,70 @@ describe("Unit: v4 bid pricing", () => {
         err = e;
       }
       expect(err.message).to.contain("no route");
+    });
+  });
+
+  describe("curveRate", () => {
+    const OUSD = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
+    const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+    const fakePool = (coins, dy) => {
+      const calls = [];
+      return {
+        calls,
+        coins: async (i) => coins[i],
+        get_dy: async (i, j, dx) => {
+          calls.push([i, j, dx.toString()]);
+          return BigNumber.from(dy);
+        },
+      };
+    };
+
+    it("reads get_dy for the right coin indices", async () => {
+      // coins as the pool returns them, lowercase on purpose
+      const pool = fakePool(
+        [OUSD.toLowerCase(), USDC.toLowerCase()],
+        "99973861988"
+      );
+      const rate = await curveRate({
+        pool,
+        tokenIn: OUSD,
+        tokenOut: USDC,
+        amountIn: BigNumber.from("100000000000000000000000"),
+        decimalsIn: 18,
+        decimalsOut: 6,
+      });
+      expect(rate).to.be.closeTo(0.99973861988, 1e-12);
+      expect(pool.calls).to.deep.equal([[0, 1, "100000000000000000000000"]]);
+    });
+
+    it("handles the reverse coin order", async () => {
+      const pool = fakePool([USDC, OUSD], "1");
+      await curveRate({
+        pool,
+        tokenIn: OUSD,
+        tokenOut: USDC,
+        amountIn: BigNumber.from(1),
+        decimalsIn: 18,
+        decimalsOut: 6,
+      });
+      expect(pool.calls[0].slice(0, 2)).to.deep.equal([1, 0]);
+    });
+
+    it("rejects a pool without the pair", async () => {
+      let err;
+      try {
+        await curveRate({
+          pool: fakePool([OUSD, OUSD], "1"),
+          tokenIn: OUSD,
+          tokenOut: USDC,
+          amountIn: BigNumber.from(1),
+          decimalsIn: 18,
+          decimalsOut: 6,
+        });
+      } catch (e) {
+        err = e;
+      }
+      expect(err.message).to.contain("does not trade");
     });
   });
 });

@@ -144,3 +144,48 @@ export async function kyberRate({
     Number(formatUnits(amountIn, decimalsIn))
   );
 }
+
+/** The two calls of a 2-coin Curve StableSwap pool `curveRate` needs. */
+export interface CurvePool {
+  coins(i: number): Promise<string>;
+  get_dy(i: number, j: number, dx: BigNumber): Promise<BigNumber>;
+}
+
+/**
+ * Curve rate for selling `amountIn` of tokenIn, in tokenOut per tokenIn, from
+ * `get_dy` on a 2-coin pool. The fallback for the OUSD -> USDC exit leg, which
+ * KyberSwap routes through the same Curve pool anyway.
+ */
+export async function curveRate({
+  pool,
+  tokenIn,
+  tokenOut,
+  amountIn,
+  decimalsIn,
+  decimalsOut,
+}: {
+  pool: CurvePool;
+  tokenIn: string;
+  tokenOut: string;
+  amountIn: BigNumber;
+  decimalsIn: number;
+  decimalsOut: number;
+}): Promise<number> {
+  const coins = (await Promise.all([pool.coins(0), pool.coins(1)])).map((c) =>
+    c.toLowerCase()
+  );
+  const i = coins.indexOf(tokenIn.toLowerCase());
+  const j = coins.indexOf(tokenOut.toLowerCase());
+  if (i < 0 || j < 0 || i === j) {
+    throw new Error(
+      `Curve pool does not trade ${tokenIn} for ${tokenOut} (coins ${coins.join(
+        ", "
+      )})`
+    );
+  }
+  const amountOut = await pool.get_dy(i, j, amountIn);
+  return (
+    Number(formatUnits(amountOut, decimalsOut)) /
+    Number(formatUnits(amountIn, decimalsIn))
+  );
+}

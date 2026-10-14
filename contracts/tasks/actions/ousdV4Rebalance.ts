@@ -4,6 +4,8 @@ import { action, types, Logger } from "../lib/action";
 import { getOrNull } from "../lib/deployments";
 import {
   bidToTickLower,
+  curveRate,
+  CurvePool,
   kyberRate,
   parseQuoteSizes,
   targetBidPrice,
@@ -31,6 +33,12 @@ const MODULE_ABI = [
 const ERC20_ABI = [
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
+];
+
+// Fallback for the OUSD -> USDC exit leg when KyberSwap fails.
+const CURVE_POOL_ABI = [
+  "function coins(uint256 i) view returns (address)",
+  "function get_dy(int128 i, int128 j, uint256 dx) view returns (uint256)",
 ];
 
 const USDC_DECIMALS = 6;
@@ -128,6 +136,7 @@ async function marketTickLower({
   offsetBps,
   redeemCostBps,
   excludedPools,
+  provider,
   log,
 }: {
   position: Position;
@@ -137,6 +146,7 @@ async function marketTickLower({
   offsetBps: number;
   redeemCostBps: number;
   excludedPools: string[];
+  provider: ethers.providers.Provider;
   log: Logger;
 }): Promise<number> {
   const quote = (token: Token) =>
@@ -148,9 +158,34 @@ async function marketTickLower({
       decimalsOut: USDC_DECIMALS,
       excludedPools,
     });
+  // The exit leg falls back to the Curve OUSD/USDC pool, which is where
+  // KyberSwap routes it today.
+  const exitQuote = async () => {
+    try {
+      return await quote(token0);
+    } catch (err) {
+      log.warn(
+        `KyberSwap ${token0.symbol} -> USDC quote failed (${
+          (err as Error).message
+        }); using Curve get_dy`
+      );
+      return curveRate({
+        pool: new ethers.Contract(
+          addresses.mainnet.curve.OUSD_USDC.pool,
+          CURVE_POOL_ABI,
+          provider
+        ) as unknown as CurvePool,
+        tokenIn: token0.address,
+        tokenOut: addresses.mainnet.USDC,
+        amountIn: parseUnits(String(quoteSize), token0.decimals),
+        decimalsIn: token0.decimals,
+        decimalsOut: USDC_DECIMALS,
+      });
+    }
+  };
   const [usdcPerToken1, usdcPerOusd] = await Promise.all([
     quote(token1),
-    quote(token0),
+    exitQuote(),
   ]);
   for (const [label, rate] of [
     [`USDC/${token1.symbol}`, usdcPerToken1],
@@ -306,6 +341,7 @@ action({
             offsetBps: args.offsetBps,
             redeemCostBps: args.redeemCostBps,
             excludedPools,
+            provider,
             log,
           });
           if (

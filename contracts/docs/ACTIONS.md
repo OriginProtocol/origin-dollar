@@ -196,7 +196,9 @@ first):
    because the pricing assumes USDe always redeems 1:1 for USDC at Ethena. Its
    lower tick (1 tick = 1 bp) is logged, with a warning when it is at least
    `--alert-tick-move` ticks from the position's range, for the Safe to move
-   it. A quote failure or an out-of-band rate only skips the indicator. A
+   it. The OUSD -> USDC leg falls back to `get_dy` on the Curve OUSD/USDC
+   pool, which is where KyberSwap routes it, if the KyberSwap quote fails.
+   Any other quote failure or an out-of-band rate only skips the indicator. A
    range starting above the redeem-cost floor (`1 - redeemCost`, tick 1 at the
    default 1 bp) is always warned about, quotes or not: it buys USDe for more
    than redeeming it returns.
