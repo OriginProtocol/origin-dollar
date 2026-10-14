@@ -34,6 +34,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
 | `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
+| `ousdV4Rebalance`                   | mainnet | `7,37 * * * *`   | Price and keep one-sided the OUSD/USDe Uniswap v4 position via UniswapV4RebalanceModule (see below) |
 
 ## Native staking (Ethereum validators)
 
@@ -178,3 +179,54 @@ be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
 to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
 Delegation only permits proposal submission; it does not count toward the
 Safe's 2/8 owner confirmations. A Safe module is not used.
+
+### ousdV4Rebalance parameters
+
+The OUSD v4 liquidity Safe (`0x13eb…eB26`) owns an OUSD-only position just above
+the price on the hookless, fee-0 OUSD/USDe pool, so it only ever buys USDe.
+Every run, for each position configured on `UniswapV4RebalanceModule` (deepest
+range first):
+
+1. **Price.** Quote KyberSwap for selling `--quote-size` USDe for USDC and the
+   same size of OUSD for USDC, with our own pools excluded from the route. The
+   bid that wins a seller routed through us (who then exits OUSD to USDC) is
+   `usdcPerUsde * (1 + offset) / usdcPerOusd`, capped at `1 - redeemCost`
+   because the pricing assumes USDe always redeems 1:1 for USDC at Ethena. The
+   lower tick is the lowest whose bid does not exceed that (1 tick = 1 bp),
+   clamped to the Safe's `[minTickLower, maxTickLower]`. If it moved by
+   `--min-tick-move` or more, `reposition` burns the position to the Safe,
+   resets the price and mints the new range. A quote failure or an
+   out-of-band rate skips repricing for the run, never the pull.
+2. **Pull and re-add.** Otherwise, if the position holds USDe, `rebalance`
+   pulls it to the Safe, swaps the price back to the range bottom if needed
+   (price limited, capped by `maxResetAmount0`) and puts the OUSD back.
+
+- `--quote-size <n>` (default `100000`): size of the reference quote in USDe.
+  The market discount grows with size, so this is what sets how deep the bid
+  sits. One value, or one per configured position in `configuredTokenIds`
+  order, comma separated (e.g. `20000,100000` for a shallow and a deep tier).
+- `--offset-bps <n>` (default `0.2`): how much better than the market the bid
+  is, as in the ARM's `setPrices`.
+- `--redeem-cost-bps <n>` (default `1`): cost of redeeming USDe for USDC at
+  Ethena; the bid never goes above `1 - this`. To confirm with Ethena.
+- `--min-tick-move <n>` (default `1`): smallest move worth a reposition.
+- `--no-reprice`: only pull and re-add.
+- `--min-token1 <n>` (default `10`): smallest amount of USDe worth a pull;
+  below it the run skips as `Dust`.
+- `--max-gas <n>` (default `25000000`): skip a transaction estimated above
+  this. A seller that pushes the price far above an otherwise empty range
+  leaves it near the maximum tick, and the reset swap then walks every
+  tick-bitmap word back down (~19M gas). A normal rebalance is ~355k gas, a
+  reposition ~700k.
+- `--dryrun` simulates and logs without sending. A non-operator signer
+  simulates as the Safe.
+
+Skips the module reports as `ReAddSkipped(reason)`, all of which keep the pull:
+`Paused` (operator paused, only the Safe unpauses), `PriceInRange` (another
+LP's liquidity kept the price in range past the reset cap), `ExposureCap` (the
+Safe holds `maxToken1InSafe` USDe or more; an operational backstop, not
+pricing) and `AddFailed` (usually the Safe is short of the OUSD the add needs:
+keep a stock at least as large as the USDe bought since the last redemption).
+
+Operating it is manual for now: redeem the Safe's USDe for USDC at Ethena, mint
+OUSD at the Vault, and leave it in the Safe for the next re-adds.

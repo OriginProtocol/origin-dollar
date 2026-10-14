@@ -6,7 +6,7 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
 | eth, hyper | crossChainRelayHyperEVM |
@@ -39,6 +39,7 @@
 | `abi/passThrough.json` | 1 | eth |
 | `tasks/lib/cowHarvest` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
+| `tasks/lib/v4BidPricing` | 1 | eth |
 | `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |
 | `utils/constants` | 1 | eth |
