@@ -186,19 +186,6 @@ contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
         assertEq(_liquidity(), TARGET_LIQUIDITY);
     }
 
-    function test_pull_removesEverythingToTheSafe() public {
-        _sellUsde(1_000e18);
-        uint256 usdeBefore = usde.balanceOf(safe);
-        uint256 ousdBefore = ousd.balanceOf(safe);
-
-        vm.prank(operator);
-        module.pull(tokenId);
-
-        assertEq(_liquidity(), 0);
-        assertGt(usde.balanceOf(safe), usdeBefore);
-        assertGt(ousd.balanceOf(safe), ousdBefore);
-    }
-
     function test_poolManagerHoldsOusdNonRebasing() public view {
         // 1 = StdNonRebasing: the pool's OUSD balance moves only with transfers.
         assertEq(ousd.rebaseState(address(poolManager)), 1);

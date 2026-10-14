@@ -4,7 +4,6 @@ import { action, types, Logger } from "../lib/action";
 import { getOrNull } from "../lib/deployments";
 import {
   bidToTickLower,
-  clampTick,
   kyberRate,
   parseQuoteSizes,
   targetBidPrice,
@@ -25,9 +24,8 @@ const MODULE_ABI = [
   "function configuredTokenIds() view returns (uint256[])",
   "function rebalanceStatus(uint256 tokenId) view returns (bool needed, uint8 reason)",
   "function pendingToken1(uint256 tokenId) view returns (uint256)",
-  "function getPosition(uint256 tokenId) view returns (tuple(tuple(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, bytes32 poolId, int24 tickLower, int24 tickUpper, uint160 sqrtPriceLowerX96, uint160 sqrtPriceUpperX96, tuple(uint128 targetLiquidity, uint128 maxAmount0, uint128 maxResetAmount0, uint256 maxToken1InSafe, int24 minTickLower, int24 maxTickLower) limits))",
+  "function getPosition(uint256 tokenId) view returns (tuple(tuple(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, bytes32 poolId, int24 tickLower, int24 tickUpper, uint160 sqrtPriceLowerX96, uint160 sqrtPriceUpperX96, tuple(uint128 targetLiquidity, uint128 maxAmount0, uint128 maxResetAmount0, uint256 maxToken1InSafe) limits))",
   "function rebalance(uint256 tokenId) returns (bool added)",
-  "function reposition(uint256 tokenId, int24 newTickLower) returns (uint256 newTokenId)",
 ];
 
 const ERC20_ABI = [
@@ -36,7 +34,7 @@ const ERC20_ABI = [
 ];
 
 const USDC_DECIMALS = 6;
-// A reference outside this band is bad data, not a market to follow.
+// A reference outside this band is bad data, not a market to report.
 const MIN_SANE_RATE = 0.9;
 const MAX_SANE_RATE = 1.1;
 
@@ -80,17 +78,20 @@ export function decideRebalance({
   return { send: true, why: label };
 }
 
-/** Whether the range should move from `current` to `target`. */
-export function shouldReposition({
+/**
+ * Whether the market-implied lower tick is far enough from a position's range
+ * to tell the Safe, which owns the pricing decision.
+ */
+export function pricingAlert({
   current,
   target,
-  minTickMove,
+  alertTickMove,
 }: {
   current: number;
   target: number;
-  minTickMove: number;
+  alertTickMove: number;
 }): boolean {
-  return Math.abs(target - current) >= minTickMove;
+  return Math.abs(target - current) >= alertTickMove;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -114,8 +115,12 @@ async function tokenInfo(
   return { address, decimals, symbol };
 }
 
-/** Target lower tick for a position, from KyberSwap quotes at `quoteSize`. */
-async function targetTickLower({
+/**
+ * Market-implied lower tick for a position, from KyberSwap quotes at
+ * `quoteSize`: where the range should start to beat the market by the offset
+ * without bidding above what redeeming 1:1 returns.
+ */
+async function marketTickLower({
   position,
   token0,
   token1,
@@ -162,12 +167,7 @@ async function targetTickLower({
     offsetBps,
     redeemCostBps,
   });
-  const raw = bidToTickLower(bid, position.key.tickSpacing);
-  const tick = clampTick(
-    raw,
-    position.limits.minTickLower,
-    position.limits.maxTickLower
-  );
+  const tick = bidToTickLower(bid, position.key.tickSpacing);
 
   log.info(
     `Quotes for ${quoteSize} ${token1.symbol}: ${usdcPerToken1.toFixed(
@@ -176,9 +176,7 @@ async function targetTickLower({
       token0.symbol
     }; bid ${bid.toFixed(6)} ${token0.symbol}/${token1.symbol}${
       capped ? " (capped at the redeem cost: the market is tighter)" : ""
-    } -> tick ${tick}${
-      tick !== raw ? ` (clamped from ${raw})` : ""
-    }, top bid ${tickLowerToBid(tick).toFixed(6)}`
+    } -> lower tick ${tick}, top bid ${tickLowerToBid(tick).toFixed(6)}`
   );
   return tick;
 }
@@ -186,7 +184,7 @@ async function targetTickLower({
 action({
   name: "ousdV4Rebalance",
   description:
-    "Keep the OUSD Uniswap v4 positions one-sided and priced: move each range to beat the market by a small offset, pull the token it bought (USDe) to the Safe and put the OUSD back, via UniswapV4RebalanceModule",
+    "Keep the OUSD Uniswap v4 positions one-sided: pull the token they bought (USDe) to the Safe and put the OUSD back, via UniswapV4RebalanceModule, and report where KyberSwap quotes would put each range",
   chains: [1],
   params: (t) => {
     t.addOptionalParam(
@@ -197,23 +195,23 @@ action({
     );
     t.addOptionalParam(
       "offsetBps",
-      "How much better than the market the bid is, in bps",
+      "How much better than the market the reported bid is, in bps",
       0.2,
       types.float
     );
     t.addOptionalParam(
       "redeemCostBps",
-      "Cost of redeeming token1 1:1 for USDC, in bps; the bid never goes above 1 minus this",
+      "Cost of redeeming token1 1:1 for USDC, in bps; the reported bid never goes above 1 minus this",
       1,
       types.float
     );
     t.addOptionalParam(
-      "minTickMove",
-      "Only move a range when its target lower tick is at least this far",
-      1,
+      "alertTickMove",
+      "Warn when the market-implied lower tick is at least this far from a range",
+      3,
       types.int
     );
-    t.addFlag("noReprice", "Never move a range, only pull and re-add");
+    t.addFlag("skipPricing", "Do not fetch quotes, only pull and re-add");
     t.addOptionalParam(
       "minToken1",
       "Smallest amount of the bought token (whole units) worth a pull",
@@ -222,7 +220,7 @@ action({
     );
     t.addOptionalParam(
       "maxGas",
-      "Skip a transaction estimated above this gas (a seller pushing the price far above an empty range makes the reset walk thousands of ticks)",
+      "Skip a rebalance estimated above this gas (a seller pushing the price far above an empty range makes the reset walk thousands of ticks)",
       25_000_000,
       types.int
     );
@@ -270,33 +268,6 @@ action({
       ...new Set(positions.map((p) => String(p.poolId).toLowerCase())),
     ];
 
-    // Gas-checked send of one module call; returns false when skipped.
-    const send = async (
-      method: "rebalance" | "reposition",
-      callArgs: unknown[],
-      label: string
-    ): Promise<boolean> => {
-      const gas: BigNumber = await module.estimateGas[method](...callArgs, {
-        from,
-      });
-      if (gas.gt(maxGas)) {
-        log.warn(
-          `${label}: estimated at ${gas.toString()} gas, above --max-gas ${maxGas.toString()}; skipping`
-        );
-        return false;
-      }
-      log.info(`${label} (~${gas.toString()} gas)`);
-      if (dryrun) {
-        log.info("Dry run, not sending");
-        return true;
-      }
-      const tx = await module[method](...callArgs, {
-        gasLimit: gas.mul(12).div(10),
-      });
-      await logTxDetails(tx, label);
-      return true;
-    };
-
     // Deepest range first: a reset swap down to a shallower range would
     // otherwise trade through a deeper one still holding token1.
     const order = positions
@@ -314,12 +285,20 @@ action({
         position.tickUpper
       }]`;
 
-      // 1. Price: move the range if the market moved. Repositioning also
-      //    pulls whatever the position bought.
-      if (!args.noReprice) {
-        let target: number | undefined;
+      // 1. Pricing indicator: the ranges are the Safe's decision, this only
+      //    reports where the market would put them. It never blocks the pull.
+      const floorTick = bidToTickLower(
+        1 - args.redeemCostBps / 10_000,
+        position.key.tickSpacing
+      );
+      if (position.tickLower < floorTick) {
+        log.warn(
+          `${label}: the range starts above the redeem-cost floor (tick ${floorTick}), so it buys ${token1.symbol} for more than redeeming it returns`
+        );
+      }
+      if (!args.skipPricing) {
         try {
-          target = await targetTickLower({
+          const target = await marketTickLower({
             position,
             token0,
             token1,
@@ -329,46 +308,29 @@ action({
             excludedPools,
             log,
           });
-        } catch (err) {
-          log.warn(
-            `${label}: not repricing, ${
-              (err as Error).message
-            }; pull and re-add only`
-          );
-        }
-
-        if (
-          target !== undefined &&
-          shouldReposition({
-            current: position.tickLower,
-            target,
-            minTickMove: args.minTickMove,
-          })
-        ) {
-          try {
-            await module.callStatic.reposition(tokenId, target, { from });
-          } catch (err) {
-            log.warn(
-              `${label}: reposition to ${target} would revert (${
-                (err as Error).message
-              }); pull and re-add only`
-            );
-            target = undefined;
-          }
           if (
-            target !== undefined &&
-            (await send(
-              "reposition",
-              [tokenId, target],
-              `${label}: repositioning to tick ${target}`
-            ))
+            pricingAlert({
+              current: position.tickLower,
+              target,
+              alertTickMove: args.alertTickMove,
+            })
           ) {
-            continue;
+            log.warn(
+              `${label}: the market puts the lower tick at ${target}, ${Math.abs(
+                target - position.tickLower
+              )} ticks ${
+                target > position.tickLower
+                  ? "deeper (we bid more than needed)"
+                  : "closer to par (we bid less than the market)"
+              }; the Safe may want to move the range`
+            );
           }
+        } catch (err) {
+          log.warn(`${label}: no pricing, ${(err as Error).message}`);
         }
       }
 
-      // 2. Pull and re-add on the current range.
+      // 2. Pull and re-add.
       const [{ needed, reason }, pendingToken1]: [
         { needed: boolean; reason: number },
         BigNumber
@@ -380,13 +342,13 @@ action({
         token1.symbol
       }`;
 
-      const { send: shouldSend, why } = decideRebalance({
+      const { send, why } = decideRebalance({
         needed,
         reason,
         pendingToken1,
         minToken1: parseUnits(String(args.minToken1), token1.decimals),
       });
-      if (!shouldSend) {
+      if (!send) {
         log.info(`${label}: skipping (${why}, holds ${pending})`);
         continue;
       }
@@ -404,13 +366,30 @@ action({
         continue;
       }
 
-      await send(
-        "rebalance",
-        [tokenId],
+      const gas: BigNumber = await module.estimateGas.rebalance(tokenId, {
+        from,
+      });
+      if (gas.gt(maxGas)) {
+        log.warn(
+          `${label}: rebalance estimated at ${gas.toString()} gas, above --max-gas ${maxGas.toString()}; skipping`
+        );
+        continue;
+      }
+
+      log.info(
         `${label}: rebalancing (${why}, holds ${pending}, re-add ${
           added ? "expected" : "skipped"
-        })`
+        }, ~${gas.toString()} gas)`
       );
+      if (dryrun) {
+        log.info("Dry run, not sending");
+        continue;
+      }
+
+      const tx = await module.rebalance(tokenId, {
+        gasLimit: gas.mul(12).div(10),
+      });
+      await logTxDetails(tx, `rebalance:${tokenId.toString()}`);
     }
   },
 });

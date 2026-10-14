@@ -35,8 +35,6 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
     uint128 internal constant MAX_RESET_AMOUNT0 = 1_000e18;
     uint256 internal constant MAX_TOKEN1_IN_SAFE = 100_000e18;
     uint256 internal constant SAFE_TOKEN0 = 100_000e18;
-    int24 internal constant MIN_TICK_LOWER = 0;
-    int24 internal constant MAX_TICK_LOWER = 50;
 
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
@@ -121,9 +119,7 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
             targetLiquidity: targetLiquidity,
             maxAmount0: maxAmount0,
             maxResetAmount0: maxResetAmount0,
-            maxToken1InSafe: maxToken1InSafe,
-            minTickLower: MIN_TICK_LOWER,
-            maxTickLower: MAX_TICK_LOWER
+            maxToken1InSafe: maxToken1InSafe
         });
     }
 

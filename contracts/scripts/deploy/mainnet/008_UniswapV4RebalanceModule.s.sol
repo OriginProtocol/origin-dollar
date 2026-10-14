@@ -14,8 +14,9 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 /// @title 008_UniswapV4RebalanceModule
 /// @notice Deploys the Safe module that keeps the OUSD/USDe Uniswap v4 position one-sided: Talos
-///         pulls the USDe the position bought to the Safe, puts the OUSD back, and moves the
-///         range to follow the market (see the `ousdV4Rebalance` Talos action).
+///         pulls the USDe the position bought to the Safe and puts the OUSD back. The ranges
+///         (bid prices) stay a Safe decision; the `ousdV4Rebalance` Talos action only reports
+///         where the market would put them.
 /// @dev No governance proposal: the module sits on the OUSD v4 liquidity Safe, which already owns
 ///      the positions and the tokens. It touches no Vault or OToken.
 ///
@@ -32,10 +33,6 @@ contract $008_UniswapV4RebalanceModule is AbstractDeployScript("008_UniswapV4Reb
     uint128 internal constant MAX_RESET_AMOUNT0 = 1_000e18;
     /// @dev Operational backstop only: pricing assumes USDe always redeems 1:1.
     uint256 internal constant MAX_USDE_IN_SAFE = 1_000_000e18;
-    /// @dev The range bottom never goes above par (tick 0 = 1 OUSD per USDe), so Talos can never
-    ///      buy USDe above what Ethena redeems it for. Deepest bid: tick 500, ~5% below par.
-    int24 internal constant MIN_TICK_LOWER = 0;
-    int24 internal constant MAX_TICK_LOWER = 500;
 
     // ==================== Deployment Logic ==================== //
 
@@ -88,9 +85,7 @@ contract $008_UniswapV4RebalanceModule is AbstractDeployScript("008_UniswapV4Reb
                     targetLiquidity: TARGET_LIQUIDITY,
                     maxAmount0: MAX_AMOUNT0,
                     maxResetAmount0: MAX_RESET_AMOUNT0,
-                    maxToken1InSafe: MAX_USDE_IN_SAFE,
-                    minTickLower: MIN_TICK_LOWER,
-                    maxTickLower: MAX_TICK_LOWER
+                    maxToken1InSafe: MAX_USDE_IN_SAFE
                 })
             );
         }

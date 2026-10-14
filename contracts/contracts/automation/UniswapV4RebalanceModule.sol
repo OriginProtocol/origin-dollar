@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.22;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -17,8 +17,8 @@ import { TickMath } from "../utils/TickMath.sol";
  *         one-sided. A position provides `currency0` (OUSD) on a range just
  *         above the price, so it only ever buys `currency1` (e.g. USDe) from
  *         sellers. An operator pulls the `currency1` bought to the Safe and puts
- *         `currency0` back, so it cannot be bought back from the pool, and moves
- *         the range when the bid price should change.
+ *         `currency0` back, so it cannot be bought back from the pool. The
+ *         ranges, i.e. the bid prices, are set by the Safe.
  *
  * @dev    `rebalance` is one transaction:
  *         1. Pull: decrease the whole position, both currencies to the Safe.
@@ -31,18 +31,13 @@ import { TickMath } from "../utils/TickMath.sol";
  *         3. Re-add: increase the position back to `targetLiquidity` with
  *            `amount1Max = 0`, so the add can only ever deposit `currency0`.
  *
- *         `reposition` moves a position to a new range of the same width: it
- *         burns the old position to the Safe, resets the price to the new range
- *         bottom and mints the new position. It is all or nothing.
- *
  *         Safety properties against a compromised operator key:
- *         - All calldata is built here. The operator passes a tokenId and, to
- *           reposition, a lower tick inside bounds the Safe set. Every token the
- *           module moves ends up in the Safe.
- *         - `currency0` is only ever sold at or above the price of a range
- *           bottom the Safe allowed, and the amounts are capped by the Safe.
- *         - The operator can pause, but only the Safe can unpause. `pull` keeps
- *           working while paused.
+ *         - All calldata is built here. The operator passes a tokenId, never a
+ *           payload, and every token the module moves ends up in the Safe.
+ *         - `currency0` is only ever sold at or above the price of the range
+ *           bottom the Safe chose, and the amounts are capped by the Safe.
+ *         - The operator can pause, but only the Safe can unpause. While
+ *           paused, `rebalance` still pulls but adds nothing back.
  *
  *         A re-add that cannot happen is skipped with a `ReAddSkipped` event
  *         instead of reverting, so the pull is never undone. A later call tops
@@ -55,8 +50,6 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
     /// @dev v4-periphery `Actions` values understood by the PositionManager.
     uint256 internal constant INCREASE_LIQUIDITY = 0x00;
     uint256 internal constant DECREASE_LIQUIDITY = 0x01;
-    uint256 internal constant MINT_POSITION = 0x02;
-    uint256 internal constant BURN_POSITION = 0x03;
     uint256 internal constant CLOSE_CURRENCY = 0x12;
 
     /// @dev Storage slot of `PoolManager._pools`, as used by v4-core `StateLibrary`.
@@ -64,54 +57,16 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
 
     uint256 internal constant Q96 = 2**96;
 
+    IPermit2 public immutable permit2;
     IPoolManager public immutable poolManager;
     IPositionManager public immutable positionManager;
-    IPermit2 public immutable permit2;
 
-    /// @notice When true, no liquidity is added. Pulling still works.
+    /// @notice When true, no liquidity is added. `rebalance` still pulls.
     bool public paused;
 
     mapping(uint256 => IUniswapV4RebalanceModule.PositionConfig)
         internal positions;
     uint256[] internal tokenIds;
-
-    event PositionConfigured(
-        uint256 indexed tokenId,
-        bytes32 indexed poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        IUniswapV4RebalanceModule.PositionLimits limits
-    );
-    event PositionRemoved(uint256 indexed tokenId);
-    event Paused(address indexed by);
-    event Unpaused();
-    event LiquidityPulled(
-        uint256 indexed tokenId,
-        uint128 liquidity,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event PriceReset(
-        uint256 indexed tokenId,
-        uint256 amount0In,
-        uint256 amount1Out,
-        uint160 sqrtPriceX96
-    );
-    event LiquidityAdded(
-        uint256 indexed tokenId,
-        uint128 liquidity,
-        uint256 amount0
-    );
-    event ReAddSkipped(
-        uint256 indexed tokenId,
-        IUniswapV4RebalanceModule.Reason reason
-    );
-    event Repositioned(
-        uint256 indexed oldTokenId,
-        uint256 indexed newTokenId,
-        int24 tickLower,
-        int24 tickUpper
-    );
 
     /**
      * @param _safeContract    Gnosis Safe that owns the positions.
@@ -171,7 +126,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         }
 
         if (paused) {
-            emit ReAddSkipped(
+            emit IUniswapV4RebalanceModule.ReAddSkipped(
                 _tokenId,
                 IUniswapV4RebalanceModule.Reason.Paused
             );
@@ -183,7 +138,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
                 sqrtPrice = _resetPrice(_tokenId, cfg);
             }
             if (sqrtPrice > cfg.sqrtPriceLowerX96) {
-                emit ReAddSkipped(
+                emit IUniswapV4RebalanceModule.ReAddSkipped(
                     _tokenId,
                     IUniswapV4RebalanceModule.Reason.PriceInRange
                 );
@@ -192,7 +147,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         }
 
         if (_atExposureCap(cfg)) {
-            emit ReAddSkipped(
+            emit IUniswapV4RebalanceModule.ReAddSkipped(
                 _tokenId,
                 IUniswapV4RebalanceModule.Reason.ExposureCap
             );
@@ -203,89 +158,17 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         // the pull, so it is reported rather than reverted.
         added = _add(_tokenId, cfg, cfg.limits.targetLiquidity - liquidity);
         if (!added) {
-            emit ReAddSkipped(
+            emit IUniswapV4RebalanceModule.ReAddSkipped(
                 _tokenId,
                 IUniswapV4RebalanceModule.Reason.AddFailed
             );
         }
     }
 
-    /**
-     * @notice Move a position to a new range of the same width, at the target
-     *         liquidity. The old position is burned to the Safe and a new one
-     *         is minted, so the tokenId changes. Reverts entirely if the new
-     *         position cannot be minted.
-     * @param _tokenId      PositionManager tokenId of a configured position.
-     * @param _newTickLower New lower tick, inside the Safe's bounds.
-     * @return newTokenId   tokenId of the new position, now configured in
-     *                      place of the old one.
-     */
-    function reposition(uint256 _tokenId, int24 _newTickLower)
-        external
-        onlyOperator
-        returns (uint256 newTokenId)
-    {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = _config(_tokenId);
-        require(!paused, "Paused");
-        require(_newTickLower != cfg.tickLower, "Same range");
-        require(
-            _newTickLower >= cfg.limits.minTickLower &&
-                _newTickLower <= cfg.limits.maxTickLower,
-            "Tick out of bounds"
-        );
-        require(_newTickLower % cfg.key.tickSpacing == 0, "Tick not aligned");
-
-        _burn(_tokenId, cfg);
-
-        cfg.tickUpper = _newTickLower + (cfg.tickUpper - cfg.tickLower);
-        cfg.tickLower = _newTickLower;
-        cfg.sqrtPriceLowerX96 = TickMath.getSqrtPriceAtTick(cfg.tickLower);
-        cfg.sqrtPriceUpperX96 = TickMath.getSqrtPriceAtTick(cfg.tickUpper);
-        require(
-            uint256(cfg.sqrtPriceUpperX96 - cfg.sqrtPriceLowerX96) <=
-                type(uint128).max,
-            "Range too wide"
-        );
-
-        uint160 sqrtPrice = _sqrtPrice(cfg.poolId);
-        if (sqrtPrice > cfg.sqrtPriceLowerX96) {
-            if (cfg.limits.maxResetAmount0 > 0) {
-                sqrtPrice = _resetPrice(_tokenId, cfg);
-            }
-            require(sqrtPrice <= cfg.sqrtPriceLowerX96, "Price above range");
-        }
-        require(!_atExposureCap(cfg), "Exposure cap");
-
-        newTokenId = _mint(cfg);
-
-        positions[newTokenId] = cfg;
-        delete positions[_tokenId];
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (tokenIds[i] == _tokenId) {
-                tokenIds[i] = newTokenId;
-                break;
-            }
-        }
-
-        emit Repositioned(_tokenId, newTokenId, cfg.tickLower, cfg.tickUpper);
-    }
-
-    /**
-     * @notice Remove all liquidity of a position to the Safe without adding it
-     *         back. Works while paused.
-     * @param _tokenId PositionManager tokenId of a configured position.
-     */
-    function pull(uint256 _tokenId) external onlyOperator {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = _config(_tokenId);
-        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
-        require(liquidity > 0, "No liquidity");
-        _pull(_tokenId, cfg, liquidity);
-    }
-
     /// @notice Stop adding liquidity. The Safe holds the operator role too.
     function pause() external onlyOperator {
         paused = true;
-        emit Paused(msg.sender);
+        emit IUniswapV4RebalanceModule.Paused(msg.sender);
     }
 
     ////////////////////////////////////////////////////
@@ -294,7 +177,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
 
     function unpause() external onlySafe {
         paused = false;
-        emit Unpaused();
+        emit IUniswapV4RebalanceModule.Unpaused();
     }
 
     /**
@@ -310,10 +193,6 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         require(_limits.targetLiquidity > 0, "Invalid target liquidity");
         require(_limits.maxAmount0 > 0, "Invalid max amount0");
         require(_limits.maxToken1InSafe > 0, "Invalid max token1");
-        require(
-            _limits.minTickLower <= _limits.maxTickLower,
-            "Invalid tick bounds"
-        );
         require(
             positionManager.ownerOf(_tokenId) == address(safeContract),
             "Position not owned by Safe"
@@ -350,7 +229,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
             limits: _limits
         });
 
-        emit PositionConfigured(
+        emit IUniswapV4RebalanceModule.PositionConfigured(
             _tokenId,
             poolId,
             tickLower,
@@ -376,7 +255,7 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
             }
         }
 
-        emit PositionRemoved(_tokenId);
+        emit IUniswapV4RebalanceModule.PositionRemoved(_tokenId);
     }
 
     ////////////////////////////////////////////////////
@@ -554,7 +433,9 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         IUniswapV4RebalanceModule.PositionConfig memory _cfg,
         uint128 _liquidity
     ) internal {
-        (uint256 balance0, uint256 balance1) = _safeBalances(_cfg);
+        address safe = address(safeContract);
+        uint256 balance0 = IERC20(_cfg.key.currency0).balanceOf(safe);
+        uint256 balance1 = IERC20(_cfg.key.currency1).balanceOf(safe);
 
         // CLOSE_CURRENCY settles or takes the full delta of each currency
         // with the locker, which is the Safe.
@@ -581,35 +462,12 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
             "Pull failed"
         );
 
-        _emitPulled(_tokenId, _cfg, _liquidity, balance0, balance1);
-    }
-
-    /// @dev Remove all liquidity, any fees and the NFT itself, to the Safe.
-    function _burn(
-        uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg
-    ) internal {
-        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
-        (uint256 balance0, uint256 balance1) = _safeBalances(_cfg);
-
-        bytes[] memory params = new bytes[](3);
-        params[0] = abi.encode(_tokenId, uint128(0), uint128(0), bytes(""));
-        params[1] = abi.encode(_cfg.key.currency0);
-        params[2] = abi.encode(_cfg.key.currency1);
-        _exec(
-            address(positionManager),
-            _modifyLiquiditiesCall(
-                abi.encodePacked(
-                    uint8(BURN_POSITION),
-                    uint8(CLOSE_CURRENCY),
-                    uint8(CLOSE_CURRENCY)
-                ),
-                params
-            ),
-            "Burn failed"
+        emit IUniswapV4RebalanceModule.LiquidityPulled(
+            _tokenId,
+            _liquidity,
+            _gain(IERC20(_cfg.key.currency0).balanceOf(safe), balance0),
+            _gain(IERC20(_cfg.key.currency1).balanceOf(safe), balance1)
         );
-
-        _emitPulled(_tokenId, _cfg, liquidity, balance0, balance1);
     }
 
     function _resetPrice(
@@ -627,7 +485,12 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
             (uint256, uint256)
         );
         sqrtPriceAfter = _sqrtPrice(_cfg.poolId);
-        emit PriceReset(_tokenId, amount0In, amount1Out, sqrtPriceAfter);
+        emit IUniswapV4RebalanceModule.PriceReset(
+            _tokenId,
+            amount0In,
+            amount1Out,
+            sqrtPriceAfter
+        );
     }
 
     function _add(
@@ -637,7 +500,30 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
     ) internal returns (bool) {
         address currency0 = _cfg.key.currency0;
         uint256 balance0 = IERC20(currency0).balanceOf(address(safeContract));
-        _approveAmount0(_cfg);
+
+        // Both allowances run down on every add (OUSD's own allowance too, even
+        // at max), so they are set for exactly this add. A Permit2 expiration
+        // of 0 lasts until the end of this block.
+        _exec(
+            currency0,
+            abi.encodeWithSelector(
+                IERC20.approve.selector,
+                address(permit2),
+                uint256(_cfg.limits.maxAmount0)
+            ),
+            "Token approval failed"
+        );
+        _exec(
+            address(permit2),
+            abi.encodeWithSelector(
+                IPermit2.approve.selector,
+                currency0,
+                address(positionManager),
+                uint160(_cfg.limits.maxAmount0),
+                uint48(0)
+            ),
+            "Permit2 approval failed"
+        );
 
         // amount1Max = 0: the add fails if it would need any currency1.
         bytes[] memory params = new bytes[](3);
@@ -663,115 +549,12 @@ contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
         );
         if (!success) return false;
 
-        emit LiquidityAdded(
+        emit IUniswapV4RebalanceModule.LiquidityAdded(
             _tokenId,
             _liquidity,
             _gain(balance0, IERC20(currency0).balanceOf(address(safeContract)))
         );
         return true;
-    }
-
-    /// @dev Mint the configured range at the target liquidity, owned by the
-    ///      Safe. `amount1Max = 0`: the mint fails if it would need currency1.
-    function _mint(IUniswapV4RebalanceModule.PositionConfig memory _cfg)
-        internal
-        returns (uint256 tokenId)
-    {
-        address currency0 = _cfg.key.currency0;
-        uint256 balance0 = IERC20(currency0).balanceOf(address(safeContract));
-        _approveAmount0(_cfg);
-
-        tokenId = positionManager.nextTokenId();
-        bytes[] memory params = new bytes[](3);
-        params[0] = abi.encode(
-            _cfg.key,
-            _cfg.tickLower,
-            _cfg.tickUpper,
-            uint256(_cfg.limits.targetLiquidity),
-            _cfg.limits.maxAmount0,
-            uint128(0),
-            address(safeContract),
-            bytes("")
-        );
-        params[1] = abi.encode(currency0);
-        params[2] = abi.encode(_cfg.key.currency1);
-        _exec(
-            address(positionManager),
-            _modifyLiquiditiesCall(
-                abi.encodePacked(
-                    uint8(MINT_POSITION),
-                    uint8(CLOSE_CURRENCY),
-                    uint8(CLOSE_CURRENCY)
-                ),
-                params
-            ),
-            "Mint failed"
-        );
-        require(
-            positionManager.ownerOf(tokenId) == address(safeContract),
-            "Mint failed"
-        );
-
-        emit LiquidityAdded(
-            tokenId,
-            _cfg.limits.targetLiquidity,
-            _gain(balance0, IERC20(currency0).balanceOf(address(safeContract)))
-        );
-    }
-
-    /// @dev Both allowances run down on every add (OUSD's own allowance too,
-    ///      even at max), so they are set for exactly this add. A Permit2
-    ///      expiration of 0 lasts until the end of this block.
-    function _approveAmount0(
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg
-    ) internal {
-        address currency0 = _cfg.key.currency0;
-        _exec(
-            currency0,
-            abi.encodeWithSelector(
-                IERC20.approve.selector,
-                address(permit2),
-                uint256(_cfg.limits.maxAmount0)
-            ),
-            "Token approval failed"
-        );
-        _exec(
-            address(permit2),
-            abi.encodeWithSelector(
-                IPermit2.approve.selector,
-                currency0,
-                address(positionManager),
-                uint160(_cfg.limits.maxAmount0),
-                uint48(0)
-            ),
-            "Permit2 approval failed"
-        );
-    }
-
-    function _safeBalances(IUniswapV4RebalanceModule.PositionConfig memory _cfg)
-        internal
-        view
-        returns (uint256 balance0, uint256 balance1)
-    {
-        address safe = address(safeContract);
-        balance0 = IERC20(_cfg.key.currency0).balanceOf(safe);
-        balance1 = IERC20(_cfg.key.currency1).balanceOf(safe);
-    }
-
-    function _emitPulled(
-        uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg,
-        uint128 _liquidity,
-        uint256 _balance0Before,
-        uint256 _balance1Before
-    ) internal {
-        (uint256 balance0, uint256 balance1) = _safeBalances(_cfg);
-        emit LiquidityPulled(
-            _tokenId,
-            _liquidity,
-            _gain(balance0, _balance0Before),
-            _gain(balance1, _balance1Before)
-        );
     }
 
     function _modifyLiquiditiesCall(

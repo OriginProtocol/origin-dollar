@@ -34,8 +34,6 @@ contract Unit_Concrete_UniswapV4RebalanceModule_ConfigurePosition_Test is Unit_U
         assertEq(cfg.limits.maxAmount0, MAX_AMOUNT0);
         assertEq(cfg.limits.maxResetAmount0, MAX_RESET_AMOUNT0);
         assertEq(cfg.limits.maxToken1InSafe, MAX_TOKEN1_IN_SAFE);
-        assertEq(cfg.limits.minTickLower, MIN_TICK_LOWER);
-        assertEq(cfg.limits.maxTickLower, MAX_TICK_LOWER);
     }
 
     function test_configurePosition_listsTokenIdOnce() public {
@@ -125,16 +123,6 @@ contract Unit_Concrete_UniswapV4RebalanceModule_ConfigurePosition_Test is Unit_U
         vm.prank(address(mockSafe));
         vm.expectRevert("Invalid max token1");
         module.configurePosition(TOKEN_ID, _limits(TARGET_LIQUIDITY, MAX_AMOUNT0, MAX_RESET_AMOUNT0, 0));
-    }
-
-    function test_configurePosition_RevertWhen_tickBoundsInverted() public {
-        IUniswapV4RebalanceModule.PositionLimits memory limits =
-            _limits(TARGET_LIQUIDITY, MAX_AMOUNT0, MAX_RESET_AMOUNT0, MAX_TOKEN1_IN_SAFE);
-        limits.minTickLower = 10;
-        limits.maxTickLower = 9;
-        vm.prank(address(mockSafe));
-        vm.expectRevert("Invalid tick bounds");
-        module.configurePosition(TOKEN_ID, limits);
     }
 
     function test_configurePosition_RevertWhen_notOwnedBySafe() public {

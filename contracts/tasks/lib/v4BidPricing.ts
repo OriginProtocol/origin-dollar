@@ -2,10 +2,11 @@ import { BigNumber } from "ethers";
 import { formatUnits } from "ethers/lib/utils";
 
 /**
- * Bid pricing for the one-sided OUSD Uniswap v4 positions, after the Ethena
- * ARM's setPrices (arm-oeth src/js/tasks/armPrices.js): quote the market at a
- * realistic size and beat it by a small offset, capped so that redeeming what
- * we buy at par still pays.
+ * Market-implied bid for the one-sided OUSD Uniswap v4 positions, after the
+ * Ethena ARM's setPrices (arm-oeth src/js/tasks/armPrices.js): quote the market
+ * at a realistic size and beat it by a small offset, capped so that redeeming
+ * what we buy at par still pays. ousdV4Rebalance reports it; the ranges stay a
+ * Safe decision.
  *
  * A seller of token1 (USDe) routed through our pool receives OUSD, then sells
  * it for USDC. Per unit of token1 they net `bid * usdcPerOusd`, against
@@ -73,10 +74,6 @@ export function bidToTickLower(bid: number, tickSpacing: number): number {
 /** Bid at the top of a range starting at `tickLower`, OUSD per token1. */
 export function tickLowerToBid(tickLower: number): number {
   return Math.pow(1.0001, -tickLower);
-}
-
-export function clampTick(tick: number, min: number, max: number): number {
-  return Math.min(Math.max(tick, min), max);
 }
 
 /**

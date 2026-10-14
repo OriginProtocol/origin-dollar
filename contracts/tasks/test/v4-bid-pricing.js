@@ -3,17 +3,16 @@ const { BigNumber } = require("ethers");
 
 const {
   bidToTickLower,
-  clampTick,
   kyberRate,
   parseQuoteSizes,
   targetBidPrice,
   tickLowerToBid,
 } = require("../lib/v4BidPricing");
-const { shouldReposition } = require("../actions/ousdV4Rebalance");
+const { pricingAlert } = require("../actions/ousdV4Rebalance");
 
-// The bid decides every fill: a tick too low buys token1 above what redeeming
-// it returns, a tick too high loses every trade. Pin the formula and the
-// rounding at tick boundaries.
+// The reported bid is what the Safe sets its ranges from: a tick too low buys
+// token1 above what redeeming it returns, a tick too high loses every trade.
+// Pin the formula and the rounding at tick boundaries.
 describe("Unit: v4 bid pricing", () => {
   describe("targetBidPrice", () => {
     it("beats the market net of the OUSD -> USDC exit", () => {
@@ -80,23 +79,13 @@ describe("Unit: v4 bid pricing", () => {
     });
   });
 
-  describe("clampTick", () => {
-    it("keeps the tick inside the Safe's bounds", () => {
-      expect(clampTick(-3, 0, 500)).to.equal(0);
-      expect(clampTick(700, 0, 500)).to.equal(500);
-      expect(clampTick(4, 0, 500)).to.equal(4);
-    });
-  });
-
-  describe("shouldReposition", () => {
-    it("moves only past the minimum tick move", () => {
-      expect(shouldReposition({ current: 3, target: 3, minTickMove: 1 })).to.be
+  describe("pricingAlert", () => {
+    it("alerts only past the tick threshold, in either direction", () => {
+      expect(pricingAlert({ current: 3, target: 5, alertTickMove: 3 })).to.be
         .false;
-      expect(shouldReposition({ current: 3, target: 4, minTickMove: 1 })).to.be
+      expect(pricingAlert({ current: 3, target: 6, alertTickMove: 3 })).to.be
         .true;
-      expect(shouldReposition({ current: 3, target: 4, minTickMove: 2 })).to.be
-        .false;
-      expect(shouldReposition({ current: 3, target: 1, minTickMove: 2 })).to.be
+      expect(pricingAlert({ current: 3, target: 0, alertTickMove: 3 })).to.be
         .true;
     });
   });

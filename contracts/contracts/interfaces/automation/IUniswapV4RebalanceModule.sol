@@ -23,15 +23,12 @@ interface IUniswapV4RebalanceModule is IAbstractSafeModule {
     struct PositionLimits {
         // Liquidity to keep in the position.
         uint128 targetLiquidity;
-        // Hard cap on currency0 pulled by one add or mint.
+        // Hard cap on currency0 pulled by one add.
         uint128 maxAmount0;
         // Cap on currency0 sold by the reset swap. 0 disables the reset.
         uint128 maxResetAmount0;
         // No liquidity is added while the Safe holds this much currency1.
         uint256 maxToken1InSafe;
-        // Bounds on the range's lower tick when the operator repositions it.
-        int24 minTickLower;
-        int24 maxTickLower;
     }
 
     struct PositionConfig {
@@ -72,12 +69,6 @@ interface IUniswapV4RebalanceModule is IAbstractSafeModule {
         uint256 amount0
     );
     event ReAddSkipped(uint256 indexed tokenId, Reason reason);
-    event Repositioned(
-        uint256 indexed oldTokenId,
-        uint256 indexed newTokenId,
-        int24 tickLower,
-        int24 tickUpper
-    );
 
     function poolManager() external view returns (address);
 
@@ -97,12 +88,6 @@ interface IUniswapV4RebalanceModule is IAbstractSafeModule {
     function unpause() external;
 
     function rebalance(uint256 tokenId) external returns (bool added);
-
-    function reposition(uint256 tokenId, int24 newTickLower)
-        external
-        returns (uint256 newTokenId);
-
-    function pull(uint256 tokenId) external;
 
     function unlockCallback(bytes calldata data)
         external
