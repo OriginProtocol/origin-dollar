@@ -47,7 +47,7 @@ abstract contract Smoke_UniswapV4RebalanceModule_Shared_Test is BaseSmoke {
         usde = IERC20(Mainnet.USDe);
         safe = Mainnet.ousdV4LiquiditySafe;
         tokenId = Mainnet.ousdUsdeV4PositionId;
-        key = module.getPosition(tokenId).key;
+        (key,) = positionManager.getPoolAndPositionInfo(tokenId);
 
         trader = new V4Swapper(module.poolManager());
         deal(address(usde), address(trader), 100_000e18);
@@ -61,8 +61,21 @@ abstract contract Smoke_UniswapV4RebalanceModule_Shared_Test is BaseSmoke {
         trader.swap(key, false, amount);
     }
 
-    function _rebalance() internal returns (bool added) {
+    /// @dev What Talos sends for the live [0, 5] position: re-add what was there and reset the
+    ///      price to the range bottom, par.
+    function _rebalance(uint128 liquidityToAdd) internal {
+        uint160 floor = module.minSqrtPriceX96();
         vm.prank(CrossChain.talosRelayer);
-        added = module.rebalance(tokenId);
+        module.rebalance(tokenId, liquidityToAdd, 1_000e18, floor);
     }
+
+    function _sqrtPrice() internal view returns (uint160) {
+        bytes32 slot0 =
+            IPoolManagerSlots(module.poolManager()).extsload(keccak256(abi.encode(module.poolId(), uint256(6))));
+        return uint160(uint256(slot0));
+    }
+}
+
+interface IPoolManagerSlots {
+    function extsload(bytes32 slot) external view returns (bytes32);
 }

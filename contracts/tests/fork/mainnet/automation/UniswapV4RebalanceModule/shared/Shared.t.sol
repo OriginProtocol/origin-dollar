@@ -50,10 +50,13 @@ abstract contract Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test is BaseFork 
     int24 internal constant TICK_UPPER = 5;
     /// @dev Same liquidity as the live position: ~20k OUSD on [0, 5].
     uint128 internal constant TARGET_LIQUIDITY = Mainnet.ousdUsdeV4PositionLiquidity;
-    uint128 internal constant MAX_AMOUNT0 = 20_200e18;
-    uint128 internal constant MAX_RESET_AMOUNT0 = 1_000e18;
-    uint256 internal constant MAX_TOKEN1_IN_SAFE = 100_000e18;
+    uint128 internal constant MAX_AMOUNT0 = 100_000e18;
+    uint128 internal constant RESET_AMOUNT0 = 1_000e18;
     uint256 internal constant SAFE_OUSD = 100_000e18;
+    /// @dev The range bottom (tick 0) is par, which is also the module's floor.
+    uint160 internal constant SQRT_PRICE_PAR = 79228162514264337593543950336;
+    /// @dev getSqrtPriceAtTick(5), the range top.
+    uint160 internal constant SQRT_PRICE_TICK_5 = 79247971040445709311708648151;
 
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
@@ -87,24 +90,23 @@ abstract contract Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test is BaseFork 
         usde = IERC20(Mainnet.USDe);
 
         safe = _deploySafe();
+        key = PoolKey({currency0: address(ousd), currency1: address(usde), fee: 1, tickSpacing: 1, hooks: address(0)});
         module = IUniswapV4RebalanceModule(
             vm.deployCode(
                 Automation.UNISWAP_V4_REBALANCE_MODULE,
-                abi.encode(safe, operator, address(poolManager), address(positionManager), address(permit2))
+                abi.encode(
+                    safe, operator, address(poolManager), address(positionManager), key, SQRT_PRICE_PAR, MAX_AMOUNT0
+                )
             )
         );
         vm.prank(safe);
         ISafeSetup(safe).enableModule(address(module));
 
-        key = PoolKey({currency0: address(ousd), currency1: address(usde), fee: 1, tickSpacing: 1, hooks: address(0)});
         // Just below tick 0, so an OUSD-only position on [0, 5] can be minted.
         poolManager.initialize(key, uint160((Q96 * 9999) / 10000));
 
         _mintOusd(safe, SAFE_OUSD);
         tokenId = _mintSafePosition();
-
-        vm.prank(safe);
-        module.configurePosition(tokenId, _limits(TARGET_LIQUIDITY, MAX_AMOUNT0, MAX_RESET_AMOUNT0, MAX_TOKEN1_IN_SAFE));
 
         trader = new V4Swapper(address(poolManager));
         otherLp = new V4Swapper(address(poolManager));
@@ -129,8 +131,8 @@ abstract contract Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test is BaseFork 
         ousd.mint(to, amount);
     }
 
-    /// @dev Mint the OUSD-only position as the Safe, then clear the allowances so every test
-    ///      proves the module sets its own.
+    /// @dev The Safe's one-time setup (OUSD to Permit2, Permit2 to the PositionManager, both at
+    ///      max) and the OUSD-only position on [0, 5].
     function _mintSafePosition() internal returns (uint256 id) {
         id = positionManager.nextTokenId();
 
@@ -141,32 +143,17 @@ abstract contract Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test is BaseFork 
         params[1] = abi.encode(key.currency0, key.currency1);
 
         vm.startPrank(safe);
-        ousd.approve(address(permit2), MAX_AMOUNT0);
-        permit2.approve(address(ousd), address(positionManager), MAX_AMOUNT0, uint48(block.timestamp));
+        ousd.approve(address(permit2), type(uint256).max);
+        permit2.approve(address(ousd), address(positionManager), type(uint160).max, type(uint48).max);
         positionManager.modifyLiquidities(
             abi.encode(abi.encodePacked(uint8(0x02), uint8(0x0d)), params), block.timestamp
         );
-        ousd.approve(address(permit2), 0);
-        permit2.approve(address(ousd), address(positionManager), 0, 0);
         vm.stopPrank();
     }
 
     //////////////////////////////////////////////////////
     /// --- HELPERS
     //////////////////////////////////////////////////////
-
-    function _limits(uint128 targetLiquidity, uint128 maxAmount0, uint128 maxResetAmount0, uint256 maxToken1InSafe)
-        internal
-        pure
-        returns (IUniswapV4RebalanceModule.PositionLimits memory)
-    {
-        return IUniswapV4RebalanceModule.PositionLimits({
-            targetLiquidity: targetLiquidity,
-            maxAmount0: maxAmount0,
-            maxResetAmount0: maxResetAmount0,
-            maxToken1InSafe: maxToken1InSafe
-        });
-    }
 
     /// @dev A user sells USDe for OUSD. This is the flow the position exists for.
     function _sellUsde(uint256 amount) internal returns (uint256 ousdOut) {
@@ -178,17 +165,32 @@ abstract contract Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test is BaseFork 
         usdeOut = trader.swap(key, true, ousdIn);
     }
 
-    function _rebalance() internal returns (bool added) {
+    /// @dev What Talos sends: re-add the target liquidity and, when the price sits in or above
+    ///      the range, reset it down to the range bottom.
+    function _rebalance() internal {
+        _rebalance(TARGET_LIQUIDITY, _sqrtPrice() > SQRT_PRICE_PAR ? RESET_AMOUNT0 : 0);
+    }
+
+    function _rebalance(uint128 liquidityToAdd, uint128 resetAmount0) internal {
         vm.prank(operator);
-        added = module.rebalance(tokenId);
+        module.rebalance(tokenId, liquidityToAdd, resetAmount0, SQRT_PRICE_PAR);
+    }
+
+    function _sqrtPrice() internal view returns (uint160) {
+        bytes32 slot0 = poolManager.extsload(keccak256(abi.encode(keccak256(abi.encode(key)), uint256(6))));
+        return uint160(uint256(slot0));
+    }
+
+    /// @dev USDe the position holds, as Talos computes it.
+    function _pendingUsde() internal view returns (uint256) {
+        uint160 price = _sqrtPrice();
+        if (price <= SQRT_PRICE_PAR) return 0;
+        uint160 top = price < SQRT_PRICE_TICK_5 ? price : SQRT_PRICE_TICK_5;
+        return (uint256(_liquidity()) * (top - SQRT_PRICE_PAR)) / Q96;
     }
 
     function _liquidity() internal view returns (uint128) {
         return positionManager.getPositionLiquidity(tokenId);
-    }
-
-    function _sqrtLower() internal view returns (uint160) {
-        return module.getPosition(tokenId).sqrtPriceLowerX96;
     }
 
     //////////////////////////////////////////////////////

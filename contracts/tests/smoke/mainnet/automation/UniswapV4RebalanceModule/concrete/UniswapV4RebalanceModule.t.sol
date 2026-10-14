@@ -10,7 +10,6 @@ import {
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 // --- Project imports
-import {IUniswapV4RebalanceModule} from "contracts/interfaces/automation/IUniswapV4RebalanceModule.sol";
 
 interface ISafeModules {
     function isModuleEnabled(address module) external view returns (bool);
@@ -30,17 +29,10 @@ contract Smoke_Concrete_UniswapV4RebalanceModule_Test is Smoke_UniswapV4Rebalanc
         assertTrue(ISafeModules(safe).isModuleEnabled(address(module)));
     }
 
-    function test_position_matchesTheLivePool() public view {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = module.getPosition(tokenId);
-        assertEq(cfg.key.currency0, Mainnet.OUSDProxy);
-        assertEq(cfg.key.currency1, Mainnet.USDe);
-        assertEq(cfg.key.fee, 0);
-        assertEq(cfg.key.tickSpacing, 1);
-        assertEq(cfg.key.hooks, address(0));
-        assertEq(cfg.poolId, 0xa6075a4d90b1de293e0347fa4319584d2b57c0c6faf576a4bd4108450ec45622);
-        assertEq(cfg.tickLower, 0);
-        assertEq(cfg.tickUpper, 5);
-        assertEq(cfg.limits.targetLiquidity, Mainnet.ousdUsdeV4PositionLiquidity);
+    function test_module_guardsTheLivePool() public view {
+        assertEq(module.poolId(), 0xa6075a4d90b1de293e0347fa4319584d2b57c0c6faf576a4bd4108450ec45622);
+        assertEq(keccak256(abi.encode(key)), module.poolId());
+        assertEq(module.minSqrtPriceX96(), 2 ** 96);
         assertEq(positionManager.ownerOf(tokenId), safe);
     }
 
@@ -56,14 +48,13 @@ contract Smoke_Concrete_UniswapV4RebalanceModule_Test is Smoke_UniswapV4Rebalanc
 
         _sellUsde(1_000e18);
         uint256 usdeBefore = usde.balanceOf(safe);
-        (bool needed,) = module.rebalanceStatus(tokenId);
-        assertTrue(needed);
+        uint128 liquidity = positionManager.getPositionLiquidity(tokenId);
+        assertGt(_sqrtPrice(), module.minSqrtPriceX96());
 
-        assertTrue(_rebalance());
+        _rebalance(liquidity);
 
         assertGt(usde.balanceOf(safe), usdeBefore);
-        assertEq(positionManager.getPositionLiquidity(tokenId), Mainnet.ousdUsdeV4PositionLiquidity);
-        assertEq(module.pendingToken1(tokenId), 0);
-        assertLe(module.sqrtPriceX96(tokenId), module.getPosition(tokenId).sqrtPriceLowerX96);
+        assertEq(positionManager.getPositionLiquidity(tokenId), liquidity);
+        assertLe(_sqrtPrice(), module.minSqrtPriceX96());
     }
 }

@@ -6,10 +6,6 @@ import {
     Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test
 } from "tests/fork/mainnet/automation/UniswapV4RebalanceModule/shared/Shared.t.sol";
 
-// --- Project imports
-import {IUniswapV4RebalanceModule} from "contracts/interfaces/automation/IUniswapV4RebalanceModule.sol";
-import {Vm} from "forge-std/Vm.sol";
-
 contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
     Fork_Mainnet_UniswapV4RebalanceModule_Shared_Test
 {
@@ -27,24 +23,16 @@ contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
     function test_rebalance_partialFill_pullsUsdeAndRestoresPosition() public {
         uint256 usdeBefore = usde.balanceOf(safe);
         _sellUsde(5_000e18);
-        uint256 pending = module.pendingToken1(tokenId);
+        uint256 pending = _pendingUsde();
         assertGt(pending, 4_900e18);
 
-        (bool needed, IUniswapV4RebalanceModule.Reason reason) = module.rebalanceStatus(tokenId);
-        assertTrue(needed);
-        assertEq(uint8(reason), uint8(IUniswapV4RebalanceModule.Reason.PullNeeded));
-
-        assertTrue(_rebalance());
+        _rebalance();
 
         // Principal plus the 1-pip fee the seller paid.
         assertApproxEqRel(usde.balanceOf(safe) - usdeBefore, pending, 1e13);
         assertEq(_liquidity(), TARGET_LIQUIDITY);
-        assertLe(module.sqrtPriceX96(tokenId), _sqrtLower());
-        assertEq(module.pendingToken1(tokenId), 0);
-
-        (needed, reason) = module.rebalanceStatus(tokenId);
-        assertFalse(needed);
-        assertEq(uint8(reason), uint8(IUniswapV4RebalanceModule.Reason.Balanced));
+        assertLe(_sqrtPrice(), SQRT_PRICE_PAR);
+        assertEq(_pendingUsde(), 0);
     }
 
     function test_rebalance_usdeCannotBeBoughtBackAfterwards() public {
@@ -60,72 +48,48 @@ contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
     function test_rebalance_priceAboveRange() public {
         uint256 usdeBefore = usde.balanceOf(safe);
         _sellUsde(25_000e18);
-        assertGt(module.sqrtPriceX96(tokenId), module.getPosition(tokenId).sqrtPriceUpperX96);
-        uint256 pending = module.pendingToken1(tokenId);
+        assertGt(_sqrtPrice(), SQRT_PRICE_TICK_5);
+        uint256 pending = _pendingUsde();
 
-        assertTrue(_rebalance());
+        _rebalance();
 
         assertApproxEqRel(usde.balanceOf(safe) - usdeBefore, pending, 1e13);
         assertEq(_liquidity(), TARGET_LIQUIDITY);
-        assertLe(module.sqrtPriceX96(tokenId), _sqrtLower());
+        assertLe(_sqrtPrice(), SQRT_PRICE_PAR);
     }
 
-    /// @dev The reset swap trades against the other LP, but never below the range bottom.
-    function test_rebalance_otherLpInRange_resetBuysTheirUsdeAtOrAbovePar() public {
+    /// @dev The reset swap trades against the other LP, never below the par floor.
+    function test_rebalance_otherLpInRange_resetBuysTheirUsde() public {
         otherLp.modifyLiquidity(key, TICK_LOWER, TICK_UPPER, int256(uint256(TARGET_LIQUIDITY)));
         _sellUsde(1_000e18);
+        uint256 usdeBefore = usde.balanceOf(safe);
+        uint256 pending = _pendingUsde();
 
-        vm.recordLogs();
-        assertTrue(_rebalance());
-        (uint256 amount0In, uint256 amount1Out) = _priceResetAmounts();
+        _rebalance();
 
-        assertGt(amount0In, 0);
-        assertLe(amount0In, MAX_RESET_AMOUNT0);
-        // At or above 1 USDe per OUSD, less the 1-pip fee.
-        assertGe(amount1Out, (amount0In * (1e6 - 1)) / 1e6);
+        // Our own USDe plus what the reset bought from the other LP.
+        assertGt(usde.balanceOf(safe) - usdeBefore, pending);
         assertEq(_liquidity(), TARGET_LIQUIDITY);
-        assertLe(module.sqrtPriceX96(tokenId), _sqrtLower());
+        assertLe(_sqrtPrice(), SQRT_PRICE_PAR);
     }
 
-    function test_rebalance_resetCapReached_skipsThenTopsUp() public {
+    /// @dev When the capped reset cannot bring the price down, the add reverts the whole call;
+    ///      Talos then sends a pull only, and re-adds once the market moves the price back.
+    function test_rebalance_resetCapReached_pullOnlyThenReAdd() public {
         otherLp.modifyLiquidity(key, TICK_LOWER, TICK_UPPER, int256(uint256(TARGET_LIQUIDITY)));
         _sellUsde(10_000e18);
 
-        vm.expectEmit(true, false, false, true, address(module));
-        emit IUniswapV4RebalanceModule.ReAddSkipped(tokenId, IUniswapV4RebalanceModule.Reason.PriceInRange);
-        assertFalse(_rebalance());
+        vm.prank(operator);
+        vm.expectRevert("Safe call failed");
+        module.rebalance(tokenId, TARGET_LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_PAR);
+
+        _rebalance(0, RESET_AMOUNT0);
         assertEq(_liquidity(), 0);
 
         // The market takes the other LP's USDe and the price falls back below the range.
         _buyUsde(10_000e18);
-        assertLe(module.sqrtPriceX96(tokenId), _sqrtLower());
-
-        (bool needed, IUniswapV4RebalanceModule.Reason reason) = module.rebalanceStatus(tokenId);
-        assertTrue(needed);
-        assertEq(uint8(reason), uint8(IUniswapV4RebalanceModule.Reason.ReAddNeeded));
-        assertTrue(_rebalance());
-        assertEq(_liquidity(), TARGET_LIQUIDITY);
-    }
-
-    function test_rebalance_exposureCap_skipsUntilUsdeLeavesTheSafe() public {
-        deal(address(usde), safe, MAX_TOKEN1_IN_SAFE);
-        _sellUsde(1_000e18);
-
-        vm.expectEmit(true, false, false, true, address(module));
-        emit IUniswapV4RebalanceModule.ReAddSkipped(tokenId, IUniswapV4RebalanceModule.Reason.ExposureCap);
-        assertFalse(_rebalance());
-        assertEq(_liquidity(), 0);
-
-        (bool needed, IUniswapV4RebalanceModule.Reason reason) = module.rebalanceStatus(tokenId);
-        assertFalse(needed);
-        assertEq(uint8(reason), uint8(IUniswapV4RebalanceModule.Reason.ExposureCap));
-
-        // USDe redeemed at Ethena.
-        vm.startPrank(safe);
-        usde.transfer(makeAddr("Redemption"), usde.balanceOf(safe));
-        vm.stopPrank();
-
-        assertTrue(_rebalance());
+        assertLe(_sqrtPrice(), SQRT_PRICE_PAR);
+        _rebalance(TARGET_LIQUIDITY, 0);
         assertEq(_liquidity(), TARGET_LIQUIDITY);
     }
 
@@ -137,53 +101,35 @@ contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
         vm.stopPrank();
         _sellUsde(900e18);
 
-        assertTrue(_rebalance());
+        _rebalance();
         assertEq(_liquidity(), TARGET_LIQUIDITY);
     }
 
-    function test_rebalance_safeShortOfOusd_keepsThePull() public {
+    function test_rebalance_safeShortOfOusd_pullOnly() public {
         vm.startPrank(safe);
         ousd.transfer(makeAddr("Elsewhere"), ousd.balanceOf(safe));
         vm.stopPrank();
         _sellUsde(1_000e18);
-        uint256 pending = module.pendingToken1(tokenId);
+        uint256 pending = _pendingUsde();
 
-        vm.expectEmit(true, false, false, true, address(module));
-        emit IUniswapV4RebalanceModule.ReAddSkipped(tokenId, IUniswapV4RebalanceModule.Reason.AddFailed);
-        assertFalse(_rebalance());
+        vm.prank(operator);
+        vm.expectRevert("Safe call failed");
+        module.rebalance(tokenId, TARGET_LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_PAR);
+
+        _rebalance(0, 0);
         assertEq(_liquidity(), 0);
         assertApproxEqRel(usde.balanceOf(safe), pending, 1e13);
     }
 
-    /// @dev Both allowances run down on every add, so each cycle must set its own.
+    /// @dev The Safe's one-time max approvals cover every add.
     function test_rebalance_fiveCyclesInARow() public {
         uint256 usdeBefore = usde.balanceOf(safe);
         for (uint256 i = 0; i < 5; i++) {
             _sellUsde(2_000e18);
-            assertTrue(_rebalance());
+            _rebalance();
             assertEq(_liquidity(), TARGET_LIQUIDITY);
         }
         assertApproxEqRel(usde.balanceOf(safe) - usdeBefore, 10_000e18, 1e15);
-    }
-
-    function test_rebalance_paused_pullsButDoesNotAdd() public {
-        vm.prank(operator);
-        module.pause();
-        _sellUsde(1_000e18);
-
-        vm.expectEmit(true, false, false, true, address(module));
-        emit IUniswapV4RebalanceModule.ReAddSkipped(tokenId, IUniswapV4RebalanceModule.Reason.Paused);
-        assertFalse(_rebalance());
-        assertEq(_liquidity(), 0);
-
-        (bool needed, IUniswapV4RebalanceModule.Reason reason) = module.rebalanceStatus(tokenId);
-        assertFalse(needed);
-        assertEq(uint8(reason), uint8(IUniswapV4RebalanceModule.Reason.Paused));
-
-        vm.prank(safe);
-        module.unpause();
-        assertTrue(_rebalance());
-        assertEq(_liquidity(), TARGET_LIQUIDITY);
     }
 
     function test_poolManagerHoldsOusdNonRebasing() public view {
@@ -195,24 +141,10 @@ contract Fork_Concrete_Mainnet_UniswapV4RebalanceModule_Rebalance_Test is
     /// --- REVERTING TESTS
     //////////////////////////////////////////////////////
 
-    function test_rebalance_RevertWhen_nothingToDo() public {
-        vm.expectRevert("Nothing to rebalance");
-        _rebalance();
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- HELPERS
-    //////////////////////////////////////////////////////
-
-    function _priceResetAmounts() internal returns (uint256 amount0In, uint256 amount1Out) {
-        bytes32 topic = IUniswapV4RebalanceModule.PriceReset.selector;
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i = 0; i < logs.length; i++) {
-            if (logs[i].emitter == address(module) && logs[i].topics[0] == topic) {
-                (amount0In, amount1Out,) = abi.decode(logs[i].data, (uint256, uint256, uint160));
-                return (amount0In, amount1Out);
-            }
-        }
-        revert("PriceReset not emitted");
+    function test_rebalance_RevertWhen_priceLimitBelowPar() public {
+        _sellUsde(1_000e18);
+        vm.prank(operator);
+        vm.expectRevert("Price limit below floor");
+        module.rebalance(tokenId, 0, RESET_AMOUNT0, SQRT_PRICE_PAR - 1);
     }
 }

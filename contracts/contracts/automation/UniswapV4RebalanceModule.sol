@@ -6,595 +6,200 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
 import { IUniswapV4RebalanceModule } from "../interfaces/automation/IUniswapV4RebalanceModule.sol";
-import { IPermit2 } from "../interfaces/uniswap/IPermit2.sol";
 import { IPoolManager, IUnlockCallback, PoolKey } from "../interfaces/uniswap/v4/IPoolManager.sol";
 import { IPositionManager } from "../interfaces/uniswap/v4/IPositionManager.sol";
-import { TickMath } from "../utils/TickMath.sol";
 
 /**
  * @title UniswapV4RebalanceModule
- * @notice Gnosis Safe module that keeps Safe-owned Uniswap v4 positions
- *         one-sided. A position provides `currency0` (OUSD) on a range just
- *         above the price, so it only ever buys `currency1` (e.g. USDe) from
- *         sellers. An operator pulls the `currency1` bought to the Safe and puts
- *         `currency0` back, so it cannot be bought back from the pool. The
- *         ranges, i.e. the bid prices, are set by the Safe.
+ * @notice Gnosis Safe module that lets an operator keep the Safe's Uniswap v4
+ *         positions one-sided. Each position provides `currency0` (OUSD) just
+ *         above the price, so it only buys `currency1` (USDe). `rebalance`
+ *         pulls the position to the Safe, swaps the price back to the range
+ *         bottom and puts `currency0` back, so what it bought cannot be bought
+ *         back from the pool.
  *
- * @dev    `rebalance` is one transaction:
- *         1. Pull: decrease the whole position, both currencies to the Safe.
- *         2. Reset: if the price is still inside the range, swap it back down to
- *            the bottom of the range with a price limit. The swap runs through
- *            the module's own `unlock` because the v4 Universal Router takes no
- *            price limit. With no other liquidity in the range it trades
- *            nothing; otherwise the Safe pays `currency0` at or above the range
- *            price, capped by `maxResetAmount0`.
- *         3. Re-add: increase the position back to `targetLiquidity` with
- *            `amount1Max = 0`, so the add can only ever deposit `currency0`.
+ * @dev    All decisions (when, how much, which price limit) are made off-chain
+ *         by the operator. The module only enforces guardrails, fixed at
+ *         deployment:
+ *         - it only touches Safe-owned positions in one hookless pool;
+ *         - every token it moves ends up in the Safe;
+ *         - adds can never deposit `currency1` and pull at most `maxAmount0`;
+ *         - the reset swap sells at most `maxAmount0` of `currency0` and never
+ *           pushes the price below `minSqrtPriceX96` (par for OUSD/USDe).
  *
- *         Safety properties against a compromised operator key:
- *         - All calldata is built here. The operator passes a tokenId, never a
- *           payload, and every token the module moves ends up in the Safe.
- *         - `currency0` is only ever sold at or above the price of the range
- *           bottom the Safe chose, and the amounts are capped by the Safe.
- *         - The operator can pause, but only the Safe can unpause. While
- *           paused, `rebalance` still pulls but adds nothing back.
- *
- *         A re-add that cannot happen is skipped with a `ReAddSkipped` event
- *         instead of reverting, so the pull is never undone. A later call tops
- *         the position back up.
- *
- *         The Safe must call `enableModule(address(this))` before this module
- *         can do anything at all.
+ *         The Safe must enable this module and, once, approve OUSD to Permit2
+ *         and Permit2 to the PositionManager, which pays the adds.
  */
 contract UniswapV4RebalanceModule is AbstractSafeModule, IUnlockCallback {
-    /// @dev v4-periphery `Actions` values understood by the PositionManager.
-    uint256 internal constant INCREASE_LIQUIDITY = 0x00;
-    uint256 internal constant DECREASE_LIQUIDITY = 0x01;
-    uint256 internal constant CLOSE_CURRENCY = 0x12;
+    // v4-periphery `Actions` understood by the PositionManager.
+    uint8 internal constant INCREASE_LIQUIDITY = 0x00;
+    uint8 internal constant DECREASE_LIQUIDITY = 0x01;
+    uint8 internal constant CLOSE_CURRENCY = 0x12;
 
-    /// @dev Storage slot of `PoolManager._pools`, as used by v4-core `StateLibrary`.
-    bytes32 internal constant POOLS_SLOT = bytes32(uint256(6));
-
-    uint256 internal constant Q96 = 2**96;
-
-    IPermit2 public immutable permit2;
     IPoolManager public immutable poolManager;
     IPositionManager public immutable positionManager;
+    /// @notice The only pool this module may touch.
+    bytes32 public immutable poolId;
+    /// @notice Lowest price the reset swap may reach.
+    uint160 public immutable minSqrtPriceX96;
+    /// @notice Cap on `currency0` per add and per reset swap.
+    uint128 public immutable maxAmount0;
 
-    /// @notice When true, no liquidity is added. `rebalance` still pulls.
-    bool public paused;
-
-    mapping(uint256 => IUniswapV4RebalanceModule.PositionConfig)
-        internal positions;
-    uint256[] internal tokenIds;
-
-    /**
-     * @param _safeContract    Gnosis Safe that owns the positions.
-     * @param _operator        Address allowed to rebalance (Talos relayer).
-     * @param _poolManager     Uniswap v4 PoolManager.
-     * @param _positionManager Uniswap v4 PositionManager.
-     * @param _permit2         Permit2, through which the PositionManager pulls
-     *                         the Safe's tokens.
-     */
     constructor(
         address _safeContract,
         address _operator,
         address _poolManager,
         address _positionManager,
-        address _permit2
+        PoolKey memory _poolKey,
+        uint160 _minSqrtPriceX96,
+        uint128 _maxAmount0
     ) AbstractSafeModule(_safeContract) {
         require(_operator != address(0), "Invalid operator");
-        require(_poolManager.code.length > 0, "Invalid pool manager");
-        require(_positionManager.code.length > 0, "Invalid position manager");
-        require(_permit2.code.length > 0, "Invalid permit2");
-
+        require(_poolKey.hooks == address(0), "Hooked pool");
         poolManager = IPoolManager(_poolManager);
         positionManager = IPositionManager(_positionManager);
-        permit2 = IPermit2(_permit2);
-
+        poolId = keccak256(abi.encode(_poolKey));
+        minSqrtPriceX96 = _minSqrtPriceX96;
+        maxAmount0 = _maxAmount0;
         _grantRole(OPERATOR_ROLE, _operator);
     }
 
-    ////////////////////////////////////////////////////
-    ///               Operator actions               ///
-    ////////////////////////////////////////////////////
-
     /**
-     * @notice Pull any `currency1` out of the position to the Safe and put the
-     *         position back to its target liquidity, `currency0` only.
-     * @param _tokenId PositionManager tokenId of a configured position.
-     * @return added True if liquidity was added back.
+     * @notice Pull a position to the Safe, optionally reset the price and add
+     *         `currency0` back.
+     * @param _tokenId           Safe-owned position in the module's pool.
+     * @param _liquidityToAdd    Liquidity to add after the pull; 0 to only pull.
+     * @param _resetAmount0      Max `currency0` the reset swap sells; 0 for no
+     *                           reset.
+     * @param _sqrtPriceLimitX96 Price the reset swap stops at, normally the
+     *                           range bottom.
      */
-    function rebalance(uint256 _tokenId)
-        external
-        onlyOperator
-        returns (bool added)
-    {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = _config(_tokenId);
-        uint160 sqrtPrice = _sqrtPrice(cfg.poolId);
-        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
-        bool priceInRange = sqrtPrice > cfg.sqrtPriceLowerX96;
-
-        require(
-            priceInRange || liquidity < cfg.limits.targetLiquidity,
-            "Nothing to rebalance"
-        );
-
-        if (priceInRange && liquidity > 0) {
-            _pull(_tokenId, cfg, liquidity);
-            liquidity = 0;
-        }
-
-        if (paused) {
-            emit IUniswapV4RebalanceModule.ReAddSkipped(
-                _tokenId,
-                IUniswapV4RebalanceModule.Reason.Paused
-            );
-            return false;
-        }
-
-        if (priceInRange) {
-            if (cfg.limits.maxResetAmount0 > 0) {
-                sqrtPrice = _resetPrice(_tokenId, cfg);
-            }
-            if (sqrtPrice > cfg.sqrtPriceLowerX96) {
-                emit IUniswapV4RebalanceModule.ReAddSkipped(
-                    _tokenId,
-                    IUniswapV4RebalanceModule.Reason.PriceInRange
-                );
-                return false;
-            }
-        }
-
-        if (_atExposureCap(cfg)) {
-            emit IUniswapV4RebalanceModule.ReAddSkipped(
-                _tokenId,
-                IUniswapV4RebalanceModule.Reason.ExposureCap
-            );
-            return false;
-        }
-
-        // A failed add (e.g. the Safe is short of currency0) must not undo
-        // the pull, so it is reported rather than reverted.
-        added = _add(_tokenId, cfg, cfg.limits.targetLiquidity - liquidity);
-        if (!added) {
-            emit IUniswapV4RebalanceModule.ReAddSkipped(
-                _tokenId,
-                IUniswapV4RebalanceModule.Reason.AddFailed
-            );
-        }
-    }
-
-    /// @notice Stop adding liquidity. The Safe holds the operator role too.
-    function pause() external onlyOperator {
-        paused = true;
-        emit IUniswapV4RebalanceModule.Paused(msg.sender);
-    }
-
-    ////////////////////////////////////////////////////
-    ///                  Safe admin                  ///
-    ////////////////////////////////////////////////////
-
-    function unpause() external onlySafe {
-        paused = false;
-        emit IUniswapV4RebalanceModule.Unpaused();
-    }
-
-    /**
-     * @notice Add or update a position this module may rebalance. The pool,
-     *         the range and the owner are read from the PositionManager.
-     * @param _tokenId PositionManager tokenId, owned by the Safe.
-     * @param _limits  Liquidity, amount and tick limits for the position.
-     */
-    function configurePosition(
+    function rebalance(
         uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionLimits calldata _limits
-    ) external onlySafe {
-        require(_limits.targetLiquidity > 0, "Invalid target liquidity");
-        require(_limits.maxAmount0 > 0, "Invalid max amount0");
-        require(_limits.maxToken1InSafe > 0, "Invalid max token1");
+        uint128 _liquidityToAdd,
+        uint128 _resetAmount0,
+        uint160 _sqrtPriceLimitX96
+    ) external onlyOperator {
         require(
             positionManager.ownerOf(_tokenId) == address(safeContract),
-            "Position not owned by Safe"
+            "Not a Safe position"
         );
-
-        (PoolKey memory key, uint256 info) = positionManager
-            .getPoolAndPositionInfo(_tokenId);
-        require(key.hooks == address(0), "Hooked pool");
-        require(key.currency0 != address(0), "Native currency");
-
-        int24 tickLower = int24(uint24(info >> 8));
-        int24 tickUpper = int24(uint24(info >> 32));
-        uint160 sqrtLower = TickMath.getSqrtPriceAtTick(tickLower);
-        uint160 sqrtUpper = TickMath.getSqrtPriceAtTick(tickUpper);
-        // Keeps `liquidity * (sqrtUpper - sqrtLower)` within 256 bits.
-        require(
-            uint256(sqrtUpper - sqrtLower) <= type(uint128).max,
-            "Range too wide"
+        (PoolKey memory key, ) = positionManager.getPoolAndPositionInfo(
+            _tokenId
         );
+        require(keccak256(abi.encode(key)) == poolId, "Wrong pool");
 
-        bytes32 poolId = keccak256(abi.encode(key));
-
-        if (positions[_tokenId].limits.targetLiquidity == 0) {
-            tokenIds.push(_tokenId);
+        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
+        if (liquidity > 0) {
+            _modifyLiquidity(
+                key,
+                DECREASE_LIQUIDITY,
+                abi.encode(_tokenId, liquidity, 0, 0, "")
+            );
         }
 
-        positions[_tokenId] = IUniswapV4RebalanceModule.PositionConfig({
-            key: key,
-            poolId: poolId,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            sqrtPriceLowerX96: sqrtLower,
-            sqrtPriceUpperX96: sqrtUpper,
-            limits: _limits
-        });
+        if (_resetAmount0 > 0) {
+            require(_resetAmount0 <= maxAmount0, "Reset too large");
+            require(
+                _sqrtPriceLimitX96 >= minSqrtPriceX96,
+                "Price limit below floor"
+            );
+            poolManager.unlock(
+                abi.encode(key, _resetAmount0, _sqrtPriceLimitX96)
+            );
+        }
 
-        emit IUniswapV4RebalanceModule.PositionConfigured(
+        if (_liquidityToAdd > 0) {
+            // amount1Max = 0: the add can only deposit currency0.
+            _modifyLiquidity(
+                key,
+                INCREASE_LIQUIDITY,
+                abi.encode(_tokenId, _liquidityToAdd, maxAmount0, 0, "")
+            );
+        }
+
+        emit IUniswapV4RebalanceModule.Rebalanced(
             _tokenId,
-            poolId,
-            tickLower,
-            tickUpper,
-            _limits
+            liquidity,
+            _resetAmount0,
+            _liquidityToAdd
         );
     }
-
-    /// @notice Stop this module from touching a position.
-    function removePosition(uint256 _tokenId) external onlySafe {
-        require(
-            positions[_tokenId].limits.targetLiquidity > 0,
-            "Position not configured"
-        );
-        delete positions[_tokenId];
-
-        uint256 last = tokenIds.length - 1;
-        for (uint256 i = 0; i <= last; i++) {
-            if (tokenIds[i] == _tokenId) {
-                tokenIds[i] = tokenIds[last];
-                tokenIds.pop();
-                break;
-            }
-        }
-
-        emit IUniswapV4RebalanceModule.PositionRemoved(_tokenId);
-    }
-
-    ////////////////////////////////////////////////////
-    ///              PoolManager callback            ///
-    ////////////////////////////////////////////////////
 
     /**
      * @notice Runs the reset swap. The PoolManager only calls back the address
-     *         that called `unlock`, so this only ever runs inside
-     *         `_resetPrice`, with data the module encoded itself.
-     * @dev    The Safe pays the pool directly and receives the output. The
-     *         module itself never holds a token.
+     *         that called `unlock`, so this only runs inside `rebalance`. The
+     *         Safe pays the pool and receives the output.
      */
     function unlockCallback(bytes calldata _data)
         external
         override
         returns (bytes memory)
     {
-        require(
-            msg.sender == address(poolManager),
-            "Caller is not the pool manager"
-        );
-
-        (PoolKey memory key, uint128 maxAmount0, uint160 sqrtPriceLimit) = abi
+        require(msg.sender == address(poolManager), "Not the pool manager");
+        (PoolKey memory key, uint128 amount0, uint160 sqrtPriceLimitX96) = abi
             .decode(_data, (PoolKey, uint128, uint160));
 
         int256 delta = poolManager.swap(
             key,
-            IPoolManager.SwapParams({
-                zeroForOne: true,
-                amountSpecified: -int256(uint256(maxAmount0)),
-                sqrtPriceLimitX96: sqrtPriceLimit
-            }),
+            IPoolManager.SwapParams(
+                true,
+                -int256(uint256(amount0)),
+                sqrtPriceLimitX96
+            ),
             ""
         );
+        // Exact-in zeroForOne: owes currency0 (upper 128 bits, <= 0) and
+        // receives currency1 (lower 128 bits, >= 0).
+        uint256 paid = uint128(-int128(delta >> 128));
+        uint256 received = uint128(int128(delta));
 
-        // BalanceDelta: amount0 in the upper 128 bits, amount1 in the lower.
-        // An exact-in zeroForOne swap only ever owes currency0 and receives
-        // currency1.
-        int128 delta0 = int128(delta >> 128);
-        int128 delta1 = int128(delta);
-        uint256 amount0In = delta0 < 0 ? uint256(uint128(-delta0)) : 0;
-        uint256 amount1Out = delta1 > 0 ? uint256(uint128(delta1)) : 0;
-
-        if (amount0In > 0) {
+        if (paid > 0) {
             poolManager.sync(key.currency0);
             _exec(
                 key.currency0,
                 abi.encodeWithSelector(
                     IERC20.transfer.selector,
                     address(poolManager),
-                    amount0In
-                ),
-                "Reset payment failed"
+                    paid
+                )
             );
             poolManager.settle();
         }
-        if (amount1Out > 0) {
-            poolManager.take(key.currency1, address(safeContract), amount1Out);
+        if (received > 0) {
+            poolManager.take(key.currency1, address(safeContract), received);
         }
-
-        return abi.encode(amount0In, amount1Out);
+        return "";
     }
 
-    ////////////////////////////////////////////////////
-    ///                     Views                    ///
-    ////////////////////////////////////////////////////
-
-    function getPosition(uint256 _tokenId)
-        external
-        view
-        returns (IUniswapV4RebalanceModule.PositionConfig memory)
-    {
-        return positions[_tokenId];
-    }
-
-    function configuredTokenIds() external view returns (uint256[] memory) {
-        return tokenIds;
-    }
-
-    /// @notice Current sqrt price of the position's pool.
-    function sqrtPriceX96(uint256 _tokenId) external view returns (uint160) {
-        return _sqrtPrice(_config(_tokenId).poolId);
-    }
-
-    /// @notice Amount of `currency1` the position currently holds.
-    function pendingToken1(uint256 _tokenId) external view returns (uint256) {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = _config(_tokenId);
-        uint160 sqrtPrice = _sqrtPrice(cfg.poolId);
-        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
-        if (sqrtPrice <= cfg.sqrtPriceLowerX96 || liquidity == 0) return 0;
-
-        uint160 top = sqrtPrice < cfg.sqrtPriceUpperX96
-            ? sqrtPrice
-            : cfg.sqrtPriceUpperX96;
-        return
-            (uint256(liquidity) * uint256(top - cfg.sqrtPriceLowerX96)) / Q96;
-    }
-
-    /**
-     * @notice Whether `rebalance` has work to do, mirroring its branches.
-     * @return needed True if `rebalance` would pull or add.
-     * @return reason Why. A re-add can still be skipped if the reset swap does
-     *         not bring the price back to the bottom of the range, or if the
-     *         add itself fails; simulate `rebalance` to know for sure.
-     */
-    function rebalanceStatus(uint256 _tokenId)
-        external
-        view
-        returns (bool needed, IUniswapV4RebalanceModule.Reason reason)
-    {
-        IUniswapV4RebalanceModule.PositionConfig memory cfg = positions[
-            _tokenId
-        ];
-        if (cfg.limits.targetLiquidity == 0) {
-            return (false, IUniswapV4RebalanceModule.Reason.NotConfigured);
-        }
-
-        uint160 sqrtPrice = _sqrtPrice(cfg.poolId);
-        uint128 liquidity = positionManager.getPositionLiquidity(_tokenId);
-        bool priceInRange = sqrtPrice > cfg.sqrtPriceLowerX96;
-
-        if (priceInRange && liquidity > 0) {
-            return (true, IUniswapV4RebalanceModule.Reason.PullNeeded);
-        }
-        if (paused) {
-            return (false, IUniswapV4RebalanceModule.Reason.Paused);
-        }
-        if (!priceInRange && liquidity >= cfg.limits.targetLiquidity) {
-            return (false, IUniswapV4RebalanceModule.Reason.Balanced);
-        }
-        if (priceInRange && cfg.limits.maxResetAmount0 == 0) {
-            return (false, IUniswapV4RebalanceModule.Reason.PriceInRange);
-        }
-        if (_atExposureCap(cfg)) {
-            return (false, IUniswapV4RebalanceModule.Reason.ExposureCap);
-        }
-        return (true, IUniswapV4RebalanceModule.Reason.ReAddNeeded);
-    }
-
-    ////////////////////////////////////////////////////
-    ///                   Internals                  ///
-    ////////////////////////////////////////////////////
-
-    function _config(uint256 _tokenId)
-        internal
-        view
-        returns (IUniswapV4RebalanceModule.PositionConfig memory cfg)
-    {
-        cfg = positions[_tokenId];
-        require(cfg.limits.targetLiquidity > 0, "Position not configured");
-    }
-
-    /// @dev `StateLibrary.getSlot0` without the v4-core dependency: the price
-    ///      is the low 160 bits of the pool's first storage slot.
-    function _sqrtPrice(bytes32 _poolId) internal view returns (uint160) {
-        bytes32 slot0 = poolManager.extsload(
-            keccak256(abi.encode(_poolId, POOLS_SLOT))
-        );
-        return uint160(uint256(slot0));
-    }
-
-    /// @dev True once the Safe holds as much currency1 as it is allowed to
-    ///      wait on, e.g. while redemptions are pending.
-    function _atExposureCap(
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg
-    ) internal view returns (bool) {
-        return
-            IERC20(_cfg.key.currency1).balanceOf(address(safeContract)) >=
-            _cfg.limits.maxToken1InSafe;
-    }
-
-    function _pull(
-        uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg,
-        uint128 _liquidity
+    /// @dev One liquidity action, then CLOSE_CURRENCY on both currencies,
+    ///      which settles or takes each full delta with the Safe.
+    function _modifyLiquidity(
+        PoolKey memory _key,
+        uint8 _action,
+        bytes memory _params
     ) internal {
-        address safe = address(safeContract);
-        uint256 balance0 = IERC20(_cfg.key.currency0).balanceOf(safe);
-        uint256 balance1 = IERC20(_cfg.key.currency1).balanceOf(safe);
-
-        // CLOSE_CURRENCY settles or takes the full delta of each currency
-        // with the locker, which is the Safe.
         bytes[] memory params = new bytes[](3);
-        params[0] = abi.encode(
-            _tokenId,
-            uint256(_liquidity),
-            uint128(0),
-            uint128(0),
-            bytes("")
-        );
-        params[1] = abi.encode(_cfg.key.currency0);
-        params[2] = abi.encode(_cfg.key.currency1);
+        params[0] = _params;
+        params[1] = abi.encode(_key.currency0);
+        params[2] = abi.encode(_key.currency1);
         _exec(
             address(positionManager),
-            _modifyLiquiditiesCall(
-                abi.encodePacked(
-                    uint8(DECREASE_LIQUIDITY),
-                    uint8(CLOSE_CURRENCY),
-                    uint8(CLOSE_CURRENCY)
-                ),
-                params
-            ),
-            "Pull failed"
-        );
-
-        emit IUniswapV4RebalanceModule.LiquidityPulled(
-            _tokenId,
-            _liquidity,
-            _gain(IERC20(_cfg.key.currency0).balanceOf(safe), balance0),
-            _gain(IERC20(_cfg.key.currency1).balanceOf(safe), balance1)
-        );
-    }
-
-    function _resetPrice(
-        uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg
-    ) internal returns (uint160 sqrtPriceAfter) {
-        (uint256 amount0In, uint256 amount1Out) = abi.decode(
-            poolManager.unlock(
-                abi.encode(
-                    _cfg.key,
-                    _cfg.limits.maxResetAmount0,
-                    _cfg.sqrtPriceLowerX96
-                )
-            ),
-            (uint256, uint256)
-        );
-        sqrtPriceAfter = _sqrtPrice(_cfg.poolId);
-        emit IUniswapV4RebalanceModule.PriceReset(
-            _tokenId,
-            amount0In,
-            amount1Out,
-            sqrtPriceAfter
-        );
-    }
-
-    function _add(
-        uint256 _tokenId,
-        IUniswapV4RebalanceModule.PositionConfig memory _cfg,
-        uint128 _liquidity
-    ) internal returns (bool) {
-        address currency0 = _cfg.key.currency0;
-        uint256 balance0 = IERC20(currency0).balanceOf(address(safeContract));
-
-        // Both allowances run down on every add (OUSD's own allowance too, even
-        // at max), so they are set for exactly this add. A Permit2 expiration
-        // of 0 lasts until the end of this block.
-        _exec(
-            currency0,
-            abi.encodeWithSelector(
-                IERC20.approve.selector,
-                address(permit2),
-                uint256(_cfg.limits.maxAmount0)
-            ),
-            "Token approval failed"
-        );
-        _exec(
-            address(permit2),
-            abi.encodeWithSelector(
-                IPermit2.approve.selector,
-                currency0,
-                address(positionManager),
-                uint160(_cfg.limits.maxAmount0),
-                uint48(0)
-            ),
-            "Permit2 approval failed"
-        );
-
-        // amount1Max = 0: the add fails if it would need any currency1.
-        bytes[] memory params = new bytes[](3);
-        params[0] = abi.encode(
-            _tokenId,
-            uint256(_liquidity),
-            _cfg.limits.maxAmount0,
-            uint128(0),
-            bytes("")
-        );
-        params[1] = abi.encode(currency0);
-        params[2] = abi.encode(_cfg.key.currency1);
-        bool success = _tryExec(
-            address(positionManager),
-            _modifyLiquiditiesCall(
-                abi.encodePacked(
-                    uint8(INCREASE_LIQUIDITY),
-                    uint8(CLOSE_CURRENCY),
-                    uint8(CLOSE_CURRENCY)
-                ),
-                params
-            )
-        );
-        if (!success) return false;
-
-        emit IUniswapV4RebalanceModule.LiquidityAdded(
-            _tokenId,
-            _liquidity,
-            _gain(balance0, IERC20(currency0).balanceOf(address(safeContract)))
-        );
-        return true;
-    }
-
-    function _modifyLiquiditiesCall(
-        bytes memory _actions,
-        bytes[] memory _params
-    ) internal view returns (bytes memory) {
-        return
             abi.encodeWithSelector(
                 IPositionManager.modifyLiquidities.selector,
-                abi.encode(_actions, _params),
+                abi.encode(
+                    abi.encodePacked(_action, CLOSE_CURRENCY, CLOSE_CURRENCY),
+                    params
+                ),
                 block.timestamp
-            );
+            )
+        );
     }
 
-    function _exec(
-        address _target,
-        bytes memory _data,
-        string memory _error
-    ) internal {
-        require(_tryExec(_target, _data), _error);
-    }
-
-    function _tryExec(address _target, bytes memory _data)
-        internal
-        returns (bool)
-    {
-        return
-            safeContract.execTransactionFromModule(
-                _target,
-                0, // Value
-                _data,
-                0 // Call
-            );
-    }
-
-    function _gain(uint256 _after, uint256 _before)
-        internal
-        pure
-        returns (uint256)
-    {
-        return _after > _before ? _after - _before : 0;
+    function _exec(address _target, bytes memory _data) internal {
+        require(
+            safeContract.execTransactionFromModule(_target, 0, _data, 0),
+            "Safe call failed"
+        );
     }
 }

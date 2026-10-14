@@ -26,14 +26,14 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
     uint256 internal constant TOKEN_ID = 457273;
     int24 internal constant TICK_LOWER = 0;
     int24 internal constant TICK_UPPER = 5;
-    uint160 internal constant SQRT_PRICE_TICK_0 = 79228162514264337593543950336;
-    /// @dev getSqrtPriceAtTick(5), checked against the module in the constructor tests.
+    /// @dev Par: 1 token1 per token0.
+    uint160 internal constant SQRT_PRICE_PAR = 79228162514264337593543950336;
+    /// @dev getSqrtPriceAtTick(5).
     uint160 internal constant SQRT_PRICE_TICK_5 = 79247971040445709311708648151;
 
-    uint128 internal constant TARGET_LIQUIDITY = 80014000349982500743725934;
-    uint128 internal constant MAX_AMOUNT0 = 20_200e18;
-    uint128 internal constant MAX_RESET_AMOUNT0 = 1_000e18;
-    uint256 internal constant MAX_TOKEN1_IN_SAFE = 100_000e18;
+    uint128 internal constant LIQUIDITY = 80014000349982500743725934;
+    uint128 internal constant MAX_AMOUNT0 = 100_000e18;
+    uint128 internal constant RESET_AMOUNT0 = 1_000e18;
     uint256 internal constant SAFE_TOKEN0 = 100_000e18;
 
     //////////////////////////////////////////////////////
@@ -58,12 +58,6 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
     function setUp() public virtual override {
         super.setUp();
 
-        _deployContracts();
-        _configureContracts();
-        label();
-    }
-
-    function _deployContracts() internal {
         mockSafe = new MockSafeContract();
         permit2 = new MockPermit2();
         poolManager = new MockV4PoolManager();
@@ -71,38 +65,44 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
         token0 = new MockERC20("Origin Dollar", "OUSD", 18);
         token1 = new MockERC20("Ethena USDe", "USDe", 18);
 
-        module = IUniswapV4RebalanceModule(
-            vm.deployCode(
-                Automation.UNISWAP_V4_REBALANCE_MODULE,
-                abi.encode(
-                    address(mockSafe), operator, address(poolManager), address(positionManager), address(permit2)
-                )
-            )
-        );
-    }
-
-    function _configureContracts() internal {
         key = PoolKey({
             currency0: address(token0), currency1: address(token1), fee: 0, tickSpacing: 1, hooks: address(0)
         });
         poolId = keccak256(abi.encode(key));
+        module = _deployModule(operator, key);
 
-        positionManager.setPosition(TOKEN_ID, address(mockSafe), key, TICK_LOWER, TICK_UPPER, TARGET_LIQUIDITY);
-        _setPrice(SQRT_PRICE_TICK_0);
+        positionManager.setPosition(TOKEN_ID, address(mockSafe), key, TICK_LOWER, TICK_UPPER, LIQUIDITY);
+        poolManager.setSqrtPrice(poolId, SQRT_PRICE_PAR);
 
+        // The Safe's one-time setup: approve token0 to Permit2 and Permit2 to the PositionManager.
         token0.mint(address(mockSafe), SAFE_TOKEN0);
-        // Liquidity the mocks pay out on decreases and swaps.
+        vm.startPrank(address(mockSafe));
+        token0.approve(address(permit2), type(uint256).max);
+        permit2.approve(address(token0), address(positionManager), type(uint160).max, type(uint48).max);
+        vm.stopPrank();
+
+        // What the mocks pay out on decreases and swaps.
         token0.mint(address(positionManager), 1_000_000e18);
         token1.mint(address(positionManager), 1_000_000e18);
         token1.mint(address(poolManager), 1_000_000e18);
 
-        _configurePosition();
+        label();
     }
 
-    function _configurePosition() internal {
-        vm.prank(address(mockSafe));
-        module.configurePosition(
-            TOKEN_ID, _limits(TARGET_LIQUIDITY, MAX_AMOUNT0, MAX_RESET_AMOUNT0, MAX_TOKEN1_IN_SAFE)
+    function _deployModule(address _operator, PoolKey memory _key) internal returns (IUniswapV4RebalanceModule) {
+        return IUniswapV4RebalanceModule(
+            vm.deployCode(
+                Automation.UNISWAP_V4_REBALANCE_MODULE,
+                abi.encode(
+                    address(mockSafe),
+                    _operator,
+                    address(poolManager),
+                    address(positionManager),
+                    _key,
+                    SQRT_PRICE_PAR,
+                    MAX_AMOUNT0
+                )
+            )
         );
     }
 
@@ -110,43 +110,9 @@ abstract contract Unit_UniswapV4RebalanceModule_Shared_Test is Base {
     /// --- HELPERS
     //////////////////////////////////////////////////////
 
-    function _limits(uint128 targetLiquidity, uint128 maxAmount0, uint128 maxResetAmount0, uint256 maxToken1InSafe)
-        internal
-        pure
-        returns (IUniswapV4RebalanceModule.PositionLimits memory)
-    {
-        return IUniswapV4RebalanceModule.PositionLimits({
-            targetLiquidity: targetLiquidity,
-            maxAmount0: maxAmount0,
-            maxResetAmount0: maxResetAmount0,
-            maxToken1InSafe: maxToken1InSafe
-        });
-    }
-
-    function _setPrice(uint160 sqrtPriceX96) internal {
-        poolManager.setSqrtPrice(poolId, sqrtPriceX96);
-    }
-
-    /// @dev A price inside [0, 5]: the position holds some token1.
-    function _priceInRange() internal pure returns (uint160) {
-        return SQRT_PRICE_TICK_0 + (SQRT_PRICE_TICK_5 - SQRT_PRICE_TICK_0) / 2;
-    }
-
-    /// @dev Price in range, a fill to pull, and a reset swap that trades nothing and lands on
-    ///      the bottom of the range.
-    function _setUpFill(uint256 pulled0, uint256 pulled1, uint256 added0) internal {
-        _setPrice(_priceInRange());
-        positionManager.setAmounts(pulled0, pulled1, added0, 0);
-        poolManager.setSwapResult(0, 0, SQRT_PRICE_TICK_0);
-    }
-
-    function _rebalance() internal returns (bool added) {
+    function _rebalance(uint128 liquidityToAdd, uint128 resetAmount0, uint160 sqrtPriceLimitX96) internal {
         vm.prank(operator);
-        added = module.rebalance(TOKEN_ID);
-    }
-
-    function _status() internal view returns (bool needed, IUniswapV4RebalanceModule.Reason reason) {
-        return module.rebalanceStatus(TOKEN_ID);
+        module.rebalance(TOKEN_ID, liquidityToAdd, resetAmount0, sqrtPriceLimitX96);
     }
 
     //////////////////////////////////////////////////////

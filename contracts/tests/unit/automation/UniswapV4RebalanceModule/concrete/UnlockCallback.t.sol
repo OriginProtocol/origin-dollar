@@ -13,7 +13,7 @@ contract Unit_Concrete_UniswapV4RebalanceModule_UnlockCallback_Test is Unit_Unis
 
     function test_unlockCallback_RevertWhen_callerIsNotPoolManager() public {
         vm.prank(operator);
-        vm.expectRevert("Caller is not the pool manager");
-        module.unlockCallback(abi.encode(TOKEN_ID));
+        vm.expectRevert("Not the pool manager");
+        module.unlockCallback(abi.encode(key, RESET_AMOUNT0, SQRT_PRICE_PAR));
     }
 }

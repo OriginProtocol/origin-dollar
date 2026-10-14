@@ -6,8 +6,8 @@ import {
     Unit_UniswapV4RebalanceModule_Shared_Test
 } from "tests/unit/automation/UniswapV4RebalanceModule/shared/Shared.t.sol";
 
-// --- Test utilities
-import {Automation} from "tests/utils/artifacts/Automation.sol";
+// --- Project imports
+import {PoolKey} from "contracts/interfaces/uniswap/v4/IPoolManager.sol";
 
 contract Unit_Concrete_UniswapV4RebalanceModule_Constructor_Test is Unit_UniswapV4RebalanceModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -18,8 +18,9 @@ contract Unit_Concrete_UniswapV4RebalanceModule_Constructor_Test is Unit_Uniswap
         assertEq(module.safeContract(), address(mockSafe));
         assertEq(module.poolManager(), address(poolManager));
         assertEq(module.positionManager(), address(positionManager));
-        assertEq(module.permit2(), address(permit2));
-        assertFalse(module.paused());
+        assertEq(module.poolId(), poolId);
+        assertEq(module.minSqrtPriceX96(), SQRT_PRICE_PAR);
+        assertEq(module.maxAmount0(), MAX_AMOUNT0);
     }
 
     function test_constructor_grantsRoles() public view {
@@ -34,32 +35,13 @@ contract Unit_Concrete_UniswapV4RebalanceModule_Constructor_Test is Unit_Uniswap
 
     function test_constructor_RevertWhen_operatorIsZero() public {
         vm.expectRevert("Invalid operator");
-        _deploy(address(0), address(poolManager), address(positionManager), address(permit2));
+        _deployModule(address(0), key);
     }
 
-    function test_constructor_RevertWhen_poolManagerHasNoCode() public {
-        vm.expectRevert("Invalid pool manager");
-        _deploy(operator, makeAddr("EOA"), address(positionManager), address(permit2));
-    }
-
-    function test_constructor_RevertWhen_positionManagerHasNoCode() public {
-        vm.expectRevert("Invalid position manager");
-        _deploy(operator, address(poolManager), makeAddr("EOA"), address(permit2));
-    }
-
-    function test_constructor_RevertWhen_permit2HasNoCode() public {
-        vm.expectRevert("Invalid permit2");
-        _deploy(operator, address(poolManager), address(positionManager), makeAddr("EOA"));
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- HELPERS
-    //////////////////////////////////////////////////////
-
-    function _deploy(address _operator, address _poolManager, address _positionManager, address _permit2) internal {
-        vm.deployCode(
-            Automation.UNISWAP_V4_REBALANCE_MODULE,
-            abi.encode(address(mockSafe), _operator, _poolManager, _positionManager, _permit2)
-        );
+    function test_constructor_RevertWhen_hookedPool() public {
+        PoolKey memory hooked = key;
+        hooked.hooks = makeAddr("Hook");
+        vm.expectRevert("Hooked pool");
+        _deployModule(operator, hooked);
     }
 }
