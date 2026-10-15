@@ -35,6 +35,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
 | `ousdV4Rebalance`                   | mainnet | `7,37 * * * *`   | Keep the OUSD/USDe Uniswap v4 positions one-sided via UniswapV4RebalanceModule (see below)          |
+| `ousdSusdeV4Rebalance`              | mainnet | `22,52 * * * *`  | Keep the OUSD/sUSDe v4 position just above the sUSDe NAV (UniswapV4ERC4626RebalanceModule, below)   |
 
 ## Native staking (Ethereum validators)
 
@@ -240,3 +241,47 @@ Operating it is manual for now: redeem the Safe's USDe for USDC at Ethena, mint
 OUSD at the Vault, leave it in the Safe for the next re-adds, and move a range
 (burn and mint from the Safe, then pass the new token id) when the indicator
 says the market has moved.
+
+### ousdSusdeV4Rebalance parameters
+
+The OUSD v4 liquidity Safe (`0x13eb…eB26`) also owns an OUSD-only position on
+the hookless, fee-0, tick-spacing-1 OUSD/sUSDe pool. It should sell OUSD just
+above the sUSDe NAV (`convertToShares`), which grows, so the NAV tick drifts
+down ~1.3 tick/day and a fixed range stops filling.
+`UniswapV4ERC4626RebalanceModule` burns the position to the Safe, swaps the
+price back down and mints a fresh position (a new token id each time), and
+never lets the swap or the new range sell OUSD more than `navToleranceBps`
+(1 bp) below the NAV. Every run:
+
+1. The current position is the `mintedTokenId` of the module's latest
+   `Rebalanced` event (none: `--token-id`; a burn-only call: no position).
+2. The target range is `[ceil(floorTick), ceil(floorTick) + --width]` from
+   `navFloorX192()` (the NAV less the tolerance, so the range starts on the
+   tick nearest the NAV); the reset limit is the smallest sqrtPrice at or above
+   that floor.
+3. It moves when there is no position, the position holds at least
+   `--min-token1` sUSDe, its bottom is below the target's, or its bottom is at
+   least `--max-drift` ticks above the target's. The call is
+   `rebalance(tokenId, lower, upper, liquidity, reset, limit)`, with a reset
+   only while the pool price is above the limit (v4 reverts a zeroForOne swap
+   whose limit is at or above the price) and the liquidity of `--target-ousd`
+   on the new range. Simulated first; a revert is logged and nothing is sent.
+
+- `--token-id <id>` (default `457274`): position used before the first
+  `Rebalanced` event.
+- `--width <n>` (default `5`), `--max-drift <n>` (default `2`): ticks.
+- `--min-token1 <n>` (default `10`): sUSDe held that is worth a move.
+- `--target-ousd <n>` (default `20000`): OUSD in the new position, capped at
+  the Safe's OUSD plus the burned position's, less the reset and 0.5%.
+- `--reset-amount <n>` (default `100`): max OUSD the reset swap sells,
+  capped by the module's `maxAmount0`.
+- `--lookback-blocks <n>` (default `500000`), `--log-chunk <n>` (default
+  `50000`): the event search.
+- `--max-gas <n>` (default `5000000`): skip a rebalance estimated above this.
+- `--module <address>`: override the deployment descriptor (forks).
+- `--dryrun` simulates and logs without sending. A non-operator signer
+  simulates as the Safe.
+
+The Safe must enable the module and approve OUSD to Permit2 and Permit2 to the
+PositionManager (see `009_UniswapV4ERC4626RebalanceModule.s.sol`). The
+schedule stays disabled until then.
