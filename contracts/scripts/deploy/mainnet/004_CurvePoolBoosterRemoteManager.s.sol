@@ -22,6 +22,9 @@ import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICu
 ///      booster, which is `onlyGovernor`, so this script only builds a governance proposal.
 ///      The Votemarket platform address is unchanged and must stay as is.
 contract $004_CurvePoolBoosterRemoteManager is AbstractDeployScript("004_CurvePoolBoosterRemoteManager") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     using GovHelper for GovProposal;
 
     /// @notice Stake DAO's new mainnet CampaignRemoteManager.

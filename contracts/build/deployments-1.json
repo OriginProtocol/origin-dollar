@@ -123,6 +123,10 @@
         {
             "implementation": "0x549f300EEA621969b88Db15120A5fb9103680535",
             "name": "SetXOGNRewardRateModule"
+        },
+        {
+            "implementation": "0x91003127F18b3b36E0f4dBa56322C4B4A18aB698",
+            "name": "UNISWAP_V4_REBALANCE_MODULE"
         }
     ],
     "executions": [
@@ -154,6 +158,12 @@
             "name": "006_OGNBuyback",
             "proposalId": 0,
             "tsDeployment": 1790178659,
+            "tsGovernance": 0
+        },
+        {
+            "name": "008_UniswapV4RebalanceModule",
+            "proposalId": 1,
+            "tsDeployment": 1792049603,
             "tsGovernance": 0
         }
     ]
