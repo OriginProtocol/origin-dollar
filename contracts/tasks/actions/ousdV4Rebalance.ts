@@ -118,7 +118,9 @@ export function planRebalance({
       resetAmount0: add.isZero() ? zero : resetAmount0,
     };
   }
-  if (liquidity.gte(targetLiquidity)) return skip("Balanced");
+  // Within 1% of the target is close enough: topping up the rounding left
+  // by the last add would only spend gas.
+  if (liquidity.mul(100).gte(targetLiquidity.mul(99))) return skip("Balanced");
   if (atCap) return skip("ExposureCap");
   return {
     send: true,
@@ -143,6 +145,72 @@ export function pendingToken1({
   if (sqrtPriceX96.lte(sqrtLowerX96)) return BigNumber.from(0);
   const top = sqrtPriceX96.lt(sqrtUpperX96) ? sqrtPriceX96 : sqrtUpperX96;
   return liquidity.mul(top.sub(sqrtLowerX96)).div(Q96);
+}
+
+/** token0 (OUSD) a position holds: L * (Pu - max(P, Pl)) * Q96 / (max(P, Pl) * Pu). */
+export function positionToken0({
+  liquidity,
+  sqrtPriceX96,
+  sqrtLowerX96,
+  sqrtUpperX96,
+}: {
+  liquidity: BigNumber;
+  sqrtPriceX96: BigNumber;
+  sqrtLowerX96: BigNumber;
+  sqrtUpperX96: BigNumber;
+}): BigNumber {
+  if (sqrtPriceX96.gte(sqrtUpperX96)) return BigNumber.from(0);
+  const bottom = sqrtPriceX96.gt(sqrtLowerX96) ? sqrtPriceX96 : sqrtLowerX96;
+  return liquidity
+    .mul(sqrtUpperX96.sub(bottom))
+    .mul(Q96)
+    .div(bottom)
+    .div(sqrtUpperX96);
+}
+
+/** Liquidity an OUSD-only position on [Pl, Pu] gets from `amount0` OUSD. */
+export function liquidityForToken0({
+  amount0,
+  sqrtLowerX96,
+  sqrtUpperX96,
+}: {
+  amount0: BigNumber;
+  sqrtLowerX96: BigNumber;
+  sqrtUpperX96: BigNumber;
+}): BigNumber {
+  return amount0
+    .mul(sqrtLowerX96)
+    .div(Q96)
+    .mul(sqrtUpperX96)
+    .div(sqrtUpperX96.sub(sqrtLowerX96));
+}
+
+// Kept back from the OUSD the Safe can put in, for rounding.
+const FUND_MARGIN_BPS = 50;
+
+/**
+ * OUSD to keep in a position: `--target-ousd`, capped at what the Safe can
+ * fund after the pull (its own OUSD, plus the OUSD the position returns,
+ * less what the reset swap may sell), with a 0.5% margin.
+ */
+export function fundableToken0({
+  targetToken0,
+  safeToken0,
+  positionToken0,
+  resetAmount0,
+}: {
+  targetToken0: BigNumber;
+  safeToken0: BigNumber;
+  positionToken0: BigNumber;
+  resetAmount0: BigNumber;
+}): BigNumber {
+  const available = safeToken0
+    .add(positionToken0)
+    .mul(10_000 - FUND_MARGIN_BPS)
+    .div(10_000)
+    .sub(resetAmount0);
+  if (available.lte(0)) return BigNumber.from(0);
+  return available.lt(targetToken0) ? available : targetToken0;
 }
 
 /** int24 tickLower and tickUpper packed in PositionInfo (bits 8-31, 32-55). */
@@ -310,15 +378,15 @@ action({
       types.string
     );
     t.addOptionalParam(
-      "targetLiquidity",
-      "Liquidity to keep in each position. One value, or one per position",
-      "80014000349982500743725934",
+      "targetOusd",
+      "OUSD to keep in each position, in whole units, capped at what the Safe can fund. One value, or one per position",
+      "20000",
       types.string
     );
     t.addOptionalParam(
       "resetAmount",
       "Max OUSD the reset swap may sell, in whole units (capped by the module)",
-      1000,
+      100,
       types.float
     );
     t.addOptionalParam(
@@ -418,10 +486,10 @@ action({
       .split(",")
       .map((id) => BigNumber.from(id.trim()));
     const targets = perPosition(
-      args.targetLiquidity,
+      args.targetOusd,
       tokenIds.length,
-      "--target-liquidity"
-    ).map((v) => BigNumber.from(v));
+      "--target-ousd"
+    );
     const quoteSizes = parseQuoteSizes(args.quoteSize, tokenIds.length);
 
     const positions = await Promise.all(
@@ -526,14 +594,16 @@ action({
       const sqrtUpperX96 = BigNumber.from(
         getSqrtPriceAtTick(tickUpper).toString()
       );
-      const [liquidity, safeToken1]: [BigNumber, BigNumber] = await Promise.all(
-        [
+      const [liquidity, safeToken0, safeToken1]: BigNumber[] =
+        await Promise.all([
           positionManager.getPositionLiquidity(tokenId),
+          new ethers.Contract(token0.address, ERC20_ABI, provider).balanceOf(
+            safe
+          ),
           new ethers.Contract(token1.address, ERC20_ABI, provider).balanceOf(
             safe
           ),
-        ]
-      );
+        ]);
       const pending = pendingToken1({
         liquidity,
         sqrtPriceX96,
@@ -541,18 +611,37 @@ action({
         sqrtUpperX96,
       });
       const resetCap = parseUnits(String(args.resetAmount), token0.decimals);
+      const resetAmount0 = resetCap.lt(maxAmount0) ? resetCap : maxAmount0;
+      const priceInRange = sqrtPriceX96.gt(sqrtLowerX96);
+      // The target in OUSD, capped at what the Safe can fund once the
+      // position is pulled, then turned into liquidity on this range.
+      const targetToken0 = fundableToken0({
+        targetToken0: parseUnits(targets[i], token0.decimals),
+        safeToken0,
+        positionToken0: positionToken0({
+          liquidity,
+          sqrtPriceX96,
+          sqrtLowerX96,
+          sqrtUpperX96,
+        }),
+        resetAmount0: priceInRange ? resetAmount0 : BigNumber.from(0),
+      });
       const plan = planRebalance({
-        priceInRange: sqrtPriceX96.gt(sqrtLowerX96),
+        priceInRange,
         pendingToken1: pending,
         liquidity,
-        targetLiquidity: targets[i],
+        targetLiquidity: liquidityForToken0({
+          amount0: targetToken0,
+          sqrtLowerX96,
+          sqrtUpperX96,
+        }),
         minToken1: parseUnits(String(args.minToken1), token1.decimals),
         safeToken1,
         maxToken1InSafe: parseUnits(
           String(args.maxToken1InSafe),
           token1.decimals
         ),
-        resetAmount0: resetCap.lt(maxAmount0) ? resetCap : maxAmount0,
+        resetAmount0,
       });
       const holds = `${formatUnits(pending, token1.decimals)} ${token1.symbol}`;
       if (!plan.send) {
@@ -605,9 +694,10 @@ action({
         continue;
       }
       log.info(
-        `${label}: ${
-          plan.why
-        } (holds ${holds}, add ${plan.liquidityToAdd.toString()}, reset ${formatUnits(
+        `${label}: ${plan.why} (holds ${holds}, add ${formatUnits(
+          plan.liquidityToAdd.isZero() ? 0 : targetToken0,
+          token0.decimals
+        )} ${token0.symbol}, reset ${formatUnits(
           plan.resetAmount0,
           token0.decimals
         )} ${token0.symbol}, ~${gas.toString()} gas)`
