@@ -105,17 +105,17 @@ contract Fork_Concrete_Mainnet_UniswapV4ERC4626RebalanceModule_Rebalance_Test is
     /// --- REVERTING TESTS
     //////////////////////////////////////////////////////
 
-    function test_rebalance_RevertWhen_priceLimitBelowNav() public {
+    function test_rebalance_RevertWhen_priceLimitBelowFloor() public {
         _sellSusde(1_000e18);
-        uint160 limit = _navSqrtPriceX96() - 1;
+        uint160 limit = _floorSqrtPriceX96() - 1;
         vm.prank(operator);
-        vm.expectRevert("Price limit below NAV");
+        vm.expectRevert("Price limit below NAV floor");
         module.rebalance(tokenId, navTick + 1, navTick + 6, LIQUIDITY, RESET_AMOUNT0, limit);
     }
 
     /// @dev Another LP's liquidity below the NAV lets the price fall under it: no mint then, since
     ///      a range starting at the pool price would sell OUSD below the NAV.
-    function test_rebalance_RevertWhen_poolPriceBelowNav() public {
+    function test_rebalance_RevertWhen_poolPriceBelowFloor() public {
         deal(address(susde), address(otherLp), 1_000_000e18);
         otherLp.modifyLiquidity(key, navTick - 20, navTick, 1e24);
         _buySusde(1_000e18);
@@ -123,7 +123,7 @@ contract Fork_Concrete_Mainnet_UniswapV4ERC4626RebalanceModule_Rebalance_Test is
         assertLt(price, navSqrtPriceX96);
 
         vm.prank(operator);
-        vm.expectRevert("Pool price below NAV");
+        vm.expectRevert("Pool price below NAV floor");
         module.rebalance(tokenId, navTick - 5, navTick, LIQUIDITY, 0, 0);
     }
 

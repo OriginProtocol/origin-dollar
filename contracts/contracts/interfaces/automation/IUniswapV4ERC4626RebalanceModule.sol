@@ -26,9 +26,13 @@ interface IUniswapV4ERC4626RebalanceModule is IAbstractSafeModule {
 
     function maxAmount0() external view returns (uint128);
 
+    function navToleranceBps() external view returns (uint256);
+
     function poolKey() external view returns (PoolKey memory);
 
     function navPriceX192() external view returns (uint256);
+
+    function navFloorX192() external view returns (uint256);
 
     function poolSqrtPriceX96() external view returns (uint160);
 

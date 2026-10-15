@@ -31,6 +31,9 @@ abstract contract Unit_UniswapV4ERC4626RebalanceModule_Shared_Test is Base {
     uint256 internal constant SHARES_PER_ASSET = 0.8e18;
     /// @dev Smallest sqrtPriceX96 whose square is at or above 0.8 * 2^192.
     uint160 internal constant SQRT_PRICE_NAV = 70863822845718284118440686465;
+    uint256 internal constant NAV_TOLERANCE_BPS = 1;
+    /// @dev Smallest sqrtPriceX96 whose square is at or above the NAV less 1 bp.
+    uint160 internal constant SQRT_PRICE_FLOOR = 70860279565991790381327865619;
 
     uint128 internal constant LIQUIDITY = 70_000_000e18;
     uint128 internal constant MAX_AMOUNT0 = 100_000e18;
@@ -71,7 +74,7 @@ abstract contract Unit_UniswapV4ERC4626RebalanceModule_Shared_Test is Base {
             currency0: address(token0), currency1: address(token1), fee: 0, tickSpacing: 1, hooks: address(0)
         });
         poolId = keccak256(abi.encode(key));
-        module = _deployModule(operator, key);
+        module = _deployModule(operator, key, NAV_TOLERANCE_BPS);
 
         positionManager.setPosition(TOKEN_ID, address(mockSafe), key, TICK_LOWER, TICK_UPPER, LIQUIDITY);
         poolManager.setSqrtPrice(poolId, SQRT_PRICE_NAV);
@@ -91,12 +94,21 @@ abstract contract Unit_UniswapV4ERC4626RebalanceModule_Shared_Test is Base {
         label();
     }
 
-    function _deployModule(address _operator, PoolKey memory _key) internal returns (IUniswapV4ERC4626RebalanceModule) {
+    function _deployModule(address _operator, PoolKey memory _key, uint256 _navToleranceBps)
+        internal
+        returns (IUniswapV4ERC4626RebalanceModule)
+    {
         return IUniswapV4ERC4626RebalanceModule(
             vm.deployCode(
                 Automation.UNISWAP_V4_ERC4626_REBALANCE_MODULE,
                 abi.encode(
-                    address(mockSafe), _operator, address(poolManager), address(positionManager), _key, MAX_AMOUNT0
+                    address(mockSafe),
+                    _operator,
+                    address(poolManager),
+                    address(positionManager),
+                    _key,
+                    MAX_AMOUNT0,
+                    _navToleranceBps
                 )
             )
         );

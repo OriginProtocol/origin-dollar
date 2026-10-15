@@ -31,9 +31,12 @@ interface IERC4626ConvertToShares {
  *         - mints can never deposit `currency1` and pull at most `maxAmount0`;
  *         - the reset swap sells at most `maxAmount0` of `currency0`;
  *         - neither the reset swap nor a new range ever sells `currency0`
- *           below the vault's NAV, read from `convertToShares` at call time
- *           and taking one `currency0` as worth one vault asset (OUSD = USDe).
- *           Both currencies must have 18 decimals.
+ *           more than `navToleranceBps` below the vault's NAV, read from
+ *           `convertToShares` at call time and taking one `currency0` as
+ *           worth one vault asset (OUSD = USDe). The tolerance lets the range
+ *           start on the tick nearest the NAV rather than the one above it;
+ *           the NAV recovers 1 bp in under a day. Both currencies must have
+ *           18 decimals.
  *
  *         The Safe must enable this module and, once, approve `currency0` to
  *         Permit2 and Permit2 to the PositionManager, which pays the mints.
@@ -61,6 +64,9 @@ contract UniswapV4ERC4626RebalanceModule is
     bytes32 public immutable poolId;
     /// @notice Cap on `currency0` per mint and per reset swap.
     uint128 public immutable maxAmount0;
+    /// @notice How far below the NAV (in bps of price) the module may sell
+    ///         `currency0`.
+    uint256 public immutable navToleranceBps;
 
     constructor(
         address _safeContract,
@@ -68,10 +74,12 @@ contract UniswapV4ERC4626RebalanceModule is
         address _poolManager,
         address _positionManager,
         PoolKey memory _poolKey,
-        uint128 _maxAmount0
+        uint128 _maxAmount0,
+        uint256 _navToleranceBps
     ) AbstractSafeModule(_safeContract) {
         require(_operator != address(0), "Invalid operator");
         require(_poolKey.hooks == address(0), "Hooked pool");
+        require(_navToleranceBps <= 10, "Tolerance too high");
         poolManager = IPoolManager(_poolManager);
         positionManager = IPositionManager(_positionManager);
         currency0 = _poolKey.currency0;
@@ -80,6 +88,7 @@ contract UniswapV4ERC4626RebalanceModule is
         tickSpacing = _poolKey.tickSpacing;
         poolId = keccak256(abi.encode(_poolKey));
         maxAmount0 = _maxAmount0;
+        navToleranceBps = _navToleranceBps;
         _grantRole(OPERATOR_ROLE, _operator);
     }
 
@@ -89,7 +98,8 @@ contract UniswapV4ERC4626RebalanceModule is
      * @param _tokenId           Safe-owned position in the module's pool; 0 if
      *                           there is none to burn.
      * @param _tickLower         Bottom of the new range. Must sit at or above
-     *                           the NAV, which the pool price check enforces.
+     *                           the NAV floor, which the pool price check
+     *                           enforces.
      * @param _tickUpper         Top of the new range.
      * @param _liquidity         Liquidity of the new position; 0 to only burn.
      * @param _resetAmount0      Max `currency0` the reset swap sells; 0 for no
@@ -124,13 +134,13 @@ contract UniswapV4ERC4626RebalanceModule is
             );
         }
 
-        uint256 navFloorX192 = navPriceX192();
+        uint256 floorX192 = navFloorX192();
 
         if (_resetAmount0 > 0) {
             require(_resetAmount0 <= maxAmount0, "Reset too large");
             require(
-                uint256(_sqrtPriceLimitX96)**2 >= navFloorX192,
-                "Price limit below NAV"
+                uint256(_sqrtPriceLimitX96)**2 >= floorX192,
+                "Price limit below NAV floor"
             );
             poolManager.unlock(
                 abi.encode(key, _resetAmount0, _sqrtPriceLimitX96)
@@ -139,10 +149,10 @@ contract UniswapV4ERC4626RebalanceModule is
 
         if (_liquidity > 0) {
             // amount1Max = 0 makes the mint `currency0`-only, so the range
-            // starts at or above the pool price, itself at or above the NAV.
+            // starts at or above the pool price, itself at or above the floor.
             require(
-                uint256(poolSqrtPriceX96())**2 >= navFloorX192,
-                "Pool price below NAV"
+                uint256(poolSqrtPriceX96())**2 >= floorX192,
+                "Pool price below NAV floor"
             );
             newTokenId = positionManager.nextTokenId();
             _modifyLiquidity(
@@ -227,6 +237,12 @@ contract UniswapV4ERC4626RebalanceModule is
         return
             (IERC4626ConvertToShares(currency1).convertToShares(1e18) << 192) /
             1e18;
+    }
+
+    /// @notice Lowest price the module may sell `currency0` at: the NAV less
+    ///         `navToleranceBps`, in X192.
+    function navFloorX192() public view returns (uint256) {
+        return (navPriceX192() * (10_000 - navToleranceBps)) / 10_000;
     }
 
     /// @notice Current pool price, from the pool's slot0.

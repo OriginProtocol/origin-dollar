@@ -104,6 +104,14 @@ contract Unit_Concrete_UniswapV4ERC4626RebalanceModule_Rebalance_Test is
         _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, 0, 0);
     }
 
+    /// @dev Within the tolerance: the reset may stop, and the range may start, just below the NAV.
+    function test_rebalance_priceBetweenFloorAndNav() public {
+        _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_FLOOR);
+        poolManager.setSqrtPrice(poolId, SQRT_PRICE_FLOOR);
+        vm.prank(operator);
+        module.rebalance(0, NEW_LOWER, NEW_UPPER, LIQUIDITY, 0, 0);
+    }
+
     function test_rebalance_safeCanCall() public {
         vm.prank(address(mockSafe));
         module.rebalance(TOKEN_ID, 0, 0, 0, 0, 0);
@@ -138,29 +146,29 @@ contract Unit_Concrete_UniswapV4ERC4626RebalanceModule_Rebalance_Test is
         _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, MAX_AMOUNT0 + 1, SQRT_PRICE_NAV);
     }
 
-    function test_rebalance_RevertWhen_priceLimitBelowNav() public {
-        vm.expectRevert("Price limit below NAV");
-        _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_NAV - 1);
+    function test_rebalance_RevertWhen_priceLimitBelowFloor() public {
+        vm.expectRevert("Price limit below NAV floor");
+        _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_FLOOR - 1);
     }
 
     /// @dev Once the NAV rises past the limit, the same limit is refused.
     function test_rebalance_RevertWhen_navRoseAboveLimit() public {
         token1.setSharesPerAsset(0.81e18);
-        vm.expectRevert("Price limit below NAV");
+        vm.expectRevert("Price limit below NAV floor");
         _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_NAV);
     }
 
-    function test_rebalance_RevertWhen_poolPriceBelowNav() public {
-        poolManager.setSqrtPrice(poolId, SQRT_PRICE_NAV - 1);
-        vm.expectRevert("Pool price below NAV");
+    function test_rebalance_RevertWhen_poolPriceBelowFloor() public {
+        poolManager.setSqrtPrice(poolId, SQRT_PRICE_FLOOR - 1);
+        vm.expectRevert("Pool price below NAV floor");
         _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, 0, 0);
     }
 
     /// @dev The reset leaves the price below the NAV only if the pool misbehaves; the mint still
     ///      checks the pool price.
-    function test_rebalance_RevertWhen_resetEndsBelowNav() public {
-        poolManager.setSwapResult(0, 0, SQRT_PRICE_NAV - 1);
-        vm.expectRevert("Pool price below NAV");
+    function test_rebalance_RevertWhen_resetEndsBelowFloor() public {
+        poolManager.setSwapResult(0, 0, SQRT_PRICE_FLOOR - 1);
+        vm.expectRevert("Pool price below NAV floor");
         _rebalance(NEW_LOWER, NEW_UPPER, LIQUIDITY, RESET_AMOUNT0, SQRT_PRICE_NAV);
     }
 

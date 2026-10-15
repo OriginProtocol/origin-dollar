@@ -49,6 +49,7 @@ abstract contract Fork_Mainnet_UniswapV4ERC4626RebalanceModule_Shared_Test is Ba
     /// @dev ~14k OUSD on a 5-tick range around tick -2257.
     uint128 internal constant LIQUIDITY = 50_000_000e18;
     uint128 internal constant MAX_AMOUNT0 = 100_000e18;
+    uint256 internal constant NAV_TOLERANCE_BPS = 1;
     uint128 internal constant RESET_AMOUNT0 = 1_000e18;
     uint256 internal constant SAFE_OUSD = 100_000e18;
     uint256 internal constant POOLS_SLOT = 6;
@@ -112,7 +113,15 @@ abstract contract Fork_Mainnet_UniswapV4ERC4626RebalanceModule_Shared_Test is Ba
         return IUniswapV4ERC4626RebalanceModule(
             vm.deployCode(
                 Automation.UNISWAP_V4_ERC4626_REBALANCE_MODULE,
-                abi.encode(_safe, operator, address(poolManager), address(positionManager), _key, MAX_AMOUNT0)
+                abi.encode(
+                    _safe,
+                    operator,
+                    address(poolManager),
+                    address(positionManager),
+                    _key,
+                    MAX_AMOUNT0,
+                    NAV_TOLERANCE_BPS
+                )
             )
         );
     }
@@ -180,7 +189,15 @@ abstract contract Fork_Mainnet_UniswapV4ERC4626RebalanceModule_Shared_Test is Ba
 
     /// @dev Smallest sqrtPriceX96 at or above the NAV.
     function _navSqrtPriceX96() internal view returns (uint160) {
-        uint256 x = module.navPriceX192();
+        return _ceilSqrt(module.navPriceX192());
+    }
+
+    /// @dev Smallest sqrtPriceX96 at or above the module's floor, the NAV less the tolerance.
+    function _floorSqrtPriceX96() internal view returns (uint160) {
+        return _ceilSqrt(module.navFloorX192());
+    }
+
+    function _ceilSqrt(uint256 x) internal pure returns (uint160) {
         uint256 r = _sqrt(x);
         if (r * r < x) r++;
         return uint160(r);

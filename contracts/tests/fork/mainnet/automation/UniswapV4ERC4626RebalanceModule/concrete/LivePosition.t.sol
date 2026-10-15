@@ -67,12 +67,30 @@ contract Fork_Concrete_Mainnet_UniswapV4ERC4626RebalanceModule_LivePosition_Test
         assertGe(susde.balanceOf(safe), susdeBefore);
     }
 
-    /// @dev One tick lower than the NAV allows, e.g. -2257 while the NAV is at -2256.6: the
-    ///      position would sell OUSD above the NAV price for sUSDe.
-    function test_live_RevertWhen_rangeBelowNav() public {
-        uint160 limit = _navSqrtPriceX96();
+    /// @dev The range Talos targets with the 1 bp tolerance: it starts on `navTick` (-2257 while
+    ///      the NAV sits at -2256.6), i.e. at most 1 bp above the NAV price for sUSDe. The reset
+    ///      stops at the floor, one tick below.
+    function test_live_rangeOnNavTick_accepted() public {
+        uint160 floor = _floorSqrtPriceX96();
+        vm.prank(operator);
+        module.rebalance(tokenId, 0, 0, 0, RESET_AMOUNT0, floor);
+        (, int24 tick) = _slot0();
+        assertEq(tick + 1, navTick);
+
+        vm.prank(operator);
+        uint256 newTokenId = module.rebalance(0, navTick, navTick + 5, LIVE_LIQUIDITY, 0, 0);
+
+        (int24 tickLower, int24 tickUpper) = _range(newTokenId);
+        assertEq(tickLower, navTick);
+        assertEq(tickUpper, navTick + 5);
+    }
+
+    /// @dev One tick further, past the 1 bp tolerance: the reset cannot go that low, so the range
+    ///      would hold sUSDe and the OUSD-only mint fails.
+    function test_live_RevertWhen_rangeBelowFloor() public {
+        uint160 floor = _floorSqrtPriceX96();
         vm.prank(operator);
         vm.expectRevert("Safe call failed");
-        module.rebalance(tokenId, navTick, navTick + 5, LIVE_LIQUIDITY, RESET_AMOUNT0, limit);
+        module.rebalance(tokenId, navTick - 1, navTick + 4, LIVE_LIQUIDITY, RESET_AMOUNT0, floor);
     }
 }

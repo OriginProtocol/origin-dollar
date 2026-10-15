@@ -17,8 +17,8 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 /// @notice Deploys the Safe module that lets Talos keep the OUSD/sUSDe Uniswap v4 position
 ///         one-sided and just below the sUSDe NAV: burn it to the Safe, push the price down to the
 ///         new range bottom and mint OUSD on the new range. Talos decides everything off-chain;
-///         the module only enforces guardrails, the main one being that it never sells OUSD below
-///         the sUSDe NAV.
+///         the module only enforces guardrails, the main one being that it never sells OUSD more
+///         than 1 bp below the sUSDe NAV.
 /// @dev No governance proposal: the module sits on the OUSD v4 liquidity Safe, which already owns
 ///      the position and the tokens. It touches no Vault or OToken.
 ///
@@ -30,6 +30,9 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 contract $009_UniswapV4ERC4626RebalanceModule is AbstractDeployScript("009_UniswapV4ERC4626RebalanceModule") {
     /// @dev Cap on OUSD per mint and per reset swap.
     uint128 internal constant MAX_AMOUNT0 = 100_000e18;
+    /// @dev The module may sell OUSD up to 1 bp below the sUSDe NAV, so the range can start on the
+    ///      tick nearest the NAV; the NAV recovers 1 bp in under a day.
+    uint256 internal constant NAV_TOLERANCE_BPS = 1;
 
     // ==================== Deployment Logic ==================== //
 
@@ -40,7 +43,8 @@ contract $009_UniswapV4ERC4626RebalanceModule is AbstractDeployScript("009_Unisw
             Mainnet.uniswapV4PoolManager,
             Mainnet.uniswapV4PositionManager,
             _poolKey(),
-            MAX_AMOUNT0
+            MAX_AMOUNT0,
+            NAV_TOLERANCE_BPS
         );
         _recordDeployment(
             "UNISWAP_V4_ERC4626_REBALANCE_MODULE", address(module), type(UniswapV4ERC4626RebalanceModule).name
@@ -56,6 +60,7 @@ contract $009_UniswapV4ERC4626RebalanceModule is AbstractDeployScript("009_Unisw
         require(address(module.safeContract()) == Mainnet.ousdV4LiquiditySafe, "Wrong Safe");
         require(module.poolId() == keccak256(abi.encode(_poolKey())), "Wrong pool");
         require(module.maxAmount0() == MAX_AMOUNT0, "Wrong cap");
+        require(module.navToleranceBps() == NAV_TOLERANCE_BPS, "Wrong NAV tolerance");
         require(module.hasRole(module.OPERATOR_ROLE(), CrossChain.talosRelayer), "Operator role not set");
 
         // The Safe and the position only exist from block 26181117; older fork pins stop here.
