@@ -57,6 +57,7 @@ library Mainnet {
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address internal constant TUSD = 0x0000000000085d4780B73119b644AE5ecd22b376;
     address internal constant USDe = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
+    address internal constant sUSDe = 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497;
     address internal constant USDS = 0xdC035D45d973E3EC169d2276DDab16f1e407384F;
 
     // AAVE
@@ -123,6 +124,8 @@ library Mainnet {
     /// @dev OUSD-only position on the hookless, fee-0 OUSD/USDe pool, ticks [0, 5].
     uint256 internal constant ousdUsdeV4PositionId = 457273;
     uint128 internal constant ousdUsdeV4PositionLiquidity = 80014000349982500743725934;
+    /// @dev OUSD-only position on the hookless, fee-0 OUSD/sUSDe pool, ticks [-2252, -2238].
+    uint256 internal constant ousdSusdeV4PositionId = 457274;
 
     // Chainlink feeds
     address internal constant chainlinkETH_USD = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
