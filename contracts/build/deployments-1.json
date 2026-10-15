@@ -127,6 +127,10 @@
         {
             "implementation": "0x91003127F18b3b36E0f4dBa56322C4B4A18aB698",
             "name": "UNISWAP_V4_REBALANCE_MODULE"
+        },
+        {
+            "implementation": "0x5438ADCD5f91593B7b00024f2dc26393559e30C8",
+            "name": "UNISWAP_V4_ERC4626_REBALANCE_MODULE"
         }
     ],
     "executions": [
@@ -164,6 +168,12 @@
             "name": "008_UniswapV4RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792049603,
+            "tsGovernance": 0
+        },
+        {
+            "name": "009_UniswapV4ERC4626RebalanceModule",
+            "proposalId": 1,
+            "tsDeployment": 1792073075,
             "tsGovernance": 0
         }
     ]
