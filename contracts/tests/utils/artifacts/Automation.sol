@@ -17,6 +17,8 @@ library Automation {
     string internal constant PAUSE_SAFE_MODULE = "contracts/automation/PauseSafeModule.sol:PauseSafeModule";
     string internal constant SET_XOGN_REWARD_RATE_MODULE =
         "contracts/automation/SetXOGNRewardRateModule.sol:SetXOGNRewardRateModule";
+    string internal constant UNISWAP_V4_ERC4626_REBALANCE_MODULE =
+        "contracts/automation/UniswapV4ERC4626RebalanceModule.sol:UniswapV4ERC4626RebalanceModule";
     string internal constant UNISWAP_V4_REBALANCE_MODULE =
         "contracts/automation/UniswapV4RebalanceModule.sol:UniswapV4RebalanceModule";
 }
