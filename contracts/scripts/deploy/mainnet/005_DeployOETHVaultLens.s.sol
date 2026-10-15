@@ -22,6 +22,9 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 ///         lastVerifiedBalanceTimestamp, 1 ETH initial deposit) and deploys the
 ///         OETH Vault Lens that reports the OETH/WETH NAV rate gated on that timestamp.
 contract $005_DeployOETHVaultLens is AbstractDeployScript("005_DeployOETHVaultLens") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     using GovHelper for GovProposal;
 
     uint64 internal constant BEACON_GENESIS_TIMESTAMP = 1_606_824_023;

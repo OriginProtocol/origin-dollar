@@ -15,6 +15,9 @@ import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrat
 ///      inbound message only when `transportSender == address(this)`, so that parity is load
 ///      bearing rather than cosmetic — `_fork` re-derives the address to prove it holds.
 contract $006_OETHbV3RemoteProxy is AbstractDeployScript("006_OETHbV3RemoteProxy") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     /// @notice MUST match `base/002_OETHbV3MasterProxy`.
     string internal constant SALT = "OETHb wOETH V3 Strategy 1";
 

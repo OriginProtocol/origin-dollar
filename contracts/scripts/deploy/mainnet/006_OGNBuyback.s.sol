@@ -43,6 +43,9 @@ interface IOToken {
 ///      settlement contract for at least 90 days. A non-zero `operationsBps` diverts that
 ///      share away from stakers and lowers the computed reward rate proportionally.
 contract $006_OGNBuyback is AbstractDeployScript("006_OGNBuyback") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     using GovHelper for GovProposal;
 
     string internal constant CONFIG_PATH = "scripts/config/ogn-buyback.json";
