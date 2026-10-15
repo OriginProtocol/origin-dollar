@@ -206,17 +206,21 @@ of `--token-ids` (deepest range first):
    about: it buys USDe for more than redeeming it returns.
 2. **Pull and re-add.** When the position holds at least `--min-token1` USDe,
    call `rebalance(tokenId, target, reset, sqrtPrice(tickLower))`: pull it to
-   the Safe, swap the price back to the range bottom, re-add the target
-   liquidity. Below the range, top an emptied position back up. Once the
+   the Safe, swap the price back to the range bottom, re-add `--target-ousd`
+   liquidity. Below the range, top a short position back up. Once the
    Safe would hold `--max-token1-in-safe` USDe, pull without re-adding. Every
    call is simulated first; if the re-add would revert (the capped reset
    cannot bring the price back, or the Safe is short of OUSD) the action
    sends a pull only and warns.
 
 - `--token-ids <ids>` (default `457273`): Safe positions to manage.
-- `--target-liquidity <L>` (default the live position's): liquidity to keep,
-  one value or one per position.
-- `--reset-amount <n>` (default `1000`): max OUSD the reset swap sells.
+- `--target-ousd <n>` (default `20000`): OUSD to keep in each position, one
+  value or one per position. Capped at what the Safe can fund once the
+  position is pulled (its OUSD plus the OUSD the position returns, less the
+  reset and a 0.5% margin), so an under-funded Safe re-adds what it has and
+  the position grows back to the target once the Safe is topped up. No top-up
+  within 1% of the target.
+- `--reset-amount <n>` (default `100`): max OUSD the reset swap sells.
 - `--max-token1-in-safe <n>` (default `1000000`): operational backstop, not
   pricing.
 - `--min-token1 <n>` (default `10`): smallest amount of USDe worth a pull.

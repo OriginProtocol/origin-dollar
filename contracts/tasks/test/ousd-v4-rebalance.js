@@ -2,8 +2,11 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 
 const {
+  fundableToken0,
+  liquidityForToken0,
   pendingToken1,
   planRebalance,
+  positionToken0,
   unpackTicks,
 } = require("../actions/ousdV4Rebalance");
 const { getSqrtPriceAtTick } = require("../lib/v4TickMath");
@@ -63,6 +66,15 @@ describe("Unit: ousdV4Rebalance", () => {
       expect(p.why).to.equal("Top up");
       expect(p.liquidityToAdd.eq(TARGET)).to.equal(true);
       expect(p.resetAmount0.isZero()).to.equal(true);
+    });
+
+    it("does not top up within 1% of the target", () => {
+      const p = plan({
+        priceInRange: false,
+        pendingToken1: bn(0),
+        liquidity: TARGET.mul(995).div(1000),
+      });
+      expect(p.why).to.equal("Balanced");
     });
 
     it("does nothing below the range at the target", () => {
@@ -128,6 +140,55 @@ describe("Unit: ousdV4Rebalance", () => {
 
     it("rejects ticks out of range", () => {
       expect(() => getSqrtPriceAtTick(887273)).to.throw("Invalid tick");
+    });
+  });
+
+  describe("--target-ousd", () => {
+    const e18 = bn(10).pow(18);
+    const lower = bn(getSqrtPriceAtTick(0).toString());
+    const upper = bn(getSqrtPriceAtTick(5).toString());
+
+    it("turns 20k OUSD on [0, 5] into the live position's liquidity", () => {
+      const l = liquidityForToken0({
+        amount0: bn(20000).mul(e18),
+        sqrtLowerX96: lower,
+        sqrtUpperX96: upper,
+      });
+      // The live position: 20k OUSD minted for 80014000349982500743725934.
+      expect(Number(l.sub(TARGET).abs().mul(1e6).div(TARGET))).to.be.lessThan(
+        1
+      );
+    });
+
+    it("counts the OUSD a position holds below, in and above its range", () => {
+      const at = (sqrtPriceX96) =>
+        Number(
+          positionToken0({
+            liquidity: TARGET,
+            sqrtPriceX96,
+            sqrtLowerX96: lower,
+            sqrtUpperX96: upper,
+          }).div(e18)
+        );
+      expect(at(lower.sub(1))).to.be.closeTo(20000, 1);
+      expect(at(lower.add(upper).div(2))).to.be.closeTo(10000, 20);
+      expect(at(upper)).to.equal(0);
+    });
+
+    it("caps the target at what the Safe can fund, less margin and reset", () => {
+      const fund = (safe, inPosition, reset = 0) =>
+        Number(
+          fundableToken0({
+            targetToken0: bn(20000).mul(e18),
+            safeToken0: bn(safe).mul(e18),
+            positionToken0: bn(inPosition).mul(e18),
+            resetAmount0: bn(reset).mul(e18),
+          }).div(e18)
+        );
+      expect(fund(7, 14407)).to.equal(14341); // (7 + 14407) * 99.5%
+      expect(fund(7, 14407, 100)).to.equal(14241);
+      expect(fund(30000, 14407)).to.equal(20000);
+      expect(fund(0, 0, 100)).to.equal(0);
     });
   });
 });
