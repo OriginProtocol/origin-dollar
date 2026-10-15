@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// Deployment framework
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+
+// Contracts
+import {UniswapV4RebalanceModule} from "contracts/automation/UniswapV4RebalanceModule.sol";
+import {IPermit2} from "contracts/interfaces/uniswap/IPermit2.sol";
+import {PoolKey} from "contracts/interfaces/uniswap/v4/IPoolManager.sol";
+import {IPositionManager} from "contracts/interfaces/uniswap/v4/IPositionManager.sol";
+
+// Addresses
+import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
+
+/// @title 008_UniswapV4RebalanceModule
+/// @notice Deploys the Safe module that lets Talos keep the OUSD/USDe Uniswap v4 positions
+///         one-sided: pull the USDe they bought to the Safe and put the OUSD back. Talos decides
+///         everything off-chain; the module only enforces guardrails.
+/// @dev No governance proposal: the module sits on the OUSD v4 liquidity Safe, which already owns
+///      the positions and the tokens. It touches no Vault or OToken.
+///
+///      REQUIRED POST-DEPLOY STEPS, as Safe transactions (all simulated in `_fork()`):
+///      1. `enableModule(<module>)`, then check `isModuleEnabled(<module>)` reads true.
+///      2. `OUSD.approve(Permit2, type(uint256).max)` and
+///         `Permit2.approve(OUSD, PositionManager, type(uint160).max, type(uint48).max)`, so the
+///         PositionManager can pay the adds the Safe initiates through the module.
+contract $008_UniswapV4RebalanceModule is AbstractDeployScript("008_UniswapV4RebalanceModule") {
+    /// @dev Par (1 USDe per OUSD): the reset swap never sells OUSD below it.
+    uint160 internal constant MIN_SQRT_PRICE_X96 = 79228162514264337593543950336;
+    /// @dev Cap on OUSD per add and per reset swap.
+    uint128 internal constant MAX_AMOUNT0 = 100_000e18;
+
+    // ==================== Deployment Logic ==================== //
+
+    function _execute() internal override {
+        UniswapV4RebalanceModule module = new UniswapV4RebalanceModule(
+            Mainnet.ousdV4LiquiditySafe,
+            CrossChain.talosRelayer,
+            Mainnet.uniswapV4PoolManager,
+            Mainnet.uniswapV4PositionManager,
+            _poolKey(),
+            MIN_SQRT_PRICE_X96,
+            MAX_AMOUNT0
+        );
+        _recordDeployment("UNISWAP_V4_REBALANCE_MODULE", address(module), type(UniswapV4RebalanceModule).name);
+    }
+
+    // ==================== Fork Verification ==================== //
+
+    function _fork() internal override {
+        UniswapV4RebalanceModule module =
+            UniswapV4RebalanceModule(payable(resolver.resolve("UNISWAP_V4_REBALANCE_MODULE")));
+
+        require(address(module.safeContract()) == Mainnet.ousdV4LiquiditySafe, "Wrong Safe");
+        require(module.poolId() == keccak256(abi.encode(_poolKey())), "Wrong pool");
+        require(module.minSqrtPriceX96() == MIN_SQRT_PRICE_X96, "Wrong floor");
+        require(module.hasRole(module.OPERATOR_ROLE(), CrossChain.talosRelayer), "Operator role not set");
+
+        // The Safe and the position only exist from block 26181117; older fork pins stop here.
+        if (
+            Mainnet.ousdV4LiquiditySafe.code.length == 0
+                || IPositionManager(Mainnet.uniswapV4PositionManager).nextTokenId() <= Mainnet.ousdUsdeV4PositionId
+        ) {
+            return;
+        }
+
+        // Safe transactions, not part of any proposal, simulated so the smoke tests exercise the
+        // module. Guarded because `_fork()` is re-run by every later smoke suite and Safe reverts
+        // on a double enable.
+        ISafeModuleAdmin safe = ISafeModuleAdmin(Mainnet.ousdV4LiquiditySafe);
+        if (!safe.isModuleEnabled(address(module))) {
+            vm.startPrank(Mainnet.ousdV4LiquiditySafe);
+            safe.enableModule(address(module));
+            IERC20Approve(Mainnet.OUSDProxy).approve(Mainnet.permit2, type(uint256).max);
+            IPermit2(Mainnet.permit2)
+                .approve(Mainnet.OUSDProxy, Mainnet.uniswapV4PositionManager, type(uint160).max, type(uint48).max);
+            vm.stopPrank();
+        }
+        require(safe.isModuleEnabled(address(module)), "Module not enabled on the Safe");
+    }
+
+    function _poolKey() internal pure returns (PoolKey memory) {
+        return
+            PoolKey({currency0: Mainnet.OUSDProxy, currency1: Mainnet.USDe, fee: 0, tickSpacing: 1, hooks: address(0)});
+    }
+}
+
+// ==================== External Interfaces ==================== //
+
+/// @notice Module management surface on a Gnosis Safe. Not part of ISafe, which only carries the
+///         `execTransactionFromModule` call the modules themselves make.
+interface ISafeModuleAdmin {
+    function enableModule(address module) external;
+    function isModuleEnabled(address module) external view returns (bool);
+}
+
+interface IERC20Approve {
+    function approve(address spender, uint256 amount) external returns (bool);
+}

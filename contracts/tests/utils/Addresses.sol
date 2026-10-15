@@ -56,6 +56,7 @@ library Mainnet {
     address internal constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address internal constant TUSD = 0x0000000000085d4780B73119b644AE5ecd22b376;
+    address internal constant USDe = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
     address internal constant USDS = 0xdC035D45d973E3EC169d2276DDab16f1e407384F;
 
     // AAVE
@@ -107,6 +108,21 @@ library Mainnet {
     address internal constant sushiswapRouter = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
     address internal constant uniswapV3Quoter = 0x61fFE014bA17989E743c5F6cB21bF9697530B21e;
     address internal constant uniswapUniversalRouter = 0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B;
+    address internal constant uniswapV4PoolManager = 0x000000000004444c5dc75cB358380D2e3dE08A90;
+    address internal constant uniswapV4PositionManager = 0xbD216513d74C8cf14cf4747E6AaA6420FF64ee9e;
+    address internal constant uniswapV4UniversalRouter = 0x66a9893cC07D91D95644AEDD05D03f95e1dBA8Af;
+    address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    // Safe (canonical v1.4.1 deployments)
+    address internal constant safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+    address internal constant safeSingleton = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+
+    // OUSD Uniswap v4 liquidity
+    /// @dev Safe (1-of-8) that owns the OUSD/USDe and OUSD/sUSDe v4 positions.
+    address internal constant ousdV4LiquiditySafe = 0x13eb66d8311599c57Dc02ac53b748AEC5AdaEB26;
+    /// @dev OUSD-only position on the hookless, fee-0 OUSD/USDe pool, ticks [0, 5].
+    uint256 internal constant ousdUsdeV4PositionId = 457273;
+    uint128 internal constant ousdUsdeV4PositionLiquidity = 80014000349982500743725934;
 
     // Chainlink feeds
     address internal constant chainlinkETH_USD = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
