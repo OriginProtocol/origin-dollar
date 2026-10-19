@@ -31,6 +31,9 @@ import {CrossChain} from "tests/utils/Addresses.sol";
 ///      adds each one afterwards with `allowTarget(<arm>)`. Allow-listing them now would look
 ///      configured but revert on use.
 contract $006_PauseSafeModule is AbstractDeployScript("006_PauseSafeModule") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     // ==================== Deployment Logic ==================== //
 
     function _execute() internal override {

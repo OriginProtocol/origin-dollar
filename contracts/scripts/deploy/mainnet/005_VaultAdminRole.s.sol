@@ -26,6 +26,9 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///      `adminAddr` is set in the same proposal as the upgrade so the vaults are never left with a
 ///      zero Admin, which would leave the Governor as the only account able to lift a pause.
 contract $005_VaultAdminRole is AbstractDeployScript("005_VaultAdminRole") {
+    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
+    bool public constant override skip = true;
+
     using GovHelper for GovProposal;
 
     /// @notice The Admin (5/8) multisig. Carried in the address books as `Guardian`, a name that
