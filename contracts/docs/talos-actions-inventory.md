@@ -6,9 +6,9 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdSusdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | hyper | crossChainBalanceUpdateHyperevm |
-| base | claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
+| base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |

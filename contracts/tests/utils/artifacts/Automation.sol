@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 library Automation {
     string internal constant AUTO_WITHDRAWAL_MODULE =
         "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule";
+    string internal constant BASE_FEE_BRIDGE_MODULE =
+        "contracts/automation/BaseFeeBridgeModule.sol:BaseFeeBridgeModule";
     string internal constant CLAIM_BRIBES_SAFE_MODULE =
         "contracts/automation/ClaimBribesSafeModule.sol:ClaimBribesSafeModule";
     string internal constant CLAIM_STRATEGY_REWARDS_SAFE_MODULE =

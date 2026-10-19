@@ -75,6 +75,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for OETH: CRV/SSV for WETH to the OETH Vault (`--harvester oeth`)                      |
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for the OGN buyback: OETH/WETH/OUSD/USDe for OGN to OGNRewardsSource (`--harvester ogn`) |
 | `setXOGNRewardRate`         | mainnet     | `20 1 * * 2`     | Set the xOGN reward rate from measured OGN buybacks, via SetXOGNRewardRateModule                 |
+| `bridgeBaseFees`            | base        | `45 10 * * *`    | Swap the Base fee Safe's OETHb fees to WETH on Curve and bridge them to the Ethereum FeeSplitter |
 
 ## System
 
@@ -124,6 +125,32 @@ hashOrder(order))`, with no EIP-191 prefix, through `getDigestSigner` (KMS
 - One failing token is logged and does not fail the run; all of them do.
 - The harvester checks no price beyond `buyAmount > 0`: the slippage on the
   quote is the only price protection.
+
+### Base fee bridge parameters
+
+Base OETHb fees are minted to the fee Safe (`multichainBuybackOperator`, the
+Base vault's `trusteeAddress`). `bridgeBaseFees` calls `swapAndBridge` on
+`BaseFeeBridgeModule`. That sells the Safe's whole OETHb balance for WETH on the
+Curve AMO pool and sends the WETH over CCIP to the Ethereum FeeSplitter. From
+there `feeSplitterDistribute` and `cowHarvest --harvester ogn` treat it like any
+other fee.
+
+- The CCIP fee is roughly flat per message (~0.019 ETH when this was written),
+  so the action batches. It skips until `bridgeFee` is at most `--max-fee-bps`
+  (default 100) of the WETH, which today means about 2 OETHb.
+- `minWethOut` is the Curve `get_dy` quote less `--slippage-bps` (default 10).
+  The module also enforces a par floor (`maxSlippageBps`, 50 at deploy). The
+  run fails, rather than skips, when the quote is below that floor.
+- The Safe pays the CCIP fee in native ETH. The run fails if the Safe cannot
+  cover it, and warns when it covers fewer than three fees.
+- The run is simulated before broadcast. `--dryrun` stops after the simulation.
+- Scheduled at 10:45, after the 09:25 Base rebase mints fees and ahead of the
+  12:10 mainnet `feeSplitterDistribute`, which leaves time for CCIP delivery.
+- Needs, before enabling: the module deployed (`base/007`) and enabled on the
+  fee Safe, and `FeeSplitter.addAsset(WETH, …)` on Ethereum. Until that last
+  step, bridged WETH is not distributed.
+- OGN bought with this WETH reaches OGNRewardsSource through CoW settlement, so
+  `setXOGNRewardRate` counts it as buyback inflow, not as a donation.
 
 ### Vault strategy proposal parameters
 
