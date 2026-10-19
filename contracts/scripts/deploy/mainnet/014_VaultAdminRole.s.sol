@@ -15,7 +15,7 @@ import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/Initializ
 // Addresses
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 005_VaultAdminRole
+/// @title 014_VaultAdminRole
 /// @notice Gives the OUSD and OETH vaults an Admin role that can unpause, alongside the Governor.
 /// @dev Before this upgrade the Strategist could both pause and unpause, so a single compromised
 ///      key could trip a pause and immediately lift it. The new `adminAddr` slot splits the two:
@@ -25,7 +25,7 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///
 ///      `adminAddr` is set in the same proposal as the upgrade so the vaults are never left with a
 ///      zero Admin, which would leave the Governor as the only account able to lift a pause.
-contract $005_VaultAdminRole is AbstractDeployScript("005_VaultAdminRole") {
+contract $014_VaultAdminRole is AbstractDeployScript("014_VaultAdminRole") {
     using GovHelper for GovProposal;
 
     /// @notice The Admin (5/8) multisig. Carried in the address books as `Guardian`, a name that
