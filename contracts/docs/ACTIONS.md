@@ -249,9 +249,9 @@ Replaces `ousdV4Rebalance` on the OUSD/USDe pool once
 `UniswapV4LiquidityModule` (deploy 010) is enabled on the OUSD v4 liquidity
 Safe. The module holds no pricing logic (no floor, no NAV, no tick bounds):
 it only burns Safe positions, resets the price and mints Safe positions on
-pools the Safe allowed, within per-call and per-day caps the Safe sets
-(`maxPerCall`, `maxPerDay` on the net outflow of each token, `setPaused`). All
-pricing is here, so a pricing change never needs a redeploy.
+hookless pools, within a daily cap the Safe sets on its net outflow of each
+token (`maxPerDay`). All pricing is here, so a pricing change never needs a
+redeploy.
 
 Every run (every 2 minutes):
 
@@ -269,8 +269,8 @@ Every run (every 2 minutes):
    market quote it keeps the current tick and only pulls fills.
 4. The call burns the position, resets the price down to the new range bottom
    only if the pool sits above it, and mints `--target-ousd` OUSD only
-   (`amount1Max = 0`), capped at what the Safe can fund, the module's
-   `maxPerCall` and its daily room.
+   (`amount1Max = 0`), capped at what the Safe can fund and the module's
+   daily room (`maxPerDay` less `spentOn` today).
 
 - `--cap-bps <n>` (default `4`), `--offset-bps <n>` (default `1`).
 - `--quote-size <n>`, `--exit-size <n>` (default `10000` each).

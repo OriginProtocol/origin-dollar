@@ -33,12 +33,10 @@ const MODULE_ABI = [
   "function OPERATOR_ROLE() view returns (bytes32)",
   "function hasRole(bytes32 role, address account) view returns (bool)",
   "function safeContract() view returns (address)",
+  "function poolManager() view returns (address)",
   "function positionManager() view returns (address)",
-  "function paused() view returns (bool)",
-  "function isPoolAllowed(bytes32 poolId) view returns (bool)",
-  "function maxPerCall(address token) view returns (uint256)",
-  "function remainingToday(address token) view returns (uint256)",
-  "function poolSqrtPriceX96(bytes32 poolId) view returns (uint160)",
+  "function maxPerDay(address token) view returns (uint256)",
+  "function spentOn(uint256 day, address token) view returns (uint256)",
   `function rebalance(${REBALANCE_PARAMS} params) returns (uint256 newTokenId)`,
 ];
 const POSITION_MANAGER_ABI = [
@@ -50,6 +48,11 @@ const ERC20_ABI = [
   "function balanceOf(address account) view returns (uint256)",
 ];
 const POOL_ID_ABI = ["function poolId() view returns (bytes32)"];
+const POOL_MANAGER_ABI = [
+  "function extsload(bytes32 slot) view returns (bytes32)",
+];
+// Storage slot of `PoolManager._pools`, as used by v4-core `StateLibrary`.
+const POOLS_SLOT = 6;
 const CURVE_POOL_ABI = [
   "function coins(uint256 i) view returns (address)",
   "function get_dy(int128 i, int128 j, uint256 dx) view returns (uint256)",
@@ -180,23 +183,21 @@ export function planRebalance({
 
 /**
  * OUSD to put in the new position: `target`, capped at what the Safe holds
- * once the position is burned (less the reset and a 0.5% margin), at the
- * module's per-call cap, and at what keeps the call's net OUSD outflow
- * (mint + reset - burned OUSD) within the module's daily room.
+ * once the position is burned (less the reset and a 0.5% margin), and at what
+ * keeps the call's net OUSD outflow (mint + reset - burned OUSD) within the
+ * module's daily room.
  */
 export function fundableToken0({
   target,
   safeToken0,
   positionToken0: burned0,
   resetAmount0,
-  maxPerCall,
   remainingToday,
 }: {
   target: bigint;
   safeToken0: bigint;
   positionToken0: bigint;
   resetAmount0: bigint;
-  maxPerCall: bigint;
   remainingToday: bigint;
 }): bigint {
   const held =
@@ -206,7 +207,7 @@ export function fundableToken0({
     ((remainingToday + burned0) * (10_000n - FUND_MARGIN_BPS)) / 10_000n -
     resetAmount0;
   let amount = target;
-  for (const cap of [held, daily, maxPerCall]) {
+  for (const cap of [held, daily]) {
     if (cap < amount) amount = cap;
   }
   return amount > 0n ? amount : 0n;
@@ -459,19 +460,7 @@ action({
         `Signer ${signerAddress} is not an operator of ${MODULE_DEPLOYMENT} at ${module.address}`
       );
     }
-    const [safe, paused, allowed] = await Promise.all([
-      module.safeContract() as Promise<string>,
-      module.paused() as Promise<boolean>,
-      module.isPoolAllowed(poolId) as Promise<boolean>,
-    ]);
-    if (paused || !allowed) {
-      log.warn(
-        `${MODULE_DEPLOYMENT} is ${
-          paused ? "paused" : "not allowed on the OUSD/USDe pool"
-        }; skipping`
-      );
-      return;
-    }
+    const safe: string = await module.safeContract();
     // A dry run from a non-operator simulates as the Safe, which also holds
     // the operator role.
     const from = isOperator ? signerAddress : safe;
@@ -491,9 +480,20 @@ action({
       lookback: args.lookbackBlocks,
       log,
     });
-    const sqrtPriceX96 = BigInt(
-      (await module.poolSqrtPriceX96(poolId)).toString()
+    const poolManager = new ethers.Contract(
+      await module.poolManager(),
+      POOL_MANAGER_ABI,
+      provider
     );
+    const slot0 = await poolManager.extsload(
+      ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "uint256"],
+          [poolId, POOLS_SLOT]
+        )
+      )
+    );
+    const sqrtPriceX96 = BigInt(slot0) & ((1n << 160n) - 1n);
     let tickLower = 0;
     let tickUpper = 0;
     let liquidity = 0n;
@@ -616,19 +616,19 @@ action({
     const newUpper = targetLower + args.width;
     const sqrtLimitX96 = getSqrtPriceAtTick(newLower);
     const ousd = new ethers.Contract(key.currency0, ERC20_ABI, provider);
-    const [safeToken0, maxPerCall, remainingToday] = await Promise.all([
+    const day = Math.floor(Date.now() / 1000 / 86400);
+    const [safeToken0, maxPerDay, spent] = await Promise.all([
       ousd.balanceOf(safe),
-      module.maxPerCall(key.currency0),
-      module.remainingToday(key.currency0),
+      module.maxPerDay(key.currency0),
+      module.spentOn(day, key.currency0),
     ]);
-    const callCap = BigInt(maxPerCall.toString());
-    const resetCap = BigInt(
-      parseUnits(String(args.resetAmount), DECIMALS).toString()
-    );
+    const cap = BigInt(maxPerDay.toString());
+    const used = BigInt(spent.toString());
+    const remainingToday = cap > used ? cap - used : 0n;
     const reset = resetAmount({
       sqrtPriceX96,
       sqrtLimitX96,
-      cap: resetCap < callCap ? resetCap : callCap,
+      cap: BigInt(parseUnits(String(args.resetAmount), DECIMALS).toString()),
     });
     const target0 = BigInt(
       parseUnits(String(args.targetOusd), DECIMALS).toString()
@@ -638,8 +638,7 @@ action({
       safeToken0: BigInt(safeToken0.toString()),
       positionToken0: token0,
       resetAmount0: reset,
-      maxPerCall: callCap,
-      remainingToday: BigInt(remainingToday.toString()),
+      remainingToday,
     });
     const newLiquidity = liquidityForToken0(
       amount0,
@@ -656,10 +655,7 @@ action({
         } (Safe ${formatUnits(
           BigInt(safeToken0.toString()),
           DECIMALS
-        )}, module room today ${formatUnits(
-          BigInt(remainingToday.toString()),
-          DECIMALS
-        )})`
+        )}, module room today ${formatUnits(remainingToday, DECIMALS)})`
       );
     }
 
@@ -680,9 +676,6 @@ action({
       ),
       sqrtPriceLimitX96: BigNumber.from(sqrtLimitX96.toString()),
     };
-    if (BigInt(params.amount0Max.toString()) > callCap) {
-      params.amount0Max = BigNumber.from(callCap.toString());
-    }
     try {
       await module.callStatic.rebalance(params, { from });
     } catch (err) {

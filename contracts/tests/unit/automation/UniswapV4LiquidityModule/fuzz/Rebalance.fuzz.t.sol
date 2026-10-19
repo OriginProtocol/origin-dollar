@@ -16,11 +16,11 @@ contract Unit_Fuzz_UniswapV4LiquidityModule_Rebalance_Test is Unit_UniswapV4Liqu
     function testFuzz_rebalance_dailyCapOnNetOutflow(uint256 burned0, uint256 reset0, uint256 minted0) public {
         burned0 = bound(burned0, 0, 100_000e18);
         reset0 = bound(reset0, 0, RESET_AMOUNT);
-        minted0 = bound(minted0, 0, MAX_PER_CALL);
+        minted0 = bound(minted0, 0, AMOUNT0_MAX);
         positionManager.setAmounts(burned0, 0, minted0, 0);
         poolManager.setSwapResult(-int128(int256(reset0)), int128(int256(reset0)), SQRT_PRICE_PAR);
 
-        IUniswapV4LiquidityModule.RebalanceParams memory p = _params(4, 5, LIQUIDITY, MAX_PER_CALL, RESET_AMOUNT);
+        IUniswapV4LiquidityModule.RebalanceParams memory p = _params(4, 5, LIQUIDITY, AMOUNT0_MAX, RESET_AMOUNT);
         uint256 outflow = reset0 + minted0;
         uint256 expectedSpent = outflow > burned0 ? outflow - burned0 : 0;
 
@@ -30,7 +30,7 @@ contract Unit_Fuzz_UniswapV4LiquidityModule_Rebalance_Test is Unit_UniswapV4Liqu
             return;
         }
         _rebalance(p);
-        assertEq(module.spentToday(address(token0)), expectedSpent);
+        assertEq(_spentToday(address(token0)), expectedSpent);
         assertEq(token0.balanceOf(address(module)), 0);
         assertEq(token1.balanceOf(address(module)), 0);
         assertEq(token0.balanceOf(address(mockSafe)), SAFE_TOKEN0 + burned0 - outflow);

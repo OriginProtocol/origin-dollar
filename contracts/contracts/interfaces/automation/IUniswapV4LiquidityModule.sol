@@ -7,7 +7,7 @@ import { PoolKey } from "contracts/interfaces/uniswap/v4/IPoolManager.sol";
 interface IUniswapV4LiquidityModule is IAbstractSafeModule {
     /// @notice One `rebalance` call. Every field is the operator's decision.
     struct RebalanceParams {
-        /// @dev Pool to act on; must be allowed by the Safe.
+        /// @dev Hookless pool to act on.
         PoolKey key;
         /// @dev Safe-owned position in that pool to burn first; 0 for none.
         uint256 tokenId;
@@ -37,21 +37,11 @@ interface IUniswapV4LiquidityModule is IAbstractSafeModule {
         bool resetZeroForOne,
         uint128 resetAmountIn
     );
-    event PoolAllowed(bytes32 indexed poolId, PoolKey key);
-    event PoolRevoked(bytes32 indexed poolId);
-    event MaxPerCallSet(address indexed token, uint256 amount);
     event MaxPerDaySet(address indexed token, uint256 amount);
-    event PausedSet(bool paused);
 
     function poolManager() external view returns (address);
 
     function positionManager() external view returns (address);
-
-    function paused() external view returns (bool);
-
-    function isPoolAllowed(bytes32 poolId) external view returns (bool);
-
-    function maxPerCall(address token) external view returns (uint256);
 
     function maxPerDay(address token) external view returns (uint256);
 
@@ -59,12 +49,6 @@ interface IUniswapV4LiquidityModule is IAbstractSafeModule {
         external
         view
         returns (uint256);
-
-    function spentToday(address token) external view returns (uint256);
-
-    function remainingToday(address token) external view returns (uint256);
-
-    function poolSqrtPriceX96(bytes32 poolId) external view returns (uint160);
 
     function rebalance(RebalanceParams calldata params)
         external
@@ -74,13 +58,5 @@ interface IUniswapV4LiquidityModule is IAbstractSafeModule {
         external
         returns (bytes memory);
 
-    function allowPool(PoolKey calldata key) external;
-
-    function revokePool(bytes32 poolId) external;
-
-    function setMaxPerCall(address token, uint256 amount) external;
-
     function setMaxPerDay(address token, uint256 amount) external;
-
-    function setPaused(bool paused) external;
 }

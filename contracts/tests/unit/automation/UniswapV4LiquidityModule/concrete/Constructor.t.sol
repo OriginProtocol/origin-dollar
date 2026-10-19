@@ -21,13 +21,10 @@ contract Unit_Concrete_UniswapV4LiquidityModule_Constructor_Test is Unit_Uniswap
         assertTrue(module.hasRole(module.OPERATOR_ROLE(), operator));
         assertTrue(module.hasRole(module.OPERATOR_ROLE(), address(mockSafe)));
         assertTrue(module.hasRole(module.DEFAULT_ADMIN_ROLE(), address(mockSafe)));
-        assertFalse(module.paused());
     }
 
-    function test_constructor_startsWithNoPoolAndNoCaps() public {
+    function test_constructor_startsWithNoCaps() public {
         module = _deployModule(operator);
-        assertFalse(module.isPoolAllowed(poolId));
-        assertEq(module.maxPerCall(address(token0)), 0);
         assertEq(module.maxPerDay(address(token0)), 0);
     }
 
@@ -40,22 +37,6 @@ contract Unit_Concrete_UniswapV4LiquidityModule_Constructor_Test is Unit_Uniswap
         vm.deployCode(
             Automation.UNISWAP_V4_LIQUIDITY_MODULE,
             abi.encode(address(mockSafe), address(0), address(poolManager), address(positionManager))
-        );
-    }
-
-    function test_constructor_RevertWhen_poolManagerIsZero() public {
-        vm.expectRevert("Invalid pool manager");
-        vm.deployCode(
-            Automation.UNISWAP_V4_LIQUIDITY_MODULE,
-            abi.encode(address(mockSafe), operator, address(0), address(positionManager))
-        );
-    }
-
-    function test_constructor_RevertWhen_positionManagerIsZero() public {
-        vm.expectRevert("Invalid position manager");
-        vm.deployCode(
-            Automation.UNISWAP_V4_LIQUIDITY_MODULE,
-            abi.encode(address(mockSafe), operator, address(poolManager), address(0))
         );
     }
 }

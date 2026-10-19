@@ -30,7 +30,8 @@ abstract contract Unit_UniswapV4LiquidityModule_Shared_Test is Base {
     uint160 internal constant SQRT_PRICE_PAR = 79228162514264337593543950336;
 
     uint128 internal constant LIQUIDITY = 80_000_000e18;
-    uint128 internal constant MAX_PER_CALL = 100_000e18;
+    /// @dev amount0Max the tests pass to mints.
+    uint128 internal constant AMOUNT0_MAX = 100_000e18;
     uint128 internal constant MAX_PER_DAY = 200_000e18;
     uint128 internal constant RESET_AMOUNT = 1_000e18;
     uint256 internal constant SAFE_TOKEN0 = 300_000e18;
@@ -71,12 +72,9 @@ abstract contract Unit_UniswapV4LiquidityModule_Shared_Test is Base {
         poolId = keccak256(abi.encode(key));
         module = _deployModule(operator);
 
-        // The Safe's configuration: allow the pool, cap token0, leave token1 at 0.
-        vm.startPrank(address(mockSafe));
-        module.allowPool(key);
-        module.setMaxPerCall(address(token0), MAX_PER_CALL);
+        // The Safe's configuration: a daily cap on token0, none on token1 (so 0).
+        vm.prank(address(mockSafe));
         module.setMaxPerDay(address(token0), MAX_PER_DAY);
-        vm.stopPrank();
 
         positionManager.setPosition(TOKEN_ID, address(mockSafe), key, TICK_LOWER, TICK_UPPER, LIQUIDITY);
         poolManager.setSqrtPrice(poolId, SQRT_PRICE_PAR);
@@ -129,6 +127,10 @@ abstract contract Unit_UniswapV4LiquidityModule_Shared_Test is Base {
         p.resetZeroForOne = true;
         p.resetAmountIn = resetAmountIn;
         p.sqrtPriceLimitX96 = SQRT_PRICE_PAR;
+    }
+
+    function _spentToday(address token) internal view returns (uint256) {
+        return module.spentOn(block.timestamp / 1 days, token);
     }
 
     function _rebalance(IUniswapV4LiquidityModule.RebalanceParams memory p) internal returns (uint256) {

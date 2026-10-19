@@ -7,7 +7,6 @@ import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.
 // Contracts
 import {UniswapV4LiquidityModule} from "contracts/automation/UniswapV4LiquidityModule.sol";
 import {IPermit2} from "contracts/interfaces/uniswap/IPermit2.sol";
-import {PoolKey} from "contracts/interfaces/uniswap/v4/IPoolManager.sol";
 
 // Addresses
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
@@ -23,14 +22,12 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///
 ///      REQUIRED POST-DEPLOY STEPS, as Safe transactions (all simulated in `_fork()`):
 ///      1. `enableModule(<module>)`, then check `isModuleEnabled(<module>)` reads true.
-///      2. `allowPool(<OUSD/USDe key>)`, `setMaxPerCall(OUSD, 100k)`, `setMaxPerDay(OUSD, 200k)`.
+///      2. `setMaxPerDay(OUSD, 200k)`.
 ///      3. Only if not already done for 008/009: `OUSD.approve(Permit2, max)` and
 ///         `Permit2.approve(OUSD, PositionManager, max, max)`.
 ///      Once Talos runs `ousdUsdeV4Rebalance`: disable the `ousd_v4_rebalance` schedule, then
 ///      `disableModule(<008>)`.
 contract $010_UniswapV4LiquidityModule is AbstractDeployScript("010_UniswapV4LiquidityModule") {
-    /// @dev OUSD one mint or reset may take from the Safe.
-    uint256 internal constant MAX_PER_CALL_OUSD = 100_000e18;
     /// @dev Net OUSD outflow from the Safe through the module per UTC day; bounds the loss if the
     ///      operator key is compromised.
     uint256 internal constant MAX_PER_DAY_OUSD = 200_000e18;
@@ -54,8 +51,8 @@ contract $010_UniswapV4LiquidityModule is AbstractDeployScript("010_UniswapV4Liq
             UniswapV4LiquidityModule(payable(resolver.resolve("UNISWAP_V4_LIQUIDITY_MODULE")));
 
         require(address(module.safeContract()) == Mainnet.ousdV4LiquiditySafe, "Wrong Safe");
-        require(module.poolManager() == Mainnet.uniswapV4PoolManager, "Wrong pool manager");
-        require(module.positionManager() == Mainnet.uniswapV4PositionManager, "Wrong position manager");
+        require(address(module.poolManager()) == Mainnet.uniswapV4PoolManager, "Wrong pool manager");
+        require(address(module.positionManager()) == Mainnet.uniswapV4PositionManager, "Wrong position manager");
         require(module.hasRole(module.OPERATOR_ROLE(), CrossChain.talosRelayer), "Operator role not set");
 
         // The Safe only exists from block 26181117; older fork pins stop here.
@@ -68,8 +65,6 @@ contract $010_UniswapV4LiquidityModule is AbstractDeployScript("010_UniswapV4Liq
         if (!safe.isModuleEnabled(address(module))) {
             vm.startPrank(Mainnet.ousdV4LiquiditySafe);
             safe.enableModule(address(module));
-            module.allowPool(_poolKey());
-            module.setMaxPerCall(Mainnet.OUSDProxy, MAX_PER_CALL_OUSD);
             module.setMaxPerDay(Mainnet.OUSDProxy, MAX_PER_DAY_OUSD);
             IERC20Approve(Mainnet.OUSDProxy).approve(Mainnet.permit2, type(uint256).max);
             IPermit2(Mainnet.permit2)
@@ -77,12 +72,7 @@ contract $010_UniswapV4LiquidityModule is AbstractDeployScript("010_UniswapV4Liq
             vm.stopPrank();
         }
         require(safe.isModuleEnabled(address(module)), "Module not enabled on the Safe");
-        require(module.isPoolAllowed(keccak256(abi.encode(_poolKey()))), "OUSD/USDe pool not allowed");
-    }
-
-    function _poolKey() internal pure returns (PoolKey memory) {
-        return
-            PoolKey({currency0: Mainnet.OUSDProxy, currency1: Mainnet.USDe, fee: 0, tickSpacing: 1, hooks: address(0)});
+        require(module.maxPerDay(Mainnet.OUSDProxy) == MAX_PER_DAY_OUSD, "OUSD daily cap not set");
     }
 }
 

@@ -15,24 +15,17 @@ import { IPositionManager } from "../interfaces/uniswap/v4/IPositionManager.sol"
  *         liquidity: burn a Safe position, optionally swap the pool price to a
  *         new level, and mint a new position owned by the Safe.
  *
- * @dev    The module holds no pricing logic: no price floor, no NAV, no tick
- *         bounds. Which pool, range, size and reset to use is decided
- *         off-chain by the operator (Talos), so a change of pricing logic,
- *         pool or token never needs a redeploy. The module only protects the
- *         Safe's funds, with limits the Safe can change:
- *         - it acts only on hookless pools the Safe allowed, with ERC20
- *           currencies, and burns only Safe-owned positions in that pool;
+ * @dev    No pricing logic: the operator (Talos) picks the pool, range, size
+ *         and reset, so a pricing change never needs a redeploy. The module
+ *         only protects the Safe's funds:
+ *         - hookless pools only, and only Safe-owned positions are burned;
  *         - every token it moves ends up in the Safe;
- *         - a mint pulls at most `maxPerCall` of each currency, and the reset
- *           swap spends at most `maxPerCall` of its input;
- *         - over a UTC day, the Safe's net outflow of each currency through
- *           the module (what it paid less what it got back, per call) stays
- *           within `maxPerDay`;
- *         - the Safe can pause it.
- *         A compromised operator can therefore buy at a bad price, but loses
- *         at most `maxPerDay` of each currency per day.
+ *         - over a UTC day, the Safe's net outflow of each token through the
+ *           module (summed per call) stays within `maxPerDay`, set by the
+ *           Safe. A compromised operator loses at most that per day; the Safe
+ *           can disable the module in one transaction.
  *
- *         The Safe must enable this module and, once per currency it lets the
+ *         The Safe must enable this module and, once per token it lets the
  *         module pay, approve the token to Permit2 and Permit2 to the
  *         PositionManager, which pays the mints.
  */
@@ -41,45 +34,31 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
     uint8 internal constant MINT_POSITION = 0x02;
     uint8 internal constant BURN_POSITION = 0x03;
     uint8 internal constant CLOSE_CURRENCY = 0x12;
-    // Storage slot of `PoolManager._pools`, as used by v4-core `StateLibrary`.
-    uint256 internal constant POOLS_SLOT = 6;
 
-    IPoolManager internal immutable _poolManager;
-    IPositionManager internal immutable _positionManager;
+    IPoolManager public immutable poolManager;
+    IPositionManager public immutable positionManager;
 
-    /// @notice When true, `rebalance` reverts.
-    bool public paused;
-    /// @notice Pools the module may act on, by v4 pool id.
-    mapping(bytes32 => bool) public isPoolAllowed;
-    /// @notice Most of a token one mint, or one reset swap, may take from the Safe.
-    mapping(address => uint256) public maxPerCall;
-    /// @notice Most net outflow of a token from the Safe through the module per UTC day.
+    /// @notice Most net outflow of a token from the Safe per UTC day.
     mapping(address => uint256) public maxPerDay;
-    /// @notice Net outflow of a token from the Safe through the module, per UTC day.
+    /// @notice Net outflow of a token from the Safe, per UTC day
+    ///         (`block.timestamp / 1 days`).
     mapping(uint256 => mapping(address => uint256)) public spentOn;
 
     constructor(
         address _safeContract,
         address _operator,
-        address _poolManagerAddress,
-        address _positionManagerAddress
+        address _poolManager,
+        address _positionManager
     ) AbstractSafeModule(_safeContract) {
         require(_operator != address(0), "Invalid operator");
-        require(_poolManagerAddress != address(0), "Invalid pool manager");
-        require(
-            _positionManagerAddress != address(0),
-            "Invalid position manager"
-        );
-        _poolManager = IPoolManager(_poolManagerAddress);
-        _positionManager = IPositionManager(_positionManagerAddress);
+        poolManager = IPoolManager(_poolManager);
+        positionManager = IPositionManager(_positionManager);
         _grantRole(OPERATOR_ROLE, _operator);
     }
 
-    // ==================== Operator ==================== //
-
     /**
      * @notice Burn a Safe position, optionally reset the pool price and mint
-     *         a new Safe position, all in one pool the Safe allowed.
+     *         a new Safe position, all in one hookless pool.
      * @return newTokenId The minted position, 0 if none.
      */
     function rebalance(IUniswapV4LiquidityModule.RebalanceParams calldata _p)
@@ -87,24 +66,19 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         onlyOperator
         returns (uint256 newTokenId)
     {
-        require(!paused, "Paused");
         PoolKey memory key = _p.key;
+        require(key.hooks == address(0), "Hooked pool");
         bytes32 id = keccak256(abi.encode(key));
-        require(isPoolAllowed[id], "Pool not allowed");
-
-        uint256 before0 = IERC20(key.currency0).balanceOf(
-            address(safeContract)
-        );
-        uint256 before1 = IERC20(key.currency1).balanceOf(
-            address(safeContract)
-        );
+        address safe = address(safeContract);
+        uint256 before0 = IERC20(key.currency0).balanceOf(safe);
+        uint256 before1 = IERC20(key.currency1).balanceOf(safe);
 
         if (_p.tokenId != 0) {
             require(
-                _positionManager.ownerOf(_p.tokenId) == address(safeContract),
+                positionManager.ownerOf(_p.tokenId) == safe,
                 "Not a Safe position"
             );
-            (PoolKey memory positionKey, ) = _positionManager
+            (PoolKey memory positionKey, ) = positionManager
                 .getPoolAndPositionInfo(_p.tokenId);
             require(keccak256(abi.encode(positionKey)) == id, "Wrong pool");
             // amount0Min = amount1Min = 0: everything goes to the Safe.
@@ -116,12 +90,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         }
 
         if (_p.resetAmountIn > 0) {
-            address input = _p.resetZeroForOne ? key.currency0 : key.currency1;
-            require(
-                _p.resetAmountIn <= maxPerCall[input],
-                "Reset above max per call"
-            );
-            _poolManager.unlock(
+            poolManager.unlock(
                 abi.encode(
                     key,
                     _p.resetZeroForOne,
@@ -132,12 +101,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         }
 
         if (_p.liquidity > 0) {
-            require(
-                _p.amount0Max <= maxPerCall[key.currency0] &&
-                    _p.amount1Max <= maxPerCall[key.currency1],
-                "Mint above max per call"
-            );
-            newTokenId = _positionManager.nextTokenId();
+            newTokenId = positionManager.nextTokenId();
             _modifyLiquidity(
                 key,
                 MINT_POSITION,
@@ -148,7 +112,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
                     uint256(_p.liquidity),
                     _p.amount0Max,
                     _p.amount1Max,
-                    address(safeContract),
+                    safe,
                     ""
                 )
             );
@@ -179,7 +143,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         override
         returns (bytes memory)
     {
-        require(msg.sender == address(_poolManager), "Not the pool manager");
+        require(msg.sender == address(poolManager), "Not the pool manager");
         (
             PoolKey memory key,
             bool zeroForOne,
@@ -187,7 +151,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
             uint160 sqrtPriceLimitX96
         ) = abi.decode(_data, (PoolKey, bool, uint128, uint160));
 
-        int256 delta = _poolManager.swap(
+        int256 delta = poolManager.swap(
             key,
             IPoolManager.SwapParams(
                 zeroForOne,
@@ -203,111 +167,36 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         return "";
     }
 
-    // ==================== Safe ==================== //
-
-    /// @notice Let the module act on a hookless pool with ERC20 currencies.
-    function allowPool(PoolKey calldata _key) external onlySafe {
-        require(_key.hooks == address(0), "Hooked pool");
-        require(
-            _key.currency0 != address(0) && _key.currency1 != address(0),
-            "Native currency"
-        );
-        bytes32 id = keccak256(abi.encode(_key));
-        isPoolAllowed[id] = true;
-        emit IUniswapV4LiquidityModule.PoolAllowed(id, _key);
-    }
-
-    function revokePool(bytes32 _poolId) external onlySafe {
-        isPoolAllowed[_poolId] = false;
-        emit IUniswapV4LiquidityModule.PoolRevoked(_poolId);
-    }
-
-    function setMaxPerCall(address _token, uint256 _amount) external onlySafe {
-        maxPerCall[_token] = _amount;
-        emit IUniswapV4LiquidityModule.MaxPerCallSet(_token, _amount);
-    }
-
     function setMaxPerDay(address _token, uint256 _amount) external onlySafe {
         maxPerDay[_token] = _amount;
         emit IUniswapV4LiquidityModule.MaxPerDaySet(_token, _amount);
     }
 
-    function setPaused(bool _paused) external onlySafe {
-        paused = _paused;
-        emit IUniswapV4LiquidityModule.PausedSet(_paused);
-    }
-
-    // ==================== Views ==================== //
-
-    function poolManager() external view returns (address) {
-        return address(_poolManager);
-    }
-
-    function positionManager() external view returns (address) {
-        return address(_positionManager);
-    }
-
-    /// @notice Net outflow of `_token` from the Safe through the module today.
-    function spentToday(address _token) external view returns (uint256) {
-        return spentOn[_today()][_token];
-    }
-
-    /// @notice Net outflow of `_token` the module may still cause today.
-    function remainingToday(address _token) external view returns (uint256) {
-        uint256 spent = spentOn[_today()][_token];
-        uint256 cap = maxPerDay[_token];
-        return spent >= cap ? 0 : cap - spent;
-    }
-
-    /// @notice Current price of a pool, from its slot0.
-    function poolSqrtPriceX96(bytes32 _poolId) external view returns (uint160) {
-        return
-            uint160(
-                uint256(
-                    _poolManager.extsload(
-                        keccak256(abi.encode(_poolId, POOLS_SLOT))
-                    )
-                )
-            );
-    }
-
-    // ==================== Internal ==================== //
-
-    function _today() internal view returns (uint256) {
-        return block.timestamp / 1 days;
-    }
-
-    /// @dev Adds the call's net outflow of `_token` to today's total, which
-    ///      must stay within `maxPerDay`. A net inflow lowers it, not below 0.
+    /// @dev Adds the call's net outflow of `_token`, if any, to today's
+    ///      total, which must stay within `maxPerDay`.
     function _trackOutflow(address _token, uint256 _before) internal {
         uint256 afterBalance = IERC20(_token).balanceOf(address(safeContract));
-        uint256 day = _today();
-        uint256 spent = spentOn[day][_token];
-        if (afterBalance < _before) {
-            spent += _before - afterBalance;
-            require(spent <= maxPerDay[_token], "Above max per day");
-        } else {
-            uint256 inflow = afterBalance - _before;
-            spent = inflow >= spent ? 0 : spent - inflow;
-        }
+        if (afterBalance >= _before) return;
+        uint256 day = block.timestamp / 1 days;
+        uint256 spent = spentOn[day][_token] + _before - afterBalance;
+        require(spent <= maxPerDay[_token], "Above max per day");
         spentOn[day][_token] = spent;
     }
 
     function _settleOrTake(address _currency, int128 _amount) internal {
         if (_amount < 0) {
-            uint256 owed = uint256(uint128(-_amount));
-            _poolManager.sync(_currency);
+            poolManager.sync(_currency);
             _exec(
                 _currency,
                 abi.encodeWithSelector(
                     IERC20.transfer.selector,
-                    address(_poolManager),
-                    owed
+                    address(poolManager),
+                    uint256(uint128(-_amount))
                 )
             );
-            _poolManager.settle();
+            poolManager.settle();
         } else if (_amount > 0) {
-            _poolManager.take(
+            poolManager.take(
                 _currency,
                 address(safeContract),
                 uint256(uint128(_amount))
@@ -327,7 +216,7 @@ contract UniswapV4LiquidityModule is AbstractSafeModule, IUnlockCallback {
         params[1] = abi.encode(_key.currency0);
         params[2] = abi.encode(_key.currency1);
         _exec(
-            address(_positionManager),
+            address(positionManager),
             abi.encodeWithSelector(
                 IPositionManager.modifyLiquidities.selector,
                 abi.encode(

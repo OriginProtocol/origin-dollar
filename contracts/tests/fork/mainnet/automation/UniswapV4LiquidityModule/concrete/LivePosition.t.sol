@@ -69,7 +69,7 @@ contract Fork_Concrete_Mainnet_UniswapV4LiquidityModule_LivePosition_Test is
         p.tickLower = 4;
         p.tickUpper = 5;
         p.liquidity = ONE_TICK_LIQUIDITY;
-        p.amount0Max = uint128(MAX_PER_CALL);
+        p.amount0Max = uint128(AMOUNT0_MAX);
         vm.prank(operator);
         vm.expectRevert("Above max per day");
         module.rebalance(p);

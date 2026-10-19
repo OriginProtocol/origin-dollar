@@ -30,12 +30,9 @@ contract Smoke_Concrete_UniswapV4LiquidityModule_Test is Smoke_UniswapV4Liquidit
         assertTrue(ISafeModules(safe).isModuleEnabled(address(module)));
     }
 
-    function test_module_allowsTheOusdUsdePoolWithOusdCaps() public view {
-        assertTrue(module.isPoolAllowed(keccak256(abi.encode(key))));
-        assertEq(module.maxPerCall(Mainnet.OUSDProxy), 100_000e18);
+    function test_module_capsOusdOnly() public view {
         assertEq(module.maxPerDay(Mainnet.OUSDProxy), 200_000e18);
-        assertEq(module.maxPerCall(Mainnet.USDe), 0);
-        assertFalse(module.paused());
+        assertEq(module.maxPerDay(Mainnet.USDe), 0);
     }
 
     //////////////////////////////////////////////////////

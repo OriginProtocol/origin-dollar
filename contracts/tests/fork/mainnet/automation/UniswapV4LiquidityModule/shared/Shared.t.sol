@@ -29,7 +29,8 @@ abstract contract Fork_Mainnet_UniswapV4LiquidityModule_Shared_Test is BaseFork 
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 
-    uint256 internal constant MAX_PER_CALL = 100_000e18;
+    /// @dev amount0Max the tests pass to mints.
+    uint256 internal constant AMOUNT0_MAX = 100_000e18;
     uint256 internal constant MAX_PER_DAY = 200_000e18;
     uint128 internal constant RESET_AMOUNT = 100e18;
     uint256 internal constant POOLS_SLOT = 6;
@@ -88,8 +89,6 @@ abstract contract Fork_Mainnet_UniswapV4LiquidityModule_Shared_Test is BaseFork 
         // Post-deploy Safe transactions, as in the 010 deploy script (approvals idempotent).
         vm.startPrank(safe);
         ISafeModules(safe).enableModule(address(module));
-        module.allowPool(key);
-        module.setMaxPerCall(address(ousd), MAX_PER_CALL);
         module.setMaxPerDay(address(ousd), MAX_PER_DAY);
         ousd.approve(address(permit2), type(uint256).max);
         permit2.approve(address(ousd), address(positionManager), type(uint160).max, type(uint48).max);
@@ -120,7 +119,7 @@ abstract contract Fork_Mainnet_UniswapV4LiquidityModule_Shared_Test is BaseFork 
         p.tickLower = tickLower;
         p.tickUpper = tickLower + 1;
         p.liquidity = liquidity;
-        p.amount0Max = uint128(MAX_PER_CALL);
+        p.amount0Max = uint128(AMOUNT0_MAX);
         p.resetZeroForOne = true;
         p.resetAmountIn = price > limit ? RESET_AMOUNT : 0;
         p.sqrtPriceLimitX96 = limit;

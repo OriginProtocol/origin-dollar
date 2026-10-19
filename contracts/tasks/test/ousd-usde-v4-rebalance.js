@@ -136,7 +136,6 @@ describe("Unit: ousdUsdeV4Rebalance", () => {
       safeToken0: units(100000),
       positionToken0: 0n,
       resetAmount0: 0n,
-      maxPerCall: units(100000),
       remainingToday: units(200000),
     };
 
@@ -165,10 +164,7 @@ describe("Unit: ousdUsdeV4Rebalance", () => {
       ).to.equal((units(20000) * 9950n) / 10000n);
     });
 
-    it("caps at the module's per-call cap and never goes negative", () => {
-      expect(fundableToken0({ ...base, maxPerCall: units(1000) })).to.equal(
-        units(1000)
-      );
+    it("never goes negative", () => {
       expect(
         fundableToken0({ ...base, safeToken0: 0n, resetAmount0: units(1) })
       ).to.equal(0n);
