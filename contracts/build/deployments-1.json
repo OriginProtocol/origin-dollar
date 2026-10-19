@@ -131,6 +131,10 @@
         {
             "implementation": "0x5438ADCD5f91593B7b00024f2dc26393559e30C8",
             "name": "UNISWAP_V4_ERC4626_REBALANCE_MODULE"
+        },
+        {
+            "implementation": "0x33A0f124293fA72e55CEfeFE1e723E04793A7bE9",
+            "name": "UNISWAP_V4_LIQUIDITY_MODULE"
         }
     ],
     "executions": [
@@ -168,12 +172,18 @@
             "name": "008_UniswapV4RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792049603,
-            "tsGovernance": 0
+            "tsGovernance": 1
         },
         {
             "name": "009_UniswapV4ERC4626RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792073075,
+            "tsGovernance": 1
+        },
+        {
+            "name": "010_UniswapV4LiquidityModule",
+            "proposalId": 1,
+            "tsDeployment": 1792421171,
             "tsGovernance": 0
         }
     ]
