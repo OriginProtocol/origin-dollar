@@ -66,6 +66,11 @@ const FUND_MARGIN_BPS = 50n;
 // A reference this far from par is bad data, not a market to price against.
 const MIN_SANE_RATE = 0.9;
 const MAX_SANE_RATE = 1.1;
+// Ethena RFQ quotes for a whitelisted benefactor, as scraped by the
+// defi-analytics `ethena` collector (Grafana `ethena_rfq_price`).
+const ETHENA_RFQ_URL =
+  "https://29tpi36mx8.execute-api.ap-southeast-1.amazonaws.com/prod/rfq";
+const ETHENA_BENEFACTOR = "0x0000000000000000000000000000000000000020";
 
 export interface PoolKey {
   currency0: string;
@@ -105,30 +110,77 @@ export interface TargetPrice {
 /**
  * The bid for USDe in OUSD: the market bid in USDC plus the offset, converted
  * into OUSD at the exit rate (what a seller gets for the OUSD), never above
- * par less `capBps`. The cap is in ticks (1.0001^-capBps), so 4 bp is exactly
- * tick 4 rather than a hair below it. All pricing lives here, not in the
- * module.
+ * what the USDe redeems for at Ethena (par at best) less `capBps`. The margin
+ * is in ticks (1.0001^-capBps), so 4 bp below par is exactly tick 4 rather
+ * than a hair below it. Without a redemption quote the cap is taken from par.
+ * All pricing lives here, not in the module.
  */
 export function targetPrice({
   bidUsdc,
   exitRate,
   offsetBps,
   capBps,
+  redeemRate,
 }: {
   bidUsdc: number;
   exitRate: number;
   offsetBps: number;
   capBps: number;
+  /** USDC per USDe from an Ethena redemption; undefined for par. */
+  redeemRate?: number;
 }): TargetPrice {
   if (!(bidUsdc > 0) || !(exitRate > 0)) {
     throw new Error(`Invalid market rates: ${bidUsdc} bid, ${exitRate} exit`);
   }
   if (!(capBps >= 0)) throw new Error(`Invalid cap ${capBps} bp`);
+  if (redeemRate !== undefined && !(redeemRate > 0)) {
+    throw new Error(`Invalid redemption rate ${redeemRate}`);
+  }
   const market = (bidUsdc * (1 + offsetBps / BPS)) / exitRate;
-  const cap = Math.pow(1.0001, -capBps);
+  const cap = Math.min(1, redeemRate ?? 1) * Math.pow(1.0001, -capBps);
   return market < cap
     ? { price: market, capped: false }
     : { price: cap, capped: true };
+}
+
+/** Cost of an Ethena redemption at `redeemRate` USDC per USDe, in bp. */
+export function redeemCostBps(redeemRate: number): number {
+  return (1 - redeemRate) * BPS;
+}
+
+/**
+ * Whether redeeming USDe at Ethena costs no more than `maxCostBps`. Above
+ * that (an Ethena fee regime, e.g. -10 bp for 34h from 2026-10-01), hold the
+ * USDe and redeem once the quote is back to normal.
+ */
+export function redeemQuoteIsNormal(
+  redeemRate: number,
+  maxCostBps: number
+): boolean {
+  return redeemCostBps(redeemRate) <= maxCostBps;
+}
+
+/** USDC an Ethena RFQ pays per USDe for redeeming `size` USDe. */
+export async function ethenaRedeemRate(size: number): Promise<number> {
+  const url = `${ETHENA_RFQ_URL}?pair=USDC%2FUSDe&side=REDEEM&size=${size}&benefactor=${ETHENA_BENEFACTOR}`;
+  const res = await fetch(url, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) {
+    throw new Error(`Ethena RFQ ${res.status} ${res.statusText}`);
+  }
+  const data = (await res.json()) as {
+    collateral_amount: string;
+    usde_amount: string;
+  };
+  const rate =
+    Number(formatUnits(data.collateral_amount, USDC_DECIMALS)) /
+    Number(formatUnits(data.usde_amount, DECIMALS));
+  if (!(rate >= MIN_SANE_RATE && rate <= MAX_SANE_RATE)) {
+    throw new Error(`Ethena redemption rate ${rate} is outside the sane band`);
+  }
+  return rate;
 }
 
 /**
@@ -351,13 +403,25 @@ async function marketInputs({
 action({
   name: "ousdUsdeV4Rebalance",
   description:
-    "Keep the OUSD/USDe Uniswap v4 position on one tick just above the KyberSwap bid for USDe, capped below par, via UniswapV4LiquidityModule: burn it, reset the price and mint a fresh one, so what it bought cannot be bought back",
+    "Keep the OUSD/USDe Uniswap v4 position on one tick just above the KyberSwap bid for USDe, capped below its Ethena redemption value, via UniswapV4LiquidityModule: burn it, reset the price and mint a fresh one, so what it bought cannot be bought back",
   chains: [1],
   params: (t) => {
     t.addOptionalParam(
       "capBps",
-      "Never pay more than par less this for USDe, in bp of OUSD",
+      "Never pay more than the Ethena redemption value of USDe (par at best) less this, in bp of OUSD",
       4,
+      types.float
+    );
+    t.addOptionalParam(
+      "redeemSize",
+      "USDe redeemed in the Ethena RFQ reference quote, in whole units",
+      50000,
+      types.float
+    );
+    t.addOptionalParam(
+      "maxRedeemCostBps",
+      "Warn to hold the USDe while an Ethena redemption costs more than this, in bp",
+      2,
       types.float
     );
     t.addOptionalParam(
@@ -557,6 +621,29 @@ action({
       provider,
       log,
     });
+    let redeemRate: number | undefined;
+    try {
+      redeemRate = await ethenaRedeemRate(args.redeemSize);
+      const cost = redeemCostBps(redeemRate);
+      log.info(
+        `Ethena redeems ${args.redeemSize} USDe at ${redeemRate.toFixed(
+          6
+        )} USDC (${cost.toFixed(2)} bp)`
+      );
+      if (!redeemQuoteIsNormal(redeemRate, args.maxRedeemCostBps)) {
+        log.warn(
+          `Ethena redemption costs ${cost.toFixed(2)} bp, above ${
+            args.maxRedeemCostBps
+          } bp: hold the USDe until the quote is back to normal`
+        );
+      }
+    } catch (err) {
+      log.warn(
+        `No Ethena redemption quote (${
+          (err as Error).message
+        }); capping from par`
+      );
+    }
     let targetLower: number;
     if (market) {
       const target = targetPrice({
@@ -564,6 +651,7 @@ action({
         exitRate: market.exitRate,
         offsetBps: args.offsetBps,
         capBps: args.capBps,
+        redeemRate,
       });
       targetLower = targetTickLower(target.price);
       const bps = (x: number) => ((x - 1) * BPS).toFixed(2);
@@ -575,7 +663,13 @@ action({
         )} USDC/OUSD; target ${target.price.toFixed(6)} OUSD/USDe (${bps(
           target.price
         )} bp vs par)${
-          target.capped ? `, capped at par - ${args.capBps} bp` : ""
+          target.capped
+            ? `, capped at ${
+                redeemRate !== undefined && redeemRate < 1
+                  ? "the Ethena redemption value"
+                  : "par"
+              } - ${args.capBps} bp`
+            : ""
         } -> tick ${targetLower}, top bid ${tickLowerToBid(targetLower).toFixed(
           6
         )}`

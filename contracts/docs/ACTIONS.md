@@ -260,10 +260,15 @@ Every run (every 2 minutes):
 2. Target: KyberSwap bid for selling `--quote-size` USDe for USDC, plus
    `--offset-bps`, divided by the OUSD -> USDC exit rate at `--exit-size`
    (Curve `get_dy` if KyberSwap fails), both with our v4 pools excluded; never
-   above par less `--cap-bps` (in ticks: 4 bp is tick 4). The range is the
-   lowest tick whose price does not exceed that, `--width` ticks wide; a tick
-   priced above par is refused. In a calm market the cap binds (tick 4);
-   during a depeg the range follows the market down.
+   above min(par, Ethena redemption quote) less `--cap-bps`, in ticks (4 bp
+   below par is tick 4). The redemption quote is the Ethena RFQ for
+   `--redeem-size` USDe (the proxy the defi-analytics collector scrapes into
+   Grafana `ethena_rfq_price`); without it the cap is taken from par. The
+   range is the lowest tick whose price does not exceed that, `--width` ticks
+   wide; a tick priced above par is refused. In a calm market the cap binds:
+   Ethena's ~1 USDC flat fee per order (0.2 bp on 50k) puts it on tick 5, and
+   an Ethena fee regime (-10 bp for 34h from 2026-10-01) moves it down with
+   the quote. During a USDe depeg the range follows the market down.
 3. It moves when there is no position, the position holds at least
    `--min-token1` USDe, or the target is `--max-drift` ticks away. Without a
    market quote it keeps the current tick and only pulls fills.
@@ -272,15 +277,21 @@ Every run (every 2 minutes):
    (`amount1Max = 0`), capped at what the Safe can fund and the module's
    daily room (`maxPerDay` less `spentOn` today).
 
-- `--cap-bps <n>` (default `4`), `--offset-bps <n>` (default `1`).
+- `--cap-bps <n>` (default `4`; `3` keeps tick 4 in calm markets),
+  `--offset-bps <n>` (default `1`).
+- `--redeem-size <n>` (default `50000`): USDe in the Ethena RFQ quote.
+- `--max-redeem-cost-bps <n>` (default `2`): above this redemption cost the
+  run warns to hold the USDe.
 - `--quote-size <n>`, `--exit-size <n>` (default `10000` each).
 - `--width <n>` (default `1`), `--max-drift <n>` (default `1`): ticks.
 - `--min-token1 <n>` (default `500`): USDe held that is worth a pull.
 - `--target-ousd <n>` (default `50000`), `--reset-amount <n>` (default `100`).
 - `--token-id <id>` (default `457273`), `--max-gas`, `--module`, `--dryrun`.
 
-Bought USDe stays in the Safe until it is redeemed 1:1 at Ethena and minted
-back into OUSD, which is not automated yet. Before enabling this schedule,
+Bought USDe stays in the Safe until it is redeemed at Ethena and minted
+back into OUSD, which is not automated yet. Redeem only while the quote is
+normal: when the run warns that a redemption costs more than
+`--max-redeem-cost-bps`, hold the USDe until the quote recovers. Before enabling this schedule,
 disable `ousd_v4_rebalance` and then disable module 008 on the Safe, so only
 one module manages the pool.
 

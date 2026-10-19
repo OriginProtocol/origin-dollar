@@ -1,10 +1,13 @@
 const { expect } = require("chai");
 
 const {
+  ethenaRedeemRate,
   fundableToken0,
   ousdUsdeKey,
   planRebalance,
   poolIdOf,
+  redeemCostBps,
+  redeemQuoteIsNormal,
   resetAmount,
   targetPrice,
   targetTickLower,
@@ -54,6 +57,43 @@ describe("Unit: ousdUsdeV4Rebalance", () => {
       expect(t.price).to.be.closeTo((0.997 * 1.0001) / 0.9998, 1e-12);
     });
 
+    it("caps below the Ethena redemption value when it is under par", () => {
+      // Ethena fee regime: redeeming pays 0.999 USDC per USDe.
+      const t = targetPrice({
+        bidUsdc: 0.99978,
+        exitRate: 0.99981,
+        offsetBps: 1,
+        capBps: 4,
+        redeemRate: 0.999,
+      });
+      expect(t.capped).to.equal(true);
+      expect(t.price).to.equal(0.999 * 1.0001 ** -4);
+      expect(targetTickLower(t.price)).to.equal(15);
+    });
+
+    it("never caps above par, whatever Ethena pays", () => {
+      const t = targetPrice({
+        bidUsdc: 1,
+        exitRate: 1,
+        offsetBps: 1,
+        capBps: 4,
+        redeemRate: 1.0002,
+      });
+      expect(t.price).to.equal(1.0001 ** -4);
+    });
+
+    it("moves a normal flat Ethena fee one tick down", () => {
+      // ~1 USDC per order on 50k USDe: 0.2 bp, enough to leave tick 4.
+      const { price } = targetPrice({
+        bidUsdc: 1,
+        exitRate: 1,
+        offsetBps: 1,
+        capBps: 4,
+        redeemRate: 0.999979856,
+      });
+      expect(targetTickLower(price)).to.equal(5);
+    });
+
     it("rejects bad inputs", () => {
       expect(() =>
         targetPrice({ bidUsdc: 0, exitRate: 1, offsetBps: 1, capBps: 4 })
@@ -61,6 +101,64 @@ describe("Unit: ousdUsdeV4Rebalance", () => {
       expect(() =>
         targetPrice({ bidUsdc: 1, exitRate: 1, offsetBps: 1, capBps: -1 })
       ).to.throw("Invalid cap");
+      expect(() =>
+        targetPrice({
+          bidUsdc: 1,
+          exitRate: 1,
+          offsetBps: 1,
+          capBps: 4,
+          redeemRate: 0,
+        })
+      ).to.throw("Invalid redemption rate");
+    });
+  });
+
+  describe("Ethena redemption quote", () => {
+    const realFetch = global.fetch;
+    const respond = (body, ok = true) => {
+      global.fetch = async () => ({
+        ok,
+        status: ok ? 200 : 502,
+        statusText: ok ? "OK" : "Bad Gateway",
+        json: async () => body,
+      });
+    };
+    const rejection = (promise) =>
+      promise.then(
+        () => expect.fail("expected a rejection"),
+        (err) => err.message
+      );
+    afterEach(() => {
+      global.fetch = realFetch;
+    });
+
+    it("reads USDC per USDe from the RFQ amounts", async () => {
+      // Live quote, 2026-10-19: 50k USDe -> 49,998.9928 USDC.
+      respond({
+        collateral_amount: "49998992800",
+        usde_amount: "50000000000000000000000",
+      });
+      expect(await ethenaRedeemRate(50000)).to.equal(49998.9928 / 50000);
+    });
+
+    it("rejects an error or an insane quote", async () => {
+      respond({}, false);
+      expect(await rejection(ethenaRedeemRate(50000))).to.contain(
+        "Ethena RFQ 502"
+      );
+      respond({
+        collateral_amount: "1000000",
+        usde_amount: "50000000000000000000000",
+      });
+      expect(await rejection(ethenaRedeemRate(50000))).to.contain(
+        "outside the sane band"
+      );
+    });
+
+    it("calls a quote normal up to the max cost", () => {
+      expect(redeemCostBps(0.999)).to.be.closeTo(10, 1e-9);
+      expect(redeemQuoteIsNormal(0.999979856, 2)).to.equal(true);
+      expect(redeemQuoteIsNormal(0.999, 2)).to.equal(false);
     });
   });
 
