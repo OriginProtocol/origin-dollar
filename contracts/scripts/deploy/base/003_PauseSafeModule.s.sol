@@ -10,7 +10,7 @@ import {PauseSafeModule} from "contracts/automation/PauseSafeModule.sol";
 // Addresses
 import {CrossChain} from "tests/utils/Addresses.sol";
 
-/// @title 004_PauseSafeModule
+/// @title 003_PauseSafeModule
 /// @notice Deploys the Safe module that lets a threat-detection operator pause the Super OETH vault
 ///         without gathering multisig signatures.
 /// @dev Base counterpart of mainnet 006_PauseSafeModule, hosted on the same 2/8 Guardian Safe (the
@@ -25,7 +25,7 @@ import {CrossChain} from "tests/utils/Addresses.sol";
 ///
 ///      REQUIRED POST-DEPLOY STEP — the module does nothing until the Safe calls
 ///      `enableModule(<module>)` and `isModuleEnabled(<module>)` reads true.
-contract $004_PauseSafeModule is AbstractDeployScript("004_PauseSafeModule") {
+contract $003_PauseSafeModule is AbstractDeployScript("003_PauseSafeModule") {
     // ==================== Deployment Logic ==================== //
 
     function _execute() internal override {
