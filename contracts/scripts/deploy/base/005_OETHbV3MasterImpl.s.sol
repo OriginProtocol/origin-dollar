@@ -21,7 +21,7 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 // Addresses
 import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 003_OETHbV3MasterImpl
+/// @title 005_OETHbV3MasterImpl
 /// @notice Deploys the OETHb V3 Master strategy implementation and its two bridge adapters on Base.
 /// @dev Master holds WETH plus a reported `remoteStrategyBalance`; it never custodies wOETH. The
 ///      two adapters cover one direction each:
@@ -32,7 +32,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///      Both adapters sit behind `BridgeAdapterProxy` deployed through CreateX, because the
 ///      adapter family validates inbound messages with `transportSender == address(this)` and so
 ///      needs the peer adapter on Ethereum at the same address.
-contract $003_OETHbV3MasterImpl is AbstractDeployScript("003_OETHbV3MasterImpl") {
+contract $005_OETHbV3MasterImpl is AbstractDeployScript("005_OETHbV3MasterImpl") {
     using GovHelper for GovProposal;
 
     /// @notice CreateX salts for the adapter proxies.

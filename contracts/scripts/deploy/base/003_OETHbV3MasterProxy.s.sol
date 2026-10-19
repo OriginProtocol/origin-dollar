@@ -8,7 +8,7 @@ import {CreateXHelper} from "scripts/deploy/helpers/CreateXHelper.sol";
 // Contracts
 import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrategyProxy.sol";
 
-/// @title 002_OETHbV3MasterProxy
+/// @title 003_OETHbV3MasterProxy
 /// @notice Deploys the OETHb V3 Master strategy proxy on Base at a CreateX-deterministic address.
 /// @dev Deployed on its own, ahead of the implementation, because the address is an input to
 ///      several later steps: `003` initialises it and wires the adapters, `004` bakes it into
@@ -18,7 +18,7 @@ import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrat
 ///      That last point is the reason for CreateX rather than a plain `new`: the adapters accept
 ///      an inbound message only when `transportSender == address(this)`, so Master on Base and
 ///      Remote on Ethereum must share one address.
-contract $002_OETHbV3MasterProxy is AbstractDeployScript("002_OETHbV3MasterProxy") {
+contract $003_OETHbV3MasterProxy is AbstractDeployScript("003_OETHbV3MasterProxy") {
     /// @notice Salt for the OETHb wOETH V3 strategy pair.
     /// @dev MUST match `mainnet/006_OETHbV3RemoteProxy`. Convention for V3 salts:
     ///        * identical on PAIRED chains — peer parity depends on it;
