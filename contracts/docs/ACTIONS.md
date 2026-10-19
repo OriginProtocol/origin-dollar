@@ -266,8 +266,8 @@ Every run (every 2 minutes):
    Grafana `ethena_rfq_price`); without it the cap is taken from par. The
    range is the lowest tick whose price does not exceed that, `--width` ticks
    wide; a tick priced above par is refused. In a calm market the cap binds:
-   Ethena's ~1 USDC flat fee per order (0.2 bp on 50k) puts it on tick 5, and
-   an Ethena fee regime (-10 bp for 34h from 2026-10-01) moves it down with
+   Ethena's ~1 USDC flat fee per order (0.2 bp on 50k) plus 3 bp puts it on
+   tick 4 (with 4 bp it would land on tick 5), and an Ethena fee regime (-10 bp for 34h from 2026-10-01) moves it down with
    the quote. During a USDe depeg the range follows the market down.
 3. It moves when there is no position, the position holds at least
    `--min-token1` USDe, or the target is `--max-drift` ticks away. Without a
@@ -277,8 +277,7 @@ Every run (every 2 minutes):
    (`amount1Max = 0`), capped at what the Safe can fund and the module's
    daily room (`maxPerDay` less `spentOn` today).
 
-- `--cap-bps <n>` (default `4`; `3` keeps tick 4 in calm markets),
-  `--offset-bps <n>` (default `1`).
+- `--cap-bps <n>` (default `3`), `--offset-bps <n>` (default `1`).
 - `--redeem-size <n>` (default `50000`): USDe in the Ethena RFQ quote.
 - `--max-redeem-cost-bps <n>` (default `2`): above this redemption cost the
   run warns to hold the USDe.

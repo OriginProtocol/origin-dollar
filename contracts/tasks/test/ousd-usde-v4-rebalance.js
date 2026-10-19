@@ -82,16 +82,20 @@ describe("Unit: ousdUsdeV4Rebalance", () => {
       expect(t.price).to.equal(1.0001 ** -4);
     });
 
-    it("moves a normal flat Ethena fee one tick down", () => {
-      // ~1 USDC per order on 50k USDe: 0.2 bp, enough to leave tick 4.
-      const { price } = targetPrice({
-        bidUsdc: 1,
-        exitRate: 1,
-        offsetBps: 1,
-        capBps: 4,
-        redeemRate: 0.999979856,
-      });
-      expect(targetTickLower(price)).to.equal(5);
+    it("keeps tick 4 in a calm market with the default 3 bp margin", () => {
+      // ~1 USDC per order on 50k USDe: 0.2 bp, so 4 bp would land on tick 5.
+      const at = (capBps) =>
+        targetTickLower(
+          targetPrice({
+            bidUsdc: 1,
+            exitRate: 1,
+            offsetBps: 1,
+            capBps,
+            redeemRate: 0.999979856,
+          }).price
+        );
+      expect(at(3)).to.equal(4);
+      expect(at(4)).to.equal(5);
     });
 
     it("rejects bad inputs", () => {

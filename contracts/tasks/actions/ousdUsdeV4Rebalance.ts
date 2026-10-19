@@ -409,7 +409,7 @@ action({
     t.addOptionalParam(
       "capBps",
       "Never pay more than the Ethena redemption value of USDe (par at best) less this, in bp of OUSD",
-      4,
+      3,
       types.float
     );
     t.addOptionalParam(
