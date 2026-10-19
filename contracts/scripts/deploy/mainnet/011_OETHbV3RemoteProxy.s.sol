@@ -16,7 +16,7 @@ import {CrossChainStrategyProxy} from "contracts/proxies/create2/CrossChainStrat
 ///      bearing rather than cosmetic — `_fork` re-derives the address to prove it holds.
 contract $011_OETHbV3RemoteProxy is AbstractDeployScript("011_OETHbV3RemoteProxy") {
     /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
-    bool public constant override skip = true;
+    bool public constant override skip = false;
 
     /// @notice MUST match `base/002_OETHbV3MasterProxy`.
     string internal constant SALT = "OETHb wOETH V3 Strategy 1";

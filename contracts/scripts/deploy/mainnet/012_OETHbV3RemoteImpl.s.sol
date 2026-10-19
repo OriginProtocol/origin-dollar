@@ -31,7 +31,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///        * inbound  Base -> Ethereum via `CCIPAdapter` (atomic message + token).
 contract $012_OETHbV3RemoteImpl is AbstractDeployScript("012_OETHbV3RemoteImpl") {
     /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
-    bool public constant override skip = true;
+    bool public constant override skip = false;
 
     using GovHelper for GovProposal;
 

@@ -131,6 +131,30 @@
         {
             "implementation": "0x5438ADCD5f91593B7b00024f2dc26393559e30C8",
             "name": "UNISWAP_V4_ERC4626_REBALANCE_MODULE"
+        },
+        {
+            "implementation": "0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe",
+            "name": "OETHB_V3_REMOTE_PROXY"
+        },
+        {
+            "implementation": "0x21ae1d9F1AAa58A3B9b58497cD79ac29B6125649",
+            "name": "OETHB_V3_REMOTE_IMPL"
+        },
+        {
+            "implementation": "0x26ef0Ec5a9369A8609248F2e9a14388025B4E16F",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x05A99cB2Cf686573f96d4c25F646E1C619C602EE",
+            "name": "OETHB_V3_CCIP_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x0F12256E27E658790C404C087C38ab4f34D53360",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_PROXY"
+        },
+        {
+            "implementation": "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82",
+            "name": "OETHB_V3_CCIP_ADAPTER_PROXY"
         }
     ],
     "executions": [
@@ -174,6 +198,18 @@
             "name": "009_UniswapV4ERC4626RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792073075,
+            "tsGovernance": 0
+        },
+        {
+            "name": "011_OETHbV3RemoteProxy",
+            "proposalId": 1,
+            "tsDeployment": 1792404599,
+            "tsGovernance": 0
+        },
+        {
+            "name": "012_OETHbV3RemoteImpl",
+            "proposalId": 0,
+            "tsDeployment": 1792404599,
             "tsGovernance": 0
         }
     ]
