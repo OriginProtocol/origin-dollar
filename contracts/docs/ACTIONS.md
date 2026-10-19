@@ -36,6 +36,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
 | `ousdV4Rebalance`                   | mainnet | `7,37 * * * *`   | Keep the OUSD/USDe Uniswap v4 positions one-sided via UniswapV4RebalanceModule (see below)          |
 | `ousdSusdeV4Rebalance`              | mainnet | `22,52 * * * *`  | Keep the OUSD/sUSDe v4 position just above the sUSDe NAV (UniswapV4ERC4626RebalanceModule, below)   |
+| `ousdUsdeV4Rebalance`               | mainnet | `*/2 * * * *`    | Keep the OUSD/USDe v4 position on one tick above the KyberSwap bid (UniswapV4LiquidityModule, below) |
 
 ## Native staking (Ethereum validators)
 
@@ -241,6 +242,57 @@ Operating it is manual for now: redeem the Safe's USDe for USDC at Ethena, mint
 OUSD at the Vault, leave it in the Safe for the next re-adds, and move a range
 (burn and mint from the Safe, then pass the new token id) when the indicator
 says the market has moved.
+
+### ousdUsdeV4Rebalance parameters
+
+Replaces `ousdV4Rebalance` on the OUSD/USDe pool once
+`UniswapV4LiquidityModule` (deploy 010) is enabled on the OUSD v4 liquidity
+Safe. The module holds no pricing logic (no floor, no NAV, no tick bounds):
+it only burns Safe positions, resets the price and mints Safe positions on
+hookless pools, within a daily cap the Safe sets on its net outflow of each
+token (`maxPerDay`). All pricing is here, so a pricing change never needs a
+redeploy.
+
+Every run (every 2 minutes):
+
+1. The current position is the `mintedTokenId` of the module's latest
+   `Rebalanced` event for the pool (none: `--token-id`).
+2. Target: KyberSwap bid for selling `--quote-size` USDe for USDC, plus
+   `--offset-bps`, divided by the OUSD -> USDC exit rate at `--exit-size`
+   (Curve `get_dy` if KyberSwap fails), both with our v4 pools excluded; never
+   above min(par, Ethena redemption quote) less `--cap-bps`, in ticks (4 bp
+   below par is tick 4). The redemption quote is the Ethena RFQ for
+   `--redeem-size` USDe (the proxy the defi-analytics collector scrapes into
+   Grafana `ethena_rfq_price`); without it the cap is taken from par. The
+   range is the lowest tick whose price does not exceed that, `--width` ticks
+   wide; a tick priced above par is refused. In a calm market the cap binds:
+   Ethena's ~1 USDC flat fee per order (0.2 bp on 50k) plus 3 bp puts it on
+   tick 4 (with 4 bp it would land on tick 5), and an Ethena fee regime (-10 bp for 34h from 2026-10-01) moves it down with
+   the quote. During a USDe depeg the range follows the market down.
+3. It moves when there is no position, the position holds at least
+   `--min-token1` USDe, or the target is `--max-drift` ticks away. Without a
+   market quote it keeps the current tick and only pulls fills.
+4. The call burns the position, resets the price down to the new range bottom
+   only if the pool sits above it, and mints `--target-ousd` OUSD only
+   (`amount1Max = 0`), capped at what the Safe can fund and the module's
+   daily room (`maxPerDay` less `spentOn` today).
+
+- `--cap-bps <n>` (default `3`), `--offset-bps <n>` (default `1`).
+- `--redeem-size <n>` (default `50000`): USDe in the Ethena RFQ quote.
+- `--max-redeem-cost-bps <n>` (default `2`): above this redemption cost the
+  run warns to hold the USDe.
+- `--quote-size <n>`, `--exit-size <n>` (default `10000` each).
+- `--width <n>` (default `1`), `--max-drift <n>` (default `1`): ticks.
+- `--min-token1 <n>` (default `500`): USDe held that is worth a pull.
+- `--target-ousd <n>` (default `50000`), `--reset-amount <n>` (default `100`).
+- `--token-id <id>` (default `457273`), `--max-gas`, `--module`, `--dryrun`.
+
+Bought USDe stays in the Safe until it is redeemed at Ethena and minted
+back into OUSD, which is not automated yet. Redeem only while the quote is
+normal: when the run warns that a redemption costs more than
+`--max-redeem-cost-bps`, hold the USDe until the quote recovers. Before enabling this schedule,
+disable `ousd_v4_rebalance` and then disable module 008 on the Safe, so only
+one module manages the pool.
 
 ### ousdSusdeV4Rebalance parameters
 

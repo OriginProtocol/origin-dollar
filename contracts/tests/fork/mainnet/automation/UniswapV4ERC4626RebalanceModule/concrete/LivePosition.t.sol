@@ -26,10 +26,12 @@ contract Fork_Concrete_Mainnet_UniswapV4ERC4626RebalanceModule_LivePosition_Test
 
     function setUp() public override {
         super.setUp();
-        // The Safe and the position only exist from block 26181117.
+        // The Safe and the position only exist from block 26181117, and the module burned the
+        // position on Oct 15 2026 (block 26200340). Module 009 is due for a revamp, so these
+        // live-position tests stay skipped rather than tracking the current token id.
         if (
             Mainnet.ousdV4LiquiditySafe.code.length == 0
-                || positionManager.nextTokenId() <= Mainnet.ousdSusdeV4PositionId
+                || positionManager.nextTokenId() <= Mainnet.ousdSusdeV4PositionId || _burned()
         ) {
             vm.skip(true);
         }
@@ -92,5 +94,13 @@ contract Fork_Concrete_Mainnet_UniswapV4ERC4626RebalanceModule_LivePosition_Test
         vm.prank(operator);
         vm.expectRevert("Safe call failed");
         module.rebalance(tokenId, navTick - 1, navTick + 4, LIVE_LIQUIDITY, RESET_AMOUNT0, floor);
+    }
+
+    function _burned() internal view returns (bool) {
+        try positionManager.ownerOf(Mainnet.ousdSusdeV4PositionId) returns (address) {
+            return false;
+        } catch {
+            return true;
+        }
     }
 }
