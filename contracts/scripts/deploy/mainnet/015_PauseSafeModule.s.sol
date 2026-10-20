@@ -18,7 +18,7 @@ import {CrossChain} from "tests/utils/Addresses.sol";
 ///      the signature-gathering step. It cannot unpause, because the only selectors compiled into
 ///      its bytecode are `pauseCapital()`, `pauseRebase()` and `pause()`.
 ///
-///      Depends on 005_VaultAdminRole having landed: without the Admin role the Strategist could
+///      Depends on 014_VaultAdminRole having landed: without the Admin role the Strategist could
 ///      still unpause, and handing an automated operator a pause trigger would be handing it an
 ///      unpause trigger too.
 ///

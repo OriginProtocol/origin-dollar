@@ -21,7 +21,7 @@ import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///      key could trip a pause and immediately lift it. The new `adminAddr` slot splits the two:
 ///      `pauseCapital`/`pauseRebase` stay open to the Strategist (the 2/8 Guardian Safe), while
 ///      `unpauseCapital`/`unpauseRebase` become Admin-or-Governor only. That is what makes it safe
-///      to hand a pause trigger to an automated threat-detection service — see 006_PauseSafeModule.
+///      to hand a pause trigger to an automated threat-detection service — see 015_PauseSafeModule.
 ///
 ///      `adminAddr` is set in the same proposal as the upgrade so the vaults are never left with a
 ///      zero Admin, which would leave the Governor as the only account able to lift a pause.

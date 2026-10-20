@@ -36,7 +36,7 @@ contract $005_OETHbV3MasterImpl is AbstractDeployScript("005_OETHbV3MasterImpl")
     using GovHelper for GovProposal;
 
     /// @notice CreateX salts for the adapter proxies.
-    /// @dev MUST match `mainnet/007_OETHbV3RemoteImpl`.
+    /// @dev MUST match `mainnet/012_OETHbV3RemoteImpl`.
     string internal constant CCIP_ADAPTER_PROXY_SALT = "OETHb V3 CCIPAdapter Proxy 1";
     string internal constant SUPERBRIDGE_ADAPTER_PROXY_SALT = "OETHb V3 SuperbridgeAdapter Proxy 1";
 

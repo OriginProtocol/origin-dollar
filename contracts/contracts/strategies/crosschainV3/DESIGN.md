@@ -367,7 +367,7 @@ has executed on chain.**
 ### 4.2 OETH-vault Remote registration is undefined
 
 Base side registers Master with the OETHb vault via
-`scripts/deploy/base/005_OETHbV3VaultWiring.s.sol` — `approveStrategy` only; Master needs no mint
+`scripts/deploy/base/007_OETHbV3VaultWiring.s.sol` — `approveStrategy` only; Master needs no mint
 permission because it never touches OETHb. Mainnet side has no equivalent
 governance action touching the OETH vault. **Verify with the team:** does
 the OETH vault need Remote registered as a strategy? Remote is a custodian, not
@@ -413,7 +413,7 @@ address**, which is known ahead of time via CREATE2 but has no code until
 
 ### 4.5 Cleanup script (`006`) is gated by `skip`
 
-`scripts/deploy/base/006_OETHbV3RemoveOldStrategy.s.sol` has `skip = true` so
+`scripts/deploy/base/008_OETHbV3RemoveOldStrategy.s.sol` has `skip = true` so
 it never auto-fires. **The operator must manually flip this to `false`**
 after the 9-batch migration completes and `BridgedWOETHStrategy.checkBalance`
 is at dust.

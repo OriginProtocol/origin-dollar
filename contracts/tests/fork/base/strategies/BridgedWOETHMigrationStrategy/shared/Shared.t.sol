@@ -57,7 +57,7 @@ abstract contract Fork_BridgedWOETHMigrationStrategy_Shared_Test is BaseFork {
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 
-    /// @dev Per-call cap set by `scripts/deploy/base/004_OETHbV3WOETHMigration.s.sol`.
+    /// @dev Per-call cap set by `scripts/deploy/base/006_OETHbV3WOETHMigration.s.sol`.
     uint256 internal constant MAX_PER_BRIDGE = 1000 ether;
 
     //////////////////////////////////////////////////////

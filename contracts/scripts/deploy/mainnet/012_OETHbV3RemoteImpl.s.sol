@@ -30,13 +30,12 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///          and sent as native ETH over the canonical bridge, the message goes over CCIP);
 ///        * inbound  Base -> Ethereum via `CCIPAdapter` (atomic message + token).
 contract $012_OETHbV3RemoteImpl is AbstractDeployScript("012_OETHbV3RemoteImpl") {
-    /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
     bool public constant override skip = false;
 
     using GovHelper for GovProposal;
 
     /// @notice CreateX salts for the adapter proxies.
-    /// @dev MUST match `base/003_OETHbV3MasterImpl`.
+    /// @dev MUST match `base/005_OETHbV3MasterImpl`.
     string internal constant CCIP_ADAPTER_PROXY_SALT = "OETHb V3 CCIPAdapter Proxy 1";
     string internal constant SUPERBRIDGE_ADAPTER_PROXY_SALT = "OETHb V3 SuperbridgeAdapter Proxy 1";
 

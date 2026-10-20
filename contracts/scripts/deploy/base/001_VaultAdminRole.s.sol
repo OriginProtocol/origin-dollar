@@ -16,7 +16,7 @@ import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
 /// @title 001_VaultAdminRole
 /// @notice Gives the Super OETH vault an Admin role that can unpause, alongside the Governor.
-/// @dev Base counterpart of mainnet 005_VaultAdminRole. Before this upgrade the Strategist could
+/// @dev Base counterpart of mainnet 014_VaultAdminRole. Before this upgrade the Strategist could
 ///      both pause and unpause, so a single compromised key could trip a pause and immediately lift
 ///      it. The new `adminAddr` slot splits the two: `pauseCapital`/`pauseRebase` stay open to the
 ///      Strategist (the 2/8 Guardian Safe), while `unpauseCapital`/`unpauseRebase` become
