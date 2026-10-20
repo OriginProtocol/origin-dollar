@@ -7,30 +7,33 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IRouterClient } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 
-import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 /**
  * @title BaseFeeBridgeModule
- * @notice Gnosis Safe module that sells the Super OETH (OETHb) protocol fees held by the
- *         Base fee Safe for WETH on the Curve AMO pool and bridges that WETH over CCIP to the
- *         Ethereum FeeSplitter, where it joins the OUSD/OETH fees on their way to xOGN.
+ * @notice Gnosis Safe module that redeems the Super OETH (OETHb) protocol fees held by the
+ *         Base fee Safe for WETH through the vault's withdrawal queue and bridges that WETH
+ *         over CCIP to the Ethereum FeeSplitter, where it joins the OUSD/OETH fees on their
+ *         way to xOGN.
  *
  * @dev The Safe hosting this module is the vault's `trusteeAddress`, so fees are minted to it
  *      as OETHb on every rebase.
+ *
+ *      The redeem is the vault's async withdrawal: `requestWithdrawal` burns OETHb 1:1, and
+ *      `claimAndBridge` claims the WETH once `withdrawalClaimDelay` has passed and the queue
+ *      has the liquidity. It is 1:1, so there is no price exposure and no slippage bound.
  *
  *      Safety properties:
  *
  *      1. The destination is fixed at construction. An operator can only move OETHb fees to
  *         the FeeSplitter, never to an address of its choosing.
- *      2. The route is fixed at construction: one Curve pool, OETHb in, WETH out.
- *      3. The swap has an on-chain slippage floor against par. OETHb is redeemable 1:1 for WETH
- *         at the vault, so par is a valid reference that needs no oracle, and the floor caps
- *         what a compromised operator key can lose to a sandwich.
- *      4. Only the WETH the swap produced is bridged, so any other WETH the Safe holds stays put.
+ *      2. Only the WETH the claim paid out is bridged, so any other WETH the Safe holds stays.
+ *      3. At most one request is open at a time, so the module never has to track a list and
+ *         the operator cannot fragment the fees across requests.
  *
- *      A swap is used instead of a vault redeem because a redeem is two-step (request, then a
- *      claim after `withdrawalClaimDelay` once the queue has liquidity). The pool costs a few
- *      basis points on amounts this small.
+ *      If a Safe owner claims the pending request directly on the vault, every later claim
+ *      through the module would revert with "Already claimed"; the Safe then calls
+ *      `clearPendingRequest` to reset the module.
  *
  *      The CCIP fee is paid in native ETH from the Safe, so the Safe must hold some ETH. The
  *      message is token-only (empty data, zero gas limit), so CCIP releases the WETH to the
@@ -39,120 +42,124 @@ import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
  *      The Safe must call `enableModule(address(this))` before this module can do anything.
  */
 contract BaseFeeBridgeModule is AbstractSafeModule {
-    /// @notice Upper bound for `maxSlippageBps`, so a misconfiguration cannot open the floor.
-    uint256 public constant MAX_SLIPPAGE_BPS = 100;
-
-    IERC20 public immutable oethb;
+    IVault public immutable vault;
+    /// @notice The vault's asset, paid out by the withdrawal queue and bridged.
     IERC20 public immutable weth;
-    ICurveStableSwapNG public immutable curvePool;
-    int128 public immutable oethbIndex;
-    int128 public immutable wethIndex;
 
     IRouterClient public immutable ccipRouter;
     uint64 public immutable destinationChainSelector;
     /// @notice FeeSplitter on the destination chain that receives the bridged WETH.
     address public immutable feeSplitter;
 
-    /// @notice Maximum discount to par accepted on the OETHb -> WETH swap, in basis points.
-    uint256 public maxSlippageBps;
+    /// @notice Vault withdrawal request opened by this module and not yet claimed.
+    uint256 public pendingRequestId;
+    bool public hasPendingRequest;
+    /// @notice Time of the last request, so the operator can space requests out.
+    uint256 public lastRequestAt;
 
-    event MaxSlippageBpsUpdated(uint256 maxSlippageBps);
-    event FeesBridged(uint256 oethbAmount, uint256 wethAmount, uint256 ccipFee);
+    event WithdrawalRequested(uint256 indexed requestId, uint256 oethbAmount);
+    event FeesBridged(
+        uint256 indexed requestId,
+        uint256 wethAmount,
+        uint256 ccipFee
+    );
+    event PendingRequestCleared(uint256 indexed requestId);
 
     constructor(
         address _safeContract,
         address _operator,
-        address _oethb,
-        address _weth,
-        address _curvePool,
+        address _vault,
         address _ccipRouter,
         uint64 _destinationChainSelector,
-        address _feeSplitter,
-        uint256 _maxSlippageBps
+        address _feeSplitter
     ) AbstractSafeModule(_safeContract) {
         require(_operator != address(0), "Invalid operator");
         require(_feeSplitter != address(0), "Invalid fee splitter");
 
-        oethb = IERC20(_oethb);
-        weth = IERC20(_weth);
-        curvePool = ICurveStableSwapNG(_curvePool);
-
-        address coin0 = curvePool.coins(0);
-        address coin1 = curvePool.coins(1);
-        if (coin0 == _oethb && coin1 == _weth) {
-            oethbIndex = 0;
-            wethIndex = 1;
-        } else {
-            require(coin0 == _weth && coin1 == _oethb, "Pool coins mismatch");
-            oethbIndex = 1;
-            wethIndex = 0;
-        }
-
+        vault = IVault(_vault);
+        weth = IERC20(vault.asset());
         ccipRouter = IRouterClient(_ccipRouter);
         destinationChainSelector = _destinationChainSelector;
         feeSplitter = _feeSplitter;
 
-        _setMaxSlippageBps(_maxSlippageBps);
         _grantRole(OPERATOR_ROLE, _operator);
     }
 
     /**
-     * @notice Sell OETHb from the Safe for WETH on the Curve pool and bridge the WETH to the
-     *         FeeSplitter on the destination chain.
-     * @param oethbAmount Amount of OETHb to sell.
-     * @param minWethOut  Minimum WETH out. Must be at or above the par floor set by
-     *                    `maxSlippageBps`; the operator passes a tighter value from a quote.
+     * @notice Open a vault withdrawal request for OETHb held by the Safe.
+     * @param oethbAmount Amount of OETHb to burn; the claim pays the same amount of WETH.
      */
-    // The before/after WETH read is the point: it measures what the swap paid the Safe. The only
-    // external calls go to the Safe, which calls the fixed pool and router set at construction.
-    // slither-disable-start reentrancy-balance,reentrancy-events
-    function swapAndBridge(uint256 oethbAmount, uint256 minWethOut)
-        external
-        onlyOperator
-    {
+    // Events follow the Safe call because they report what it did. The only external calls go
+    // to the Safe, which calls the fixed vault and router.
+    // slither-disable-next-line reentrancy-events
+    function requestWithdrawal(uint256 oethbAmount) external onlyOperator {
+        require(!hasPendingRequest, "Request pending");
         require(oethbAmount > 0, "Invalid amount");
-        require(
-            minWethOut >= (oethbAmount * (1e4 - maxSlippageBps)) / 1e4,
-            "Min out below floor"
-        );
 
-        uint256 wethBefore = weth.balanceOf(address(safeContract));
+        // The vault assigns ids sequentially, and nothing can interleave between this read
+        // and the request below, so this is the id the request will get.
+        uint256 requestId = vault.withdrawalQueueMetadata().nextWithdrawalIndex;
+        pendingRequestId = requestId;
+        hasPendingRequest = true;
+        lastRequestAt = block.timestamp;
 
         _exec(
-            address(oethb),
+            address(vault),
             0,
             abi.encodeWithSelector(
-                oethb.approve.selector,
-                address(curvePool),
+                vault.requestWithdrawal.selector,
                 oethbAmount
             ),
-            "Failed to approve OETHb"
+            "Withdrawal request failed"
         );
-        _exec(
-            address(curvePool),
-            0,
-            // `exchange` is overloaded on StableSwap-NG; pick the receiver-less variant.
-            abi.encodeWithSignature(
-                "exchange(int128,int128,uint256,uint256)",
-                oethbIndex,
-                wethIndex,
-                oethbAmount,
-                minWethOut
-            ),
-            "Swap failed"
+        // A Safe module call to a codeless or misbehaving target can report success without
+        // doing anything, so confirm the request exists rather than trusting the call.
+        require(
+            vault.withdrawalRequests(requestId).withdrawer ==
+                address(safeContract),
+            "Request not recorded"
         );
 
+        emit WithdrawalRequested(requestId, oethbAmount);
+    }
+
+    /**
+     * @notice Claim the pending withdrawal and bridge the WETH to the FeeSplitter on the
+     *         destination chain.
+     */
+    // The before/after WETH read is the point: it measures what the claim paid the Safe. The
+    // only external calls go to the Safe, which calls the fixed vault and router.
+    // slither-disable-start reentrancy-balance,reentrancy-events
+    function claimAndBridge() external onlyOperator {
+        require(hasPendingRequest, "No pending request");
+        uint256 requestId = pendingRequestId;
+        hasPendingRequest = false;
+
+        uint256 wethBefore = weth.balanceOf(address(safeContract));
+        _exec(
+            address(vault),
+            0,
+            abi.encodeWithSelector(vault.claimWithdrawal.selector, requestId),
+            "Withdrawal claim failed"
+        );
         uint256 wethAmount = weth.balanceOf(address(safeContract)) - wethBefore;
-        // A Safe module call to a codeless or misbehaving pool can report success without
-        // paying out, so check the delivered amount rather than trusting the call.
-        require(wethAmount >= minWethOut, "Insufficient WETH out");
+        require(wethAmount > 0, "Nothing claimed");
 
         uint256 ccipFee = _bridgeWETH(wethAmount);
 
-        emit FeesBridged(oethbAmount, wethAmount, ccipFee);
+        emit FeesBridged(requestId, wethAmount, ccipFee);
     }
 
     // slither-disable-end reentrancy-balance,reentrancy-events
+
+    /**
+     * @notice Forget the pending request, e.g. after a Safe owner claimed it on the vault.
+     */
+    function clearPendingRequest() external onlySafe {
+        require(hasPendingRequest, "No pending request");
+        hasPendingRequest = false;
+        emit PendingRequestCleared(pendingRequestId);
+    }
 
     /**
      * @notice Native CCIP fee the Safe would pay to bridge `wethAmount` to the FeeSplitter.
@@ -165,20 +172,6 @@ contract BaseFeeBridgeModule is AbstractSafeModule {
                 destinationChainSelector,
                 _ccipMessage(wethAmount)
             );
-    }
-
-    /**
-     * @notice Set the maximum discount to par accepted on the swap.
-     * @param _maxSlippageBps New bound in basis points, at most `MAX_SLIPPAGE_BPS`.
-     */
-    function setMaxSlippageBps(uint256 _maxSlippageBps) external onlySafe {
-        _setMaxSlippageBps(_maxSlippageBps);
-    }
-
-    function _setMaxSlippageBps(uint256 _maxSlippageBps) internal {
-        require(_maxSlippageBps <= MAX_SLIPPAGE_BPS, "Slippage too high");
-        maxSlippageBps = _maxSlippageBps;
-        emit MaxSlippageBpsUpdated(_maxSlippageBps);
     }
 
     function _bridgeWETH(uint256 amount) internal returns (uint256 ccipFee) {

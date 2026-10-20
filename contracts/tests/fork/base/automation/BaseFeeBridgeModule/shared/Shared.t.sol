@@ -10,19 +10,16 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 
 /// @dev Test-local handle on BaseFeeBridgeModule; nothing else in the repo consumes it.
 interface IBaseFeeBridgeModule {
-    function swapAndBridge(uint256 oethbAmount, uint256 minWethOut) external;
-    function maxSlippageBps() external view returns (uint256);
+    function requestWithdrawal(uint256 oethbAmount) external;
+    function claimAndBridge() external;
     function bridgeFee(uint256 wethAmount) external view returns (uint256);
-}
-
-interface ICurvePoolQuote {
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
+    function pendingRequestId() external view returns (uint256);
+    function hasPendingRequest() external view returns (bool);
 }
 
 abstract contract Fork_Base_BaseFeeBridgeModule_Shared_Test is BaseFork {
-    uint256 internal constant MAX_SLIPPAGE = 50;
-
     IBaseFeeBridgeModule internal module;
+    IVault internal vault;
     IERC20 internal oethb;
     address internal safe;
 
@@ -31,6 +28,7 @@ abstract contract Fork_Base_BaseFeeBridgeModule_Shared_Test is BaseFork {
         _createAndSelectForkBase();
 
         safe = CrossChain.multichainBuybackOperator;
+        vault = IVault(Base.OETHBaseVaultProxy);
         oethb = IERC20(Base.OETHBaseProxy);
         weth = IERC20(Base.WETH);
 
@@ -40,13 +38,10 @@ abstract contract Fork_Base_BaseFeeBridgeModule_Shared_Test is BaseFork {
                 abi.encode(
                     safe,
                     operator,
-                    Base.OETHBaseProxy,
-                    Base.WETH,
-                    Base.OETHb_WETH_pool,
+                    Base.OETHBaseVaultProxy,
                     Base.CCIPRouter,
                     Mainnet.CCIPChainSelector,
-                    Mainnet.FeeSplitter,
-                    MAX_SLIPPAGE
+                    Mainnet.FeeSplitter
                 )
             )
         );
@@ -66,13 +61,8 @@ abstract contract Fork_Base_BaseFeeBridgeModule_Shared_Test is BaseFork {
         deal(Base.WETH, alice, needed);
         vm.startPrank(alice);
         weth.approve(Base.OETHBaseVaultProxy, needed);
-        IVault(Base.OETHBaseVaultProxy).mint(needed);
+        vault.mint(needed);
         oethb.transfer(safe, oethb.balanceOf(alice));
         vm.stopPrank();
-    }
-
-    /// @dev Quote OETHb (coins[1]) -> WETH (coins[0]) on the Curve AMO pool.
-    function _quote(uint256 amount) internal view returns (uint256) {
-        return ICurvePoolQuote(Base.OETHb_WETH_pool).get_dy(1, 0, amount);
     }
 }

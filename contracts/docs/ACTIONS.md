@@ -75,7 +75,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for OETH: CRV/SSV for WETH to the OETH Vault (`--harvester oeth`)                      |
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for the OGN buyback: OETH/WETH/OUSD/USDe for OGN to OGNRewardsSource (`--harvester ogn`) |
 | `setXOGNRewardRate`         | mainnet     | `20 1 * * 2`     | Set the xOGN reward rate from measured OGN buybacks, via SetXOGNRewardRateModule                 |
-| `bridgeBaseFees`            | base        | `45 10 * * *`    | Swap the Base fee Safe's OETHb fees to WETH on Curve and bridge them to the Ethereum FeeSplitter |
+| `bridgeBaseFees`            | base        | `45 10 * * *`    | Redeem the Base fee Safe's OETHb fees for WETH (weekly) and bridge them to the Ethereum FeeSplitter |
 
 ## System
 
@@ -129,23 +129,36 @@ hashOrder(order))`, with no EIP-191 prefix, through `getDigestSigner` (KMS
 ### Base fee bridge parameters
 
 Base OETHb fees are minted to the fee Safe (`multichainBuybackOperator`, the
-Base vault's `trusteeAddress`). `bridgeBaseFees` calls `swapAndBridge` on
-`BaseFeeBridgeModule`. That sells the Safe's whole OETHb balance for WETH on the
-Curve AMO pool and sends the WETH over CCIP to the Ethereum FeeSplitter. From
-there `feeSplitterDistribute` and `cowHarvest --harvester ogn` treat it like any
-other fee.
+Base vault's `trusteeAddress`). `bridgeBaseFees` drives `BaseFeeBridgeModule`.
+The module redeems the fees 1:1 through the vault's async withdrawal queue and
+sends the WETH over CCIP to the Ethereum FeeSplitter. From there
+`feeSplitterDistribute` and `cowHarvest --harvester ogn` treat it like any other
+fee.
 
-- The CCIP fee is roughly flat per message (~0.019 ETH when this was written),
-  so the action batches. It skips until `bridgeFee` is at most `--max-fee-bps`
-  (default 100) of the WETH, which today means about 2 OETHb.
-- `minWethOut` is the Curve `get_dy` quote less `--slippage-bps` (default 10).
-  The module also enforces a par floor (`maxSlippageBps`, 50 at deploy). The
-  run fails, rather than skips, when the quote is below that floor.
-- The Safe pays the CCIP fee in native ETH. The run fails if the Safe cannot
-  cover it, and warns when it covers fewer than three fees.
-- The run is simulated before broadcast. `--dryrun` stops after the simulation.
-- Scheduled at 10:45, after the 09:25 Base rebase mints fees and ahead of the
-  12:10 mainnet `feeSplitterDistribute`, which leaves time for CCIP delivery.
+The module keeps at most one request open. The action runs daily, but it only
+sends a transaction when there is something to do:
+
+- **Pending request.** It claims and bridges once `withdrawalClaimDelay` has
+  passed and the queue has the liquidity, and otherwise waits with no tx. It
+  checks claimability by simulation, and logs the vault's reason (e.g.
+  `Queue pending liquidity`) while it waits. If the vault claim would succeed
+  but `claimAndBridge` still reverts (e.g. the Safe cannot pay the CCIP fee),
+  the run fails. It never opens a new request while one is pending.
+- **New request.** It opens one at most every `--min-interval-days` (default
+  7), and only when `bridgeFee` is at most `--max-fee-bps` (default 100) of the
+  Safe's OETHb. The CCIP fee is roughly flat per message (~0.019 ETH when this
+  was written), so that means about 2 OETHb. A single run can claim last week's
+  request and then open this week's.
+- The claim is not fee-gated: the request is already open, and idle WETH helps
+  no one.
+- Queue liquidity: the vault's idle WETH is largely reserved for earlier
+  claimable requests, so a claim can wait until mints or strategy withdrawals
+  fund the queue.
+- The Safe pays the CCIP fee in native ETH. The action warns when the Safe's ETH
+  covers fewer than three fees.
+- Every write is simulated first. `--dryrun` stops after the simulation.
+- Recovery: if a Safe owner claims the pending request directly on the vault,
+  the Safe calls `clearPendingRequest()` on the module.
 - Needs, before enabling: the module deployed (`base/007`) and enabled on the
   fee Safe, and `FeeSplitter.addAsset(WETH, …)` on Ethereum. Until that last
   step, bridged WETH is not distributed.

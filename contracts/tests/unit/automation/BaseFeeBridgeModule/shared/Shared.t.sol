@@ -9,29 +9,28 @@ import {Automation} from "tests/utils/artifacts/Automation.sol";
 import {Mocks} from "tests/utils/artifacts/Mocks.sol";
 
 // --- Project imports
-import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
+import {MockAsyncWithdrawalVault} from "tests/mocks/MockAsyncWithdrawalVault.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 /// @dev Test-local handle on BaseFeeBridgeModule; nothing else in the repo consumes it.
 interface IBaseFeeBridgeModule {
-    function MAX_SLIPPAGE_BPS() external view returns (uint256);
     function OPERATOR_ROLE() external view returns (bytes32);
     function DEFAULT_ADMIN_ROLE() external view returns (bytes32);
     function safeContract() external view returns (address);
-    function oethb() external view returns (address);
+    function vault() external view returns (address);
     function weth() external view returns (address);
-    function curvePool() external view returns (address);
-    function oethbIndex() external view returns (int128);
-    function wethIndex() external view returns (int128);
     function ccipRouter() external view returns (address);
     function destinationChainSelector() external view returns (uint64);
     function feeSplitter() external view returns (address);
-    function maxSlippageBps() external view returns (uint256);
+    function pendingRequestId() external view returns (uint256);
+    function hasPendingRequest() external view returns (bool);
+    function lastRequestAt() external view returns (uint256);
     function hasRole(bytes32 role, address account) external view returns (bool);
+    function requestWithdrawal(uint256 oethbAmount) external;
+    function claimAndBridge() external;
+    function clearPendingRequest() external;
     function bridgeFee(uint256 wethAmount) external view returns (uint256);
-    function swapAndBridge(uint256 oethbAmount, uint256 minWethOut) external;
-    function setMaxSlippageBps(uint256 maxSlippageBps) external;
 }
 
 /// @dev Test-local handle on the CCIP router mock.
@@ -46,9 +45,9 @@ abstract contract Unit_BaseFeeBridgeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     uint64 internal constant DEST_SELECTOR = 5009297550715157269;
-    uint256 internal constant MAX_SLIPPAGE = 50;
     uint256 internal constant CCIP_FEE = 0.001 ether;
-    uint256 internal constant POOL_LIQUIDITY = 1_000 ether;
+    uint256 internal constant VAULT_LIQUIDITY = 1_000 ether;
+    uint256 internal constant CLAIM_DELAY = 600;
 
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
@@ -57,7 +56,7 @@ abstract contract Unit_BaseFeeBridgeModule_Shared_Test is Base {
     MockSafeContract internal mockSafe;
     MockERC20 internal oethb;
     MockERC20 internal mockWeth;
-    MockCurvePool internal pool;
+    MockAsyncWithdrawalVault internal vault;
     IMockCCIPRouter internal router;
     IBaseFeeBridgeModule internal module;
     address internal feeSplitter;
@@ -83,16 +82,13 @@ abstract contract Unit_BaseFeeBridgeModule_Shared_Test is Base {
         mockWeth = new MockERC20("Wrapped Ether", "WETH", 18);
         feeSplitter = makeAddr("FeeSplitter");
 
-        // Same coin order as the production pool: coins[0] = WETH, coins[1] = OETHb.
-        pool = new MockCurvePool(address(mockWeth), address(oethb));
-        mockWeth.mint(address(pool), POOL_LIQUIDITY);
-        oethb.mint(address(pool), POOL_LIQUIDITY);
-        pool.setBalances(POOL_LIQUIDITY, POOL_LIQUIDITY);
+        vault = new MockAsyncWithdrawalVault(address(mockWeth), address(oethb));
+        mockWeth.mint(address(vault), VAULT_LIQUIDITY);
 
         router = IMockCCIPRouter(vm.deployCode(Mocks.CCIP_ROUTER_MOCK));
         router.setFee(CCIP_FEE);
 
-        module = _deployModule(address(pool));
+        module = _deployModule(operator, feeSplitter);
 
         vm.deal(address(mockSafe), 1 ether);
     }
@@ -101,27 +97,20 @@ abstract contract Unit_BaseFeeBridgeModule_Shared_Test is Base {
     /// --- HELPERS
     //////////////////////////////////////////////////////
 
-    function _deployModule(address _pool) internal returns (IBaseFeeBridgeModule) {
+    function _deployModule(address _operator, address _feeSplitter) internal returns (IBaseFeeBridgeModule) {
         return IBaseFeeBridgeModule(
             vm.deployCode(
                 Automation.BASE_FEE_BRIDGE_MODULE,
-                abi.encode(
-                    address(mockSafe),
-                    operator,
-                    address(oethb),
-                    address(mockWeth),
-                    _pool,
-                    address(router),
-                    DEST_SELECTOR,
-                    feeSplitter,
-                    MAX_SLIPPAGE
-                )
+                abi.encode(address(mockSafe), _operator, address(vault), address(router), DEST_SELECTOR, _feeSplitter)
             )
         );
     }
 
-    function _floor(uint256 amount) internal pure returns (uint256) {
-        return (amount * (1e4 - MAX_SLIPPAGE)) / 1e4;
+    /// @dev Give the Safe `amount` OETHb and open a request for it through the module.
+    function _request(uint256 amount) internal {
+        oethb.mint(address(mockSafe), amount);
+        vm.prank(operator);
+        module.requestWithdrawal(amount);
     }
 
     //////////////////////////////////////////////////////
@@ -132,7 +121,7 @@ abstract contract Unit_BaseFeeBridgeModule_Shared_Test is Base {
         vm.label(address(mockSafe), "MockSafe");
         vm.label(address(oethb), "OETHb");
         vm.label(address(mockWeth), "WETH");
-        vm.label(address(pool), "MockCurvePool");
+        vm.label(address(vault), "MockVault");
         vm.label(address(router), "MockCCIPRouter");
         vm.label(address(module), "BaseFeeBridgeModule");
     }
