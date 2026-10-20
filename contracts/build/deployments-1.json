@@ -137,15 +137,15 @@
             "name": "OETHB_V3_REMOTE_PROXY"
         },
         {
-            "implementation": "0x21ae1d9F1AAa58A3B9b58497cD79ac29B6125649",
+            "implementation": "0xFE69f8001b96e027C20C225Ae23d5e75687EbF1b",
             "name": "OETHB_V3_REMOTE_IMPL"
         },
         {
-            "implementation": "0x26ef0Ec5a9369A8609248F2e9a14388025B4E16F",
+            "implementation": "0x05A99cB2Cf686573f96d4c25F646E1C619C602EE",
             "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_IMPL"
         },
         {
-            "implementation": "0x05A99cB2Cf686573f96d4c25F646E1C619C602EE",
+            "implementation": "0x7661a05acCAC0492D0a114909fE0126636A3c4DF",
             "name": "OETHB_V3_CCIP_ADAPTER_IMPL"
         },
         {
@@ -203,13 +203,13 @@
         {
             "name": "011_OETHbV3RemoteProxy",
             "proposalId": 1,
-            "tsDeployment": 1792404599,
+            "tsDeployment": 1792488731,
             "tsGovernance": 0
         },
         {
             "name": "012_OETHbV3RemoteImpl",
-            "proposalId": 0,
-            "tsDeployment": 1792404599,
+            "proposalId": 91505267859951030226833253700849903488427263165343640847453520847791717800282,
+            "tsDeployment": 1792488731,
             "tsGovernance": 0
         }
     ]

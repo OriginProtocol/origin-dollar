@@ -1,0 +1,1391 @@
+{
+  "address": "0xFE69f8001b96e027C20C225Ae23d5e75687EbF1b",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_stratConfig",
+          "type": "tuple",
+          "internalType": "struct InitializableAbstractStrategy.BaseStrategyConfig",
+          "components": [
+            {
+              "name": "platformAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "vaultAddress",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        },
+        {
+          "name": "_bridgeAsset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_oToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_woToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_oTokenVault",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "assetToPToken",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "bridgeAsset",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "checkBalance",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "claimGovernance",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "claimRemoteWithdrawal",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "collectRewardTokens",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "deposit",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "depositAll",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRewardTokenAddresses",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "governor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "harvesterAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "inboundAdapter",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "initialize",
+      "inputs": [
+        {
+          "name": "_operator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isGovernor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isYieldOpInFlight",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastBalanceCheckTimestamp",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastYieldNonce",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "nonceProcessed",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "oToken",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "oTokenVault",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "operator",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "outboundAdapter",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "outstandingRequestAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "outstandingRequestId",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "platformAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "receiveMessage",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "payload",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "removePToken",
+      "inputs": [
+        {
+          "name": "_assetIndex",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "retryDeposit",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "rewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "safeApproveAllTokens",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "sendBalanceReport",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "setHarvesterAddress",
+      "inputs": [
+        {
+          "name": "_harvesterAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setInboundAdapter",
+      "inputs": [
+        {
+          "name": "_inboundAdapter",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setOperator",
+      "inputs": [
+        {
+          "name": "_operator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setOutboundAdapter",
+      "inputs": [
+        {
+          "name": "_outboundAdapter",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPTokenAddress",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setRewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "_rewardTokenAddresses",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "supportsAsset",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferGovernance",
+      "inputs": [
+        {
+          "name": "_newGovernor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferNative",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferToken",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "vaultAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "withdrawAll",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "woToken",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "BalanceReportSent",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "remoteBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Deposit",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "DepositProcessed",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "remoteBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "DepositUnderlyingFailed",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "reason",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "GovernorshipTransferred",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "HarvesterAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_newHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "IdleDepositRetried",
+      "inputs": [
+        {
+          "name": "mintedBridgeAsset",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "wrappedOToken",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "InboundAdapterUpdated",
+      "inputs": [
+        {
+          "name": "oldAdapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OperatorUpdated",
+      "inputs": [
+        {
+          "name": "oldOperator",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newOperator",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OutboundAdapterUpdated",
+      "inputs": [
+        {
+          "name": "oldAdapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenAdded",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenRemoved",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingGovernorshipTransfer",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RemoteWithdrawalClaimed",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        },
+        {
+          "name": "_newAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenCollected",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "rewardToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WithdrawClaimDelivered",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "remoteBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WithdrawClaimNack",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "remoteBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WithdrawRequestProcessed",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WithdrawRequestUnderlyingFailed",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "reason",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Withdrawal",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "YieldNonceAdvanced",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "YieldNonceProcessed",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 47337,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 47340,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 47380,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 38403,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "outboundAdapter",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 38406,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "inboundAdapter",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_address"
+      },
+      {
+        "astId": 38409,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "operator",
+        "offset": 0,
+        "slot": "53",
+        "type": "t_address"
+      },
+      {
+        "astId": 38412,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "lastYieldNonce",
+        "offset": 20,
+        "slot": "53",
+        "type": "t_uint64"
+      },
+      {
+        "astId": 38417,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "nonceProcessed",
+        "offset": 0,
+        "slot": "54",
+        "type": "t_mapping(t_uint64,t_bool)"
+      },
+      {
+        "astId": 38420,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "lastBalanceCheckTimestamp",
+        "offset": 0,
+        "slot": "55",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 38425,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "56",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 47460,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "_deprecated_platformAddress",
+        "offset": 0,
+        "slot": "106",
+        "type": "t_address"
+      },
+      {
+        "astId": 47463,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "_deprecated_vaultAddress",
+        "offset": 0,
+        "slot": "107",
+        "type": "t_address"
+      },
+      {
+        "astId": 47468,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "assetToPToken",
+        "offset": 0,
+        "slot": "108",
+        "type": "t_mapping(t_address,t_address)"
+      },
+      {
+        "astId": 47472,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "assetsMapped",
+        "offset": 0,
+        "slot": "109",
+        "type": "t_array(t_address)dyn_storage"
+      },
+      {
+        "astId": 47474,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "_deprecated_rewardTokenAddress",
+        "offset": 0,
+        "slot": "110",
+        "type": "t_address"
+      },
+      {
+        "astId": 47476,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "_deprecated_rewardLiquidationThreshold",
+        "offset": 0,
+        "slot": "111",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 47479,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "harvesterAddress",
+        "offset": 0,
+        "slot": "112",
+        "type": "t_address"
+      },
+      {
+        "astId": 47483,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "rewardTokenAddresses",
+        "offset": 0,
+        "slot": "113",
+        "type": "t_array(t_address)dyn_storage"
+      },
+      {
+        "astId": 47487,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "_reserved",
+        "offset": 0,
+        "slot": "114",
+        "type": "t_array(t_int256)98_storage"
+      },
+      {
+        "astId": 38847,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "212",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 40274,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "outstandingRequestId",
+        "offset": 0,
+        "slot": "262",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 40277,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "outstandingRequestAmount",
+        "offset": 0,
+        "slot": "263",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 40282,
+        "contract": "contracts/strategies/crosschainV3/RemoteWOTokenStrategy.sol:RemoteWOTokenStrategy",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "264",
+        "type": "t_array(t_uint256)43_storage"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_address)dyn_storage": {
+        "encoding": "dynamic_array",
+        "label": "address[]",
+        "numberOfBytes": "32",
+        "base": "t_address"
+      },
+      "t_array(t_int256)98_storage": {
+        "encoding": "inplace",
+        "label": "int256[98]",
+        "numberOfBytes": "3136",
+        "base": "t_int256"
+      },
+      "t_array(t_uint256)43_storage": {
+        "encoding": "inplace",
+        "label": "uint256[43]",
+        "numberOfBytes": "1376",
+        "base": "t_uint256"
+      },
+      "t_array(t_uint256)50_storage": {
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600",
+        "base": "t_uint256"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_int256": {
+        "encoding": "inplace",
+        "label": "int256",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_address)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_mapping(t_uint64,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_uint64",
+        "label": "mapping(uint64 => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}
