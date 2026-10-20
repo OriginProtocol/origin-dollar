@@ -1,119 +1,1036 @@
 {
-  "address": "0x0929C0fbFF88e129ACaA51Bba0C959491325b4aD",
-  "_seeded": "Pre-deploy storage baseline. BridgedWOETHMigrationStrategy upgrades the live BridgedWOETHStrategyProxy, so its baseline is the layout of the implementation deployed there today (copied from BridgedWOETHStrategy.json). Lets scripts/check-storage-upgrade.js run a real comparison in scripts/deploy/base/004_OETHbV3WOETHMigration.s.sol instead of passing the new name as a fresh contract. Replaced wholesale by the descriptor refresh after the real deploy.",
+  "address": "0xC29788FEE651182A36b4244490E1BBb0B5C5D5Eb",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_stratConfig",
+          "type": "tuple",
+          "internalType": "struct InitializableAbstractStrategy.BaseStrategyConfig",
+          "components": [
+            {
+              "name": "platformAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "vaultAddress",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        },
+        {
+          "name": "_weth",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_bridgedWOETH",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_oethb",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_oracle",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_master",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_ccipRouter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_ccipChainSelectorMainnet",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "assetToPToken",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "bridgeToRemote",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "bridgedWOETH",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ccipChainSelectorMainnet",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ccipRouter",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IRouterClient"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "checkBalance",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "claimGovernance",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "collectRewardTokens",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "deposit",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "depositAll",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "depositBridgedWOETH",
+      "inputs": [
+        {
+          "name": "woethAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getBridgedWOETHValue",
+      "inputs": [
+        {
+          "name": "woethAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRewardTokenAddresses",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "governor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "harvesterAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "initialize",
+      "inputs": [
+        {
+          "name": "_maxPriceDiffBps",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isGovernor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastOraclePrice",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "master",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxPerBridge",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxPriceDiffBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "oethb",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "oracle",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOracle"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "platformAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "removePToken",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "rewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "safeApproveAllTokens",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setHarvesterAddress",
+      "inputs": [
+        {
+          "name": "_harvesterAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setMaxPerBridge",
+      "inputs": [
+        {
+          "name": "_maxPerBridge",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setMaxPriceDiffBps",
+      "inputs": [
+        {
+          "name": "_maxPriceDiffBps",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPTokenAddress",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setRewardTokenAddresses",
+      "inputs": [
+        {
+          "name": "_rewardTokenAddresses",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "supportsAsset",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalBridged",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferGovernance",
+      "inputs": [
+        {
+          "name": "_newGovernor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferToken",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateWOETHOraclePrice",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "vaultAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "weth",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWETH9"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawAll",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawBridgedWOETH",
+      "inputs": [
+        {
+          "name": "oethToBurn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "Deposit",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "GovernorshipTransferred",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "HarvesterAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_newHarvesterAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MaxPerBridgeSet",
+      "inputs": [
+        {
+          "name": "maxPerBridge",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MaxPriceDiffBpsUpdated",
+      "inputs": [
+        {
+          "name": "oldValue",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "newValue",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenAdded",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PTokenRemoved",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingGovernorshipTransfer",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenAddressesUpdated",
+      "inputs": [
+        {
+          "name": "_oldAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        },
+        {
+          "name": "_newAddresses",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RewardTokenCollected",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "rewardToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WOETHBridgedToRemote",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalBridged",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WOETHPriceUpdated",
+      "inputs": [
+        {
+          "name": "oldValue",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "newValue",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Withdrawal",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_pToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
   "storageLayout": {
     "storage": [
       {
-        "astId": 4598,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47337,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "initialized",
         "offset": 0,
         "slot": "0",
         "type": "t_bool"
       },
       {
-        "astId": 4601,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47340,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "initializing",
         "offset": 1,
         "slot": "0",
         "type": "t_bool"
       },
       {
-        "astId": 4641,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
-        "label": "______gap",
+        "astId": 47380,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
+        "label": "__gap",
         "offset": 0,
         "slot": "1",
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 4721,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47460,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "_deprecated_platformAddress",
         "offset": 0,
         "slot": "51",
         "type": "t_address"
       },
       {
-        "astId": 4724,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47463,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "_deprecated_vaultAddress",
         "offset": 0,
         "slot": "52",
         "type": "t_address"
       },
       {
-        "astId": 4729,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47468,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "assetToPToken",
         "offset": 0,
         "slot": "53",
         "type": "t_mapping(t_address,t_address)"
       },
       {
-        "astId": 4733,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47472,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "assetsMapped",
         "offset": 0,
         "slot": "54",
         "type": "t_array(t_address)dyn_storage"
       },
       {
-        "astId": 4735,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47474,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "_deprecated_rewardTokenAddress",
         "offset": 0,
         "slot": "55",
         "type": "t_address"
       },
       {
-        "astId": 4737,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47476,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "_deprecated_rewardLiquidationThreshold",
         "offset": 0,
         "slot": "56",
         "type": "t_uint256"
       },
       {
-        "astId": 4740,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47479,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "harvesterAddress",
         "offset": 0,
         "slot": "57",
         "type": "t_address"
       },
       {
-        "astId": 4744,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47483,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "rewardTokenAddresses",
         "offset": 0,
         "slot": "58",
         "type": "t_array(t_address)dyn_storage"
       },
       {
-        "astId": 4748,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 47487,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "_reserved",
         "offset": 0,
         "slot": "59",
         "type": "t_array(t_int256)98_storage"
       },
       {
-        "astId": 2300,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 28270,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "lastOraclePrice",
         "offset": 0,
         "slot": "157",
         "type": "t_uint128"
       },
       {
-        "astId": 2302,
-        "contract": "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+        "astId": 28272,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
         "label": "maxPriceDiffBps",
         "offset": 16,
         "slot": "157",
         "type": "t_uint128"
+      },
+      {
+        "astId": 27865,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
+        "label": "totalBridged",
+        "offset": 0,
+        "slot": "158",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 27868,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
+        "label": "maxPerBridge",
+        "offset": 0,
+        "slot": "159",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 27872,
+        "contract": "contracts/strategies/BridgedWOETHMigrationStrategy.sol:BridgedWOETHMigrationStrategy",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "160",
+        "type": "t_array(t_uint256)48_storage"
       }
     ],
     "types": {
@@ -133,6 +1050,12 @@
         "label": "int256[98]",
         "numberOfBytes": "3136",
         "base": "t_int256"
+      },
+      "t_array(t_uint256)48_storage": {
+        "encoding": "inplace",
+        "label": "uint256[48]",
+        "numberOfBytes": "1536",
+        "base": "t_uint256"
       },
       "t_array(t_uint256)50_storage": {
         "encoding": "inplace",
