@@ -155,6 +155,10 @@
         {
             "implementation": "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82",
             "name": "OETHB_V3_CCIP_ADAPTER_PROXY"
+        },
+        {
+            "implementation": "0x33A0f124293fA72e55CEfeFE1e723E04793A7bE9",
+            "name": "UNISWAP_V4_LIQUIDITY_MODULE"
         }
     ],
     "executions": [
@@ -192,12 +196,18 @@
             "name": "008_UniswapV4RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792049603,
-            "tsGovernance": 0
+            "tsGovernance": 1
         },
         {
             "name": "009_UniswapV4ERC4626RebalanceModule",
             "proposalId": 1,
             "tsDeployment": 1792073075,
+            "tsGovernance": 1
+        },
+        {
+            "name": "010_UniswapV4LiquidityModule",
+            "proposalId": 1,
+            "tsDeployment": 1792421171,
             "tsGovernance": 0
         },
         {

@@ -64,6 +64,12 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
     /// --- HELPERS
     //////////////////////////////////////////////////////
 
+    /// @dev Skip tests that need the live LP position. The strategist withdrew everything from the
+    ///      AMO on Oct 19 2026 (Base block 52811036), leaving no liquidity and the NFT unstaked.
+    function _skipIfPositionEmpty() internal {
+        vm.skip(aerodromeAMOStrategy.underlyingAssets() == 0);
+    }
+
     /// @dev Deal WETH to strategy and call deposit as vault
     function _depositToStrategy(uint256 amount) internal {
         deal(address(weth), address(aerodromeAMOStrategy), amount);

@@ -40,6 +40,12 @@ contract Smoke_Concrete_UniswapV4ERC4626RebalanceModule_Test is Smoke_UniswapV4E
     /// @dev Burn the live position and reset the price to the NAV, then mint ~20k OUSD on the five
     ///      ticks just above it.
     function test_rebalance_movesTheLivePositionToTheNav() public {
+        // The module burned position 457274 on Oct 15 2026 (block 26200340). Module 009 is due for
+        // a revamp, so this stays skipped rather than tracking the current token id.
+        try positionManager.ownerOf(tokenId) returns (address) {}
+        catch {
+            vm.skip(true);
+        }
         uint160 nav = _navSqrtPriceX96();
         vm.prank(CrossChain.talosRelayer);
         module.rebalance(tokenId, 0, 0, 0, 1_000e18, nav);

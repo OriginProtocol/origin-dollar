@@ -40,6 +40,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
     }
 
     function test_withdraw_lpRestakedInGauge() public {
+        _skipIfPositionEmpty();
         // Deposit enough WETH so withdrawal doesn't need to touch the LP position
         _depositToStrategy(5 ether);
 
@@ -52,6 +53,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
     }
 
     function test_withdrawAll_returnsAllWethToVault() public {
+        _skipIfPositionEmpty();
         // Push pool price into range so position has WETH that can be withdrawn
         _pushPoolPriceIntoRange();
         _widenAllowedWethShareInterval();
