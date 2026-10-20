@@ -15,6 +15,7 @@ import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 /// @dev Test-local handle on BaseFeeBridgeModule; nothing else in the repo consumes it.
 interface IBaseFeeBridgeModule {
+    function MIN_WITHDRAWAL_AMOUNT() external view returns (uint256);
     function OPERATOR_ROLE() external view returns (bytes32);
     function DEFAULT_ADMIN_ROLE() external view returns (bytes32);
     function safeContract() external view returns (address);

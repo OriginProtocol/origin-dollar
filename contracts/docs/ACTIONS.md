@@ -157,8 +157,12 @@ sends a transaction when there is something to do:
 - The Safe pays the CCIP fee in native ETH. The action warns when the Safe's ETH
   covers fewer than three fees.
 - Every write is simulated first. `--dryrun` stops after the simulation.
+- The module rejects requests below `MIN_WITHDRAWAL_AMOUNT` (1 OETHb), so a
+  compromised operator key cannot bridge dust to drain the Safe's ETH on CCIP
+  fees. The action skips, with no tx, while the Safe holds less than that.
 - Recovery: if a Safe owner claims the pending request directly on the vault,
-  the Safe calls `clearPendingRequest()` on the module.
+  the run fails and says so. The Safe must call `clearPendingRequest()` on the
+  module and deal with the WETH that claim left on it.
 - Needs, before enabling: the module deployed (`base/007`) and enabled on the
   fee Safe, and `FeeSplitter.addAsset(WETH, …)` on Ethereum. Until that last
   step, bridged WETH is not distributed.

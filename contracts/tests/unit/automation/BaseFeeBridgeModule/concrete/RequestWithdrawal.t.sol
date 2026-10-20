@@ -66,10 +66,22 @@ contract Unit_Concrete_BaseFeeBridgeModule_RequestWithdrawal_Test is Unit_BaseFe
         module.requestWithdrawal(AMOUNT);
     }
 
-    function test_requestWithdrawal_revertsOnZeroAmount() public {
+    function test_requestWithdrawal_acceptsMinimum() public {
+        uint256 minimum = module.MIN_WITHDRAWAL_AMOUNT();
+        assertEq(minimum, 1 ether);
+
+        _request(minimum);
+
+        assertEq(vault.withdrawalRequests(0).amount, minimum);
+    }
+
+    function test_requestWithdrawal_revertsBelowMinimum() public {
+        uint256 amount = module.MIN_WITHDRAWAL_AMOUNT() - 1;
+        oethb.mint(address(mockSafe), amount);
+
         vm.prank(operator);
-        vm.expectRevert("Invalid amount");
-        module.requestWithdrawal(0);
+        vm.expectRevert("Amount below minimum");
+        module.requestWithdrawal(amount);
     }
 
     function test_requestWithdrawal_revertsWhenSafeLacksOethb() public {

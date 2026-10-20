@@ -30,6 +30,8 @@ import { IVault } from "../interfaces/IVault.sol";
  *      2. Only the WETH the claim paid out is bridged, so any other WETH the Safe holds stays.
  *      3. At most one request is open at a time, so the module never has to track a list and
  *         the operator cannot fragment the fees across requests.
+ *      4. Each request is at least `MIN_WITHDRAWAL_AMOUNT`, which bounds both the CCIP fee share
+ *         of a bridge and how fast a compromised operator can spend the Safe's ETH on fees.
  *
  *      If a Safe owner claims the pending request directly on the vault, every later claim
  *      through the module would revert with "Already claimed"; the Safe then calls
@@ -42,6 +44,11 @@ import { IVault } from "../interfaces/IVault.sol";
  *      The Safe must call `enableModule(address(this))` before this module can do anything.
  */
 contract BaseFeeBridgeModule is AbstractSafeModule {
+    /// @notice Smallest OETHb amount a request may redeem. The CCIP fee is roughly flat per
+    ///         message (~0.019 ETH), so without a floor an operator key could bridge dust every
+    ///         claim delay and drain the Safe's ETH; at 1 OETHb a bridge pays at most ~2% in fees.
+    uint256 public constant MIN_WITHDRAWAL_AMOUNT = 1 ether;
+
     IVault public immutable vault;
     /// @notice The vault's asset, paid out by the withdrawal queue and bridged.
     IERC20 public immutable weth;
@@ -94,7 +101,7 @@ contract BaseFeeBridgeModule is AbstractSafeModule {
     // slither-disable-next-line reentrancy-events
     function requestWithdrawal(uint256 oethbAmount) external onlyOperator {
         require(!hasPendingRequest, "Request pending");
-        require(oethbAmount > 0, "Invalid amount");
+        require(oethbAmount >= MIN_WITHDRAWAL_AMOUNT, "Amount below minimum");
 
         // The vault assigns ids sequentially, and nothing can interleave between this read
         // and the request below, so this is the id the request will get.

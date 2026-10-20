@@ -24,6 +24,7 @@ const MODULE_ABI = [
   "function pendingRequestId() view returns (uint256)",
   "function hasPendingRequest() view returns (bool)",
   "function lastRequestAt() view returns (uint256)",
+  "function MIN_WITHDRAWAL_AMOUNT() view returns (uint256)",
   "function bridgeFee(uint256 wethAmount) view returns (uint256)",
   "function requestWithdrawal(uint256 oethbAmount)",
   "function claimAndBridge()",
@@ -120,6 +121,16 @@ action({
         vault.withdrawalRequests(requestId),
         vault.withdrawalClaimDelay(),
       ]);
+      // A Safe owner can claim the request directly on the vault. The claim
+      // simulation below would then revert with "Already claimed" and read as
+      // "not yet", so the action would wait forever and never open a new one.
+      if (request.claimed) {
+        throw new Error(
+          `Request ${requestId} was claimed outside the module; the fee Safe ` +
+            `must call clearPendingRequest() on BaseFeeBridgeModule (and ` +
+            `handle the WETH that claim left on the Safe)`
+        );
+      }
       const claimableAt = Number(request.timestamp) + delay.toNumber();
       if (now < claimableAt) {
         log.info(
@@ -190,8 +201,13 @@ action({
     log.info(
       `Fee Safe ${safe} holds ${ethers.utils.formatEther(amount)} OETHb`
     );
-    if (amount.isZero()) {
-      log.info("Nothing to redeem");
+    const minAmount = await module.MIN_WITHDRAWAL_AMOUNT();
+    if (amount.lt(minAmount)) {
+      log.info(
+        `Below the module's ${ethers.utils.formatEther(
+          minAmount
+        )} OETHb minimum; nothing to redeem`
+      );
       return;
     }
 
