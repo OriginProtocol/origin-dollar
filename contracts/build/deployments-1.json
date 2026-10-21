@@ -133,6 +133,30 @@
             "name": "UNISWAP_V4_ERC4626_REBALANCE_MODULE"
         },
         {
+            "implementation": "0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe",
+            "name": "OETHB_V3_REMOTE_PROXY"
+        },
+        {
+            "implementation": "0xFE69f8001b96e027C20C225Ae23d5e75687EbF1b",
+            "name": "OETHB_V3_REMOTE_IMPL"
+        },
+        {
+            "implementation": "0x05A99cB2Cf686573f96d4c25F646E1C619C602EE",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x7661a05acCAC0492D0a114909fE0126636A3c4DF",
+            "name": "OETHB_V3_CCIP_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x0F12256E27E658790C404C087C38ab4f34D53360",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_PROXY"
+        },
+        {
+            "implementation": "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82",
+            "name": "OETHB_V3_CCIP_ADAPTER_PROXY"
+        },
+        {
             "implementation": "0x33A0f124293fA72e55CEfeFE1e723E04793A7bE9",
             "name": "UNISWAP_V4_LIQUIDITY_MODULE"
         }
@@ -184,6 +208,18 @@
             "name": "010_UniswapV4LiquidityModule",
             "proposalId": 1,
             "tsDeployment": 1792421171,
+            "tsGovernance": 0
+        },
+        {
+            "name": "011_OETHbV3RemoteProxy",
+            "proposalId": 1,
+            "tsDeployment": 1792488731,
+            "tsGovernance": 0
+        },
+        {
+            "name": "012_OETHbV3RemoteImpl",
+            "proposalId": 91505267859951030226833253700849903488427263165343640847453520847791717800282,
+            "tsDeployment": 1792488731,
             "tsGovernance": 0
         }
     ]

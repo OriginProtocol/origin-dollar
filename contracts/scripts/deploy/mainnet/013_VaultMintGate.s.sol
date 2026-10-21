@@ -14,10 +14,10 @@ import {OUSDVault} from "contracts/vault/OUSDVault.sol";
 import {OETHVault} from "contracts/vault/OETHVault.sol";
 import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 
-/// @title 004_VaultMintGate
+/// @title 013_VaultMintGate
 /// @notice Upgrade the OUSD and OETH vault implementations to add the under-backed
 ///         mint gate: `mint` reverts while the vault's total value is below OToken supply.
-contract $004_VaultMintGate is AbstractDeployScript("004_VaultMintGate") {
+contract $013_VaultMintGate is AbstractDeployScript("013_VaultMintGate") {
     /// @dev Skipped so `make deploy-mainnet` does not run or re-propose this script.
     bool public constant override skip = true;
 

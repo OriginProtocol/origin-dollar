@@ -12,13 +12,13 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 // Addresses
 import {Base} from "tests/utils/Addresses.sol";
 
-/// @title 006_OETHbV3RemoveOldStrategy
+/// @title 008_OETHbV3RemoveOldStrategy
 /// @notice Post-migration cleanup: removes BridgedWOETHStrategy from the OETHb vault.
 /// @dev `skip` is true, so this sits in the repo without firing. Flip it to false once every
 ///      `bridgeToRemote(1000e18)` call has settled on Ethereum — the vault refuses
 ///      `removeStrategy` while the strategy still reports a balance, and until then a fork run
 ///      would fail on a migration that has not happened yet.
-contract $006_OETHbV3RemoveOldStrategy is AbstractDeployScript("006_OETHbV3RemoveOldStrategy") {
+contract $008_OETHbV3RemoveOldStrategy is AbstractDeployScript("008_OETHbV3RemoveOldStrategy") {
     using GovHelper for GovProposal;
 
     bool public constant override skip = true;

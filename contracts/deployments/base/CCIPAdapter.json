@@ -1,0 +1,862 @@
+{
+  "address": "0xD1EB2C89f702591e5ab5e2A21AB3b0df7764D1ec",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_ccipRouter",
+          "type": "address",
+          "internalType": "contract IRouterClient"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "addStrategist",
+      "inputs": [
+        {
+          "name": "who",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "authorise",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "cfg",
+          "type": "tuple",
+          "internalType": "struct IAdapter.ChainConfig",
+          "components": [
+            {
+              "name": "paused",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "chainSelector",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "destGasLimit",
+              "type": "uint32",
+              "internalType": "uint32"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "authorised",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ccipReceive",
+      "inputs": [
+        {
+          "name": "message",
+          "type": "tuple",
+          "internalType": "struct Client.Any2EVMMessage",
+          "components": [
+            {
+              "name": "messageId",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "sourceChainSelector",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "sender",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "destTokenAmounts",
+              "type": "tuple[]",
+              "internalType": "struct Client.EVMTokenAmount[]",
+              "components": [
+                {
+                  "name": "token",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "ccipRouter",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IRouterClient"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "claimGovernance",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "governor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isGovernor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "laneConfig",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "paused",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "chainSelector",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "destGasLimit",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxTransferAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "minTransferAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pauseLane",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "quoteFee",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "payload",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "requiresExternalPayment",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "removeStrategist",
+      "inputs": [
+        {
+          "name": "who",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revoke",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "sendMessage",
+      "inputs": [
+        {
+          "name": "payload",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "sendMessageAndTokens",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "payload",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "setLaneConfig",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "cfg",
+          "type": "tuple",
+          "internalType": "struct IAdapter.ChainConfig",
+          "components": [
+            {
+              "name": "paused",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "chainSelector",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "destGasLimit",
+              "type": "uint32",
+              "internalType": "uint32"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setMaxTransferAmount",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "strategists",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "transferGovernance",
+      "inputs": [
+        {
+          "name": "_newGovernor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferToken",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "unpauseLane",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "Authorised",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "cfg",
+          "type": "tuple",
+          "indexed": false,
+          "internalType": "struct IAdapter.ChainConfig",
+          "components": [
+            {
+              "name": "paused",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "chainSelector",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "destGasLimit",
+              "type": "uint32",
+              "internalType": "uint32"
+            }
+          ]
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "GovernorshipTransferred",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "LaneConfigUpdated",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "cfg",
+          "type": "tuple",
+          "indexed": false,
+          "internalType": "struct IAdapter.ChainConfig",
+          "components": [
+            {
+              "name": "paused",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "chainSelector",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "destGasLimit",
+              "type": "uint32",
+              "internalType": "uint32"
+            }
+          ]
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "LanePaused",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "LaneUnpaused",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MaxTransferAmountUpdated",
+      "inputs": [
+        {
+          "name": "oldAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MessageDelivered",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountReceived",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feePaid",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MessageSent",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeCharged",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingGovernorshipTransfer",
+      "inputs": [
+        {
+          "name": "previousGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newGovernor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Revoked",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StrategistAdded",
+      "inputs": [
+        {
+          "name": "who",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StrategistRemoved",
+      "inputs": [
+        {
+          "name": "who",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 41411,
+        "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+        "label": "authorised",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_address,t_bool)"
+      },
+      {
+        "astId": 41417,
+        "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+        "label": "laneConfig",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_address,t_struct(ChainConfig)14428_storage)"
+      },
+      {
+        "astId": 41422,
+        "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+        "label": "strategists",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_address,t_bool)"
+      },
+      {
+        "astId": 41425,
+        "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+        "label": "_maxTransferAmount",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 41430,
+        "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_array(t_uint256)50_storage"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)50_storage": {
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600",
+        "base": "t_uint256"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_address,t_struct(ChainConfig)14428_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct IAdapter.ChainConfig)",
+        "numberOfBytes": "32",
+        "value": "t_struct(ChainConfig)14428_storage"
+      },
+      "t_struct(ChainConfig)14428_storage": {
+        "encoding": "inplace",
+        "label": "struct IAdapter.ChainConfig",
+        "numberOfBytes": "32",
+        "members": [
+          {
+            "astId": 14423,
+            "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+            "label": "paused",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool"
+          },
+          {
+            "astId": 14425,
+            "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+            "label": "chainSelector",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_uint64"
+          },
+          {
+            "astId": 14427,
+            "contract": "contracts/strategies/crosschainV3/adapters/CCIPAdapter.sol:CCIPAdapter",
+            "label": "destGasLimit",
+            "offset": 9,
+            "slot": "0",
+            "type": "t_uint32"
+          }
+        ]
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}
