@@ -2,6 +2,7 @@ import { BigNumber, ethers } from "ethers";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 import { action, types, Logger } from "../lib/action";
 import { getOrNull } from "../lib/deployments";
+import { findLatestLog, MAX_LOG_CHUNK } from "../lib/logs";
 import {
   bidToTickLower,
   curveRate,
@@ -285,7 +286,7 @@ export function resetAmount({
 /**
  * The position the module minted last on `poolId`: the `mintedTokenId` of
  * its latest `Rebalanced` event (0 after a burn-only call), searched
- * backwards in chunks; `fallback` when the module never rebalanced.
+ * backwards in chunks (see `findLatestLog`); `fallback` when the module never rebalanced.
  */
 async function currentTokenId({
   module,
@@ -307,17 +308,19 @@ async function currentTokenId({
   const latest = await provider.getBlockNumber();
   const floor = Math.max(0, latest - lookback);
   const filter = module.filters.Rebalanced(poolId);
-  for (let to = latest; to >= floor; to -= chunk) {
-    const from = Math.max(floor, to - chunk + 1);
-    const events = await module.queryFilter(filter, from, to);
-    if (events.length > 0) {
-      const last = events[events.length - 1];
-      const minted = BigInt(last.args!.mintedTokenId.toString());
-      log.info(
-        `Latest Rebalanced at block ${last.blockNumber}: minted ${minted}`
-      );
-      return minted;
-    }
+  const last = await findLatestLog({
+    query: (from, to) => module.queryFilter(filter, from, to),
+    latest,
+    floor,
+    chunk,
+    onRetry: (msg) => log.warn(msg),
+  });
+  if (last) {
+    const minted = BigInt(last.args!.mintedTokenId.toString());
+    log.info(
+      `Latest Rebalanced at block ${last.blockNumber}: minted ${minted}`
+    );
+    return minted;
   }
   log.info(
     `No Rebalanced event in the last ${lookback} blocks; using --token-id ${fallback}`
@@ -481,8 +484,8 @@ action({
     );
     t.addOptionalParam(
       "logChunk",
-      "Block range per eth_getLogs call",
-      50_000,
+      "Block range per eth_getLogs call (capped at 9999)",
+      MAX_LOG_CHUNK,
       types.int
     );
     t.addOptionalParam(

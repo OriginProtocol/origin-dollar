@@ -286,6 +286,8 @@ Every run (every 2 minutes):
 - `--min-token1 <n>` (default `500`): USDe held that is worth a pull.
 - `--target-ousd <n>` (default `50000`), `--reset-amount <n>` (default `100`).
 - `--token-id <id>` (default `457273`), `--max-gas`, `--module`, `--dryrun`.
+- `--lookback-blocks <n>` (default `500000`), `--log-chunk <n>` (default
+  `9999`, capped there): the event search, retried on transient RPC errors.
 
 Bought USDe stays in the Safe until it is redeemed at Ethena and minted
 back into OUSD, which is not automated yet. Redeem only while the quote is
@@ -328,7 +330,7 @@ never lets the swap or the new range sell OUSD more than `navToleranceBps`
 - `--reset-amount <n>` (default `100`): max OUSD the reset swap sells,
   capped by the module's `maxAmount0`.
 - `--lookback-blocks <n>` (default `500000`), `--log-chunk <n>` (default
-  `50000`): the event search.
+  `9999`, capped there): the event search, retried on transient RPC errors.
 - `--max-gas <n>` (default `5000000`): skip a rebalance estimated above this.
 - `--module <address>`: override the deployment descriptor (forks).
 - `--dryrun` simulates and logs without sending. A non-operator signer
