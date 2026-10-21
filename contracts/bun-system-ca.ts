@@ -25,10 +25,14 @@ if (systemCa.length === 0) {
   throw new Error(`bun-system-ca: no certificates in ${CA_FILE}`);
 }
 
-tls.setDefaultCACertificates(systemCa);
+// Bun runtime APIs that the installed @types/node and DOM typings predate.
+type BunTls = typeof tls & { setDefaultCACertificates(certs: string[]): void };
+type BunRequestInit = RequestInit & { tls?: Record<string, unknown> };
+
+(tls as BunTls).setDefaultCACertificates(systemCa);
 
 const bunFetch = globalThis.fetch;
-const pinnedFetch = (input: string | URL | Request, init?: RequestInit) =>
+const pinnedFetch = (input: string | URL | Request, init?: BunRequestInit) =>
   bunFetch(input, {
     ...init,
     tls: { ca: systemCa, ...init?.tls },
