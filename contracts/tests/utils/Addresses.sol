@@ -101,6 +101,10 @@ library Mainnet {
     ///      OGNRewardsSource. Not to be confused with the strategy-reward CoW
     ///      harvester at 0xD400341a..., which sells CRV/MORPHO for USDC.
     address internal constant OGNCoWHarvester = 0x637C509383Ec7Da55C19a3Dbf3227C1Bb8A89151;
+    /// @dev Trustee of the OUSD and OETH vaults: splits protocol fees between the
+    ///      operations wallet and the OGN CoW harvester. Also the CCIP destination for
+    ///      the Base OETHb fees bridged by BaseFeeBridgeModule.
+    address internal constant FeeSplitter = 0xbbE561181D831e2a0fAd54C2c27F159a20B60464;
     address internal constant xOGN = 0x63898b3b6Ef3d39332082178656E9862bee45C57;
 
     // Uniswap
