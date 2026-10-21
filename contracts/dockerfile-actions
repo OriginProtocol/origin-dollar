@@ -71,4 +71,4 @@ ARG GIT_COMMIT_SHA=""
 ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
 USER runner
-CMD ["bun", "run", "runner.ts"]
+CMD ["bun", "--use-system-ca", "run", "runner.ts"]
