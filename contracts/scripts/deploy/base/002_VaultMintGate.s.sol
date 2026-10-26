@@ -13,10 +13,10 @@ import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
 import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 
-/// @title 001_VaultMintGate
+/// @title 002_VaultMintGate
 /// @notice Upgrade the superOETHb vault implementation to add the under-backed
 ///         mint gate: `mint` reverts while the vault's total value is below OToken supply.
-contract $001_VaultMintGate is AbstractDeployScript("001_VaultMintGate") {
+contract $002_VaultMintGate is AbstractDeployScript("002_VaultMintGate") {
     using GovHelper for GovProposal;
 
     // ==================== Deployment Logic ==================== //

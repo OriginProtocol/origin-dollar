@@ -51,6 +51,34 @@
         {
             "implementation": "0x9cfcAF81600155e01c63e4D2993A8A81A8205829",
             "name": "OETHBASE_CURVE_AMO_STRATEGY"
+        },
+        {
+            "implementation": "0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe",
+            "name": "OETHB_V3_MASTER_PROXY"
+        },
+        {
+            "implementation": "0xC04B4EEB015D970EE3Ab21711b744787245eF22B",
+            "name": "OETHB_V3_MASTER_IMPL"
+        },
+        {
+            "implementation": "0xD1EB2C89f702591e5ab5e2A21AB3b0df7764D1ec",
+            "name": "OETHB_V3_CCIP_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x375699507B9FbC65b13D04cCBf8e18f375EAC4C5",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_IMPL"
+        },
+        {
+            "implementation": "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82",
+            "name": "OETHB_V3_CCIP_ADAPTER_PROXY"
+        },
+        {
+            "implementation": "0x0F12256E27E658790C404C087C38ab4f34D53360",
+            "name": "OETHB_V3_SUPERBRIDGE_ADAPTER_PROXY"
+        },
+        {
+            "implementation": "0xC29788FEE651182A36b4244490E1BBb0B5C5D5Eb",
+            "name": "BRIDGED_WOETH_MIGRATION_STRATEGY_IMPL"
         }
     ],
     "executions": [
@@ -59,6 +87,30 @@
             "proposalId": 1,
             "tsDeployment": 1723685111,
             "tsGovernance": 1
+        },
+        {
+            "name": "004_OETHbV3MasterProxy",
+            "proposalId": 1,
+            "tsDeployment": 1792483981,
+            "tsGovernance": 0
+        },
+        {
+            "name": "005_OETHbV3MasterImpl",
+            "proposalId": 0,
+            "tsDeployment": 1792483981,
+            "tsGovernance": 0
+        },
+        {
+            "name": "006_OETHbV3WOETHMigration",
+            "proposalId": 0,
+            "tsDeployment": 1792483981,
+            "tsGovernance": 0
+        },
+        {
+            "name": "007_OETHbV3VaultWiring",
+            "proposalId": 0,
+            "tsDeployment": 1792483981,
+            "tsGovernance": 0
         }
     ]
 }

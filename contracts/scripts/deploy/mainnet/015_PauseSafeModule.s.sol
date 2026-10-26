@@ -10,7 +10,7 @@ import {PauseSafeModule} from "contracts/automation/PauseSafeModule.sol";
 // Addresses
 import {CrossChain} from "tests/utils/Addresses.sol";
 
-/// @title 006_PauseSafeModule
+/// @title 015_PauseSafeModule
 /// @notice Deploys the Safe module that lets a threat-detection operator pause the OUSD and OETH
 ///         vaults without gathering multisig signatures.
 /// @dev No governance proposal: the 2/8 Guardian Safe hosting the module is already the vaults'
@@ -18,7 +18,7 @@ import {CrossChain} from "tests/utils/Addresses.sol";
 ///      the signature-gathering step. It cannot unpause, because the only selectors compiled into
 ///      its bytecode are `pauseCapital()`, `pauseRebase()` and `pause()`.
 ///
-///      Depends on 005_VaultAdminRole having landed: without the Admin role the Strategist could
+///      Depends on 014_VaultAdminRole having landed: without the Admin role the Strategist could
 ///      still unpause, and handing an automated operator a pause trigger would be handing it an
 ///      unpause trigger too.
 ///
@@ -30,7 +30,7 @@ import {CrossChain} from "tests/utils/Addresses.sol";
 ///      once arm-oeth PR #337 ships and each ARM has had `setPauseRoles(2/8, 5/8)` called; the Safe
 ///      adds each one afterwards with `allowTarget(<arm>)`. Allow-listing them now would look
 ///      configured but revert on use.
-contract $006_PauseSafeModule is AbstractDeployScript("006_PauseSafeModule") {
+contract $015_PauseSafeModule is AbstractDeployScript("015_PauseSafeModule") {
     // ==================== Deployment Logic ==================== //
 
     function _execute() internal override {

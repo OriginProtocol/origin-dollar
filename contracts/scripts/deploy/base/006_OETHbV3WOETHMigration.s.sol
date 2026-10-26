@@ -14,7 +14,7 @@ import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/Initializ
 // Addresses
 import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 004_OETHbV3WOETHMigration
+/// @title 006_OETHbV3WOETHMigration
 /// @notice Upgrades the live BridgedWOETHStrategy on Base to the migration implementation.
 /// @dev The Base vault's wOETH sits in `BridgedWOETHStrategy`, valued off an oracle rather than
 ///      earning reported yield. The migration implementation keeps that contract's V1 behaviour
@@ -32,7 +32,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///      check below complements that with a live read-back of V1 state through the proxy. The
 ///      migration only appends `totalBridged` and `maxPerBridge`; everything the constructor
 ///      takes is immutable.
-contract $004_OETHbV3WOETHMigration is AbstractDeployScript("004_OETHbV3WOETHMigration") {
+contract $006_OETHbV3WOETHMigration is AbstractDeployScript("006_OETHbV3WOETHMigration") {
     using GovHelper for GovProposal;
 
     /// @notice Per-call wOETH bridge cap, mirroring the CCIP rate-limit budget.

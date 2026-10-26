@@ -37,7 +37,7 @@ library CrossChain {
     ///      protocol cap.
     ///
     ///      Asserted by tests/fork/mainnet/strategies/RemoteWOTokenStrategy — keep the two in
-    ///      sync. Applied to the lane by `scripts/deploy/base/003_OETHbV3MasterImpl.s.sol`.
+    ///      sync. Applied to the lane by `scripts/deploy/base/005_OETHbV3MasterImpl.s.sol`.
     uint32 internal constant OETHB_V3_DEST_GAS_LIMIT_BASE_TO_MAINNET = 2_000_000;
 
     /// @dev Ethereum -> Base lane. Master's inbound handlers are terminal (no outbound

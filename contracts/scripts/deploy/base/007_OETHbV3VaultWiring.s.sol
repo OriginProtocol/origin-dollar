@@ -12,12 +12,12 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 // Addresses
 import {Base} from "tests/utils/Addresses.sol";
 
-/// @title 005_OETHbV3VaultWiring
+/// @title 007_OETHbV3VaultWiring
 /// @notice Approves the OETHb V3 Master strategy on the Base vault.
 /// @dev Deliberately separate from the deployment of Master itself: approval is what lets the
 ///      vault route collateral to it, so it waits until the strategy is fully wired to its
 ///      adapters and governed by the timelock. Nothing is deployed here.
-contract $005_OETHbV3VaultWiring is AbstractDeployScript("005_OETHbV3VaultWiring") {
+contract $007_OETHbV3VaultWiring is AbstractDeployScript("007_OETHbV3VaultWiring") {
     using GovHelper for GovProposal;
 
     // ==================== Governance Proposal ==================== //
