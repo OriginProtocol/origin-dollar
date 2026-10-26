@@ -25,7 +25,7 @@ runs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: "20"
+        node-version: "22.23.4"
         cache: "pnpm"
         cache-dependency-path: contracts/pnpm-lock.yaml
 
