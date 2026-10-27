@@ -6,9 +6,9 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdSusdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, oethbV3BalanceReport, oethbV3RetryDeposit, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdSusdeV4Rebalance, ousdUsdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | hyper | crossChainBalanceUpdateHyperevm |
-| base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
+| base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, oethbV3SettleWithdrawal, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
@@ -32,6 +32,7 @@
 | `utils/regex` | 3 | eth, base, arb |
 | `utils/signers` | 3 | eth, base, arb |
 | `utils/signersStandalone` | 3 | eth, base, arb |
+| `tasks/lib/oethbV3` | 2 | eth, base |
 | `tasks/lib/safeProposal` | 2 | eth, base |
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `utils/resolvers` | 2 | eth, base |
@@ -39,7 +40,9 @@
 | `abi/passThrough.json` | 1 | eth |
 | `tasks/lib/cowHarvest` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
+| `tasks/lib/logs` | 1 | eth |
 | `tasks/lib/v4BidPricing` | 1 | eth |
+| `tasks/lib/v4Liquidity` | 1 | eth |
 | `tasks/lib/v4TickMath` | 1 | eth |
 | `utils/anvil` | 1 | eth |
 | `utils/beacon` | 1 | eth |

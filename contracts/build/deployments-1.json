@@ -214,13 +214,13 @@
             "name": "011_OETHbV3RemoteProxy",
             "proposalId": 1,
             "tsDeployment": 1792488731,
-            "tsGovernance": 0
+            "tsGovernance": 1
         },
         {
             "name": "012_OETHbV3RemoteImpl",
             "proposalId": 91505267859951030226833253700849903488427263165343640847453520847791717800282,
             "tsDeployment": 1792488731,
-            "tsGovernance": 0
+            "tsGovernance": 1793009531
         }
     ]
 }

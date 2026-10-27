@@ -183,8 +183,8 @@ These require real on-chain configuration and were intentionally not authored as
 | # | Item | Status |
 |---|---|---|
 | 1 | **Foundry migration** — the deploy scripts now live at `scripts/deploy/{base,mainnet}/`; the test suites still need porting to `tests/{unit,fork,smoke}/` before the Hardhat ones can be deleted. | In progress |
-| 2 | **`sendBalanceReport` automation** — no Talos action exists for the ~2h cadence. It targets **Remote on Ethereum (chain 1)**, not Base. Because Foundry deploys write only `build/deployments-<chainId>.json` (never `deployments/mainnet/<Name>.json` or `utils/addresses.js`, which Talos reads), whoever writes it must hand-create the deployment entry or pin the address. Remote's ETH fee pool must be funded for the outbound leg. | Pending |
+| 2 | **`sendBalanceReport` automation** — Talos action [`oethbV3BalanceReport`](../../../tasks/actions/oethbV3BalanceReport.ts) (Ethereum, `15 */2 * * *`) sends the report and tops up Remote's fee pool; [`oethbV3SettleWithdrawal`](../../../tasks/actions/oethbV3SettleWithdrawal.ts) (Base) runs leg 2. Proxies are pinned in `utils/addresses.js` and have `OETHbV3*StrategyProxy` descriptors. | Done |
 | 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. | Pending |
 | 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`scripts/deploy/base/006`, currently gated by `skip`). | Pending |
-| 5 | **Retire `otokenOethbUpdateWoethPrice`** — once `006` removes the old strategy from the vault, its oracle price no longer feeds anything. | Follow-up |
-| 6 | **Operator runbook** — formal cadence + failure-mode runbook (balance-check ~2h, what to do on a stuck nonce); cadences exist in inline comments but there is no operator-facing doc. | Pending |
+| 5 | **Retire `otokenOethbUpdateWoethPrice`** — keep it running until `base/008` removes the old strategy from the vault (its oracle price prices the in-flight migration until then); then disable the schedule and delete the action. | Follow-up |
+| 6 | **Operator runbook** — [`RUNBOOK.md`](./RUNBOOK.md): cadences, deposit/withdraw procedure, failure table, alerts, migration and the 008 checklist. | Done |

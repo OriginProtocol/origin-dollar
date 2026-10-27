@@ -718,6 +718,20 @@ addresses.mainnet.CrossChainMasterStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
 addresses.mainnet.CrossChainHyperEVMMasterStrategy =
   "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
+// OETHb V3 cross-chain wOETH strategy pair. CreateX: each contract has the same
+// address on Base and Ethereum. These are the PROXIES.
+addresses.base.OETHbV3MasterStrategy =
+  "0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe";
+addresses.base.OETHbV3CCIPAdapter =
+  "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82";
+addresses.base.OETHbV3SuperbridgeAdapter =
+  "0x0F12256E27E658790C404C087C38ab4f34D53360";
+addresses.mainnet.OETHbV3RemoteStrategy =
+  "0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe";
+addresses.mainnet.OETHbV3CCIPAdapter =
+  "0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82";
+addresses.mainnet.OETHbV3SuperbridgeAdapter =
+  "0x0F12256E27E658790C404C087C38ab4f34D53360";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
 addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
 addresses.CCTPMessageTransmitterV2 =
