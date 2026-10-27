@@ -21,7 +21,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenOusdRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OUSD on mainnet                                                                                           |
 | `otokenOethRebase`     | mainnet | `45 11,23 * * *` | Allocate idle assets and rebase OETH on mainnet                                                                                           |
 | `otokenOusdOethRebase` | mainnet | `45 11,23 * * *` | Collect OETH and rebase OUSD on mainnet                                                                                                   |
-| `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base                                                                                                            |
+| `otokenOethbRebase`    | base    | `25 9,21 * * *`  | Rebase the OETHb vault on Base. Safe only while the OETHb V3 Master strategy is **not** the default strategy (its `depositAll` can revert inside `allocate`) |
 
 ## OToken operations
 
@@ -32,7 +32,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
 | `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
 | `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
-| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy                                      |
+| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy. Keep running until base/008 removes it from the vault (see [superOETHb V3](#superoethb-v3-cross-chain-woeth)), then retire |
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
 | `ousdV4Rebalance`                   | mainnet | `7,37 * * * *`   | Keep the OUSD/USDe Uniswap v4 positions one-sided via UniswapV4RebalanceModule (see below)          |
 | `ousdSusdeV4Rebalance`              | mainnet | `22,52 * * * *`  | Keep the OUSD/sUSDe v4 position just above the sUSDe NAV (UniswapV4ERC4626RebalanceModule, below)   |
@@ -58,6 +58,34 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `relayCCTPMessage`                | mainnet  | `43 4,10,16,22 * * *`   | As above (mainnet → Base)                                                                            |
 | `crossChainRelayHyperEVM`         | hyperevm | `17 1,6,11,16,21 * * *` | Relay CCTP bridge transactions between mainnet and HyperEVM (HyperEVM → mainnet)                     |
 | `crossChainRelayHyperEVM`         | mainnet  | `7 3,8,13,18,23 * * *`  | As above (mainnet → HyperEVM)                                                                        |
+
+## superOETHb V3 cross-chain (wOETH)
+
+The Master (Base) / Remote (Ethereum) wOETH strategy pair. Runbook:
+[`contracts/strategies/crosschainV3/RUNBOOK.md`](../contracts/strategies/crosschainV3/RUNBOOK.md).
+
+| Action                    | Network | Cron           | Description                                                                                                         |
+| ------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `oethbV3BalanceReport`    | mainnet | `15 */2 * * *` | Send Remote's balance report to Master; top up Remote's CCIP fee pool in the same tx when it runs low                |
+| `oethbV3SettleWithdrawal` | base    | `5,35 * * * *` | Finish a stored Superbridge message, or trigger leg 2 (`triggerClaim`) once Remote's OETH queue request is claimable |
+| `oethbV3RetryDeposit`     | mainnet | manual         | Re-wrap idle WETH/OETH on Remote after `DepositUnderlyingFailed` or `WithdrawRequestUnderlyingFailed`                |
+
+All three take `--dryrun` (simulate, never broadcast) and send a transaction
+only when there is something to do. The Talos signer must be `operator()` on
+the pair; `processStoredMessage` is the only permissionless step.
+
+- `oethbV3BalanceReport` skips (no tx) while Master has an operation in flight,
+  since Master would drop the report, and when both sides are 0. A nonce
+  mismatch with Master idle fails the run. When Remote's pool covers fewer than
+  10 sends it attaches enough ETH for 40, capped at 0.02 ETH per run. The
+  08:15/20:15 runs land on Base before the 09:25/21:25 `otokenOethbRebase`.
+- `oethbV3SettleWithdrawal` calls `triggerClaim` only after the OETH vault's
+  claim delay has passed and `claimWithdrawal` simulates as Remote; an early
+  trigger is NACKed and costs two CCIP fees. When Master's pool is below the
+  claim fee it attaches twice the fee.
+- Reads span both chains, so the runner needs `MAINNET_PROVIDER_URL` and
+  `BASE_PROVIDER_URL`; on a fork set `LOCAL_PROVIDER_URL_1` and
+  `LOCAL_PROVIDER_URL_8453`.
 
 ## Rewards & bribes
 
@@ -225,6 +253,17 @@ be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
 to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
 Delegation only permits proposal submission; it does not count toward the
 Safe's 2/8 owner confirmations. A Safe module is not used.
+
+Moves on the OETHb V3 Master strategy (`OETHbV3MasterStrategyProxy` on Base)
+are asynchronous and gated by CCIP:
+
+- One move into Master at a time, at most 90.75 WETH each and at most that
+  per hour (the CCIP WETH lane bucket). A larger deposit reverts inside CCIP.
+- Master's ETH fee pool must hold about 0.021 ETH before a deposit; otherwise
+  the simulation fails with `V3: pool unfunded`.
+- `withdraw` on Master only starts leg 1. The WETH reaches the vault 1 to 2
+  hours later, after `oethbV3SettleWithdrawal` runs leg 2.
+- `withdrawAll` on Master does nothing while an operation is in flight.
 
 ### ousdV4Rebalance parameters
 
