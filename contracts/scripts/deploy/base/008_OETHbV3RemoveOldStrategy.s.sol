@@ -21,7 +21,7 @@ import {Base} from "tests/utils/Addresses.sol";
 contract $008_OETHbV3RemoveOldStrategy is AbstractDeployScript("008_OETHbV3RemoveOldStrategy") {
     using GovHelper for GovProposal;
 
-    bool public constant override skip = true;
+    bool public constant override skip = false;
 
     // ==================== Governance Proposal ==================== //
 

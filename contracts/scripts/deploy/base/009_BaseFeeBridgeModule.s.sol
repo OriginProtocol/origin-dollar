@@ -10,7 +10,7 @@ import {BaseFeeBridgeModule} from "contracts/automation/BaseFeeBridgeModule.sol"
 // Addresses
 import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
-/// @title 007_BaseFeeBridgeModule
+/// @title 009_BaseFeeBridgeModule
 /// @notice Deploys the Safe module that redeems the Super OETH protocol fees for WETH through the
 ///         vault's withdrawal queue and bridges the WETH over CCIP to the Ethereum FeeSplitter.
 /// @dev Hosted on the fee Safe (multichainBuybackOperator), which is the Base vault's
@@ -23,7 +23,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///          recovered through a Governor `rescue`.
 ///        - Base: the fee Safe calls `enableModule(<module>)` and keeps a small ETH balance for
 ///          the CCIP fee.
-contract $007_BaseFeeBridgeModule is AbstractDeployScript("007_BaseFeeBridgeModule") {
+contract $009_BaseFeeBridgeModule is AbstractDeployScript("009_BaseFeeBridgeModule") {
     // ==================== Deployment Logic ==================== //
 
     function _execute() internal override {
