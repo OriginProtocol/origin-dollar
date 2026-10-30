@@ -54,6 +54,7 @@ export const HARVESTERS: Record<HarvesterId, HarvesterConfig> = {
       { address: m.WETH, symbol: "WETH" },
       { address: m.OUSDProxy, symbol: "OUSD" },
       { address: m.USDe, symbol: "USDe" },
+      { address: m.USDC, symbol: "USDC" },
     ],
   },
 };
