@@ -353,9 +353,13 @@ describe("cowHarvest", function () {
         "WETH",
         "OUSD",
         "USDe",
+        "USDC",
       ]);
       expect(lower(HARVESTERS.ogn.sellTokens[3].address)).to.equal(
         "0x4c9edd5852cd905f086c759e8383e09bff1e68b3"
+      );
+      expect(lower(HARVESTERS.ogn.sellTokens[4].address)).to.equal(
+        "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
       );
       expect(lower(HARVESTERS.ousd.sellTokens[1].address)).to.equal(
         "0x58d97b57bb95320f9a05dc918aef65434969c2b2"

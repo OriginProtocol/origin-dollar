@@ -102,7 +102,7 @@ the pair; `processStoredMessage` is the only permissionless step.
 | `feeSplitterDistribute`     | mainnet     | `10 12 * * *`    | Split protocol fees on the FeeSplitter: operations share out, remainder to the OGN buyback       |
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | Sell the OUSD CoW harvester's CRV/MORPHO for USDC to the OUSD Vault (`--harvester ousd`)        |
 | `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for OETH: CRV/SSV for WETH to the OETH Vault (`--harvester oeth`)                      |
-| `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for the OGN buyback: OETH/WETH/OUSD/USDe for OGN to OGNRewardsSource (`--harvester ogn`) |
+| `cowHarvest`                | mainnet     | `0 */4 * * *`    | As above for the OGN buyback: OETH/WETH/OUSD/USDe/USDC for OGN to OGNRewardsSource (`--harvester ogn`) |
 | `setXOGNRewardRate`         | mainnet     | `20 1 * * 2`     | Set the xOGN reward rate from measured OGN buybacks, via SetXOGNRewardRateModule                 |
 | `bridgeBaseFees`            | base        | `45 10 * * *`    | Redeem the Base fee Safe's OETHb fees for WETH (weekly) and bridge them to the Ethereum FeeSplitter |
 
