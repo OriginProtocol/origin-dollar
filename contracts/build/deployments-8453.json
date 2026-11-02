@@ -114,9 +114,9 @@
         },
         {
             "name": "008_OETHbV3RemoveOldStrategy",
-            "proposalId": 0,
+            "proposalId": "15613952062623539110545798400038064770513144374853295810488654647686994817702",
             "tsDeployment": 1793266479,
-            "tsGovernance": 0
+            "tsGovernance": 1793594011
         }
     ]
 }

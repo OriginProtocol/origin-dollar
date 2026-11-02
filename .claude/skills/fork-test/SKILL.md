@@ -250,7 +250,7 @@ test_withdraw_RevertWhen_insufficientLPTokens()  // calcTokenToBurn uses real vi
 | OETHBase / OETHBaseVault | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
 | AerodromeAMOStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
 | BaseCurveAMOStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
-| BridgedWOETHStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
+| MasterWOTokenStrategy | Base | `_createAndSelectForkBase()` | `Base` (aliased as `BaseAddresses`) |
 | WOETH (Arbitrum) | Arbitrum | `_createAndSelectForkArbitrum()` | `ArbitrumOne` |
 
 **IMPORTANT:** When importing the `Base` address library, alias it to avoid collision with the `Base` test contract:
