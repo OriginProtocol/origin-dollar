@@ -29,7 +29,7 @@ interface IBaseFeeBridgeModule {
     function lastRequestAt() external view returns (uint256);
     function hasRole(bytes32 role, address account) external view returns (bool);
     function requestWithdrawal(uint256 oethbAmount) external;
-    function claimAndBridge() external;
+    function claimAndBridge() external payable;
     function clearPendingRequest() external;
     function bridgeFee(uint256 wethAmount) external view returns (uint256);
 }

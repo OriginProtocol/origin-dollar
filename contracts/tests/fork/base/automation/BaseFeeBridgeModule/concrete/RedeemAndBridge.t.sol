@@ -41,6 +41,26 @@ contract Fork_Concrete_BaseFeeBridgeModule_RedeemAndBridge_Test is Fork_Base_Bas
         assertEq(ethBefore - safe.balance, fee, "CCIP fee not as quoted");
     }
 
+    /// @dev The real Safe proxy must accept the ETH the module forwards, so an empty Safe can
+    ///      bridge when the operator attaches the fee.
+    function test_claimAndBridge_withAttachedFee() public {
+        vm.prank(operator);
+        module.requestWithdrawal(AMOUNT);
+        skip(vault.withdrawalClaimDelay());
+        deal(address(weth), address(vault), weth.balanceOf(address(vault)) + AMOUNT);
+
+        vm.deal(safe, 0);
+        uint256 fee = module.bridgeFee(AMOUNT);
+        vm.deal(operator, fee);
+
+        vm.prank(operator);
+        module.claimAndBridge{value: fee}();
+
+        assertFalse(module.hasPendingRequest(), "Pending state not cleared");
+        assertEq(safe.balance, 0, "ETH left on Safe");
+        assertEq(address(module).balance, 0, "ETH left on module");
+    }
+
     function test_claimAndBridge_revertsBeforeDelay() public {
         vm.prank(operator);
         module.requestWithdrawal(AMOUNT);

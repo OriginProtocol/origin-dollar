@@ -37,9 +37,11 @@ import { IVault } from "../interfaces/IVault.sol";
  *      through the module would revert with "Already claimed"; the Safe then calls
  *      `clearPendingRequest` to reset the module.
  *
- *      The CCIP fee is paid in native ETH from the Safe, so the Safe must hold some ETH. The
- *      message is token-only (empty data, zero gas limit), so CCIP releases the WETH to the
- *      FeeSplitter without calling it, and the FeeSplitter needs no CCIP receiver interface.
+ *      The CCIP fee is paid in native ETH from the Safe. The operator can attach that ETH to
+ *      `claimAndBridge`, which forwards it to the Safe first, so the Safe need not keep a
+ *      balance of its own. The message is token-only (empty data, zero gas limit), so CCIP
+ *      releases the WETH to the FeeSplitter without calling it, and the FeeSplitter needs no
+ *      CCIP receiver interface.
  *
  *      The Safe must call `enableModule(address(this))` before this module can do anything.
  */
@@ -133,14 +135,27 @@ contract BaseFeeBridgeModule is AbstractSafeModule {
     /**
      * @notice Claim the pending withdrawal and bridge the WETH to the FeeSplitter on the
      *         destination chain.
+     * @dev Any ETH sent is forwarded to the Safe to pay the CCIP fee; what the fee does not use
+     *      stays on the Safe.
      */
     // The before/after WETH read is the point: it measures what the claim paid the Safe. The
     // only external calls go to the Safe, which calls the fixed vault and router.
     // slither-disable-start reentrancy-balance,reentrancy-events
-    function claimAndBridge() external onlyOperator {
+    function claimAndBridge() external payable onlyOperator {
         require(hasPendingRequest, "No pending request");
         uint256 requestId = pendingRequestId;
         hasPendingRequest = false;
+
+        // The CCIP send runs from the Safe, so the fee must be on the Safe, not on this module.
+        // Taking it with the call lets the operator fund exactly one bridge, atomically, instead
+        // of the Safe keeping an ETH balance a compromised operator could spend on fees.
+        // `call`, not `transfer`: the Safe proxy's receive delegatecalls and emits an event,
+        // which needs more than the 2300 gas stipend.
+        if (msg.value > 0) {
+            // slither-disable-next-line low-level-calls
+            (bool sent, ) = address(safeContract).call{ value: msg.value }("");
+            require(sent, "ETH forward failed");
+        }
 
         uint256 wethBefore = weth.balanceOf(address(safeContract));
         _exec(

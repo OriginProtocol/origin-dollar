@@ -185,16 +185,20 @@ sends a transaction when there is something to do:
 - Queue liquidity: the vault's idle WETH is largely reserved for earlier
   claimable requests, so a claim can wait until mints or strategy withdrawals
   fund the queue.
-- The Safe pays the CCIP fee in native ETH. The action warns when the Safe's ETH
-  covers fewer than three fees.
-- Every write is simulated first. `--dryrun` stops after the simulation.
+- The Safe pays the CCIP fee in native ETH but doesn't need any of its own. The
+  action attaches whatever the Safe is missing (fee + 20%, at most 0.05 ETH) to
+  `claimAndBridge`, paid by the Talos relayer, and the module forwards it to the
+  Safe in the same tx. The relayer needs the ETH; the action warns when its
+  balance covers fewer than 5 fees.
+- Every write is simulated first, the claim with that ETH attached. `--dryrun`
+  stops after the simulation.
 - The module rejects requests below `MIN_WITHDRAWAL_AMOUNT` (1 OETHb), so a
   compromised operator key cannot bridge dust to drain the Safe's ETH on CCIP
   fees. The action skips, with no tx, while the Safe holds less than that.
 - Recovery: if a Safe owner claims the pending request directly on the vault,
   the run fails and says so. The Safe must call `clearPendingRequest()` on the
   module and deal with the WETH that claim left on it.
-- Needs, before enabling: the module deployed (`base/007`) and enabled on the
+- Needs, before enabling: the module deployed (`base/009`) and enabled on the
   fee Safe, and `FeeSplitter.addAsset(WETH, …)` on Ethereum. Until that last
   step, bridged WETH is not distributed.
 - OGN bought with this WETH reaches OGNRewardsSource through CoW settlement, so

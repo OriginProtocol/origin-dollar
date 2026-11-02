@@ -64,6 +64,29 @@ contract Unit_Concrete_BaseFeeBridgeModule_ClaimAndBridge_Test is Unit_BaseFeeBr
         assertEq(address(router).balance, CCIP_FEE);
     }
 
+    function test_claimAndBridge_attachedEthPaysCcipFee() public {
+        vm.deal(address(mockSafe), 0);
+        vm.deal(operator, CCIP_FEE);
+
+        vm.prank(operator);
+        module.claimAndBridge{value: CCIP_FEE}();
+
+        assertEq(address(mockSafe).balance, 0, "ETH left on Safe");
+        assertEq(address(module).balance, 0, "ETH left on module");
+        assertEq(address(router).balance, CCIP_FEE);
+    }
+
+    function test_claimAndBridge_leavesUnusedEthOnSafe() public {
+        vm.deal(address(mockSafe), 0);
+        vm.deal(operator, CCIP_FEE * 2);
+
+        vm.prank(operator);
+        module.claimAndBridge{value: CCIP_FEE * 2}();
+
+        assertEq(address(mockSafe).balance, CCIP_FEE, "Unused ETH not on Safe");
+        assertEq(address(module).balance, 0, "ETH left on module");
+    }
+
     function test_claimAndBridge_bridgesOnlyClaimedWeth() public {
         uint256 existing = 5 ether;
         mockWeth.mint(address(mockSafe), existing);
@@ -144,5 +167,14 @@ contract Unit_Concrete_BaseFeeBridgeModule_ClaimAndBridge_Test is Unit_BaseFeeBr
         vm.prank(operator);
         vm.expectRevert("Failed to send CCIP message");
         module.claimAndBridge();
+    }
+
+    function test_claimAndBridge_revertsWhenAttachedEthCannotPayCcipFee() public {
+        vm.deal(address(mockSafe), 0);
+        vm.deal(operator, CCIP_FEE - 1);
+
+        vm.prank(operator);
+        vm.expectRevert("Failed to send CCIP message");
+        module.claimAndBridge{value: CCIP_FEE - 1}();
     }
 }
