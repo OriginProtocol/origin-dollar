@@ -8,7 +8,7 @@
 |---|---|
 | eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, oethbV3BalanceReport, oethbV3RetryDeposit, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdSusdeV4Rebalance, ousdUsdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | hyper | crossChainBalanceUpdateHyperevm |
-| base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, oethbV3SettleWithdrawal, otokenOethbHarvest, otokenOethbRebase, otokenOethbUpdateWoethPrice |
+| base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, oethbV3SettleWithdrawal, otokenOethbHarvest, otokenOethbRebase |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
@@ -35,7 +35,6 @@
 | `tasks/lib/oethbV3` | 2 | eth, base |
 | `tasks/lib/safeProposal` | 2 | eth, base |
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
-| `utils/resolvers` | 2 | eth, base |
 | `abi/claim-rewards-module.json` | 1 | eth |
 | `abi/passThrough.json` | 1 | eth |
 | `tasks/lib/cowHarvest` | 1 | eth |
@@ -55,5 +54,6 @@
 | `utils/proofs` | 1 | eth |
 | `utils/rebalancer` | 1 | eth |
 | `utils/rebalancer-config` | 1 | eth |
+| `utils/resolvers` | 1 | eth |
 | `utils/units` | 1 | eth |
 | `utils/vault` | 1 | eth |

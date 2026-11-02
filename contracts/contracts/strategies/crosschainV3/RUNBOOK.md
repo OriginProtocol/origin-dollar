@@ -11,7 +11,7 @@ Every contract has the same address on both chains:
 | Master (Base) / Remote (Eth) | [`0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe`](https://basescan.org/address/0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe) / [Etherscan](https://etherscan.io/address/0xa03360b3f6d902F1b3334c0adBd5C6995d3513fe) |
 | CCIPAdapter (Base → Eth)     | [`0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82`](https://basescan.org/address/0x03578bC4b5fB0cC0cA7A6AD05b06407ae6324a82)                                                               |
 | SuperbridgeAdapter (Eth → Base) | [`0x0F12256E27E658790C404C087C38ab4f34D53360`](https://etherscan.io/address/0x0F12256E27E658790C404C087C38ab4f34D53360)                                                            |
-| Old BridgedWOETHStrategy (Base) | [`0x80c864704DD06C3693ed5179190786EE38ACf835`](https://basescan.org/address/0x80c864704DD06C3693ed5179190786EE38ACf835)                                                            |
+| Old BridgedWOETHStrategy (Base), removed from the vault 2026-11-02 | [`0x80c864704DD06C3693ed5179190786EE38ACf835`](https://basescan.org/address/0x80c864704DD06C3693ed5179190786EE38ACf835) |
 
 ## Rules
 
@@ -28,11 +28,10 @@ Every contract has the same address on both chains:
 
 ## Cadences
 
-| What                       | Who                                    | When                                  |
-| -------------------------- | -------------------------------------- | ------------------------------------- |
-| Balance report             | Talos `oethbV3BalanceReport` (mainnet) | `15 */2 * * *`                        |
-| Stored message / leg 2     | Talos `oethbV3SettleWithdrawal` (base) | `5,35 * * * *`                        |
-| Old strategy oracle price  | Talos `otokenOethbUpdateWoethPrice`    | daily, **until base/008 has executed** |
+| What                   | Who                                    | When                          |
+| ---------------------- | -------------------------------------- | ----------------------------- |
+| Balance report         | Talos `oethbV3BalanceReport` (mainnet) | `15 0 * * *` (daily, 00:15 UTC) |
+| Stored message / leg 2 | Talos `oethbV3SettleWithdrawal` (base) | `5,35 * * * *`                |
 
 Enable order: fund Remote's pool (or let the first report top it up), enable
 `oethb_v3_balance_report`, wait for `BalanceReported` on Master, then enable
@@ -84,42 +83,37 @@ funded **before** any strategist move.
 
 ## Alerts
 
-| Alert | Meaning | First step |
+These are planned in infra-dashboard and **not live yet**; until they ship,
+don't look for them in Discord.
+
+| Alert (planned) | Meaning | First step |
 | --- | --- | --- |
-| `cross-chain-balance-reports` | No `BalanceReported` on Master for too long | Check the `oethb_v3_balance_report` runs and Remote's pool |
+| `cross-chain-balance-reports` (V3) | No `BalanceReported` on Master for too long | Check the `oethb_v3_balance_report` runs and Remote's pool |
 | `oethb-v3-channel` | Operation in flight too long, stored message, NACK or failed CCIP execution | Find the row in the failure table |
 | `oethb-v3-config` | Operator, adapter, lane or cap changed | Confirm it was an intended governance or strategist action |
-| `oethb-v3-migration` | Migration batch sent but not landed, or old strategy balance off | See the migration section below |
 
-## Migration (old strategy → Remote)
+## Migration record (old strategy → Remote)
 
-Batches are Strategist Safe transactions on Base:
-`bridgeToRemote(min(1000e18, remaining))` on the old strategy, at most one per
-hour (the Ethereum-side wOETH bucket refills 1,000 per hour). Each needs ETH
-for its CCIP fee: send it as `msg.value` (the surplus is refunded) or pre-fund
-the strategy. Each batch emits `WOETHBridgedToRemote` on Base and lands as a
-wOETH transfer into Remote ~30 minutes later.
+Done. Kept as a record and for the lesson at the end.
 
-Until base/008 executes, the old strategy prices both its local and bridged
-wOETH with `lastOraclePrice`, so the daily price update must keep running.
+- 6,384.451188618532578167 wOETH moved in nine `bridgeToRemote` batches: a
+  0.1 test on 2026-10-26, then eight on 2026-10-28 between 08:32 and 19:00 UTC.
+- The balance report that carried the last batch landed at Base block
+  53213374 (2026-10-28 19:34:55 UTC). The old strategy's `checkBalance` hit 0
+  there.
+- base/008 removed the old strategy from the vault at Base block 53402332
+  (2026-11-02 04:33:31 UTC), tx
+  [`0x0bdc0d16341ca48376cf154aa5d786ff1b77709c183750f796347122d7a0b658`](https://basescan.org/tx/0x0bdc0d16341ca48376cf154aa5d786ff1b77709c183750f796347122d7a0b658).
 
-### base/008 checklist (remove the old strategy)
-
-Run [`008_OETHbV3RemoveOldStrategy.s.sol`](../../../scripts/deploy/base/008_OETHbV3RemoveOldStrategy.s.sol)
-only when all of these hold:
-
-1. The old strategy holds no wOETH (`bridgedWOETH.balanceOf(old)` under dust).
-2. Every `WOETHBridgedToRemote` has a matching wOETH transfer into Remote on
-   Ethereum.
-3. A balance report was accepted on Master (`BalanceReported`) after the last
-   batch landed.
-4. `old.checkBalance(WETH)` is under `1e13` (the vault's `removeStrategy` dust
-   check).
-
-Then flip `skip` to `false`, `make simulate NETWORK=base`, and deploy. It is a
-Base timelock proposal with a 48 h delay: keep reports flowing during the
-delay. The PR must do the CLAUDE.md "MANDATORY CHECK"; afterwards disable the
-`otoken_oethb_updateWoethPrice` schedule and retire the action.
+**Lesson: the phantom window.** The old strategy valued in-flight wOETH as
+`max(0, totalBridged * lastOraclePrice - Master.checkBalance(WETH))`. That term
+was meant to be non-zero only while a batch was travelling, but it also woke up
+whenever Master's balance fell below `totalBridged * lastOraclePrice`. A 47 WETH
+withdrawal from Master on 2026-10-30, before 008 executed, made the vault count
+about 46 WETH twice for 46 hours (until a deposit raised Master's balance on
+2026-11-01). A future migration of this kind should remove the old strategy
+before any withdrawal from the new one, or cap the in-flight term at what is
+actually in transit.
 
 ## Quick state check
 

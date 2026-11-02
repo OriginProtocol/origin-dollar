@@ -32,7 +32,6 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
 | `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
 | `otokenAddWithdrawalQueueLiquidity` | plume   | `*/10 * * * *`   | As above, on Plume                                                                                  |
-| `otokenOethbUpdateWoethPrice`       | base    | `30 21 * * *`    | Update the wOETH oracle price on the Base BridgedWOETHStrategy. Keep running until base/008 removes it from the vault (see [superOETHb V3](#superoethb-v3-cross-chain-woeth)), then retire |
 | `otokenOethbHarvest`                | base    | `55 11 * * *`    | Harvest strategies on Base OETHb                                                                    |
 | `ousdV4Rebalance`                   | mainnet | `7,37 * * * *`   | Keep the OUSD/USDe Uniswap v4 positions one-sided via UniswapV4RebalanceModule (see below)          |
 | `ousdSusdeV4Rebalance`              | mainnet | `22,52 * * * *`  | Keep the OUSD/sUSDe v4 position just above the sUSDe NAV (UniswapV4ERC4626RebalanceModule, below)   |
@@ -66,7 +65,7 @@ The Master (Base) / Remote (Ethereum) wOETH strategy pair. Runbook:
 
 | Action                    | Network | Cron           | Description                                                                                                         |
 | ------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `oethbV3BalanceReport`    | mainnet | `15 */2 * * *` | Send Remote's balance report to Master; top up Remote's CCIP fee pool in the same tx when it runs low                |
+| `oethbV3BalanceReport`    | mainnet | `15 0 * * *`   | Send Remote's balance report to Master; top up Remote's CCIP fee pool in the same tx when it runs low                |
 | `oethbV3SettleWithdrawal` | base    | `5,35 * * * *` | Finish a stored Superbridge message, or trigger leg 2 (`triggerClaim`) once Remote's OETH queue request is claimable |
 | `oethbV3RetryDeposit`     | mainnet | manual         | Re-wrap idle WETH/OETH on Remote after `DepositUnderlyingFailed` or `WithdrawRequestUnderlyingFailed`                |
 
@@ -78,7 +77,10 @@ the pair; `processStoredMessage` is the only permissionless step.
   since Master would drop the report, and when both sides are 0. A nonce
   mismatch with Master idle fails the run. When Remote's pool covers fewer than
   10 sends it attaches enough ETH for 40, capped at 0.02 ETH per run. The
-  08:15/20:15 runs land on Base before the 09:25/21:25 `otokenOethbRebase`.
+  daily 00:15 run lands on Base about 15 minutes later, so the 09:25 and 21:25
+  `otokenOethbRebase` runs see a number 9h and 21h old. Remote grows about
+  0.55 WETH a day, so the lag stays under 0.5 WETH and is picked up at the
+  next rebase.
 - `oethbV3SettleWithdrawal` calls `triggerClaim` only after the OETH vault's
   claim delay has passed and `claimWithdrawal` simulates as Remote; an early
   trigger is NACKed and costs two CCIP fees. When Master's pool is below the

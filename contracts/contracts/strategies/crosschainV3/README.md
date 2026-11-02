@@ -8,7 +8,7 @@ This directory implements the V3 cross-chain strategy pair (Master + Remote) and
 |---|---|---|---|
 | Master | Base (8453) | `MasterWOTokenStrategy` | Strategy registered on the OETHb Vault. Holds WETH plus an accounting number. |
 | Remote | Ethereum (1) | `RemoteWOTokenStrategy` | Not registered with any vault. Custodies wOETH shares; mints/redeems OETH at the mainnet OETH Vault. |
-| Migration | Base | `BridgedWOETHMigrationStrategy` | Upgrade impl for the existing `BridgedWOETHStrategyProxy`; `bridgeToRemote()` CCIP-ships wOETH to Remote. |
+| Migration (done, code removed) | Base | `BridgedWOETHMigrationStrategy` | Upgrade impl for the existing `BridgedWOETHStrategyProxy`; `bridgeToRemote()` CCIP-shipped wOETH to Remote. base/008 removed the proxy from the vault on 2026-11-02; the source is in git history. |
 
 **Only the backing asset (WETH) crosses a bridge.** The pair never bridges the OToken or the wOToken — see [`DESIGN.md`](./DESIGN.md) §3.11. Every cross-chain message is nonce-gated and adapter-authenticated.
 
@@ -48,9 +48,6 @@ contracts/strategies/crosschainV3/libraries/
 contracts/proxies/create2/
   CrossChainStrategyProxy.sol — Master/Remote strategy proxy (CreateX/CREATE2-deployable for peer parity)
   BridgeAdapterProxy.sol      — Adapter proxy (CreateX/CREATE2-deployable for peer parity)
-
-contracts/strategies/
-  BridgedWOETHMigrationStrategy.sol — Phase 1 upgrade impl for the existing Base proxy
 
 contracts/mocks/crosschainV3/
   MockBridgeAdapter, MockBridgeReceiver, MockCCIPRouter, MockCrossChainV3HelperHarness,
@@ -183,8 +180,8 @@ These require real on-chain configuration and were intentionally not authored as
 | # | Item | Status |
 |---|---|---|
 | 1 | **Foundry migration** — the deploy scripts now live at `scripts/deploy/{base,mainnet}/`; the test suites still need porting to `tests/{unit,fork,smoke}/` before the Hardhat ones can be deleted. | In progress |
-| 2 | **`sendBalanceReport` automation** — Talos action [`oethbV3BalanceReport`](../../../tasks/actions/oethbV3BalanceReport.ts) (Ethereum, `15 */2 * * *`) sends the report and tops up Remote's fee pool; [`oethbV3SettleWithdrawal`](../../../tasks/actions/oethbV3SettleWithdrawal.ts) (Base) runs leg 2. Proxies are pinned in `utils/addresses.js` and have `OETHbV3*StrategyProxy` descriptors. | Done |
-| 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. | Pending |
-| 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`scripts/deploy/base/006`, currently gated by `skip`). | Pending |
-| 5 | **Retire `otokenOethbUpdateWoethPrice`** — keep it running until `base/008` removes the old strategy from the vault (its oracle price prices the in-flight migration until then); then disable the schedule and delete the action. | Follow-up |
-| 6 | **Operator runbook** — [`RUNBOOK.md`](./RUNBOOK.md): cadences, deposit/withdraw procedure, failure table, alerts, migration and the 008 checklist. | Done |
+| 2 | **`sendBalanceReport` automation** — Talos action [`oethbV3BalanceReport`](../../../tasks/actions/oethbV3BalanceReport.ts) (Ethereum, daily `15 0 * * *`) sends the report and tops up Remote's fee pool; [`oethbV3SettleWithdrawal`](../../../tasks/actions/oethbV3SettleWithdrawal.ts) (Base) runs leg 2. Proxies are pinned in `utils/addresses.js` and have `OETHbV3*StrategyProxy` descriptors. | Done |
+| 3 | **Governance proposal 1 (deploy + wire)** — proposals to deploy and wire the Master/Remote pair and upgrade the old `BridgedWOETHStrategy`. Base 005–007 and mainnet 012 executed on 2026-10-26. | Done |
+| 4 | **Governance proposal 2 (post-migration cleanup)** — remove the old `BridgedWOETHStrategy` from the vault after Phase 1 migration completes (`scripts/deploy/base/008`). Executed 2026-11-02 04:33:31 UTC, Base block 53402332, tx [`0x0bdc0d16…0b658`](https://basescan.org/tx/0x0bdc0d16341ca48376cf154aa5d786ff1b77709c183750f796347122d7a0b658). | Done |
+| 5 | **Retire `otokenOethbUpdateWoethPrice`** — the old strategy's oracle price stopped valuing anything once `base/008` executed. The action, its schedule and the old strategy code are removed. | Done |
+| 6 | **Operator runbook** — [`RUNBOOK.md`](./RUNBOOK.md): cadences, deposit/withdraw procedure, failure table, alerts and the migration record. | Done |

@@ -26,6 +26,12 @@ WHERE product = 'origin-dollar'
     'module_rebase_sonic'
   );
 
+-- base/008 removed the BridgedWOETHStrategy from the OETHb vault on 2026-11-02.
+-- Its oracle price no longer values anything, so the daily update is retired. Idempotent.
+DELETE FROM schedules
+WHERE product = 'origin-dollar'
+  AND name IN ('otoken_oethb_updateWoethPrice');
+
 -- Move the addWithdrawalQueueLiquidity rows from daily to every 10 minutes
 -- (the action now skips the tx when there is nothing to add). The INSERT below
 -- is ON CONFLICT DO NOTHING, so existing rows need this UPDATE. Guarded on the
@@ -60,7 +66,6 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'withdraw_validator',                       'cd /app && pnpm exec tsx tasks/run.ts withdrawValidator --network mainnet',            '0 0 1 1 *',             'UTC', false, 'Manual validator partial withdrawal or full exit. Provide amount and pubkey; amount 0 requests a full exit.'),
 ('origin-dollar', 'remove_validator',                         'cd /app && pnpm exec tsx tasks/run.ts removeValidator --network mainnet',              '0 0 1 1 *',             'UTC', false, 'Manual validator removal. Provide operatorids and pubkey.'),
 ('origin-dollar', 'otoken_ousd_autoWithdrawal',               'cd /app && pnpm exec tsx tasks/run.ts otokenOusdAutoWithdrawal --network mainnet',     '35 11,23 * * *',        'UTC', false, NULL),
-('origin-dollar', 'otoken_oethb_updateWoethPrice',            'cd /app && pnpm exec tsx tasks/run.ts otokenOethbUpdateWoethPrice --network base',     '30 21 * * *',           'UTC', false, NULL),
 ('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_mainnet', 'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network mainnet', '*/10 * * * *',   'UTC', false, NULL),
 ('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_base',    'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network base',    '*/10 * * * *',   'UTC', false, NULL),
 ('origin-dollar', 'otoken_addWithdrawalQueueLiquidity_sonic',   'cd /app && pnpm exec tsx tasks/run.ts otokenAddWithdrawalQueueLiquidity --network sonic',   '*/10 * * * *',   'UTC', false, NULL),
@@ -86,7 +91,7 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'ousd_usde_v4_rebalance',                    'cd /app && pnpm exec tsx tasks/run.ts ousdUsdeV4Rebalance --network mainnet', '*/2 * * * *',           'UTC', false, 'Every 2 min: pulls OUSD/USDe fills before bots buy them back and re-ranges on the KyberSwap bid. Needs UniswapV4LiquidityModule deployed (010), enabled and configured on the OUSD v4 liquidity Safe. Replaces ousd_v4_rebalance: disable that one first; keep this disabled until then.'),
 ('origin-dollar', 'ousd_susde_v4_rebalance',                   'cd /app && pnpm exec tsx tasks/run.ts ousdSusdeV4Rebalance --network mainnet', '22,52 * * * *',         'UTC', false, 'Every 30 min, off the */10 minutes and ousd_v4_rebalance (same signer). Needs UniswapV4ERC4626RebalanceModule deployed (009) and enabled on the OUSD v4 liquidity Safe; keep disabled until then.'),
 ('origin-dollar', 'otoken_oethb_harvest',                     'cd /app && pnpm exec tsx tasks/run.ts otokenOethbHarvest --network base',              '55 11 * * *',           'UTC', false, NULL),
-('origin-dollar', 'oethb_v3_balance_report',                  'cd /app && pnpm exec tsx tasks/run.ts oethbV3BalanceReport --network mainnet',         '15 */2 * * *',          'UTC', false, 'permissioned: Talos is operator on the OETHb V3 Remote strategy. Tops up Remote''s CCIP fee pool when it runs low. Lands before the 09:25/21:25 OETHb rebases.'),
+('origin-dollar', 'oethb_v3_balance_report',                  'cd /app && pnpm exec tsx tasks/run.ts oethbV3BalanceReport --network mainnet',         '15 0 * * *',            'UTC', false, 'permissioned: Talos is operator on the OETHb V3 Remote strategy. Tops up Remote''s CCIP fee pool when it runs low. Daily; lands on Base ~00:30, so both the 09:25 and 21:25 OETHb rebases see it.'),
 ('origin-dollar', 'oethb_v3_settle_withdrawal',               'cd /app && pnpm exec tsx tasks/run.ts oethbV3SettleWithdrawal --network base',         '5,35 * * * *',          'UTC', false, 'permissioned: finishes stored Superbridge messages (anyone) and triggers leg 2 of Master withdrawals (operator). Sends a tx only when needed. Enable after the first balance report lands.'),
 ('origin-dollar', 'oethb_v3_retry_deposit',                   'cd /app && pnpm exec tsx tasks/run.ts oethbV3RetryDeposit --network mainnet',          '0 0 1 1 *',             'UTC', false, 'Manual: run after DepositUnderlyingFailed or WithdrawRequestUnderlyingFailed on the OETHb V3 Remote strategy.'),
 ('origin-dollar', 'ousd_rebalancer',                          'cd /app && pnpm exec tsx tasks/run.ts ousdRebalancer --network mainnet',               '0 0 1 1 *',             'UTC', false, 'Manual: Run now to rebalance OUSD Morpho strategies'),
