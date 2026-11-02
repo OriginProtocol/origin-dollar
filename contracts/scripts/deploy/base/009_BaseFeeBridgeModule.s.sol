@@ -21,8 +21,7 @@ import {Base, CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 ///        - Ethereum: the FeeSplitter Strategist calls `addAsset(WETH, 0.125e18)` BEFORE the
 ///          first bridge. Until then the FeeSplitter does not distribute WETH, and it can only be
 ///          recovered through a Governor `rescue`.
-///        - Base: the fee Safe calls `enableModule(<module>)` and keeps a small ETH balance for
-///          the CCIP fee.
+///        - Base: the fee Safe calls `enableModule(<module>)`.
 contract $009_BaseFeeBridgeModule is AbstractDeployScript("009_BaseFeeBridgeModule") {
     // ==================== Deployment Logic ==================== //
 

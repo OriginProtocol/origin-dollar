@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { action, types } from "../lib/action";
-import type { Logger } from "../lib/action";
 import { getContract } from "../lib/contracts";
+import { MAX_TOPUP_WEI, bridgeTopUp } from "../lib/baseFeeBridge";
 import { logTxDetails } from "../../utils/txLogger";
 
 /**
@@ -27,7 +27,7 @@ const MODULE_ABI = [
   "function MIN_WITHDRAWAL_AMOUNT() view returns (uint256)",
   "function bridgeFee(uint256 wethAmount) view returns (uint256)",
   "function requestWithdrawal(uint256 oethbAmount)",
-  "function claimAndBridge()",
+  "function claimAndBridge() payable",
 ];
 
 const VAULT_ABI = [
@@ -41,8 +41,11 @@ const ERC20_ABI = ["function balanceOf(address) view returns (uint256)"];
 
 const DAY = 24 * 60 * 60;
 
-/** Warn when the Safe's ETH covers fewer than this many CCIP fees. */
-const LOW_SAFE_ETH_FEES = 3;
+/** Warn when the relayer's ETH covers fewer than this many CCIP fees. */
+const LOW_RELAYER_ETH_FEES = 5;
+
+/** ETH the relayer keeps for the claim tx's own gas on Base. */
+const GAS_RESERVE_WEI = ethers.utils.parseEther("0.001");
 
 function revertReason(err: unknown): string {
   const e = err as {
@@ -51,26 +54,6 @@ function revertReason(err: unknown): string {
     message?: string;
   };
   return e.reason || e.error?.message || e.message || String(err);
-}
-
-async function checkSafeEth(
-  provider: ethers.providers.Provider,
-  safe: string,
-  fee: ethers.BigNumber,
-  log: Logger
-) {
-  const safeEth = await provider.getBalance(safe);
-  if (safeEth.lt(fee)) {
-    throw new Error(
-      `Fee Safe has ${ethers.utils.formatEther(safeEth)} ETH, ` +
-        `less than the ${ethers.utils.formatEther(fee)} ETH CCIP fee; top it up`
-    );
-  }
-  if (safeEth.lt(fee.mul(LOW_SAFE_ETH_FEES))) {
-    log.warn(
-      `Fee Safe ETH covers fewer than ${LOW_SAFE_ETH_FEES} CCIP fees; top it up`
-    );
-  }
 }
 
 action({
@@ -142,44 +125,70 @@ action({
       // The claim also needs queue liquidity, which only a simulation can
       // confirm. A revert here just means "not yet", so wait without a tx.
       try {
-        await module.callStatic.claimAndBridge();
+        await vault.callStatic.claimWithdrawal(requestId, { from: safe });
       } catch (err) {
-        // The module only sees that the Safe call failed. Simulating the claim
-        // as the Safe tells "not yet" (a vault revert) apart from a real
-        // problem past the claim, such as the Safe not covering the CCIP fee.
-        let vaultReason: string | undefined;
-        try {
-          await vault.callStatic.claimWithdrawal(requestId, { from: safe });
-        } catch (vaultErr) {
-          vaultReason = revertReason(vaultErr);
-        }
-        if (vaultReason === undefined) {
-          throw new Error(
-            `Request ${requestId} is claimable but claimAndBridge reverts: ${revertReason(
-              err
-            )}`
-          );
-        }
         log.info(
-          `Request ${requestId} not claimable yet (${vaultReason}); waiting`
+          `Request ${requestId} not claimable yet (${revertReason(
+            err
+          )}); waiting`
         );
         return;
       }
 
-      // Not fee-gated: the request is already open, and WETH idle on the Safe
-      // helps no one.
+      // The Safe pays the CCIP fee in ETH but keeps none of its own: the
+      // relayer attaches the shortfall, and the module forwards it to the
+      // Safe in the same tx. Not fee-gated: the request is already open, and
+      // WETH idle on the Safe helps no one.
       const fee = await module.bridgeFee(request.amount);
-      await checkSafeEth(provider, safe, fee, log);
+      const safeEth = await provider.getBalance(safe);
+      const topUp = bridgeTopUp(safeEth, fee);
+      if (topUp.gt(MAX_TOPUP_WEI)) {
+        throw new Error(
+          `Fee top-up ${ethers.utils.formatEther(topUp)} ETH is above the ` +
+            `${ethers.utils.formatEther(MAX_TOPUP_WEI)} ETH cap (CCIP fee ` +
+            `${ethers.utils.formatEther(fee)} ETH); the quote looks wrong`
+        );
+      }
+
+      // Read through the provider: the signer is wrapped by the nonce queue.
+      const relayerEth = await provider.getBalance(await signer.getAddress());
+      if (relayerEth.lt(topUp.add(GAS_RESERVE_WEI))) {
+        throw new Error(
+          `Relayer has ${ethers.utils.formatEther(relayerEth)} ETH, not ` +
+            `enough for the ${ethers.utils.formatEther(topUp)} ETH fee ` +
+            `top-up plus gas; fund it`
+        );
+      }
+      if (relayerEth.lt(fee.mul(LOW_RELAYER_ETH_FEES))) {
+        log.warn(
+          `Relayer ETH covers fewer than ${LOW_RELAYER_ETH_FEES} CCIP fees; fund it`
+        );
+      }
+
+      // The vault claim passed above, so a revert here is a real problem
+      // past the claim, not "not yet".
+      try {
+        await module.callStatic.claimAndBridge({ value: topUp });
+      } catch (err) {
+        throw new Error(
+          `Request ${requestId} is claimable but claimAndBridge reverts: ${revertReason(
+            err
+          )}`
+        );
+      }
+
       log.info(
         `Claiming request ${requestId} and bridging ` +
           `${ethers.utils.formatEther(request.amount)} WETH ` +
-          `(CCIP fee ${ethers.utils.formatEther(fee)} ETH)`
+          `(CCIP fee ${ethers.utils.formatEther(fee)} ETH, Safe holds ` +
+          `${ethers.utils.formatEther(safeEth)} ETH, attaching ` +
+          `${ethers.utils.formatEther(topUp)} ETH)`
       );
       if (dryrun) {
         log.info("Dry run: claim simulation succeeded, not broadcasting");
         return;
       }
-      const tx = await module.claimAndBridge();
+      const tx = await module.claimAndBridge({ value: topUp });
       await logTxDetails(tx, "claimAndBridge on BaseFeeBridgeModule");
       await tx.wait();
     }

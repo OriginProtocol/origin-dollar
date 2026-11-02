@@ -37,6 +37,7 @@
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `abi/claim-rewards-module.json` | 1 | eth |
 | `abi/passThrough.json` | 1 | eth |
+| `tasks/lib/baseFeeBridge` | 1 | base |
 | `tasks/lib/cowHarvest` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
 | `tasks/lib/logs` | 1 | eth |

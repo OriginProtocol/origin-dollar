@@ -11,7 +11,7 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 /// @dev Test-local handle on BaseFeeBridgeModule; nothing else in the repo consumes it.
 interface IBaseFeeBridgeModule {
     function requestWithdrawal(uint256 oethbAmount) external;
-    function claimAndBridge() external;
+    function claimAndBridge() external payable;
     function bridgeFee(uint256 wethAmount) external view returns (uint256);
     function pendingRequestId() external view returns (uint256);
     function hasPendingRequest() external view returns (bool);
