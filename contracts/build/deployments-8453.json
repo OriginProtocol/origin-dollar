@@ -79,6 +79,10 @@
         {
             "implementation": "0xC29788FEE651182A36b4244490E1BBb0B5C5D5Eb",
             "name": "BRIDGED_WOETH_MIGRATION_STRATEGY_IMPL"
+        },
+        {
+            "implementation": "0x18f570c4CFC5cF1ED8B19c6876cDA4b9582e4f73",
+            "name": "BaseFeeBridgeModule"
         }
     ],
     "executions": [
@@ -117,6 +121,12 @@
             "proposalId": "15613952062623539110545798400038064770513144374853295810488654647686994817702",
             "tsDeployment": 1793266479,
             "tsGovernance": 1793594011
+        },
+        {
+            "name": "009_BaseFeeBridgeModule",
+            "proposalId": 1,
+            "tsDeployment": 1793950489,
+            "tsGovernance": 0
         }
     ]
 }
