@@ -181,6 +181,12 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         return BeaconProofsLib.merkleizeSignature(signature);
     }
 
+    /// @notice Executes a proof-verification call, retrying the other verifier if the preferred one reverts.
+    /// @dev Uses staticcall so neither verifier can modify state. Returns the first successful call's
+    /// raw return data. If both calls revert, bubbles the fallback verifier's revert data, or uses
+    /// a generic verification error when that data is empty. The preferred verifier's error is discarded.
+    /// @param data ABI-encoded IBeaconProofs function selector and arguments.
+    /// @return Raw ABI-encoded return data from the first successful verifier call.
     function _verify(bytes memory data) internal view returns (bytes memory) {
         (address primary, address fallbackVerifier) = _preferredVerifiers();
 
@@ -194,6 +200,13 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         return result;
     }
 
+    /// @notice Selects the order in which the legacy and Gloas verifiers are tried.
+    /// @dev Prefers Gloas when the configured activation timestamp is nonzero and has been reached;
+    /// otherwise prefers legacy. This uses the current execution block's timestamp, not the timestamp
+    /// of the beacon root being proven. Both formats remain accepted through fallback, including
+    /// historical pre-fork roots after activation. A zero activation timestamp always prefers legacy.
+    /// @return primary Verifier to call first.
+    /// @return fallbackVerifier Verifier to call if the primary call reverts.
     function _preferredVerifiers()
         internal
         view
