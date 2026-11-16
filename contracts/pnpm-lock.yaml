@@ -9,6 +9,8 @@ overrides:
 
 packageExtensionsChecksum: sha256-9v9SADBjD9pMBOHSjFzigW2a0Y44y8oQZjX8DRAhrzs=
 
+pnpmfileChecksum: sha256-xpSAmVYLH2SZPm+P0/M3VqOoZU1lDSTs6OBj22mviII=
+
 importers:
 
   .:
@@ -20,23 +22,23 @@ importers:
         specifier: ^8.2.0
         version: 8.2.0
       '@lodestar/api':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@lodestar/config':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@lodestar/params':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@lodestar/state-transition':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@lodestar/types':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@lodestar/utils':
-        specifier: ^1.46.0
-        version: 1.46.0
+        specifier: ^1.50.1
+        version: 1.50.1
       '@safe-global/api-kit':
         specifier: ^5.0.1
         version: 5.0.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -348,9 +350,6 @@ packages:
   '@chainsafe/as-sha256@1.2.0':
     resolution: {integrity: sha512-H2BNHQ5C3RS+H0ZvOdovK6GjFAyq5T6LClad8ivwj9Oaiy28uvdsGVS7gNJKuZmg0FGHAI+n7F0Qju6U0QkKDA==}
 
-  '@chainsafe/as-sha256@1.2.4':
-    resolution: {integrity: sha512-3GXDysZOKD6cTYbm48lEdXdUbS7cafjXQZfgHOspTByhoGR/JM3KBXyF3vE6bf63ImjNPyoEZwnQcpYPQ6k3bQ==}
-
   '@chainsafe/as-sha256@1.2.5':
     resolution: {integrity: sha512-8LzmWxBC/2O5BgbP+aRom/FaDJMrM04VZMlVIivYTc6yNQKYrONmIv27m3q/1VBgxrfrNNqmibitb2hE2tQzIw==}
 
@@ -368,56 +367,6 @@ packages:
     peerDependenciesMeta:
       '@chainsafe/blst':
         optional: true
-
-  '@chainsafe/blst-darwin-arm64@2.2.0':
-    resolution: {integrity: sha512-BOOy2KHbV028cioPWaAMqHdLRKd6/3XyEmUEcQC2E/SpyYLdNcaKiBUYIU4pT9CrWBbJJxX68UI+3vZVg0M8/w==}
-    engines: {node: '>= 16'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@chainsafe/blst-darwin-x64@2.2.0':
-    resolution: {integrity: sha512-jG64cwIdPT7u/haRrW26tWCpfMfHBQCfGY169mFQifCwO4VEwvaiVBPOh5olFis6LjpcmD+O0jpM8GqrnsmUHQ==}
-    engines: {node: '>= 16'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@chainsafe/blst-linux-arm64-gnu@2.2.0':
-    resolution: {integrity: sha512-L8xV2uuLn8we76vdzfryS9ePdheuZrmY6yArGUFaF1Uzcwml6V1/VvyPl9/uooo/YfVRIrvF/D+lQfI2GFAnhw==}
-    engines: {node: '>= 16'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/blst-linux-arm64-musl@2.2.0':
-    resolution: {integrity: sha512-0Vn0luxLYVgC3lvWT1MapFHSAoz99PldqjhilXTGv0AcAk/X5LXPH2RC9Dp2KJGqthyUkpbk1j47jUBfBI+BIg==}
-    engines: {node: '>= 16'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/blst-linux-x64-gnu@2.2.0':
-    resolution: {integrity: sha512-gEY/z2SDBA7kXtFEI9VNhWTJAIjx16jdeAyCaS2k4ACGurWZaWk+Ee4KniTsr4WieSqeuNTUr7Pdja0Sr4EKNQ==}
-    engines: {node: '>= 16'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/blst-linux-x64-musl@2.2.0':
-    resolution: {integrity: sha512-58GKtiUmtVSuerRzPEcMNQZpICPboBKFnL7+1Wo+PSuajkvbae7tEFrFTtWeMoKIPgOEsPMnk96LF+0yNgavUg==}
-    engines: {node: '>= 16'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/blst-win32-x64-msvc@2.2.0':
-    resolution: {integrity: sha512-UFrZshl4dfX5Uh2zeKXAZtrkQ+otczHMON2tsrapQNICWmfHZrzE6pKuBL+9QeGAbgflwpbz7+D5nQRDpiuHxQ==}
-    engines: {node: '>= 16'}
-    cpu: [x64]
-    os: [win32]
-
-  '@chainsafe/blst@2.2.0':
-    resolution: {integrity: sha512-VBaQoNE2a9d9+skAjQKv3Suk0yGKqp3mZM0YWYJNPj/Ae/f6lAyeVSgKqo2LrsNQBzD/LqrJLKUY8rJT3vDKLA==}
-    engines: {node: '>= 16'}
 
   '@chainsafe/hashtree-darwin-arm64@1.0.2':
     resolution: {integrity: sha512-yIIwn9SUR5ZTl2vN1QqRtDFL/w2xYW4o68A1k8UexMbieGAnE7Ab7NvtCZRHRe8x0eONO46F/bWn5bxxyYlFXw==}
@@ -463,129 +412,55 @@ packages:
     resolution: {integrity: sha512-OaWjsZ6S/GaT2RvaqdpsF5Mux8qQOE2KbitX2yHmQJZNUZkdh7C3N4PA5LsvewqX+z8Nkv8mr1uSe0LSrHGiQw==}
     engines: {node: '>= 18'}
 
+  '@chainsafe/lodestar-z-aarch64-apple-darwin@2.0.0':
+    resolution: {integrity: sha512-wmTQV7yQFUl2Bsu0DQgvGBtfSDve0/qjV61Wv8xzSZDiyuM/L/xwLyK6Aji+Eq0OpLIDzSB22/6dQ3LEwrpH+A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@chainsafe/lodestar-z-aarch64-unknown-linux-gnu@2.0.0':
+    resolution: {integrity: sha512-HgC50Q4SunPDhy58L9liNXL4gvhqydMnILCu+UBos6fSnWNEpOqMKE4daeOhmvDrrBHNVejiuD65lXOfZ9Fggg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@chainsafe/lodestar-z-aarch64-unknown-linux-musl@2.0.0':
+    resolution: {integrity: sha512-KohDy5uhu3w/FQxSGJ7VfK7J82LJ91KWVNhUPt6HFAk3f9ZophK+4q+9NV+J9Rp55ih4VNfox5yLqk6SeHQ3Bg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@chainsafe/lodestar-z-x86_64-apple-darwin@2.0.0':
+    resolution: {integrity: sha512-uKqrR1WLGeoR6CwmbDOwNBZ6NxoHufOP0CdBIhASvABjA6PfHgsdQi29/lJHvynlwj+P0HnVBB5BcajBCr/1Xg==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@chainsafe/lodestar-z-x86_64-unknown-linux-gnu@2.0.0':
+    resolution: {integrity: sha512-8s36ilUfpHQ/jl0ZWW7XuNcrD02i6YZzOofySq9BIdOa0JV6XsLRJtmzH6dfdSoXLxkKjYivLMgD/1u2Usex0w==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@chainsafe/lodestar-z-x86_64-unknown-linux-musl@2.0.0':
+    resolution: {integrity: sha512-Ymtz4z/V7ccmPpl6zJynST4/S4fDrW3LnRKtTJK1ibjvg4qi4JyTwEzPT7U6/rLHwzFhTRRfW/SkJoBH4dSW2Q==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@chainsafe/lodestar-z@2.0.0':
+    resolution: {integrity: sha512-YZjOTaNtM45j2aeijUbL/1onz7da45LtJQOynfbKjrJJMVDsI0twwSoo9RhYowaEQulYcQkEW4WsvNUlU7JRgw==}
+
   '@chainsafe/persistent-merkle-tree@1.2.1':
     resolution: {integrity: sha512-AOSEVLfaqwb9eTCKuY1ri0DrRxVQ3Rh+we1VBj1GahUGfEdE8OC3Vkbca7Up6RoI9Ip9FLnI31Y7AjKH9ZqAGA==}
-
-  '@chainsafe/persistent-merkle-tree@1.3.0':
-    resolution: {integrity: sha512-xGe95xNkYayC5BYQpo7ft5oHwyf52YtqBip+GJqZ9XgKSzraw93qUMNeqKrOVJbZM5HEOys8xxkt0h7VD1a9cw==}
 
   '@chainsafe/persistent-merkle-tree@1.3.1':
     resolution: {integrity: sha512-f8E1ftNhHK9zUEgb+Tdcx8TM57qeO4u9RU1kKDUDgCQyiMXrC+3rjAPAvum2HN7Du81myG7nz1WpIMZAPVWLTg==}
 
-  '@chainsafe/pubkey-index-map-darwin-arm64@3.0.0':
-    resolution: {integrity: sha512-gM/wwA6bpfeZm80aSoH2c3ddbPeZho73TUUprUFlHQNLldGzZ293yFQgj2Ontp1fMf9AI0w+F0uEN2qC6v7g9A==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
+  '@chainsafe/ssz@1.9.0':
+    resolution: {integrity: sha512-JU0WnYLtFlajllDBLF779+9OS/R6RVN44thKdxljJeN3ngR+OVL/s/p3Lv6SdgDvfI3RuZHgt6f4SGlBymumHw==}
 
-  '@chainsafe/pubkey-index-map-darwin-x64@3.0.0':
-    resolution: {integrity: sha512-zy4dH//kLXfQHHFVp1Pcz4HQgSh/uUKWt219hlrb5Fi+xVESVmTnLPjHmL1KtGs/R5W0XcuBrTuBHiq+zMU7lQ==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@chainsafe/pubkey-index-map-linux-arm64-gnu@3.0.0':
-    resolution: {integrity: sha512-M/HODHZcKDuoRFlx+Ka4NgyFSQvOECyIg/2pCQcgfCozR7rRx7VuOJ0ZSgU+BEhuY+fpaRSTesOlDIIY0ornWQ==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/pubkey-index-map-linux-arm64-musl@3.0.0':
-    resolution: {integrity: sha512-Sdm15mFsKiz5ndFfhcTjEl4i8TK0+gM1SEmYzmGUgnflrcvPc+US3qsMKyCqorDkHqYAYFFutQXz9QxjOMkIwg==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/pubkey-index-map-linux-x64-gnu@3.0.0':
-    resolution: {integrity: sha512-+4h995h2xEBmYdr9Tw05uYvFmMSELyaJagJ2KsFohkRjqiUyB76l8zR8aUKx7lwLXXHxWjHMYyWKHF3tTKRFNQ==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/pubkey-index-map-linux-x64-musl@3.0.0':
-    resolution: {integrity: sha512-qwFuygeutP4o9J/8ylD+ZrqkqeyytMl9E38ucIWpbiPYXDiJxpRN148v4Ah+NWwz6PqCROVyTxEyZklzy0AxUA==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/pubkey-index-map-win32-arm64-msvc@3.0.0':
-    resolution: {integrity: sha512-2t01rQAdiM5KPM7XLsZDtMhWAXz/YKY20H1N4jvaWURjaLm+S0j9X/Mt0xOjJ5SC++1g64LXjV+wnXO5j1S8Nw==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
-
-  '@chainsafe/pubkey-index-map-win32-x64-msvc@3.0.0':
-    resolution: {integrity: sha512-QemArQbgsLJ4eaM9S0Kdr3ucJUpZXTDfh3wTNp9eh7G3o1Y9O2Hp7G7BlEkF0cWU9ZsWe9YSzmeX24Uo5DNo4g==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [win32]
-
-  '@chainsafe/pubkey-index-map@3.0.0':
-    resolution: {integrity: sha512-KvWmKOG8WiVePHQDGyz+xo+RpsrmPEeipF8boqmXNYCLOGyVpkEXQk0IDVpnxngZziY6d97F9sml2vliDoyYyQ==}
-    engines: {node: '>= 10'}
-
-  '@chainsafe/ssz@1.6.2':
-    resolution: {integrity: sha512-XJELFJBHBstcvyRuXWPmNc/WRWmV5FVV03+iPTpgtCPQaImEHjKU4bc/5me35dRrXpehC04LD4ePYayOUjxFbw==}
-
-  '@chainsafe/swap-or-not-shuffle-darwin-arm64@1.2.1':
-    resolution: {integrity: sha512-kTewLZe1KqMAJ1gHfagOxo0BI4kTcMOAkGJ7pRLFM5ZkL2P7sh3/4ixnjdbtMkO207vMZEZL3fxJSSs14kg9Kg==}
-    engines: {node: '>= 18'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@chainsafe/swap-or-not-shuffle-darwin-x64@1.2.1':
-    resolution: {integrity: sha512-B/f/peQqOLW5Tqib5CqanAlQgoeib75FNszzHwRBwHdRY5ThOcBbARvOtef39zU5lYjj4j3iWobpD7G70kQyUw==}
-    engines: {node: '>= 18'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@chainsafe/swap-or-not-shuffle-linux-arm64-gnu@1.2.1':
-    resolution: {integrity: sha512-sDpuUuo3rStvHMQgLxH1UkkUbo8rcjDI70Fq3xzbNMhfjlrP0+sJistlFJtDpWmKsFk/sgje3PzVU9G3KFXzXA==}
-    engines: {node: '>= 18'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/swap-or-not-shuffle-linux-arm64-musl@1.2.1':
-    resolution: {integrity: sha512-FFmpDF2dRhhOCT3WBYOoQW9wqhJMfx7iULskBe5cjowVQ15U1TQJ6tC+hPpouUMt3/pKz9tIS9dNWTUuo7kpQg==}
-    engines: {node: '>= 18'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/swap-or-not-shuffle-linux-x64-gnu@1.2.1':
-    resolution: {integrity: sha512-nGXEnFCqRmCS7ATV7QQ7b7aKHcyET9XEpJylq0sljnkuNRwoQXFUYPMYTn4TMI6g3vgZt/AVK9RdCxp68JKwGQ==}
-    engines: {node: '>= 18'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@chainsafe/swap-or-not-shuffle-linux-x64-musl@1.2.1':
-    resolution: {integrity: sha512-VMQxE/EZjco4damGrJkkCQ2Y2WYgJcTR/ardTnSctM1/xxwUD1wQr7YW2TQsECfK3UZcW2W6gG7iqWfJgMdGSw==}
-    engines: {node: '>= 18'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@chainsafe/swap-or-not-shuffle-win32-arm64-msvc@1.2.1':
-    resolution: {integrity: sha512-qV+ps6KSoR8blc3gMse1BOBUGcCtptnMYoqTMwFCIx9LGaeSo3vKu5XBQDwHIfAW73bZ+PHb5YUqkRgtWBiEUw==}
-    engines: {node: '>= 18'}
-    cpu: [arm64]
-    os: [win32]
-
-  '@chainsafe/swap-or-not-shuffle-win32-x64-msvc@1.2.1':
-    resolution: {integrity: sha512-hsDN4O6PPpF4rEA1tMngMJAOrWTGAu8TAqdEwgdP+U25o8UVlz8W2N9697AMGRnnArN2BgYS0zCeUR9kuZ2XEQ==}
-    engines: {node: '>= 18'}
-    cpu: [x64]
-    os: [win32]
-
-  '@chainsafe/swap-or-not-shuffle@1.2.1':
-    resolution: {integrity: sha512-H8YdEoXXv2Hw17gDWGOJEya4LHlBbpChJP3jDQRfIk9hhwr0c/zbBemBRmjADowZhArL+ymkO+j5hGaYySjdpw==}
-    engines: {node: '>= 18'}
+  '@chainsafe/zapi@4.1.0':
+    resolution: {integrity: sha512-U/JgUc9KAfDeKlgJWWTvBuKEMezhnb4GVEGd3zYaMB3Vi85YTJtcd2b9eO+upk5buROwRo9DEF+ev32PaO98mg==}
+    hasBin: true
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -1011,23 +886,23 @@ packages:
     peerDependencies:
       ethers: ^5.7.2
 
-  '@lodestar/api@1.46.0':
-    resolution: {integrity: sha512-CZPXq8NLcZfmt6X0DokjPAbqnPYSU387T8QT+g2krvMqlMgycf+ByM42YsOj7EboYG4a+h1XfsgI3D2DLK0JZg==}
+  '@lodestar/api@1.50.1':
+    resolution: {integrity: sha512-hcu98aHswlBnUCR2SCihmUeq5IE6VnjNBB4uvss3Wv+PyduuGqRm/vKt7V6drHrLsZP5l7wCh2cQArQeCMg4Sg==}
 
-  '@lodestar/config@1.46.0':
-    resolution: {integrity: sha512-DJG1BavZowYq5ezOEQyR6Uijpc3ufFtTRM3zYp+7YhqDN+Y+LAOtWXJxPuAUJjUfEEFQgYj+ZJ7iJCS5suWj9g==}
+  '@lodestar/config@1.50.1':
+    resolution: {integrity: sha512-wcaVsubjS1Ys+F0Xp3B2mgoGzo9TV6D8+FSvOQvVtpQ2HzKab9nQ9n6+DWQXVQNX4gM8cYiHZ7WjBP/WMmQwCA==}
 
-  '@lodestar/params@1.46.0':
-    resolution: {integrity: sha512-eyJrn62yNZr+0KxzSKAtDkxzzMoo9T1Bz2N51mQAamp+eP6gFWPRKwegRc323SCALO41Jb1ELaECane2D7dQzA==}
+  '@lodestar/params@1.50.1':
+    resolution: {integrity: sha512-507+wFBg1RSC4AP0JfFObXfM7vSpsdo1Q+IuHfmZwbPW6XL9J5+sL2u4RWSLkPyQpc7cx5NdTt1OkL4M8esZlQ==}
 
-  '@lodestar/state-transition@1.46.0':
-    resolution: {integrity: sha512-/Wck1EE7nvv8qZvO2Gy5Pv79c1SZ0zNhoQjFA2MAHINwkd+azwmUX7tp16ZRkzwNnRPtYSHpY+rOvGH9imn/ng==}
+  '@lodestar/state-transition@1.50.1':
+    resolution: {integrity: sha512-1CjtjDM4TgfnGz2hVnYnhKcGnx/ePaGrtbFyTnkRKxg+vhqgw/OXqzp0wmGqhI2p3YjypTLrZSYsEq3uNj/DcQ==}
 
-  '@lodestar/types@1.46.0':
-    resolution: {integrity: sha512-Ga48V+1MNftO0a3cCS3CSLMpLihohsWAl1jOIFz47Jvz8xFDjXOATXmv+AlxNm4CbwmKLIEBL2e5UH0kRh85vw==}
+  '@lodestar/types@1.50.1':
+    resolution: {integrity: sha512-cs8HAmhixlmfPKlTv4kEfnF0MhKXPcuDxN26n2q1WEcUcfRJzdHbBpWHlj7YYOvQUbEMOyDpY/935ZjCrpYUsg==}
 
-  '@lodestar/utils@1.46.0':
-    resolution: {integrity: sha512-KEDTwiJLuTotisRFaazZHZB7PJMHpBlKM3w2PVSqMIUTZ7c7XaQAssnCTz0elUH9oxZ/mZfEphVeDdzuRl6V1Q==}
+  '@lodestar/utils@1.50.1':
+    resolution: {integrity: sha512-dJrWI3WqVbozjxvQgrWcgApBisoDTXNJtjKrkNhOaDSX7DhRNnCbrlHGvPjOpsMmNianqYg9+E5EFWKwzHLIGw==}
 
   '@noble/ciphers@1.3.0':
     resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
@@ -2555,8 +2430,8 @@ packages:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
 
-  es-object-atoms@1.1.1:
-    resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
+  es-object-atoms@1.1.2:
+    resolution: {integrity: sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==}
     engines: {node: '>= 0.4'}
 
   es-set-tostringtag@2.1.0:
@@ -3064,6 +2939,10 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
+  hasown@2.0.4:
+    resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
+    engines: {node: '>= 0.4'}
+
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
@@ -3295,12 +3174,20 @@ packages:
     resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
     hasBin: true
 
+  js-yaml@3.15.2:
+    resolution: {integrity: sha512-6EuL879VkRA+1Cz578mKMiKvjPNEuk6+r1JaFzoSWejZmtf7xWbIyw1e3KkxlkzTIt9Taw6JBhEppG7utc1P+w==}
+    hasBin: true
+
   js-yaml@4.1.0:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
     hasBin: true
 
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
+    hasBin: true
+
+  js-yaml@4.3.2:
+    resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
   jsbn@0.1.1:
@@ -3973,16 +3860,16 @@ packages:
     resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
     engines: {node: '>=0.6'}
 
-  qs@6.14.2:
-    resolution: {integrity: sha512-V/yCWTTF7VJ9hIh18Ugr2zhJMP01MY7c5kh4J870L7imm6/DIzBsNLTXzMwUA3yZ5b/KBqLx8Kp3uRvd7xSe3Q==}
+  qs@6.14.3:
+    resolution: {integrity: sha512-rQNAwFzg3KZjjfANpCQOAoZwHQvcpWuabal4khEuSStXNnVh6iLM+yscBqdSZuj+dRNl99Cgq5OuVyDBJZWq6Q==}
     engines: {node: '>=0.6'}
 
-  qs@6.15.0:
-    resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
+  qs@6.17.1:
+    resolution: {integrity: sha512-jd3COkaKVgGUW+ZHyEHCG9bH7RoaaiWuMgzsIBjUMVjLAaWGWpoUAVwljVvBHxRu/2qEHnadLGZrkutYUBPQJA==}
     engines: {node: '>=0.6'}
 
-  qs@6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
+  qs@6.5.5:
+    resolution: {integrity: sha512-mzR4sElr1bfCaPJe7m8ilJ6ZXdDaGoObcYR0ZHSsktM/Lt21MVHj5De30GQH2eiZ1qGRTO7LCAzQsUeXTNexWQ==}
     engines: {node: '>=0.6'}
 
   query-string@5.1.1:
@@ -4212,8 +4099,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  side-channel-list@1.0.0:
-    resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
+  side-channel-list@1.0.1:
+    resolution: {integrity: sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==}
     engines: {node: '>= 0.4'}
 
   side-channel-map@1.0.1:
@@ -4226,6 +4113,10 @@ packages:
 
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
+    engines: {node: '>= 0.4'}
+
+  side-channel@1.1.1:
+    resolution: {integrity: sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==}
     engines: {node: '>= 0.4'}
 
   signal-exit@3.0.7:
@@ -5328,8 +5219,6 @@ snapshots:
 
   '@chainsafe/as-sha256@1.2.0': {}
 
-  '@chainsafe/as-sha256@1.2.4': {}
-
   '@chainsafe/as-sha256@1.2.5': {}
 
   '@chainsafe/bls-hd-key@0.3.0':
@@ -5346,37 +5235,6 @@ snapshots:
     dependencies:
       '@chainsafe/bls-keygen': 0.4.0
       bls-eth-wasm: 1.4.0
-
-  '@chainsafe/blst-darwin-arm64@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-darwin-x64@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-linux-arm64-gnu@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-linux-arm64-musl@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-linux-x64-gnu@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-linux-x64-musl@2.2.0':
-    optional: true
-
-  '@chainsafe/blst-win32-x64-msvc@2.2.0':
-    optional: true
-
-  '@chainsafe/blst@2.2.0':
-    optionalDependencies:
-      '@chainsafe/blst-darwin-arm64': 2.2.0
-      '@chainsafe/blst-darwin-x64': 2.2.0
-      '@chainsafe/blst-linux-arm64-gnu': 2.2.0
-      '@chainsafe/blst-linux-arm64-musl': 2.2.0
-      '@chainsafe/blst-linux-x64-gnu': 2.2.0
-      '@chainsafe/blst-linux-x64-musl': 2.2.0
-      '@chainsafe/blst-win32-x64-msvc': 2.2.0
 
   '@chainsafe/hashtree-darwin-arm64@1.0.2':
     optional: true
@@ -5405,15 +5263,38 @@ snapshots:
       '@chainsafe/hashtree-linux-x64-musl': 1.0.2
       '@chainsafe/hashtree-win32-x64-msvc': 1.0.2
 
+  '@chainsafe/lodestar-z-aarch64-apple-darwin@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z-aarch64-unknown-linux-gnu@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z-aarch64-unknown-linux-musl@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z-x86_64-apple-darwin@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z-x86_64-unknown-linux-gnu@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z-x86_64-unknown-linux-musl@2.0.0':
+    optional: true
+
+  '@chainsafe/lodestar-z@2.0.0':
+    dependencies:
+      '@chainsafe/zapi': 4.1.0
+    optionalDependencies:
+      '@chainsafe/lodestar-z-aarch64-apple-darwin': 2.0.0
+      '@chainsafe/lodestar-z-aarch64-unknown-linux-gnu': 2.0.0
+      '@chainsafe/lodestar-z-aarch64-unknown-linux-musl': 2.0.0
+      '@chainsafe/lodestar-z-x86_64-apple-darwin': 2.0.0
+      '@chainsafe/lodestar-z-x86_64-unknown-linux-gnu': 2.0.0
+      '@chainsafe/lodestar-z-x86_64-unknown-linux-musl': 2.0.0
+
   '@chainsafe/persistent-merkle-tree@1.2.1':
     dependencies:
       '@chainsafe/as-sha256': 1.2.0
-      '@chainsafe/hashtree': 1.0.2
-      '@noble/hashes': 1.8.0
-
-  '@chainsafe/persistent-merkle-tree@1.3.0':
-    dependencies:
-      '@chainsafe/as-sha256': 1.2.5
       '@chainsafe/hashtree': 1.0.2
       '@noble/hashes': 1.8.0
 
@@ -5423,80 +5304,12 @@ snapshots:
       '@chainsafe/hashtree': 1.0.2
       '@noble/hashes': 1.8.0
 
-  '@chainsafe/pubkey-index-map-darwin-arm64@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-darwin-x64@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-linux-arm64-gnu@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-linux-arm64-musl@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-linux-x64-gnu@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-linux-x64-musl@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-win32-arm64-msvc@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map-win32-x64-msvc@3.0.0':
-    optional: true
-
-  '@chainsafe/pubkey-index-map@3.0.0':
-    optionalDependencies:
-      '@chainsafe/pubkey-index-map-darwin-arm64': 3.0.0
-      '@chainsafe/pubkey-index-map-darwin-x64': 3.0.0
-      '@chainsafe/pubkey-index-map-linux-arm64-gnu': 3.0.0
-      '@chainsafe/pubkey-index-map-linux-arm64-musl': 3.0.0
-      '@chainsafe/pubkey-index-map-linux-x64-gnu': 3.0.0
-      '@chainsafe/pubkey-index-map-linux-x64-musl': 3.0.0
-      '@chainsafe/pubkey-index-map-win32-arm64-msvc': 3.0.0
-      '@chainsafe/pubkey-index-map-win32-x64-msvc': 3.0.0
-
-  '@chainsafe/ssz@1.6.2':
+  '@chainsafe/ssz@1.9.0':
     dependencies:
       '@chainsafe/as-sha256': 1.2.5
       '@chainsafe/persistent-merkle-tree': 1.3.1
 
-  '@chainsafe/swap-or-not-shuffle-darwin-arm64@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-darwin-x64@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-linux-arm64-gnu@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-linux-arm64-musl@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-linux-x64-gnu@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-linux-x64-musl@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-win32-arm64-msvc@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle-win32-x64-msvc@1.2.1':
-    optional: true
-
-  '@chainsafe/swap-or-not-shuffle@1.2.1':
-    optionalDependencies:
-      '@chainsafe/swap-or-not-shuffle-darwin-arm64': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-darwin-x64': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-linux-arm64-gnu': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-linux-arm64-musl': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-linux-x64-gnu': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-linux-x64-musl': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-win32-arm64-msvc': 1.2.1
-      '@chainsafe/swap-or-not-shuffle-win32-x64-msvc': 1.2.1
+  '@chainsafe/zapi@4.1.0': {}
 
   '@colors/colors@1.5.0':
     optional: true
@@ -6211,60 +6024,58 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@lodestar/api@1.46.0':
+  '@lodestar/api@1.50.1':
     dependencies:
-      '@chainsafe/persistent-merkle-tree': 1.3.0
-      '@chainsafe/ssz': 1.6.2
-      '@lodestar/config': 1.46.0
-      '@lodestar/params': 1.46.0
-      '@lodestar/types': 1.46.0
-      '@lodestar/utils': 1.46.0
+      '@chainsafe/persistent-merkle-tree': 1.3.1
+      '@chainsafe/ssz': 1.9.0
+      '@lodestar/config': 1.50.1
+      '@lodestar/params': 1.50.1
+      '@lodestar/types': 1.50.1
+      '@lodestar/utils': 1.50.1
       eventsource: 2.0.2
-      qs: 6.15.0
+      qs: 6.17.1
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/config@1.46.0':
+  '@lodestar/config@1.50.1':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.4
-      '@chainsafe/ssz': 1.6.2
-      '@lodestar/params': 1.46.0
-      '@lodestar/types': 1.46.0
-      '@lodestar/utils': 1.46.0
+      '@chainsafe/as-sha256': 1.2.5
+      '@chainsafe/ssz': 1.9.0
+      '@lodestar/params': 1.50.1
+      '@lodestar/types': 1.50.1
+      '@lodestar/utils': 1.50.1
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/params@1.46.0': {}
+  '@lodestar/params@1.50.1': {}
 
-  '@lodestar/state-transition@1.46.0':
+  '@lodestar/state-transition@1.50.1':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.4
-      '@chainsafe/blst': 2.2.0
-      '@chainsafe/persistent-merkle-tree': 1.3.0
-      '@chainsafe/pubkey-index-map': 3.0.0
-      '@chainsafe/ssz': 1.6.2
-      '@chainsafe/swap-or-not-shuffle': 1.2.1
-      '@lodestar/config': 1.46.0
-      '@lodestar/params': 1.46.0
-      '@lodestar/types': 1.46.0
-      '@lodestar/utils': 1.46.0
+      '@chainsafe/as-sha256': 1.2.5
+      '@chainsafe/lodestar-z': 2.0.0
+      '@chainsafe/persistent-merkle-tree': 1.3.1
+      '@chainsafe/ssz': 1.9.0
+      '@lodestar/config': 1.50.1
+      '@lodestar/params': 1.50.1
+      '@lodestar/types': 1.50.1
+      '@lodestar/utils': 1.50.1
       '@vekexasia/bigint-buffer2': 1.1.1
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/types@1.46.0':
+  '@lodestar/types@1.50.1':
     dependencies:
-      '@chainsafe/ssz': 1.6.2
-      '@lodestar/params': 1.46.0
+      '@chainsafe/ssz': 1.9.0
+      '@lodestar/params': 1.50.1
       ethereum-cryptography: 2.2.1
 
-  '@lodestar/utils@1.46.0':
+  '@lodestar/utils@1.50.1':
     dependencies:
-      '@chainsafe/as-sha256': 1.2.4
+      '@chainsafe/as-sha256': 1.2.5
       '@vekexasia/bigint-buffer2': 1.1.1
       any-signal: 4.2.0
       case: 1.6.3
-      js-yaml: 4.1.1
+      js-yaml: 4.3.2
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
@@ -7368,7 +7179,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.14.2
+      qs: 6.14.3
       raw-body: 2.5.3
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -7958,7 +7769,7 @@ snapshots:
 
   es-errors@1.3.0: {}
 
-  es-object-atoms@1.1.1:
+  es-object-atoms@1.1.2:
     dependencies:
       es-errors: 1.3.0
 
@@ -8355,7 +8166,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.12
       proxy-addr: 2.0.7
-      qs: 6.14.2
+      qs: 6.14.3
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.2
@@ -8550,18 +8361,18 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       es-define-property: 1.0.1
       es-errors: 1.3.0
-      es-object-atoms: 1.1.1
+      es-object-atoms: 1.1.2
       function-bind: 1.1.2
       get-proto: 1.0.1
       gopd: 1.2.0
       has-symbols: 1.1.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       math-intrinsics: 1.1.0
 
   get-proto@1.0.1:
     dependencies:
       dunder-proto: 1.0.1
-      es-object-atoms: 1.1.1
+      es-object-atoms: 1.1.2
 
   get-random-values@1.2.2:
     dependencies:
@@ -8802,6 +8613,10 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  hasown@2.0.4:
+    dependencies:
+      function-bind: 1.1.2
+
   he@1.2.0: {}
 
   hmac-drbg@1.0.1:
@@ -8972,7 +8787,7 @@ snapshots:
       call-bound: 1.0.4
       gopd: 1.2.0
       has-tostringtag: 1.0.2
-      hasown: 2.0.2
+      hasown: 2.0.4
 
   is-typed-array@1.1.15:
     dependencies:
@@ -9015,11 +8830,20 @@ snapshots:
       argparse: 1.0.10
       esprima: 4.0.1
 
+  js-yaml@3.15.2:
+    dependencies:
+      argparse: 1.0.10
+      esprima: 4.0.1
+
   js-yaml@4.1.0:
     dependencies:
       argparse: 2.0.1
 
   js-yaml@4.1.1:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
 
@@ -9363,7 +9187,7 @@ snapshots:
       call-bind: 1.0.8
       call-bound: 1.0.4
       define-properties: 1.2.1
-      es-object-atoms: 1.1.1
+      es-object-atoms: 1.1.2
       has-symbols: 1.1.0
       object-keys: 1.1.1
 
@@ -9656,15 +9480,16 @@ snapshots:
     dependencies:
       side-channel: 1.1.0
 
-  qs@6.14.2:
+  qs@6.14.3:
     dependencies:
-      side-channel: 1.1.0
+      side-channel: 1.1.1
 
-  qs@6.15.0:
+  qs@6.17.1:
     dependencies:
-      side-channel: 1.1.0
+      es-define-property: 1.0.1
+      side-channel: 1.1.1
 
-  qs@6.5.3: {}
+  qs@6.5.5: {}
 
   query-string@5.1.1:
     dependencies:
@@ -9735,7 +9560,7 @@ snapshots:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.3
+      qs: 6.5.5
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
@@ -9946,7 +9771,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  side-channel-list@1.0.0:
+  side-channel-list@1.0.1:
     dependencies:
       es-errors: 1.3.0
       object-inspect: 1.13.4
@@ -9970,7 +9795,15 @@ snapshots:
     dependencies:
       es-errors: 1.3.0
       object-inspect: 1.13.4
-      side-channel-list: 1.0.0
+      side-channel-list: 1.0.1
+      side-channel-map: 1.0.1
+      side-channel-weakmap: 1.0.2
+
+  side-channel@1.1.1:
+    dependencies:
+      es-errors: 1.3.0
+      object-inspect: 1.13.4
+      side-channel-list: 1.0.1
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
 
@@ -10346,7 +10179,7 @@ snapshots:
       commander: 2.20.3
       diff: 4.0.2
       glob: 7.2.3
-      js-yaml: 3.14.2
+      js-yaml: 3.15.2
       minimatch: 3.1.5
       mkdirp: 0.5.6
       resolve: 1.22.11
