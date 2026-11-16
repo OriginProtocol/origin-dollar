@@ -9,10 +9,19 @@ import { IBeaconProofs } from "../interfaces/IBeaconProofs.sol";
  * @author Origin Protocol Inc
  */
 contract BeaconProofsForkRouter is IBeaconProofs {
+    /// @notice Verifier for the legacy Electra/Fulu proof format.
     address public immutable LEGACY_BEACON_PROOFS;
+    /// @notice Verifier for the Gloas progressive SSZ proof format.
     address public immutable GLOAS_BEACON_PROOFS;
+    /// @notice Unix timestamp from which Gloas is tried first; zero always prefers legacy.
     uint256 public immutable GLAMSTERDAM_ACTIVATION_TIMESTAMP;
 
+    /// @notice Configures the legacy and Gloas verifiers and their preferred order.
+    /// @dev Every verification retries the other verifier if the preferred verifier reverts.
+    /// This permits historical roots across the fork boundary; the timestamp does not restrict accepted formats.
+    /// @param legacyBeaconProofs Nonzero address of the legacy verifier.
+    /// @param gloasBeaconProofs Nonzero address of the Gloas verifier.
+    /// @param glamsterdamActivationTimestamp Unix timestamp to prefer Gloas, or zero to prefer legacy.
     constructor(
         address legacyBeaconProofs,
         address gloasBeaconProofs,
@@ -26,6 +35,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         GLAMSTERDAM_ACTIVATION_TIMESTAMP = glamsterdamActivationTimestamp;
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
@@ -46,6 +56,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         _verify(data);
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
         uint40 validatorIndex,
@@ -64,6 +75,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         _verify(data);
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerLeaf,
@@ -76,6 +88,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         _verify(data);
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
@@ -95,6 +108,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         validatorBalance = abi.decode(result, (uint256));
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyPendingDepositsContainer(
         bytes32 beaconBlockRoot,
         bytes32 pendingDepositsContainerRoot,
@@ -107,6 +121,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         _verify(data);
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyPendingDeposit(
         bytes32 pendingDepositsContainerRoot,
         bytes32 pendingDepositRoot,
@@ -125,6 +140,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         _verify(data);
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
@@ -138,6 +154,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
         isEmptyDepositQueue = abi.decode(result, (bool));
     }
 
+    /// @inheritdoc IBeaconProofs
     function merkleizePendingDeposit(
         bytes32 pubKeyHash,
         bytes calldata withdrawalCredentials,
@@ -155,6 +172,7 @@ contract BeaconProofsForkRouter is IBeaconProofs {
             );
     }
 
+    /// @inheritdoc IBeaconProofs
     function merkleizeSignature(bytes calldata signature)
         external
         pure

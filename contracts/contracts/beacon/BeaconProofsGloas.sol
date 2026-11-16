@@ -10,6 +10,7 @@ import { IBeaconProofs } from "../interfaces/IBeaconProofs.sol";
  * @author Origin Protocol Inc
  */
 contract BeaconProofsGloas is IBeaconProofs {
+    /// @inheritdoc IBeaconProofs
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
@@ -26,6 +27,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
         uint40 validatorIndex,
@@ -40,6 +42,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerRoot,
@@ -52,6 +55,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
@@ -66,6 +70,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyPendingDepositsContainer(
         bytes32 beaconBlockRoot,
         bytes32 pendingDepositsContainerRoot,
@@ -78,6 +83,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyPendingDeposit(
         bytes32 pendingDepositsContainerRoot,
         bytes32 pendingDepositRoot,
@@ -92,6 +98,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
@@ -104,6 +111,7 @@ contract BeaconProofsGloas is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function merkleizePendingDeposit(
         bytes32 pubKeyHash,
         bytes calldata withdrawalCredentials,
@@ -121,6 +129,7 @@ contract BeaconProofsGloas is IBeaconProofs {
             );
     }
 
+    /// @inheritdoc IBeaconProofs
     function merkleizeSignature(bytes calldata signature)
         external
         pure

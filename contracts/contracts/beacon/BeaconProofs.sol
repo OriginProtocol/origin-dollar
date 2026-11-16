@@ -34,6 +34,7 @@ contract BeaconProofs is IBeaconProofs {
         );
     }
 
+    /// @inheritdoc IBeaconProofs
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
         uint40 validatorIndex,
