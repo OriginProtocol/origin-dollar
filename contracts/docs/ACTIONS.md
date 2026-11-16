@@ -169,3 +169,7 @@ be registered, by a Safe owner, as a Safe Transaction Service delegate scoped
 to `0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971` on both Ethereum and Base.
 Delegation only permits proposal submission; it does not count toward the
 Safe's 2/8 owner confirmations. A Safe module is not used.
+
+### Fresh Hoodi governance
+
+`claimHoodiGovernance` is a manual Hoodi-only bootstrap action. It claims governance of the freshly deployed OETH token, vault and vanilla staking strategy after checking that strategist and validator registrator are the executing signer. Hoodi signing requires `HOODI_KMS_RELAYER_ID`; it never falls back to the production KMS key. See `scripts/deploy/hoodi/README.md` for deployment and funding prerequisites. This change adds no automatic schedules.

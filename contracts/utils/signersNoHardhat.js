@@ -33,7 +33,14 @@ const hasAwsKmsCredentials = () => {
   return false;
 };
 
+/** @param {{ relayerId?: string, taskName?: string, chainId?: number }} [context] */
 const resolveKmsRelayerId = (context = signerContext) => {
+  if (Number(context.chainId) === 560048) {
+    if (!process.env.HOODI_KMS_RELAYER_ID) {
+      throw new Error("HOODI_KMS_RELAYER_ID is required for the Hoodi signer");
+    }
+    return process.env.HOODI_KMS_RELAYER_ID;
+  }
   if (context.relayerId) {
     return context.relayerId;
   }
@@ -61,7 +68,8 @@ const withTaskSignerContext = async (context, fn) => {
 };
 
 const getKmsSigner = async (hre) => {
-  const relayerId = resolveKmsRelayerId();
+  const { chainId } = await hre.ethers.provider.getNetwork();
+  const relayerId = resolveKmsRelayerId({ ...signerContext, chainId });
   return new DirectKmsTransactionSigner(
     relayerId,
     hre.ethers.provider,
@@ -79,8 +87,10 @@ const getKmsSigner = async (hre) => {
  * @returns {Promise<string>} ethereum address
  */
 const getKmsAddress = async ({ relayerId, taskName, provider } = {}) => {
+  const chainId = provider ? (await provider.getNetwork()).chainId : undefined;
   const keyId = resolveKmsRelayerId({
     ...signerContext,
+    chainId,
     relayerId,
     taskName,
   });

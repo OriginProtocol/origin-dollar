@@ -13,6 +13,7 @@
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
 | eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
+| hoodi | claimHoodiGovernance |
 | eth, sonic, base | permissionedRebase |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, holesky, arb, plume, hoodi | healthcheck |
@@ -22,10 +23,10 @@
 | module | # chains | chains |
 |---|---|---|
 | `tasks/lib/action` | 8 | eth, sonic, hyper, base, holesky, arb, plume, hoodi |
+| `tasks/lib/network` | 7 | eth, sonic, hyper, base, arb, plume, hoodi |
+| `tasks/lib/contracts` | 6 | eth, sonic, hyper, base, plume, hoodi |
 | `tasks/lib/logger` | 6 | eth, sonic, hyper, base, arb, plume |
-| `tasks/lib/network` | 6 | eth, sonic, hyper, base, arb, plume |
 | `utils/logger` | 6 | eth, sonic, hyper, base, arb, plume |
-| `tasks/lib/contracts` | 5 | eth, sonic, hyper, base, plume |
 | `utils/addresses` | 5 | eth, sonic, hyper, base, arb |
 | `utils/txLogger` | 5 | eth, sonic, hyper, base, plume |
 | `tasks/lib/signer` | 3 | eth, base, arb |

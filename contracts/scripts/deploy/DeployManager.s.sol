@@ -114,6 +114,8 @@ contract DeployManager is Base {
             path = string(abi.encodePacked(projectRoot, "/scripts/deploy/base/"));
         } else if (chainId == 999) {
             path = string(abi.encodePacked(projectRoot, "/scripts/deploy/hyperevm/"));
+        } else if (chainId == 560048) {
+            path = string(abi.encodePacked(projectRoot, "/scripts/deploy/hoodi/"));
         } else {
             revert("Unsupported chain");
         }

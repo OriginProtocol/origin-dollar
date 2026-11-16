@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
-import { getProvider } from "./network";
+import { getChainId, getProvider } from "./network";
 // CJS util.
 import {
   AWS_KMS_REGION,
@@ -58,7 +58,7 @@ export async function getSigner(): Promise<ethers.Signer> {
 
   // 1. AWS KMS (production) — reuse the existing purrikey ethers signer.
   if (hasAwsKmsCredentials()) {
-    const relayerId = resolveKmsRelayerId();
+    const relayerId = resolveKmsRelayerId({ chainId: getChainId() });
     return maybeWrap(
       new DirectKmsTransactionSigner(relayerId, provider, AWS_KMS_REGION)
     );

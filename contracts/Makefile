@@ -169,6 +169,11 @@ deploy-hyperevm:
 	$(CLEAR_BROADCAST)/999
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(HYPEREVM_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv; rc=$$?; $(DESCRIPTORS) --chain-id 999 || exit 1; exit $$rc
 
+deploy-hoodi:
+	forge build $(DEPLOY_BUILD)
+	$(CLEAR_BROADCAST)/560048
+	@forge script $(DEPLOY_SCRIPT) --rpc-url $(HOODI_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv; rc=$$?; $(DESCRIPTORS) --chain-id 560048 || exit 1; exit $$rc
+
 deploy-local:
 	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(LOCAL_URL) $(DEPLOY_BASE) -vvvv
@@ -182,7 +187,7 @@ deploy-local:
 #   make simulate                -> simulate on mainnet (default)
 #   make simulate NETWORK=base   -> simulate on base
 NETWORK ?= mainnet
-RPC_URL = $(if $(filter base,$(NETWORK)),$(BASE_PROVIDER_URL),$(if $(filter hyperevm,$(NETWORK)),$(HYPEREVM_PROVIDER_URL),$(MAINNET_PROVIDER_URL)))
+RPC_URL = $(if $(filter hoodi,$(NETWORK)),$(HOODI_PROVIDER_URL),$(if $(filter base,$(NETWORK)),$(BASE_PROVIDER_URL),$(if $(filter hyperevm,$(NETWORK)),$(HYPEREVM_PROVIDER_URL),$(MAINNET_PROVIDER_URL))))
 
 simulate:
 	forge build $(DEPLOY_BUILD)
@@ -273,5 +278,5 @@ lint-imports:
 
 .PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
         coverage coverage-html gas snapshot build build-% \
-        deploy-mainnet deploy-base deploy-hyperevm deploy-local simulate \
+        deploy-mainnet deploy-base deploy-hyperevm deploy-hoodi deploy-local simulate \
         match clean clean-all install update-fork-blocks frame lint-imports

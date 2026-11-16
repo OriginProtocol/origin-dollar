@@ -100,5 +100,6 @@ abstract contract Base {
         chainNames[146] = "Sonic Mainnet";
         chainNames[8453] = "Base Mainnet";
         chainNames[999] = "HyperEVM";
+        chainNames[560048] = "Hoodi";
     }
 }
