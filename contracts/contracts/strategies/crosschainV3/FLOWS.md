@@ -649,12 +649,19 @@ Governor-settable configuration on each adapter. All setters are
 
 ### Suggested per-deployment values
 
-| Deployment                                       | maxTransferAmount                    | Rationale                            |
-| ------------------------------------------------ | ------------------------------------ | ------------------------------------ |
-| Base CCIPAdapter (Master outbound)               | `1000 ether`                         | CCIP lane rate ~1000 WETH/hour       |
-| Ethereum SuperbridgeAdapter (Remote outbound)    | `0` (unlimited)                      | canonical bridge has no per-tx limit |
-| Base SuperbridgeAdapter (Master inbound)         | match Remote outbound                | mirror; `0` works                    |
-| Ethereum CCIPAdapter (Remote inbound)            | match Master outbound (`1000 ether`) | mirror                               |
+| Deployment                                    | maxTransferAmount                  | Rationale                                                     |
+| --------------------------------------------- | ---------------------------------- | ------------------------------------------------------------- |
+| Base CCIPAdapter (Master outbound)            | `90 ether`                         | CCIP WETH Base→Ethereum bucket is 90.75 WETH, ~90.75 WETH/h refill |
+| Ethereum SuperbridgeAdapter (Remote outbound) | `0` (unlimited)                    | canonical bridge has no per-tx limit                          |
+| Base SuperbridgeAdapter (Master inbound)      | match Remote outbound              | mirror; `0` works                                             |
+| Ethereum CCIPAdapter (Remote inbound)         | `0` (left unset)                   | never enforced: Remote never sends through its inbound adapter |
+
+The Base cap is set by `scripts/deploy/base/009_OETHbV3AdapterLimits`. The
+cap is only checked in the sending adapter's `sendMessageAndTokens`, so
+mirroring it on the Ethereum CCIPAdapter would change nothing and is skipped
+(no Ethereum proposal). The ~1000/hour figure in
+DESIGN.md §4.4 is the **wOETH** lane used by the Phase 1 migration, not the
+WETH lane that deposits use.
 
 ---
 
