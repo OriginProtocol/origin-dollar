@@ -17,8 +17,8 @@ Every contract has the same address on both chains:
 
 1. **Never make Master the OETHb vault's default strategy.** `allocate()` would
    call `Master.depositAll`, which reverts while an operation is in flight,
-   when the fee pool can't pay the ~0.02 ETH deposit fee, or above the 90.75
-   WETH CCIP bucket. That breaks `allocate()` and the `otokenOethbRebase` run.
+   when the fee pool can't pay the ~0.02 ETH deposit fee, or when the shared
+   90.75 WETH CCIP bucket can't cover the send (clamped to the 90 WETH cap). That breaks `allocate()` and the `otokenOethbRebase` run.
 2. **One operation at a time.** `deposit`/`withdraw` revert while one is in
    flight; `withdrawAll` quietly does nothing.
 3. **Fee pools must hold ETH.** Each strategy's ETH balance pays its CCIP sends.
@@ -53,8 +53,9 @@ funded **before** any strategist move.
 1. Check Master's pool holds ≥ ~0.021 ETH and Master is idle
    (`isYieldOpInFlight() == false`).
 2. Propose `deposit:OETHbV3MasterStrategyProxy:<amount>` with
-   `proposeVaultStrategyMoves --network base --vault SuperOETH`. At most 90.75
-   WETH per move, and at most that per hour.
+   `proposeVaultStrategyMoves --network base --vault SuperOETH`. At most 90
+   WETH per move (the CCIPAdapter cap), and at most ~90.75 per hour (the
+   CCIP bucket).
 3. Expect `DepositRequested` on Master, `DepositProcessed` on Remote ~30 min
    later, then `DepositAcked` on Master ~20–30 min after that.
 

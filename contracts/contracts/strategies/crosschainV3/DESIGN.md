@@ -420,8 +420,11 @@ is at dust.
 
 ### 4.6 Adapter `maxTransferAmount` is a per-tx cap, not a per-hour rate
 
-The CCIP lane has a per-hour rate limit on Chainlink's side (~1000 WETH/h
-on the OETHb pair). The adapter's `maxTransferAmount` caps each
+The CCIP lane has a per-hour rate limit on Chainlink's side: the WETH
+Base→Ethereum bucket holds 90.75 WETH and refills at ~90.75 WETH/h, so the
+Base CCIPAdapter is capped at `90 ether` (the ~1000/h in §4.4 is the wOETH
+migration lane). The bucket is shared with every user of the lane, so a send
+under the cap can still revert while it refills. The adapter's `maxTransferAmount` caps each
 individual call, not cumulative time-window throughput. The operator must
 still pace operations off-chain to respect the rate limit. **Why not a
 time-window?** Adds state + complexity for no real protection — Chainlink
