@@ -446,11 +446,12 @@ async function loadState(
   block: number
 ): Promise<State> {
   const { module, vault, amo, checker, token } = addresses;
+  const code = await provider.getCode(module, block);
+  if (code === "0x") throw new Error("Repegging module is not deployed");
   const moduleRead = (method: string, args: unknown[] = []) =>
     read(provider, module, MODULE, method, args, block);
-  const [code, bindings, safe, profitCap, vaultCap, nonce, authorized] =
+  const [bindings, safe, profitCap, vaultCap, nonce, authorized] =
     await Promise.all([
-      provider.getCode(module, block),
       Promise.all(["vault", "amo", "checker"].map((m) => moduleRead(m))),
       moduleRead("safeContract"),
       moduleRead("maxProfitVariance"),
@@ -458,7 +459,6 @@ async function loadState(
       moduleRead("nonce"),
       moduleRead("hasRole", [id("OPERATOR_ROLE"), operator]),
     ]);
-  if (code === "0x") throw new Error("Repegging module is not deployed");
   [vault, amo, checker].forEach((address, index) =>
     assertAddress(
       bindings[index],

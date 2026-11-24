@@ -77,7 +77,8 @@ function fixture(asset = "OUSD", options = {}) {
     sent = [],
     plans = [],
     messages = [],
-    infoMessages = [];
+    infoMessages = [],
+    moduleReads = [];
   const initialValue = parseEther("1000000");
   let nonce = BigNumber.from(0),
     preflights = 0;
@@ -88,7 +89,7 @@ function fixture(asset = "OUSD", options = {}) {
   const block = { number: 100, hash: `0x${"ab".repeat(32)}`, timestamp: 10000 };
   const provider = {
     getNetwork: async () => ({ chainId: profile.chainId }),
-    getCode: async () => "0x1234",
+    getCode: async () => (options.undeployedModule ? "0x" : "0x1234"),
     getBlock: async (ref) => ({
       ...block,
       ...(ref === "latest"
@@ -99,6 +100,8 @@ function fixture(asset = "OUSD", options = {}) {
     }),
     call: async (tx) => {
       if (tx.to.toLowerCase() === addresses.module.toLowerCase()) {
+        moduleReads.push(tx);
+        if (options.undeployedModule) return "0x";
         const p = moduleAbi.parseTransaction(tx),
           name = p.name;
         const bindings = {
@@ -260,6 +263,7 @@ function fixture(asset = "OUSD", options = {}) {
     plans,
     messages,
     infoMessages,
+    moduleReads,
     provider,
     profile,
   };
@@ -618,6 +622,18 @@ describe("Curve AMO repegging", () => {
   it("never broadcasts if moved state misses the target", async () => {
     const f = fixture("OUSD", { finalBelowTarget: true });
     await rejects(() => f.run({ dryrun: false }), "below its target");
+    expect(f.sent).to.have.length(0);
+  });
+  it("rejects an undeployed module before any module ABI reads", async () => {
+    const f = fixture("OUSD", { undeployedModule: true });
+    try {
+      await f.run({ dryrun: false });
+      throw new Error("Expected undeployed module rejection");
+    } catch (error) {
+      expect(error.message).to.equal("Repegging module is not deployed");
+    }
+    expect(f.moduleReads).to.have.length(0);
+    expect(f.requests).to.have.length(0);
     expect(f.sent).to.have.length(0);
   });
   it("fails closed for unsupported RPC simulation", async () => {
