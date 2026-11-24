@@ -5,6 +5,7 @@ const {
   REPEG_PROFILES,
   getRepegProfile,
   parseSellPrice,
+  parseTriggerPrice,
   sizeRepeg,
   deriveRepegValues,
   encodeRepeg,
@@ -75,13 +76,15 @@ function fixture(asset = "OUSD", options = {}) {
   const requests = [],
     sent = [],
     plans = [],
-    messages = [];
+    messages = [],
+    infoMessages = [];
   const initialValue = parseEther("1000000");
   let nonce = BigNumber.from(0),
     preflights = 0;
   const quoteScale = BigNumber.from(10).pow(profile.quoteDecimals - 6);
-  const base = BigNumber.from(options.base ?? 999700).mul(quoteScale);
-  const quote = (lp) => base.add(lp.mul(quoteScale).div(unit));
+  const base = BigNumber.from(options.base ?? 999600).mul(quoteScale);
+  const quote = (lp, startingQuote = base) =>
+    startingQuote.add(lp.mul(quoteScale).div(unit));
   const block = { number: 100, hash: `0x${"ab".repeat(32)}`, timestamp: 10000 };
   const provider = {
     getNetwork: async () => ({ chainId: profile.chainId }),
@@ -160,7 +163,15 @@ function fixture(asset = "OUSD", options = {}) {
       expect(method).to.equal("eth_simulateV1");
       expect(params[1]).to.equal("0x64");
       const blockState = params[0].blockStateCalls[0];
+      const finalPreflight = blockState.calls.some(
+        (tx) => tx.to.toLowerCase() === addresses.module.toLowerCase()
+      );
       let lp = BigNumber.from(0);
+      const freshBase = options.freshBases?.[preflights] ?? options.freshBase;
+      let startingQuote =
+        finalPreflight && freshBase !== undefined
+          ? BigNumber.from(freshBase).mul(quoteScale)
+          : base;
       const results = blockState.calls.map((tx) => {
         if (tx.to.toLowerCase() === addresses.module.toLowerCase()) {
           expect(blockState).not.to.have.property("stateOverrides");
@@ -186,9 +197,12 @@ function fixture(asset = "OUSD", options = {}) {
           name = p.name;
         if (name === "rebase" || name === "takeSnapshot") {
           expect(tx.from).to.equal(safe);
+          if (name === "rebase" && options.rebasedBase !== undefined) {
+            startingQuote = BigNumber.from(options.rebasedBase).mul(quoteScale);
+          }
           return ok();
         }
-        if (name === "get_dy") return ok(uint(quote(lp)));
+        if (name === "get_dy") return ok(uint(quote(lp, startingQuote)));
         if (name === "removeAndBurnOTokens") {
           if (options.burnFailure) return fail(options.burnFailure);
           if (p.args[0].gt(parseEther("250")))
@@ -232,10 +246,23 @@ function fixture(asset = "OUSD", options = {}) {
       sellPrice: "0.9998",
       dryrun: true,
       resolveAddresses: () => addresses,
-      log: { ...logger, warn: (m) => messages.push(m) },
+      log: {
+        ...logger,
+        info: (m) => infoMessages.push(m),
+        warn: (m) => messages.push(m),
+      },
       ...args,
     });
-  return { run, requests, sent, plans, messages, provider, profile };
+  return {
+    run,
+    requests,
+    sent,
+    plans,
+    messages,
+    infoMessages,
+    provider,
+    profile,
+  };
 }
 
 describe("Curve AMO repegging", () => {
@@ -246,12 +273,16 @@ describe("Curve AMO repegging", () => {
     expect(entry.config.chains).to.deep.equal([1]);
     expect(entry.params.map((p) => p.name)).to.deep.equal([
       "sellPrice",
+      "triggerPrice",
       "dryrun",
     ]);
     expect(registry.has("curveAmoRepeg")).to.equal(false);
     const price = entry.params.find((p) => p.name === "sellPrice");
     expect(price.type).to.equal("string");
     expect(price.defaultValue).to.equal("0.9998");
+    const trigger = entry.params.find((p) => p.name === "triggerPrice");
+    expect(trigger.type).to.equal("string");
+    expect(trigger.defaultValue).to.equal("0.9997");
     expect(entry.params.find((p) => p.name === "dryrun").isFlag).to.equal(true);
   });
   it("keeps the public action OUSD-only even if an asset argument is supplied", async () => {
@@ -270,12 +301,21 @@ describe("Curve AMO repegging", () => {
           chainId: 1,
           networkName: "mainnet",
           log: logger,
-          args: { asset, sellPrice: "0.9998", dryrun: true },
+          args: {
+            asset,
+            sellPrice: "0.9998",
+            triggerPrice: "0.9996",
+            dryrun: true,
+          },
         });
       }
       expect(requests.map((request) => request.asset)).to.deep.equal([
         "OUSD",
         "OUSD",
+      ]);
+      expect(requests.map((request) => request.triggerPrice)).to.deep.equal([
+        "0.9996",
+        "0.9996",
       ]);
     } finally {
       helper.runCurveAmoRepeg = original;
@@ -297,6 +337,27 @@ describe("Curve AMO repegging", () => {
       expect(() => parseSellPrice(value, 6)).to.throw());
   it("rejects precision beyond USDC decimals", () =>
     expect(() => parseSellPrice("0.9998001", 6)).to.throw("at most 6"));
+  it("parses trigger quotes exactly and allows a threshold equal to the target", () => {
+    const target = parseSellPrice("0.9998", 6);
+    expect(parseTriggerPrice("0.9997", 6, target).toString()).to.equal(
+      "999700"
+    );
+    expect(parseTriggerPrice("0.9998", 6, target).eq(target)).to.equal(true);
+    expect(
+      parseTriggerPrice(
+        "0.999700000000000001",
+        18,
+        parseSellPrice("0.9998", 18)
+      ).toString()
+    ).to.equal("999700000000000001");
+  });
+  for (const value of ["0", "-0.1", "1", "1e-3", "0.9997001", "0.999801"]) {
+    it(`rejects invalid trigger ${value} with a trigger-specific error`, () => {
+      expect(() =>
+        parseTriggerPrice(value, 6, parseSellPrice("0.9998", 6))
+      ).to.throw("triggerPrice");
+    });
+  }
   it("finds the first sufficient LP step below an overshoot boundary", async () => {
     const sized = await sizeRepeg(
       parseEther("1000"),
@@ -407,7 +468,7 @@ describe("Curve AMO repegging", () => {
       const f = fixture(asset);
       await f.run();
       expect(f.plans).to.have.length(1);
-      expect(f.plans[0][0].eq(parseEther("100"))).to.equal(true);
+      expect(f.plans[0][0].eq(parseEther("200"))).to.equal(true);
       expect(f.sent).to.have.length(0);
       expect(
         f.requests.every((r) => r.params[0].validation === false)
@@ -426,6 +487,113 @@ describe("Curve AMO repegging", () => {
       f.requests[f.requests.length - 1].params[0].blockStateCalls[0];
     expect(f.sent[0].data).to.equal(final.calls[1].data);
     expect(f.sent[0].to).to.equal(addresses.module);
+  });
+  for (const base of [999700, 999701, 999750]) {
+    it(`does not trigger at a starting quote of ${base} raw USDC units`, async () => {
+      const f = fixture("OUSD", { base });
+      await f.run({ dryrun: false });
+      expect(f.requests).to.have.length(0);
+      expect(f.sent).to.have.length(0);
+      expect(
+        f.infoMessages.some((message) =>
+          message.includes("trigger 0.9997 not breached")
+        )
+      ).to.equal(true);
+      expect(
+        f.infoMessages.some((message) =>
+          message.includes("already meets 0.9998")
+        )
+      ).to.equal(false);
+    });
+  }
+  it("triggers one raw USDC unit below the threshold and sizes to the higher target", async () => {
+    const f = fixture("OUSD", { base: 999699 });
+    await f.run({ dryrun: false });
+    expect(f.plans[0][0].eq(parseEther("101"))).to.equal(true);
+    expect(f.sent).to.have.length(1);
+  });
+  for (const rebasedBase of [999700, 999750]) {
+    it(`skips when rebase recovers the quote to ${rebasedBase} raw USDC units`, async () => {
+      const f = fixture("OUSD", { rebasedBase });
+      await f.run({ dryrun: false });
+      expect(f.requests).to.have.length(1);
+      expect(f.plans).to.have.length(0);
+      expect(f.sent).to.have.length(0);
+    });
+  }
+  for (const freshBase of [999700, 999750]) {
+    it(`skips when fresh preflight recovers the quote to ${freshBase} raw USDC units`, async () => {
+      const f = fixture("OUSD", { freshBase, finalFailure: true });
+      await f.run({ dryrun: false });
+      expect(f.plans).to.have.length(1);
+      expect(f.sent).to.have.length(0);
+      expect(f.messages).to.have.length(0);
+      expect(
+        f.infoMessages.some((message) =>
+          message.includes("at or above trigger 0.9997")
+        )
+      ).to.equal(true);
+    });
+  }
+  it("uses a custom lower trigger for initial gating", async () => {
+    const f = fixture("OUSD", { base: 999650 });
+    await f.run({ triggerPrice: "0.9996", dryrun: false });
+    expect(f.requests).to.have.length(0);
+    expect(f.sent).to.have.length(0);
+  });
+  it("sends when a fresh quote remains one unit below a custom lower trigger", async () => {
+    const f = fixture("OUSD", { base: 999590, freshBase: 999599 });
+    await f.run({ triggerPrice: "0.9996", dryrun: false });
+    expect(f.plans[0][0].eq(parseEther("210"))).to.equal(true);
+    expect(f.sent).to.have.length(1);
+  });
+  it("preserves the custom trigger after a stale nonce recomputation", async () => {
+    const f = fixture("OUSD", {
+      base: 999590,
+      freshBase: 999599,
+      moveNonce: true,
+    });
+    await f.run({ triggerPrice: "0.9996", dryrun: false });
+    expect(f.plans).to.have.length(2);
+    expect(f.plans[1][5].toString()).to.equal("1");
+    expect(f.sent).to.have.length(1);
+  });
+  it("rechecks the same custom trigger after nonce movement and skips recovered state", async () => {
+    const f = fixture("OUSD", {
+      base: 999590,
+      freshBases: [999599, 999650],
+      moveNonce: true,
+    });
+    await f.run({ triggerPrice: "0.9996", dryrun: false });
+    expect(f.plans).to.have.length(2);
+    expect(f.messages).to.have.length(1);
+    expect(f.sent).to.have.length(0);
+    expect(
+      f.infoMessages.some((message) =>
+        message.includes("at or above trigger 0.9996")
+      )
+    ).to.equal(true);
+  });
+  it("applies a custom trigger after simulated rebase", async () => {
+    const f = fixture("OUSD", { base: 999590, rebasedBase: 999600 });
+    await f.run({ triggerPrice: "0.9996", dryrun: false });
+    expect(f.requests).to.have.length(1);
+    expect(f.sent).to.have.length(0);
+  });
+  it("can trigger below the target itself when both prices are equal", async () => {
+    const f = fixture("OUSD", { base: 999750 });
+    await f.run({ triggerPrice: "0.9998", dryrun: false });
+    expect(f.plans[0][0].eq(parseEther("50"))).to.equal(true);
+    expect(f.sent).to.have.length(1);
+  });
+  it("rejects a trigger above the sell target before simulation", async () => {
+    const f = fixture();
+    await rejects(
+      () => f.run({ triggerPrice: "0.9999" }),
+      "triggerPrice must not exceed sellPrice"
+    );
+    expect(f.requests).to.have.length(0);
+    expect(f.sent).to.have.length(0);
   });
   it("does nothing when already at target", async () => {
     const f = fixture("OUSD", { base: 999800 });

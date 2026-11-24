@@ -1,5 +1,5 @@
 import { action, types } from "../lib/action";
-import { runCurveAmoRepeg } from "../lib/curveAmoRepeg";
+import { DEFAULT_TRIGGER_PRICE, runCurveAmoRepeg } from "../lib/curveAmoRepeg";
 import { logTxDetails } from "../../utils/txLogger";
 
 action({
@@ -14,6 +14,12 @@ action({
       "0.9998",
       types.string
     );
+    t.addOptionalParam(
+      "triggerPrice",
+      "Only execute when the 1 OUSD sell quote is strictly below this USDC amount",
+      DEFAULT_TRIGGER_PRICE,
+      types.string
+    );
     t.addFlag(
       "dryrun",
       "Validate and simulate the exact module call without submitting"
@@ -25,6 +31,7 @@ action({
       chainId,
       asset: "OUSD",
       sellPrice: args.sellPrice,
+      triggerPrice: args.triggerPrice,
       dryrun: args.dryrun,
       log,
     });

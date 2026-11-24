@@ -1,12 +1,18 @@
 # Curve AMO repegging
 
 `ousdCurveAmoRepeg` removes excess OUSD from the Ethereum Curve OUSD/USDC pool
-and burns it. The sell-price target is USDC received for selling one OUSD. The
-default target is `0.9998`; an existing quote at or above the target produces no
-transaction. This action does not mint OUSD or lower an above-target price.
+and burns it. Quotes are USDC received for selling one OUSD. `triggerPrice`
+defaults to `0.9997`: execution requires a quote strictly below that threshold.
+`sellPrice` defaults to `0.9998`: a triggered burn is sized to reach at least that
+higher target. A quote equal to the trigger, above it, or between the two prices
+produces no transaction. This action does not mint OUSD or lower an above-target
+price.
 
-Only the OUSD Ethereum Talos action is available. Its parameters are `sellPrice`
-and `dryrun`; the asset is fixed to OUSD. The reusable module and internal sizing
+Only the OUSD Ethereum Talos action is available. Its parameters are `sellPrice`,
+`triggerPrice`, and `dryrun`; the asset is fixed to OUSD. Both prices are exact
+decimal strings with at most six USDC decimals and must satisfy
+`0 < triggerPrice <= sellPrice < 1`. Set both prices equal to execute for any quote
+below the target. The reusable module and internal sizing
 library retain the following configurations for future dedicated asset actions:
 
 | Asset     | Network | Pool sell direction  | Quote units       | Module descriptor              |
@@ -62,11 +68,16 @@ overshoot rejection is an upper sizing bound; other reverts abort the action.
 An unattainable target produces an error and no transaction.
 
 The checker values are derived from the actual simulated checker snapshot,
-post-burn vault value and post-burn token supply. Before submission the action
-simulates the exact module call from the Talos signer at fresh chain state,
+post-burn vault value and post-burn token supply. The quote must be strictly
+below `triggerPrice` at the pinned source block and after simulated rebase; either
+check skips if the quote is equal to or above the threshold. Before submission
+the action simulates the exact module call from the Talos signer at fresh chain state,
 without state overrides, and checks the resulting sell quote. This exercises the
 module's operator checks, the Safe's enabled-module check and the atomic value
-checker. A stale nonce, expired calculation or failed final preflight causes one
+checker. Its fresh starting quote must also be strictly below `triggerPrice`;
+otherwise submission is skipped even when the quote is still below `sellPrice`.
+The simulated post-burn quote must reach at least `sellPrice`. A stale nonce,
+expired calculation or failed final preflight causes one
 fresh recomputation; a second failure aborts. Submitted transactions are never
 blindly retried with the same burn calldata.
 
@@ -93,22 +104,24 @@ itself does not enable the module.
 After enablement, run the default OUSD action as a dry run:
 
 ```sh
-pnpm action ousdCurveAmoRepeg --network mainnet --dryrun
+pnpm action ousdCurveAmoRepeg --network mainnet --sell-price 0.9998 --trigger-price 0.9997 --dryrun
 ```
 
-Logs include the source block/hash, before/after quote, LP withdrawal, expected
-burn, checker bounds, module nonce and expiry. Once those values are reviewed,
+Logs distinguish the trigger threshold from the sell-price target and include
+the source block/hash, before/after quote, LP withdrawal, expected burn, checker
+bounds, module nonce and expiry. Once those values are reviewed,
 execute with the same target parameter:
 
 ```sh
-pnpm action ousdCurveAmoRepeg --network mainnet --sell-price 0.9998
+pnpm action ousdCurveAmoRepeg --network mainnet --sell-price 0.9998 --trigger-price 0.9997
 ```
 
 ## Recurring execution
 
 The `ousd_curve_amo_repeg` seed invokes the OUSD Ethereum action every 20 minutes
-in UTC (`*/20 * * * *`) with `--sell-price 0.9998`. Each run skips submission
-when the quote already meets the target. The row starts with `enabled = false`;
+in UTC (`*/20 * * * *`) with `--sell-price 0.9998 --trigger-price 0.9997`.
+Each run skips submission unless the quote is strictly below `0.9997`; when
+triggered, it sizes the burn to reach at least `0.9998`. The row starts with `enabled = false`;
 adding the seed does not activate execution.
 
 Enable it only after deployment 016, descriptor export into the deployed action

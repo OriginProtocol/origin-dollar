@@ -18,6 +18,8 @@ import {
   simulateCalls,
 } from "./simulation";
 
+export const DEFAULT_TRIGGER_PRICE = "0.9997";
+
 export const REPEG_ABI = [
   "function vault() view returns(address)",
   "function amo() view returns(address)",
@@ -179,6 +181,34 @@ export function parseSellPrice(value: string, decimals: number): BigNumber {
   if (target.lte(0) || target.gte(parseUnits("1", decimals)))
     throw new Error("sellPrice must be greater than zero and less than one");
   return target;
+}
+
+/**
+ * Parses the strict execution threshold in raw quote-asset units.
+ * @param value - Exact decimal quote amount below which execution may proceed.
+ * @param decimals - Quote precision: USDC uses 6 decimals and WETH uses 18.
+ * @param target - Parsed sellPrice output in the same raw quote-asset units.
+ * @returns A positive threshold no greater than the sell-price target.
+ * @throws If its decimal format, precision, range, or ordering is invalid.
+ * @remarks A quote equal to the threshold skips execution. Setting the threshold
+ * equal to the target allows execution for any quote below that target.
+ */
+export function parseTriggerPrice(
+  value: string,
+  decimals: number,
+  target: BigNumber
+): BigNumber {
+  let trigger: BigNumber;
+  try {
+    trigger = parseSellPrice(value, decimals);
+  } catch (error) {
+    throw new Error(
+      (error as Error).message.replace(/sellPrice/g, "triggerPrice")
+    );
+  }
+  if (trigger.gt(target))
+    throw new Error("triggerPrice must not exceed sellPrice");
+  return trigger;
 }
 
 /** A simulated sell quote, or the strategy's explicit peg-overshoot boundary. */
@@ -530,7 +560,9 @@ class StateChanged extends Error {}
  * @param state - Bindings, nonce, caps, and staked LP balance validated at block.
  * @param target - Minimum one-OToken sell output in raw quote-asset units.
  * @param block - Canonical source block used for every sizing and derivation pass.
- * @returns A checker request, or undefined when the target is met before or after rebase.
+ * @param trigger - Strict execution threshold in raw quote-asset units, at most target.
+ * @returns A checker request, or undefined when the pre- or post-rebase quote is
+ * at or above the trigger, even if it remains below the sell-price target.
  * @throws If rebase is paused, sizing or simulation fails, profit is not positive,
  * the target is unreachable, or the source block is reorganized.
  * @remarks Rebase, snapshot, burn, and balance reads are simulated as the Safe;
@@ -541,7 +573,8 @@ export async function buildRepegPlan(
   profile: RepegProfile,
   state: State,
   target: BigNumber,
-  block: ethers.providers.Block
+  block: ethers.providers.Block,
+  trigger: BigNumber
 ): Promise<RepegPlan | undefined> {
   const quote = quoteCall(profile);
   const current = (await read(
@@ -552,7 +585,7 @@ export async function buildRepegPlan(
     [profile.tokenIndex, profile.quoteIndex, parseEther("1")],
     block.number
   )) as BigNumber;
-  if (current.gte(target)) return undefined;
+  if (current.gte(trigger)) return undefined;
   if (
     await read(provider, state.vault, VAULT, "rebasePaused", [], block.number)
   )
@@ -563,7 +596,7 @@ export async function buildRepegPlan(
     quote,
   ]);
   assertCallsSucceeded(rebased, [rebase, quote]);
-  if (decodeQuote(rebased[1].returnData).gte(target)) return undefined;
+  if (decodeQuote(rebased[1].returnData).gte(trigger)) return undefined;
   const lpTokens = await sizeRepeg(state.maxLp, target, async (lp) => {
     const calls = [
       rebase,
@@ -663,7 +696,9 @@ export function encodeRepeg(plan: RepegPlan): string {
  * @param state - Bound module address for the asset.
  * @param plan - Previously sized request, including nonce and deadline.
  * @param target - Minimum one-OToken sell output in raw quote-asset units.
- * @returns ready after success, or skip if the fresh starting quote meets target.
+ * @param trigger - Strict execution threshold in the same raw quote-asset units.
+ * @returns ready after success, or skip if the fresh starting quote is at or above
+ * trigger; the post-burn quote must still meet the independent sell-price target.
  * @throws If the request expired, module execution fails, the final quote misses
  * target, or the RPC/quote calls fail.
  * @remarks No state overrides are applied. This exercises operator authorization,
@@ -676,7 +711,8 @@ export async function validateRepegPlan(
   profile: RepegProfile,
   state: State,
   plan: RepegPlan,
-  target: BigNumber
+  target: BigNumber,
+  trigger: BigNumber
 ): Promise<"ready" | "skip"> {
   const fresh = await provider.getBlock("latest");
   if (!fresh || fresh.timestamp >= plan.deadline)
@@ -694,7 +730,7 @@ export async function validateRepegPlan(
   const result = await simulate(provider, operator, fresh.number, calls, false);
   if (result[0].status !== "0x1")
     assertCallsSucceeded(result.slice(0, 1), calls.slice(0, 1));
-  if (decodeQuote(result[0].returnData).gte(target)) return "skip";
+  if (decodeQuote(result[0].returnData).gte(trigger)) return "skip";
   if (result[1].status !== "0x1")
     throw new StateChanged(
       `Module preflight failed: ${decodeRevert(result[1])}`
@@ -712,6 +748,8 @@ export interface RepegRunOptions {
   asset: string;
   /** Exact quote-asset amount per one OToken, conventionally "0.9998". */
   sellPrice: string;
+  /** Strict execution threshold per one OToken; defaults to "0.9997" and cannot exceed sellPrice. */
+  triggerPrice?: string;
   /** Simulates and validates the full request without broadcasting. */
   dryrun: boolean;
   log: Logger;
@@ -728,6 +766,9 @@ export interface RepegRunOptions {
  * through the supplied signer. Requests use the observed module nonce and expire
  * 300 seconds after their source block timestamp. Stale calculations are recomputed
  * at most once; an attempted submission is not blindly retried with old calldata.
+ * Quotes must remain strictly below triggerPrice initially, after simulated
+ * rebase, and at final preflight; sellPrice is the separate post-burn target.
+ * Valid prices satisfy 0 < triggerPrice <= sellPrice < 1 in quote-asset units.
  * Receipt confirmation and transaction logging belong to the calling action.
  */
 export async function runCurveAmoRepeg({
@@ -735,12 +776,14 @@ export async function runCurveAmoRepeg({
   chainId,
   asset,
   sellPrice,
+  triggerPrice = DEFAULT_TRIGGER_PRICE,
   dryrun,
   log,
   resolveAddresses = loadRepegAddresses,
 }: RepegRunOptions): Promise<ethers.providers.TransactionResponse | undefined> {
   const profile = getRepegProfile(asset, chainId),
     target = parseSellPrice(sellPrice, profile.quoteDecimals),
+    trigger = parseTriggerPrice(triggerPrice, profile.quoteDecimals, target),
     provider = signer.provider;
   if (!provider) throw new Error("Talos signer must have a provider");
   if ((await provider.getNetwork()).chainId !== chainId)
@@ -763,11 +806,12 @@ export async function runCurveAmoRepeg({
         profile,
         state,
         target,
-        block
+        block,
+        trigger
       );
       if (!plan) {
         log.info(
-          `${profile.asset}: quote already meets ${sellPrice}; no transaction`
+          `${profile.asset}: trigger ${triggerPrice} not breached; target ${sellPrice}; no transaction`
         );
         return;
       }
@@ -780,7 +824,7 @@ export async function runCurveAmoRepeg({
         )} -> ${formatUnits(
           plan.quoteAfter,
           profile.quoteDecimals
-        )}; target ${sellPrice}; LP ${formatEther(
+        )}; trigger ${triggerPrice}; target ${sellPrice}; LP ${formatEther(
           plan.lpTokens
         )}; burn ${formatEther(plan.burn)}`
       );
@@ -802,10 +846,13 @@ export async function runCurveAmoRepeg({
           profile,
           state,
           plan,
-          target
+          target,
+          trigger
         )) === "skip"
       ) {
-        log.info("Target reached before submission; no transaction");
+        log.info(
+          `Quote recovered to at or above trigger ${triggerPrice} before submission; target ${sellPrice}; no transaction`
+        );
         return;
       }
       if (dryrun) {
