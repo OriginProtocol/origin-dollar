@@ -280,11 +280,4 @@ contract UniswapV4ERC4626RebalanceModule is
             )
         );
     }
-
-    function _exec(address _target, bytes memory _data) internal {
-        require(
-            safeContract.execTransactionFromModule(_target, 0, _data, 0),
-            "Safe call failed"
-        );
-    }
 }

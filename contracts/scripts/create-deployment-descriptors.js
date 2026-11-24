@@ -44,6 +44,9 @@
 const fs = require("fs");
 const path = require("path");
 const { ethers } = require("ethers");
+const {
+  deploymentDescriptorName,
+} = require("./lib/deployment-descriptor-names");
 
 // Mirrors DIR_BY_CHAIN in tasks/lib/contracts.ts.
 const NETWORK_BY_CHAIN = {
@@ -255,13 +258,86 @@ function main() {
 
   // Resolve everything before writing anything, so a missing artifact fails the
   // run without leaving descriptors half-updated.
-  const planned = creations.map((tx) => ({
-    name: tx.contractName,
-    address: ethers.utils.getAddress(tx.contractAddress),
-    abi: readAbi(artifacts, tx.contractName),
-    storageLayout: readStorageLayout(artifacts, tx.contractName),
-    file: path.join(deployDir, `${tx.contractName}.json`),
-  }));
+  const registrations = creations.some(
+    (tx) => tx.contractName === "CurveAmoRepegModule"
+  )
+    ? JSON.parse(
+        fs.readFileSync(
+          path.join(CONTRACTS_ROOT, "build", `deployments-${chainId}.json`),
+          "utf8"
+        )
+      ).contracts
+    : [];
+  const planned = creations.map((tx) => {
+    const name = deploymentDescriptorName(
+      tx.contractName,
+      tx.contractAddress,
+      registrations
+    );
+    let enablement;
+    if (tx.contractName === "CurveAmoRepegModule") {
+      if (!Array.isArray(tx.arguments) || tx.arguments.length !== 7) {
+        throw new Error(
+          `Missing constructor arguments for ${name}; cannot identify its bound Safe`
+        );
+      }
+      const constructorAddresses = tx.arguments
+        .slice(0, 5)
+        .map((value) => ethers.utils.getAddress(value));
+      if (
+        constructorAddresses.some(
+          (address) => address === ethers.constants.AddressZero
+        )
+      ) {
+        throw new Error(`Zero constructor address for ${name}`);
+      }
+      const maxSigned = ethers.constants.MaxUint256.div(2);
+      for (const value of tx.arguments.slice(5)) {
+        const cap = ethers.BigNumber.from(value);
+        if (cap.lte(0) || cap.gt(maxSigned))
+          throw new Error(`Invalid variance cap for ${name}`);
+      }
+      const safe = constructorAddresses[0];
+      const data = new ethers.utils.Interface([
+        "function enableModule(address)",
+      ]).encodeFunctionData("enableModule", [tx.contractAddress]);
+      const asset = name.replace("CurveAmoRepegModule", "").toLowerCase();
+      enablement = {
+        file: path.join(
+          CONTRACTS_ROOT,
+          "build",
+          `${asset}-curve-amo-repeg-enable-${chainId}.json`
+        ),
+        batch: {
+          version: "1.0",
+          chainId: String(chainId),
+          createdAt: Date.now(),
+          meta: {
+            name: `Enable ${name}`,
+            createdFromSafeAddress: safe,
+            txBuilderVersion: "1.18.0",
+          },
+          transactions: [
+            {
+              to: safe,
+              value: "0",
+              data,
+              contractMethod: null,
+              contractInputsValues: null,
+            },
+          ],
+        },
+      };
+    }
+    return {
+      name,
+      enablement,
+      address: ethers.utils.getAddress(tx.contractAddress),
+      abi: readAbi(artifacts, tx.contractName),
+      storageLayout: readStorageLayout(artifacts, tx.contractName),
+      file: path.join(deployDir, `${name}.json`),
+    };
+  });
 
   const duplicates = planned
     .map((p) => p.name)
@@ -273,7 +349,14 @@ function main() {
     );
   }
 
-  for (const { name, address, abi, storageLayout, file } of planned) {
+  for (const {
+    name,
+    address,
+    abi,
+    storageLayout,
+    file,
+    enablement,
+  } of planned) {
     const existed = fs.existsSync(file);
     // Matches the committed on-disk shape: address first, 2-space indent,
     // no trailing newline. storageLayout is the upgrade-safety baseline for the
@@ -284,7 +367,22 @@ function main() {
       null,
       2
     );
-    if (!dryRun) fs.writeFileSync(file, body);
+    if (!dryRun) {
+      fs.writeFileSync(file, body);
+      if (enablement) {
+        fs.writeFileSync(
+          enablement.file,
+          JSON.stringify(enablement.batch, null, 2) + "\n"
+        );
+      }
+    }
+    if (enablement) {
+      console.log(
+        `[descriptors] ${
+          dryRun ? "would write" : "wrote"
+        } Safe enablement: ${path.relative(CONTRACTS_ROOT, enablement.file)}`
+      );
+    }
     console.log(
       `[descriptors] ${dryRun ? "would " : ""}${
         existed ? "update" : "create"

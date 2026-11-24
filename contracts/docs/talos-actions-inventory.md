@@ -11,7 +11,7 @@
 | base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, oethbV3SettleWithdrawal, otokenOethbHarvest, otokenOethbRebase |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
-| eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
+| eth, base | crossChainRelay, curveAmoRepeg, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 
@@ -32,8 +32,10 @@
 | `utils/regex` | 3 | eth, base, arb |
 | `utils/signers` | 3 | eth, base, arb |
 | `utils/signersStandalone` | 3 | eth, base, arb |
+| `tasks/lib/curveAmoRepeg` | 2 | eth, base |
 | `tasks/lib/oethbV3` | 2 | eth, base |
 | `tasks/lib/safeProposal` | 2 | eth, base |
+| `tasks/lib/simulation` | 2 | eth, base |
 | `tasks/lib/vaultStrategyMoves` | 2 | eth, base |
 | `abi/claim-rewards-module.json` | 1 | eth |
 | `abi/passThrough.json` | 1 | eth |

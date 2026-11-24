@@ -4,11 +4,15 @@ import {
   getAddress,
   hexValue,
   isAddress,
-  parseEther,
   parseUnits,
 } from "ethers/lib/utils";
 
 import type { Logger } from "./action";
+import {
+  SIMULATE_METHOD,
+  assertCallsSucceeded,
+  simulateCalls,
+} from "./simulation";
 
 export type VaultName = "OUSD" | "OETH" | "SuperOETH";
 export type MoveKind = "deposit" | "withdraw" | "withdrawAll";
@@ -109,11 +113,6 @@ const VAULT_CONFIGS: Record<VaultName, VaultConfig> = {
 
 const DECIMAL_VALUE = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
 const SIGNED_DECIMAL_VALUE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
-
-const SIMULATE_METHOD = "eth_simulateV1";
-/// Covers gas for the spoofed `from: safe` calls only; never moves real value.
-const SIMULATED_SAFE_BALANCE = parseEther("10").toHexString();
-const ERROR_STRING_SELECTOR = "0x08c379a0";
 
 export function getVaultConfig(vault: string, chainId: number): VaultConfig {
   const normalized = vault.trim().toLowerCase();
@@ -414,108 +413,6 @@ export function buildBatchCalls({
     description: "valueChecker.checkDelta(...)",
   });
   return calls;
-}
-
-interface SimulatedCall {
-  status: string;
-  returnData: string;
-  gasUsed: string;
-  error?: { code?: number; message?: string; data?: string };
-}
-
-/// A provider that cannot simulate is a hard stop, not a reason to propose an unchecked batch, so
-/// this spells out the one supported way forward instead of letting a raw -32601 surface.
-function simulationRpcError(error: any): Error {
-  const code = error?.error?.code ?? error?.code;
-  const message: string =
-    error?.error?.message ?? error?.message ?? String(error);
-  if (code === -32601 || /method not (found|supported)/i.test(message)) {
-    return new Error(
-      `The configured RPC does not support ${SIMULATE_METHOD} (${message}). ` +
-        `Point the network at a provider that implements it, or re-run with --skip-fork plus ` +
-        `explicit --expected-profit and --expected-vault-change.`
-    );
-  }
-  return new Error(`${SIMULATE_METHOD} failed: ${message}`);
-}
-
-function decodeRevert(call: SimulatedCall): string {
-  const data = call.error?.data ?? call.returnData;
-  if (data && data.startsWith(ERROR_STRING_SELECTOR)) {
-    try {
-      return ethers.utils.defaultAbiCoder.decode(
-        ["string"],
-        `0x${data.slice(10)}`
-      )[0];
-    } catch {
-      // Not a well-formed Error(string); fall through to the raw payload.
-    }
-  }
-  return call.error?.message ?? `reverted with ${data || "no return data"}`;
-}
-
-function assertCallsSucceeded(simulated: SimulatedCall[], calls: BatchCall[]) {
-  simulated.forEach((call, index) => {
-    if (call.status === "0x1") return;
-    throw new Error(
-      `Simulation failed at step ${index + 1} of ${simulated.length} (${
-        calls[index].description
-      }): ${decodeRevert(call)}`
-    );
-  });
-}
-
-/// Runs `calls` in order inside a single simulated block built on `blockTag`, as if the Safe had
-/// sent each one. Nothing is broadcast and nothing persists past the response.
-async function simulateCalls({
-  provider,
-  safeAddress,
-  blockTag,
-  calls,
-}: {
-  provider: ethers.providers.Provider;
-  safeAddress: string;
-  blockTag: string;
-  calls: BatchCall[];
-}): Promise<SimulatedCall[]> {
-  let response: any;
-  try {
-    response = await (provider as ethers.providers.JsonRpcProvider).send(
-      SIMULATE_METHOD,
-      [
-        {
-          blockStateCalls: [
-            {
-              calls: calls.map((call) => ({
-                from: safeAddress,
-                to: call.to,
-                value: hexValue(BigNumber.from(call.value)),
-                data: call.data,
-              })),
-              stateOverrides: {
-                [safeAddress]: { balance: SIMULATED_SAFE_BALANCE },
-              },
-            },
-          ],
-          validation: false,
-          traceTransfers: false,
-        },
-        blockTag,
-      ]
-    );
-  } catch (error: any) {
-    throw simulationRpcError(error);
-  }
-
-  const simulated: SimulatedCall[] | undefined = response?.[0]?.calls;
-  if (!Array.isArray(simulated) || simulated.length !== calls.length) {
-    throw new Error(
-      `${SIMULATE_METHOD} returned ${simulated?.length ?? "no"} results for ${
-        calls.length
-      } calls`
-    );
-  }
-  return simulated;
 }
 
 /**
