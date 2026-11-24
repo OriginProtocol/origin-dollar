@@ -110,7 +110,8 @@ contract CurveAmoRepegModule is AbstractSafeModule, ReentrancyGuard {
     /// @param expectedProfit Expected profit in 18-decimal vault units; must exceed profitVariance.
     /// @param profitVariance Nonnegative profit tolerance, at most maxProfitVariance, in the same units.
     /// @param expectedVaultChange Nonpositive expected vault-value change in the same units.
-    /// @param vaultChangeVariance Nonnegative vault-change tolerance, at most maxVaultChangeVariance, in the same units.
+    /// @param vaultChangeVariance Nonnegative vault-change tolerance in the same units,
+    ///        at most maxVaultChangeVariance.
     /// @param expectedNonce Must equal the module's current nonce.
     /// @param deadline Inclusive expiry timestamp, between execution time and 300 seconds after it.
     function repeg(
