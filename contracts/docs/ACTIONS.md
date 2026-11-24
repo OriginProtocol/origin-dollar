@@ -28,6 +28,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | Action                              | Network | Cron             | Description                                                                                         |
 | ----------------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
 | `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule                                          |
+| `ousdCurveAmoRepeg`                 | mainnet | `*/20 * * * *`   | Target 0.9998 USDC per OUSD in the Curve AMO pool; skip when already at target                        |
 | `otokenAddWithdrawalQueueLiquidity` | mainnet | `*/10 * * * *`   | Call `addWithdrawalQueueLiquidity` on each OToken vault, only when it would add claimable liquidity |
 | `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
 | `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
@@ -125,7 +126,6 @@ each run (see notes in `seed_schedules.sql`).
 | `stakeValidator`             | Convert WETH to ETH and deposit to a validator from the Compounding Staking Strategy |
 | `withdrawValidator`          | Request a partial withdrawal or full exit from a Compounding Staking validator       |
 | `removeValidator`            | Remove registered or exited validators from Native Staking Strategy 2                |
-| `ousdCurveAmoRepeg`          | Target the OUSD/USDC Curve sell quote through its restricted repegging Safe module    |
 | `ousdRebalancer`             | Plan and execute OUSD strategy rebalancing via the RebalancerModule                  |
 | `proposeVaultStrategyMoves`  | Simulate and propose ordered OUSD/OETH strategy movements to the Strategist 2/8 Safe |
 | `queueGovernorSixProposal`   | Queue a GovernorSix proposal (`--propid`)                                            |
@@ -436,9 +436,13 @@ schedule stays disabled until then.
 OUSD/USDC pool. `--sell-price` defaults to the exact decimal string `0.9998`;
 `--dryrun` performs sizing and exact module preflight without sending. These are
 the only action parameters. Every execution must have strictly positive accounting
-profit; checker bounds exclude zero-profit and loss-making outcomes. It has no
-seeded schedule and requires a deployed, Safe-enabled OUSD module and exported
-descriptor. The reusable library also has OETH/SuperOETH profiles, but separate
-Talos actions for those assets are not exposed. See
+profit; checker bounds exclude zero-profit and loss-making outcomes. The
+`ousd_curve_amo_repeg` seed runs every 20 minutes in UTC (`*/20 * * * *`) with
+a `0.9998` target and skips when the quote already meets it. It starts disabled:
+enable only after deployment 016, descriptor export, Safe module enablement and
+relayer funding. Review and stagger active Ethereum jobs sharing the relayer
+before activation; existing schedules are unchanged. The reusable library also has
+OETH/SuperOETH profiles, but separate Talos actions for those assets are not
+exposed. See
 [Curve AMO repegging](./CURVE_AMO_REPEG.md) for permissions, quote units,
 deployment and operator commands.

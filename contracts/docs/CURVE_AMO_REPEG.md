@@ -104,7 +104,22 @@ execute with the same target parameter:
 pnpm action ousdCurveAmoRepeg --network mainnet --sell-price 0.9998
 ```
 
-The action uses the existing Talos signer and transaction logger. No recurring
-schedule is created or activated by this change. To stop execution, the Safe can
-revoke `OPERATOR_ROLE` from the relayer or call `disableModule` with the current
-module predecessor from `getModulesPaginated`.
+## Recurring execution
+
+The `ousd_curve_amo_repeg` seed invokes the OUSD Ethereum action every 20 minutes
+in UTC (`*/20 * * * *`) with `--sell-price 0.9998`. Each run skips submission
+when the quote already meets the target. The row starts with `enabled = false`;
+adding the seed does not activate execution.
+
+Enable it only after deployment 016, descriptor export into the deployed action
+image, Safe module enablement, and funding the authorized Talos relayer with ETH
+for gas. Complete the dry run above first. Before activation, review active
+Ethereum jobs sharing that relayer and stagger transaction-writing jobs that
+would run within five minutes of one another. Other schedule rows are unchanged.
+The seed uses `ON CONFLICT (product, name) DO NOTHING`, so subsequent boots
+preserve an existing row's enabled state and cron settings.
+
+The action uses the existing Talos signer and transaction logger. To stop
+execution, disable the Talos schedule; the Safe can independently revoke
+`OPERATOR_ROLE` from the relayer or call `disableModule` with the current module
+predecessor from `getModulesPaginated`.
