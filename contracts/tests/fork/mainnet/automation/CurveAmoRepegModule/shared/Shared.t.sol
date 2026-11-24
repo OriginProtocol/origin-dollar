@@ -25,7 +25,7 @@ interface IRepegForkChecker {
     function snapshots(address safe) external view returns (uint256 vaultValue, uint256 totalSupply, uint256 time);
 }
 
-abstract contract Fork_CurveAmoRepegModule_Base_Test is BaseFork {
+abstract contract Fork_CurveAmoRepegModule_Shared_Test is BaseFork {
     struct Profile {
         address vault;
         address token;

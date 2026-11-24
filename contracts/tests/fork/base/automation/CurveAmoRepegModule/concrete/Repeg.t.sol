@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_CurveAmoRepegModule_Base_Test} from "tests/fork/CurveAmoRepegModuleBase.t.sol";
+import {
+    Fork_CurveAmoRepegModule_Shared_Test
+} from "tests/fork/mainnet/automation/CurveAmoRepegModule/shared/Shared.t.sol";
 
-contract Fork_Base_CurveAmoRepegModule_Repeg_Test is Fork_CurveAmoRepegModule_Base_Test {
+contract Fork_Base_CurveAmoRepegModule_Repeg_Test is Fork_CurveAmoRepegModule_Shared_Test {
     function setUp() public override {
         super.setUp();
         _createAndSelectForkBase();
