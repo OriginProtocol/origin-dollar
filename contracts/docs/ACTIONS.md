@@ -28,6 +28,7 @@ Cron times are UTC. Enable state and operational caveats (e.g. "do not enable",
 | Action                              | Network | Cron             | Description                                                                                         |
 | ----------------------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------- |
 | `otokenOusdAutoWithdrawal`          | mainnet | `35 11,23 * * *` | Auto-process OUSD withdrawals via the AutoWithdrawalModule                                          |
+| `ousdCurveAmoRepeg`                 | mainnet | `*/20 * * * *`   | Trigger below 0.9997 USDC per OUSD; remove and burn to reach 0.9998                        |
 | `otokenAddWithdrawalQueueLiquidity` | mainnet | `*/10 * * * *`   | Call `addWithdrawalQueueLiquidity` on each OToken vault, only when it would add claimable liquidity |
 | `otokenAddWithdrawalQueueLiquidity` | base    | `*/10 * * * *`   | As above, on Base                                                                                   |
 | `otokenAddWithdrawalQueueLiquidity` | sonic   | `*/10 * * * *`   | As above, on Sonic                                                                                  |
@@ -428,3 +429,26 @@ never lets the swap or the new range sell OUSD more than `navToleranceBps`
 The Safe must enable the module and approve OUSD to Permit2 and Permit2 to the
 PositionManager (see `009_UniswapV4ERC4626RebalanceModule.s.sol`). The
 schedule stays disabled until then.
+
+### OUSD Curve AMO repegging
+
+`ousdCurveAmoRepeg` runs only on Ethereum and always targets OUSD's Curve
+OUSD/USDC pool. `--sell-price` defaults to `0.9998`; `--trigger-price` defaults
+to `0.9997`. Both are exact decimal strings in USDC received per one OUSD, with
+`0 < triggerPrice <= sellPrice < 1`. Execution requires a quote strictly below
+the trigger initially, after simulated rebase, and at final preflight. Equality
+or recovery above the trigger skips submission, including quotes between the
+trigger and target. A triggered burn is sized to reach at least `sellPrice`.
+Setting the two prices equal permits execution for any quote below the target.
+`--dryrun` applies these gates and simulates a triggered request without sending.
+Every execution must have strictly positive accounting profit; checker bounds
+exclude zero-profit and loss-making outcomes.
+
+The `ousd_curve_amo_repeg` seed runs every 20 minutes in UTC (`*/20 * * * *`)
+with explicit `--sell-price 0.9998 --trigger-price 0.9997`. It starts disabled:
+enable only after deployment 016, descriptor export, Safe module enablement and
+relayer funding. Review and stagger active Ethereum jobs sharing the relayer
+before activation; existing schedules are unchanged. The reusable library also has
+OETH/SuperOETH profiles, but separate Talos actions for those assets are not
+exposed. See [Curve AMO repegging](./CURVE_AMO_REPEG.md) for permissions, quote
+units, deployment and operator commands.

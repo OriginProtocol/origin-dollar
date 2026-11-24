@@ -7,7 +7,7 @@ import {
 } from "tests/smoke/mainnet/automation/UniswapV4RebalanceModule/shared/Shared.t.sol";
 
 // --- Test utilities
-import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
+import {CrossChain} from "tests/utils/Addresses.sol";
 
 // --- Project imports
 

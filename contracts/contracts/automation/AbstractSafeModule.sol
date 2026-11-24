@@ -32,6 +32,16 @@ abstract contract AbstractSafeModule is AccessControlEnumerable {
         _grantRole(OPERATOR_ROLE, address(safeContract));
     }
 
+    /// @notice Executes a call through the Safe with zero ETH and CALL operation.
+    /// @param target Contract selected by the derived module.
+    /// @param data Encoded selector and arguments for the call.
+    function _exec(address target, bytes memory data) internal {
+        require(
+            safeContract.execTransactionFromModule(target, 0, data, 0),
+            "Safe call failed"
+        );
+    }
+
     /**
      * @dev Helps recovering any tokens accidentally sent to this module.
      * @param token Token to transfer. 0x0 to transfer Native token.

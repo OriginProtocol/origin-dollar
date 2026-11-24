@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.18.3",
   "scripts": {
     "check:storage": "node scripts/check-storage-layout.js",
-    "test:scripts": "node --test scripts/test/check-storage-upgrade.test.js scripts/test/storage-upgrade.test.js",
+    "test:scripts": "node --test scripts/test/check-storage-upgrade.test.js scripts/test/storage-upgrade.test.js scripts/test/deployment-descriptor-names.test.js",
     "test:layouts": "node --test scripts/test/layout-pinned.test.js",
     "test:tasks": "TS_NODE_TRANSPILE_ONLY=true mocha --require ts-node/register \"tasks/test/**/*.js\" --ignore \"tasks/test/anvil.js\"",
     "test:ops": "TS_NODE_TRANSPILE_ONLY=true mocha --require ts-node/register tasks/test/command-catalog.js tasks/test/command.js",
