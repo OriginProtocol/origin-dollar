@@ -7,11 +7,6 @@ import { IVault } from "../interfaces/IVault.sol";
 import { VaultValueChecker } from "../strategies/VaultValueChecker.sol";
 import { ICurveAMOStrategy } from "../interfaces/strategies/ICurveAMOStrategy.sol";
 
-interface ICurveAmoVaultBinding {
-    /// @notice Returns the vault authorized to mint and burn for this AMO.
-    function vaultAddress() external view returns (address);
-}
-
 /// @title Curve AMO Repegging Safe Module
 /// @notice Lets an operator remove and burn OTokens through one fixed Safe, vault, AMO and checker.
 /// @dev Atomically calls rebase, takeSnapshot, removeAndBurnOTokens and checkDelta through the Safe.
@@ -73,7 +68,7 @@ contract CurveAmoRepegModule is AbstractSafeModule, ReentrancyGuard {
         require(IVault(_vault).strategistAddr() == _safe, "Safe mismatch");
         require(IVault(_vault).oToken().code.length > 0, "Invalid OToken");
         require(
-            ICurveAmoVaultBinding(_amo).vaultAddress() == _vault,
+            ICurveAMOStrategy(_amo).vaultAddress() == _vault,
             "AMO vault mismatch"
         );
         require(

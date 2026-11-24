@@ -5,13 +5,9 @@ import {console2} from "forge-std/console2.sol";
 import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {VaultValueChecker} from "contracts/strategies/VaultValueChecker.sol";
 import {CurveAmoRepegModule} from "contracts/automation/CurveAmoRepegModule.sol";
-
-interface ICurveAmoDeploymentBindings {
-    function vaultAddress() external view returns (address);
-    function curvePool() external view returns (address);
-}
 
 /// @notice Deploys the OUSD instance without enabling it on the strategist Safe.
 contract $016_DeployOUSDCurveAmoRepegModule is AbstractDeployScript("016_DeployOUSDCurveAmoRepegModule") {
@@ -29,8 +25,8 @@ contract $016_DeployOUSDCurveAmoRepegModule is AbstractDeployScript("016_DeployO
         require(CHECKER.code.length > 0, "Missing checker");
         require(IVault(vault).strategistAddr() == safe, "Unexpected strategist Safe");
         require(IVault(vault).oToken() == resolver.resolve("OUSD_PROXY"), "Unexpected OToken");
-        require(ICurveAmoDeploymentBindings(amo).vaultAddress() == vault, "AMO vault mismatch");
-        require(ICurveAmoDeploymentBindings(amo).curvePool() == Mainnet.curve_OUSD_USDC_pool, "AMO pool mismatch");
+        require(ICurveAMOStrategy(amo).vaultAddress() == vault, "AMO vault mismatch");
+        require(ICurveAMOStrategy(amo).curvePool() == Mainnet.curve_OUSD_USDC_pool, "AMO pool mismatch");
         require(address(VaultValueChecker(CHECKER).vault()) == vault, "Checker vault mismatch");
         require(address(VaultValueChecker(CHECKER).ousd()) == IVault(vault).oToken(), "Checker token mismatch");
 
