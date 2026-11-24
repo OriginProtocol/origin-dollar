@@ -240,17 +240,46 @@ function fixture(asset = "OUSD", options = {}) {
 
 describe("Curve AMO repegging", () => {
   it("registers decimal-string defaults and a dry-run switch in the Talos catalog", () => {
-    require("../actions/curveAmoRepeg");
+    require("../actions/ousdCurveAmoRepeg");
     const { registry } = require("../lib/action");
-    const entry = registry.get("curveAmoRepeg");
-    expect(entry.config.chains).to.deep.equal([1, 8453]);
-    expect(entry.params.find((p) => p.name === "asset").defaultValue).to.equal(
-      "OUSD"
-    );
+    const entry = registry.get("ousdCurveAmoRepeg");
+    expect(entry.config.chains).to.deep.equal([1]);
+    expect(entry.params.map((p) => p.name)).to.deep.equal([
+      "sellPrice",
+      "dryrun",
+    ]);
+    expect(registry.has("curveAmoRepeg")).to.equal(false);
     const price = entry.params.find((p) => p.name === "sellPrice");
     expect(price.type).to.equal("string");
     expect(price.defaultValue).to.equal("0.9998");
     expect(entry.params.find((p) => p.name === "dryrun").isFlag).to.equal(true);
+  });
+  it("keeps the public action OUSD-only even if an asset argument is supplied", async () => {
+    require("../actions/ousdCurveAmoRepeg");
+    const { registry } = require("../lib/action");
+    const helper = require("../lib/curveAmoRepeg");
+    const original = helper.runCurveAmoRepeg;
+    const requests = [];
+    helper.runCurveAmoRepeg = async (options) => {
+      requests.push(options);
+    };
+    try {
+      for (const asset of ["OETH", "SuperOETH"]) {
+        await registry.get("ousdCurveAmoRepeg").config.run({
+          signer: {},
+          chainId: 1,
+          networkName: "mainnet",
+          log: logger,
+          args: { asset, sellPrice: "0.9998", dryrun: true },
+        });
+      }
+      expect(requests.map((request) => request.asset)).to.deep.equal([
+        "OUSD",
+        "OUSD",
+      ]);
+    } finally {
+      helper.runCurveAmoRepeg = original;
+    }
   });
   it("resolves only the profile supported on the requested chain", () => {
     expect(getRepegProfile("superoeth", 8453).tokenIndex).to.equal(1);

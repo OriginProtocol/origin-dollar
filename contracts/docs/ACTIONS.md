@@ -125,7 +125,7 @@ each run (see notes in `seed_schedules.sql`).
 | `stakeValidator`             | Convert WETH to ETH and deposit to a validator from the Compounding Staking Strategy |
 | `withdrawValidator`          | Request a partial withdrawal or full exit from a Compounding Staking validator       |
 | `removeValidator`            | Remove registered or exited validators from Native Staking Strategy 2                |
-| `curveAmoRepeg`              | Target OUSD/OETH Curve sell quotes through a restricted repegging Safe module        |
+| `ousdCurveAmoRepeg`          | Target the OUSD/USDC Curve sell quote through its restricted repegging Safe module    |
 | `ousdRebalancer`             | Plan and execute OUSD strategy rebalancing via the RebalancerModule                  |
 | `proposeVaultStrategyMoves`  | Simulate and propose ordered OUSD/OETH strategy movements to the Strategist 2/8 Safe |
 | `queueGovernorSixProposal`   | Queue a GovernorSix proposal (`--propid`)                                            |
@@ -135,7 +135,6 @@ each run (see notes in `seed_schedules.sql`).
 
 | Action                      | Description                                                                          |
 | --------------------------- | ------------------------------------------------------------------------------------ |
-| `curveAmoRepeg`              | Target SuperOETH Curve sell quotes through its restricted repegging Safe module      |
 | `proposeVaultStrategyMoves` | Simulate and propose ordered SuperOETH strategy movements to the Strategist 2/8 Safe |
 
 ### CoW harvester parameters
@@ -431,12 +430,15 @@ The Safe must enable the module and approve OUSD to Permit2 and Permit2 to the
 PositionManager (see `009_UniswapV4ERC4626RebalanceModule.s.sol`). The
 schedule stays disabled until then.
 
-### Curve AMO repegging
+### OUSD Curve AMO repegging
 
-`curveAmoRepeg` supports `--asset OUSD` or `OETH` on mainnet and
-`--asset SuperOETH` on Base. `--sell-price` defaults to the exact decimal string
-`0.9998`; `--dryrun` performs sizing and exact module preflight without sending.
-Every execution must have strictly positive accounting profit; checker bounds
-exclude zero-profit and loss-making outcomes. It has no seeded schedule. Each profile requires its own deployed, Safe-enabled
-module and exported descriptor. See [Curve AMO repegging](./CURVE_AMO_REPEG.md)
-for permissions, quote units, deployment and operator commands.
+`ousdCurveAmoRepeg` runs only on Ethereum and always targets OUSD's Curve
+OUSD/USDC pool. `--sell-price` defaults to the exact decimal string `0.9998`;
+`--dryrun` performs sizing and exact module preflight without sending. These are
+the only action parameters. Every execution must have strictly positive accounting
+profit; checker bounds exclude zero-profit and loss-making outcomes. It has no
+seeded schedule and requires a deployed, Safe-enabled OUSD module and exported
+descriptor. The reusable library also has OETH/SuperOETH profiles, but separate
+Talos actions for those assets are not exposed. See
+[Curve AMO repegging](./CURVE_AMO_REPEG.md) for permissions, quote units,
+deployment and operator commands.

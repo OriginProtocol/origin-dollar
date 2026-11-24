@@ -1,10 +1,13 @@
 # Curve AMO repegging
 
-`curveAmoRepeg` removes excess OTokens from a Curve AMO pool and burns them. It
-supports a minimum sell quote, expressed as quote asset received for selling one
-OToken. The default target is `0.9998`; an existing quote at or above the target
-produces no transaction. This action does not mint tokens or lower an above-target
-price.
+`ousdCurveAmoRepeg` removes excess OUSD from the Ethereum Curve OUSD/USDC pool
+and burns it. The sell-price target is USDC received for selling one OUSD. The
+default target is `0.9998`; an existing quote at or above the target produces no
+transaction. This action does not mint OUSD or lower an above-target price.
+
+Only the OUSD Ethereum Talos action is available. Its parameters are `sellPrice`
+and `dryrun`; the asset is fixed to OUSD. The reusable module and internal sizing
+library retain the following configurations for future dedicated asset actions:
 
 | Asset     | Network | Pool sell direction  | Quote units       | Module descriptor              |
 | --------- | ------- | -------------------- | ----------------- | ------------------------------ |
@@ -15,9 +18,10 @@ price.
 The action verifies pool coin order, token decimals, strategy/vault/checker
 bindings, module operator role and Safe enablement against chain state. Module
 addresses come from per-instance deployment descriptors; missing descriptors are
-a hard failure. OETH and SuperOETH need separately reviewed deployments and
-variance caps before their profiles can execute. No module addresses are inferred
-from the presence of a contract implementation.
+a hard failure. OETH and SuperOETH need separate Talos wrappers, reviewed module
+deployments, and variance caps before they can be automated. Their internal
+profiles are not public action parameters. No module addresses are inferred from
+the presence of a contract implementation.
 
 ## Module permissions
 
@@ -89,7 +93,7 @@ itself does not enable the module.
 After enablement, run the default OUSD action as a dry run:
 
 ```sh
-pnpm action curveAmoRepeg --network mainnet --asset OUSD --dryrun
+pnpm action ousdCurveAmoRepeg --network mainnet --dryrun
 ```
 
 Logs include the source block/hash, before/after quote, LP withdrawal, expected
@@ -97,7 +101,7 @@ burn, checker bounds, module nonce and expiry. Once those values are reviewed,
 execute with the same target parameter:
 
 ```sh
-pnpm action curveAmoRepeg --network mainnet --asset OUSD --sell-price 0.9998
+pnpm action ousdCurveAmoRepeg --network mainnet --sell-price 0.9998
 ```
 
 The action uses the existing Talos signer and transaction logger. No recurring

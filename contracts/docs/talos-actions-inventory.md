@@ -6,12 +6,12 @@
 
 | chains | actions |
 |---|---|
-| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, oethbV3BalanceReport, oethbV3RetryDeposit, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdRebalancer, ousdSusdeV4Rebalance, ousdUsdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
+| eth | autoValidatorDeposits, autoValidatorWithdrawals, cowHarvest, executeGovernorSixProposal, feeSplitterDistribute, harvest, manageBribes, managePassThrough, oethbV3BalanceReport, oethbV3RetryDeposit, ognClaimAndForwardRewards, otokenOethRebase, otokenOusdAutoWithdrawal, otokenOusdRebase, ousdCurveAmoRepeg, ousdRebalancer, ousdSusdeV4Rebalance, ousdUsdeV4Rebalance, ousdV4Rebalance, queueGovernorSixProposal, restartSquid, setXOGNRewardRate, snapBalances, stakeValidator, verifyBalances, verifyDeposits, withdrawValidator |
 | hyper | crossChainBalanceUpdateHyperevm |
 | base | bridgeBaseFees, claimBribes, crossChainBalanceUpdateBase, oethbV3SettleWithdrawal, otokenOethbHarvest, otokenOethbRebase |
 | eth, hyper | crossChainRelayHyperEVM |
 | arb | updateVotemarketEpochs |
-| eth, base | crossChainRelay, curveAmoRepeg, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
+| eth, base | crossChainRelay, manageMerklBribes, proposeVaultStrategyMoves, relayCCTPMessage |
 | eth, sonic, base, plume | otokenAddWithdrawalQueueLiquidity |
 | eth, sonic, hyper, base, arb, plume, hoodi | healthcheck |
 
@@ -32,7 +32,6 @@
 | `utils/regex` | 3 | eth, base, arb |
 | `utils/signers` | 3 | eth, base, arb |
 | `utils/signersStandalone` | 3 | eth, base, arb |
-| `tasks/lib/curveAmoRepeg` | 2 | eth, base |
 | `tasks/lib/oethbV3` | 2 | eth, base |
 | `tasks/lib/safeProposal` | 2 | eth, base |
 | `tasks/lib/simulation` | 2 | eth, base |
@@ -41,6 +40,7 @@
 | `abi/passThrough.json` | 1 | eth |
 | `tasks/lib/baseFeeBridge` | 1 | base |
 | `tasks/lib/cowHarvest` | 1 | eth |
+| `tasks/lib/curveAmoRepeg` | 1 | eth |
 | `tasks/lib/deployments` | 1 | eth |
 | `tasks/lib/logs` | 1 | eth |
 | `tasks/lib/v4BidPricing` | 1 | eth |

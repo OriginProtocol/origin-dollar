@@ -3,20 +3,14 @@ import { runCurveAmoRepeg } from "../lib/curveAmoRepeg";
 import { logTxDetails } from "../../utils/txLogger";
 
 action({
-  name: "curveAmoRepeg",
+  name: "ousdCurveAmoRepeg",
   description:
-    "Remove and burn excess OTokens through a restricted Safe module to reach a Curve sell-price target",
-  chains: [1, 8453],
+    "Remove and burn excess OUSD through its restricted Safe module to reach a Curve OUSD/USDC sell-price target",
+  chains: [1],
   params: (t) => {
     t.addOptionalParam(
-      "asset",
-      "OUSD or OETH on Ethereum; SuperOETH on Base",
-      "OUSD",
-      types.string
-    );
-    t.addOptionalParam(
       "sellPrice",
-      "Quote asset received for selling 1 OToken",
+      "USDC received for selling 1 OUSD",
       "0.9998",
       types.string
     );
@@ -29,11 +23,11 @@ action({
     const tx = await runCurveAmoRepeg({
       signer,
       chainId,
-      asset: args.asset,
+      asset: "OUSD",
       sellPrice: args.sellPrice,
       dryrun: args.dryrun,
       log,
     });
-    if (tx) await logTxDetails(tx, "curveAmoRepeg");
+    if (tx) await logTxDetails(tx, "ousdCurveAmoRepeg");
   },
 });
